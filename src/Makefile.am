@@ -24,7 +24,7 @@ AUTOMAKE_OPTIONS = gnu
 
 sbin_PROGRAMS = pmhelper
 pmhelper_SOURCES = pmhelper.c misc.c
-pmhelper_LDFLAGS = -lcrypt -lssl
+pmhelper_LDFLAGS = -lcrypt @LIBSSL@
 
 moduledir = /lib/security
 module_LTLIBRARIES = pam_mount.la

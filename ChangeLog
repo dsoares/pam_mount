@@ -1,3 +1,14 @@
+13 December 2002 W. Michael Petullo <mike@flyn.org>
+
+	* ./configure now checks for security/pam_modules.h.
+
+	* SMB code now uses PASSWD_FD because PASSWD can leak passwords
+	to other users.  This needs to be tested.
+
+	* No longer links against libssl if it does not exist.
+
+	* No uses -o pass-fd to transmit passwords to ncpmount.
+
 18 November 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Wildcard volume definitions are now ignored when root logs in.

@@ -54,7 +54,9 @@ int number_safe(char *n)
  * POST:   amount is added to /var/run/pam_mount/<user>'s value; if value == 0,
  *         then file is removed.
  * FN VAL: new value else -1 on error, errors are logged
- * NOTE:   code is modified version of pam_console.c's use_count */
+ * NOTE:   code is modified version of pam_console.c's use_count
+ * FIXME:  should this be replaced with utmp (man utmp) usage?  
+ *         Is utmp portable? */
 int modify_pm_count(const char *user, int amount)
 {
     char filename[PATH_MAX + 1];

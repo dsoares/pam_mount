@@ -118,7 +118,6 @@ int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password,
 	log("pmhelper: %s\n", "failed to decrypt key");
 	return 0;
     }
-    //if (!EVP_DecryptFinal(&ctx, pt_fs_key + outlen, &tmplen)) {
     if (!EVP_DecryptFinal(&ctx, pt_fs_key + outlen, &tmplen)) {
 	log("pmhelper: %s\n", "failed to finish decrypting key");
 	return 0;
@@ -136,7 +135,7 @@ int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password,
 
 /* ============================ read_fstab_mountpoint () =================== */
 /* PRE:    volume points to a valid string != NULL
- *         mountpoint points to a char array of length >= BUFSIZ + 1
+ *         mountpoint points to a char array of length >= FILENAME_MAX + 1
  * POST:   mountpoint is mp of volume as listed in fstab
  * FN VAL: if error 0 else 1, errors are logged  */
 int get_fstab_mountpoint(char *volume, char *mountpoint)
@@ -154,7 +153,7 @@ int get_fstab_mountpoint(char *volume, char *mountpoint)
 	log("pmhelper: could not determine mount point for %s\n", volume);
 	return 0;
     }
-    if (strlen(fstab_record->mnt_dir) > BUFSIZ) {
+    if (strlen(fstab_record->mnt_dir) > FILENAME_MAX) {
 	log("pmhelper: mnt point listed in /etc/fstab for %s too long",
 	    volume);
 	return 0;
@@ -428,14 +427,14 @@ int main(int argc, char **argv)
 		 data.user, data.options[0] ? "," : "", data.options);
 	add_to_argv(_argv, &_argc, tmp);
     } else if (data.type == LCLMOUNT) {
+	char *tmp;		/* FIXME: never freed */
 	w4rn("pmhelper: %s\n", "mount type is LCLMOUNT");
 	add_to_argv(_argv, &_argc, data.volume);
 	if (!mntpt_from_fstab)
 	    add_to_argv(_argv, &_argc, data.mountpoint);
-	if (data.options[0]) {
-	    add_to_argv(_argv, &_argc, "-o");
-	    add_to_argv(_argv, &_argc, data.options);
-	}
+	add_to_argv(_argv, &_argc, "-o");
+	asprintf(&tmp, "pass-fd=0", data.options[0] ? "," : "", data.options);
+	add_to_argv(_argv, &_argc, tmp);
     } else {
 	log("pmhelper: %s\n", "data.type is unknown");
 	exit(EXIT_FAILURE);
@@ -445,12 +444,8 @@ int main(int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
     /* send password down pipe to mount process */
-    if (data.type == SMBMOUNT || data.type == NCPMOUNT) {
-	/* smbmount reads password from /dev/tty; no good for pipe */
-	/* ncpmount (as of 2.2.0.19) requires a patch for this 
-	 * (see http://www.flyn.org) */
-	setenv("PASSWD", data.password, 1);
-    }
+    if (data.type == SMBMOUNT)
+	setenv("PASSWD_FD", "0", 1);
 
     w4rn("pmhelper: %s\n", "about to fork");
     child = fork();
@@ -476,12 +471,9 @@ int main(int argc, char **argv)
 	log("pmhelper: %s\n", "failed to execv mount command");
 	exit(EXIT_FAILURE);
     }
-    if (!(data.type == SMBMOUNT || data.type == NCPMOUNT)) {
-	/* SMBMOUNT and NCPMOUNT use env. var. PASSWD code above */
-	write(fds[1], data.password, strlen(data.password) + 1);
-	close(fds[0]);
-	close(fds[1]);
-    }
+    write(fds[1], data.password, strlen(data.password) + 1);
+    close(fds[0]);
+    close(fds[1]);
 
     _pam_overwrite(data.password);
 

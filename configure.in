@@ -26,7 +26,7 @@ AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
 MINOR_VERSION=5
-MICRO_VERSION=8
+MICRO_VERSION=9
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -42,6 +42,8 @@ AM_PROG_LIBTOOL
 
 AM_CONDITIONAL(FLYN, test "$FLYN")
 
-AC_CHECK_LIB(ssl, EVP_CIPHER_CTX_init)
+AC_CHECK_LIB(ssl, EVP_CIPHER_CTX_init, LIBSSL=-lssl, AC_MSG_WARN(SSL library missing: will not build SSL code))
+AC_SUBST(LIBSSL)
+AC_CHECK_HEADER(security/pam_modules.h,, AC_MSG_ERROR(You are missing security/pam_modules.h))
 
 AC_OUTPUT(Makefile config/Makefile dry/Makefile include/Makefile src/Makefile scripts/Makefile dry/pam_mount.spec.new)

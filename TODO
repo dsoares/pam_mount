@@ -1,16 +1,12 @@
 = For 1.0 =====================================================================
 
-o Wildcards should not do anything for root.  In fact, maybe root should
-be skipped all together.
+o Does new smbmount code work?
+
+o Does new ncpmount code work?
 
 o Ensure mounting a volume as root does not prohibit user from changing
 permissions on it.  Ensure users can unmount pam_mounted volumes
 (or document).
-
-o Get smbmount to support stdin passwords and modify pmhelper.c.
-
-o Wait for new ncpmount and implement interface.  Add notes to flyn.org
-about previous patch.
 
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
@@ -22,8 +18,6 @@ o Security audit.  Scrub code for buffer overflows and other
 security-related bugs (use splint?):
 pmhelper.c
 pam_mount.c
-
-o Finish LJ article.
 
 = Past 1.0 (punted) ===========================================================
 
