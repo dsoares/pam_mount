@@ -89,6 +89,7 @@ if [ ! -d "$MOUNT_POINT" ]; then
 fi
 
 CIPHER=""
+dm_timeout=5;
 KEYSIZE=""
 keyfile="";
 HASH=""
@@ -104,6 +105,7 @@ for opt in $OPTIONS; do
 	VAL="${opt#*=}";
 	case "$KEY" in
 		(cipher)  CIPHER="$VAL";;
+		(dm-timeout) dm_timeout="$VAL";;
 		(keysize) KEYSIZE="$VAL";;
 		(hash)    HASH="$VAL";;
 		(fstype)  FSTYPE="$VAL";;
@@ -171,6 +173,14 @@ if [ $? -ne 0 ]; then
 	[ "$LOOP" == true ] && losetup -d "$DEVICE";
 	exit 1
 fi
+
+for ((x = $dm_timeout * 3; x >= 0; --x)); do
+	[ -b "/dev/mapper/$DMDEVICE" ] && break;
+	usleep 333333;
+done;
+if [ ! -b "/dev/mapper/$DMDEVICE" ]; then
+	echo "dm device $DMDEVICE did not show up in time." >&2;
+fi;
 
 if [ "$DOFSCK" == "true" ]; then
 	fsck -p "/dev/mapper/$DMDEVICE";
