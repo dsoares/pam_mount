@@ -125,7 +125,7 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
 		ret = 0;
 		goto _return;
 	}
-	while (ptr = strchr(str, ',')) {
+	while ((ptr = strchr(str, ',')) != NULL) {
 		if (!_parse_string_opt(str, ptr - str, optlist))
 			if (!_parse_opt(str, ptr - str, optlist)) {
 				ret = 0;
@@ -212,7 +212,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 					((pair_t *) ptr->data)->
 					val, MAX_PAR - strlen(str));
 			}
-			if (ptr = g_list_next(ptr))
+			if ((ptr = g_list_next(ptr)) != NULL)
 				strncat(str, ",", MAX_PAR - strlen(str));
 		} while (ptr);
 	str[MAX_PAR] = 0x00;

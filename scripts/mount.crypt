@@ -22,12 +22,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 LOSETUP=/sbin/losetup
+CRYPTSETUP=/sbin/cryptsetup
+MOUNT=/bin/mount
 
 OPTIONS=""
 
 USAGE="[-o options] dev dir
 
-  -o path  set the mount options  [ $OUT ]"
+  -o options  set the mount options  [ $OPTIONS ]"
 
 _losetup() {
 	DEVICE=$1
@@ -60,21 +62,22 @@ while :;
 	shift
 done
 
-if [ -z $1 ]; then
+if [ -z "$1" ]; then
 	echo "${0##*/}: device to mount not specified" >&2
 fi
 
-if [ ! -f $1 ] && [ ! -b $1 ]; then
+if [ ! -f "$1" ] && [ ! -b "$1" ]; then
         echo "${0##*/}: $1 is not a block device or file" >&2
 	exit 1
 fi
 
-if [ ! -d $2 ]; then
+if [ ! -d "$2" ]; then
         echo "${0##*/}: $2 is not a directory" >&2
 	exit 1
 fi
 
 CIPHER=""
+KEYSIZE=""
 HASH=""
 LOOP=false
 MOUNTOPTIONS=""
@@ -87,6 +90,9 @@ for opt in $OPTIONS; do
 		# with mount's built-in (cryptoloop) encryption argument.
 		cipher )
 			CIPHER="$VAL"
+			;;
+		keysize )
+			KEYSIZE="$VAL"
 			;;
 		hash )
 			HASH="$VAL"
@@ -114,41 +120,42 @@ else
 	DMDEVICE=`echo $DEVICE | sed 's/\//_/g'`
 fi
 
-CIPHEROPT=""
-if [ ! -z "$CIPHER" ]; then
+CIPHEROPT="aes"
+if [ -n "$CIPHER" ]; then
 	CIPHEROPT="-c $CIPHER"
 fi
 
-HASHOPT=""
-if [ ! -z "$HASH" ]; then
+HASHOPT="ripemd160"
+if [ -n "$HASH" ]; then
 	HASHOPT="-h $HASH"
 fi
 
-cryptsetup $CIPHEROPT $HASHOPT create $DMDEVICE $DEVICE
+KEYSIZEOPT="256"
+if [ -n "$KEYSIZE" ]; then
+       KEYSIZEOPT="$KEYSIZE"
+fi
+
+$CRYPTSETUP -c $CIPHEROPT -h $HASHOPT -s $KEYSIZEOPT create $DMDEVICE $DEVICE
 if [ $? != 0 ]; then
 	echo "${0##*/}: error creating $DMDEVICE" >&2
 	[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
 	exit 1
 fi
 
-if [ ! -z "$MOUNTOPTIONS" ]; then
-	OPTIONSOPT="-o $MOUNTOPTIONS"
-fi
-
 if [ -z "$MOUNTOPTIONS" ]; then
 	# $2 might not exist as mount can try to read it from /etc/fstab
-	mount /dev/mapper/$DMDEVICE $2
+	$MOUNT /dev/mapper/$DMDEVICE $2
 	if [ $? != 0 ]; then
 		echo "${0##*/}: error mounting $DMDEVICE" >&2
-		cryptsetup remove $DMDEVICE
-		[ x"$LOOP" = xtrue ] && $LOSETUP-d $DEVICE
+		$CRYPTSETUP remove $DMDEVICE
+		[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
 		exit 1
 	fi
 else
-	mount -o $MOUNTOPTIONS /dev/mapper/$DMDEVICE $2
+	$MOUNT -o $MOUNTOPTIONS /dev/mapper/$DMDEVICE $2
 	if [ $? != 0 ]; then
 		echo "${0##*/}: error mounting $DMDEVICE" >&2
-		cryptsetup remove $DMDEVICE
+		$CRYPTSETUP remove $DMDEVICE
 		[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
 		exit 1
 	fi

@@ -11,9 +11,9 @@ o /etc/pam.d/* as relevant.
 
 =======================================================================
 
-Q.  Is there a pam_mount mailing list?  CVS?
+Q.  Is there a pam_mount mailing list?
 
-A.  Yes.  See http://savannah.gnu.org/projects/pam-mount/.
+A.  No.  Please contact the author directly.
 
 =======================================================================
 
@@ -90,6 +90,15 @@ exec smbmount "$@"
 Then configure pam_mount with the following in pam_mount.conf:
                                                                                 
 smbmount /bin/mount -t smbfs_no_nptl
+
+=======================================================================
+
+Q.  Will pam_mount work with my ftpd?
+
+A.  I don't know.  I know that vsftpd works fine with pam_mount.
+You need to specify "session_support=YES" in your vsftpd.conf.  You also
+need to be careful about pam_mount sending debugging information down the
+FTP connection.
 
 =======================================================================
 

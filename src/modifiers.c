@@ -24,6 +24,7 @@
 #include <new/common.h>
 #include <new/buffer.h>
 #include <new/template.h>
+#include <libgen.h>
 #include <ctype.h>
 #include <string.h>
 #include <glib.h>

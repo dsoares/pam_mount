@@ -70,7 +70,7 @@ static pm_command_t command[] = {
 	{LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e \" CIPHER)", "%(before=\"-k \" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
 	{UNLOSETUP, NULL, "unlosetup", {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
 	{PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
-	{-1, NULL, NULL, NULL}
+	{-1, NULL, NULL, {NULL}}
 };
 
 static DOTCONF_CB(read_int_param);
@@ -85,7 +85,7 @@ static DOTCONF_CB(read_fsckloop);
 
 static const configoption_t legal_config[] = {
 	{"debug", ARG_TOGGLE, read_debug, &config.debug, CTX_ALL},
-	{"mkmountpoint", ARG_TOGGLE, read_int_param, &config.mkmountpoint,
+	{"mkmountpoint", ARG_TOGGLE, read_int_param, &config.mkmntpoint,
 	 CTX_ALL},
 	{"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
 	{"fsckloop", ARG_STR, read_fsckloop, &config, CTX_ALL},
@@ -269,7 +269,7 @@ static int _option_in_list(optlist_t * haystack, const char *needle)
  * OUTPUT: if options acceptable 1 else 0
  * SIDE AFFECTS: error logged 
  */
-static options_allow_ok(optlist_t * allowed, optlist_t * options)
+static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 {
 	optlist_t *e;
 
@@ -290,7 +290,7 @@ static options_allow_ok(optlist_t * allowed, optlist_t * options)
  * OUTPUT: if options acceptable 1 else 0
  * SIDE AFFECTS: error logged
  */
-static options_required_ok(optlist_t * required, optlist_t * options)
+static int options_required_ok(optlist_t * required, optlist_t * options)
 {
 	optlist_t *e;
 	for (e = required; e; e = optlist_next(e))
@@ -308,7 +308,7 @@ static options_required_ok(optlist_t * required, optlist_t * options)
  * OUTPUT: if options acceptable 1 else 0
  * SIDE AFFECTS: error logged
  */
-static options_deny_ok(optlist_t * denied, optlist_t * options)
+static int options_deny_ok(optlist_t * denied, optlist_t * options)
 {
 	optlist_t *e;
 	if (!optlist_len(denied)) {
@@ -346,7 +346,7 @@ static int _options_ok(config_t * config, vol_t * volume)
 		    "possible conflicting option settings (use allow OR deny)");
 		return 0;
 	}
-	if (volume->use_fstab == FALSE)
+	if (volume->use_fstab == FALSE) {
 		if (!options_required_ok
 		    (config->options_require, volume->options))
 			return 0;
@@ -365,6 +365,7 @@ static int _options_ok(config_t * config, vol_t * volume)
 			    "user specified options denied by default");
 			return 0;
 		}
+	}
 	return 1;
 }
 
@@ -602,7 +603,6 @@ static DOTCONF_CB(read_volume)
 #define VOL ((config_t *)cmd->option->info)->volume
 #define VOLCOUNT ((config_t *)cmd->option->info)->volcount
 	int i;
-	char *errmsg;
 	if (cmd->arg_count != 8)
 		return "bad number of args for volume";
 	else if (*((int *) cmd->context) && strcmp
@@ -719,9 +719,10 @@ int initconfig(config_t * config)
 {
 	int i, j;
 	config->user = NULL;
-	config->volcount = 0;
 	config->debug = DEBUG_DEFAULT;
-	config->mkmountpoint = MKMOUNTPOINT_DEFAULT;
+	config->mkmntpoint = MKMOUNTPOINT_DEFAULT;
+	config->volcount = 0;
+	/* FIXME: initialize luserconf */
 	strcpy(config->fsckloop, FSCKLOOP_DEFAULT);
 
 	/* set commands to defaults */
@@ -732,6 +733,10 @@ int initconfig(config_t * config)
 		}
 		config->command[j + 1][command[i].type] = 0x00;
 	}
+
+	/* FIXME: initialize options_require, _allow and _deny */
+
+	config->volume = NULL;
 	/* FIXME: post condition assert all commands not NULL and NULL terminated */
 	return 1;
 }

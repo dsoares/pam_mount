@@ -1,6 +1,58 @@
+12 December 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Thank you very much to Bastian Kleineidam.  Bastian
+	is the Debian package maintainer and submitted patches
+	that implement the following changes:
+
+	* Add pam_sm_acct_mgmt implementation.
+	
+	* Add stuff needed for static module.
+
+	* #include <sys/fsuid.h> in misc.c.
+
+	* Fix several compile warnings.
+
+	* Change log level to LOG_AUTHPRIV.
+
+	* New debug/error messages.
+
+	* Look up user in each pam_sm_ function because ssh
+	uses a different process for each PAM call.
+
+	* Modifications to mount.crypt and umount.crypt.
+
+	* Change FSCKLOOP to FSCKTARGET in default definition of FSCK
+	command.
+
+	* Better error messages from OpenSSL code.
+
+04 November 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Initialize config->volume to NULL in initconfig() (thanks
+	Philippe Martin).
+
+27 October 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Pulled in changes from new.
+
+07 August 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Moved chdir("/") from open_session to close_session.
+
+01 August 2004 W. Michael Petullo <mike@flyn.org>
+
+	* pmvarrun_LDFLAGS = $(GLIB_LIBS) to pmvarrun_LDFLAGS = 
+	$(GLIB_LIBS) -lz
+
+29 July 2004 W. Michael Petullo <mike@flyn.org>
+
+	* size_t segment_len; -> int segment_len; for x86_64.
+
+	* Removed reference to Savannah from FAQ.
+
 21 July 2004 W. Michael Petullo <mike@flyn.org>
 
-	* Now ignore SIGPIPE when writing .  This fixes problem with
+	* Now ignore SIGPIPE when writing.  This fixes problem with
 	mount process dying before password is written.
 
 	* properly wait for child processes even when write to pipe fails.

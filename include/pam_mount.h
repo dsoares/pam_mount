@@ -116,7 +116,7 @@ extern "C" {
 	typedef struct config_t {
 		char *user;	/* user logging in */
 		gboolean debug;
-		gboolean mkmountpoint;
+		gboolean mkmntpoint;
 		unsigned int volcount;
 		char luserconf[PATH_MAX + 1];
 		char fsckloop[PATH_MAX + 1];

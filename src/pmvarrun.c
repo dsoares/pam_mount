@@ -108,7 +108,7 @@ int modify_pm_count(const char *user, long amount)
 {
 	char filename[PATH_MAX + 1];
 	int tries = 0;
-	int fd, err;
+	int fd = 0, err;
 	long val;
 	struct stat st;
 	struct flock lockinfo;

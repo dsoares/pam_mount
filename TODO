@@ -4,7 +4,10 @@ o see RELEASE_CHECKLIST
 
 = For 1.0 =====================================================================
 
-o test account hangs when logging into GNOME.
+o already_mounted() needs to handle /etc/mtab entries for dm-crypt volumes
+mounted with patched util-linux.
+
+o add printf and debug options that may be specified in pam.d.
 
 o /home/test will not unmount.
 

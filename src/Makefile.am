@@ -42,7 +42,7 @@ endif
 
 # FIXME: misc.c needs to be compiled both with and without libtool
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c
-pmvarrun_LDFLAGS = $(GLIB_LIBS)
+pmvarrun_LDFLAGS = -lz $(GLIB_LIBS)
 
 INCLUDES = -I$(srcdir)/../include @LOCAL_FMT_PTRN_INCLUDES@
 

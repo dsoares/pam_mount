@@ -22,38 +22,41 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 LOSETUP=/sbin/losetup
+CRYPTSETUP=/sbin/cryptsetup
+MOUNT=/bin/mount
+UMOUNT=/bin/umount
 
 OPTIONS=""
 
 USAGE="dir"
 
-if [ -z $1 ]; then
+if [ -z "$1" ]; then
 	echo "${0##*/}: directory to unmount not specified" >&2
 fi
 
-if [ ! -d $1 ]; then
+if [ ! -d "$1" ]; then
         echo "${0##*/}: $1 is not a directory" >&2
 	exit 1
 fi
 
-DMDEVICE=`mount | grep $1 | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`
+DMDEVICE=`$MOUNT | grep $1 | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`
 
 # FIXME: blind replacement of _ with / is a bad idea; can't have _ in real path
 REALDEVICE=`echo $DMDEVICE | sed 's/_/\//g'`
 
-umount $1
+$UMOUNT "$1"
 if [ $? != 0 ]; then
-	echo "${0##*/}: error umounting $1" >&2
+	echo "${0##*/}: error unmounting $1" >&2
 	exit 1
 fi
 
-cryptsetup remove $DMDEVICE
+$CRYPTSETUP remove $DMDEVICE
 if [ $? != 0 ]; then
 	echo "${0##*/}: error removing $DMDEVICE" >&2
 	exit 1
 fi
 
-if echo $REALDEVICE | grep ^/dev/loop > /dev/null; then
+if echo "$REALDEVICE" | grep ^/dev/loop > /dev/null; then
 	$LOSETUP -d $REALDEVICE
 	if [ $? != 0 ]; then
 		echo "${0##*/}: error removing $REALDEVICE" >&2

@@ -33,6 +33,13 @@
 #include <fstab.h>
 #elif defined(__linux__)
 #include <mntent.h>
+/* FIXME: for LOOP_ code below:
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/loop.h>
+#include <linux/major.h>
+#include <sys/stat.h>
+*/
 #endif
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -41,6 +48,7 @@
 #include <limits.h>
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #ifndef EVP_MAX_BLOCK_LENGTH
 #define EVP_MAX_BLOCK_LENGTH 32	/* some older openssl versions need this */
 #endif
@@ -53,6 +61,14 @@
 extern gboolean debug;
 
 #ifdef HAVE_LIBCRYPTO
+/* human readable SSL error message */
+static void sslerror (const char* msg) {
+    unsigned long err = ERR_get_error();
+    if (err != 0) {
+        l0g("pam_mount: %s: %s", msg, ERR_error_string(err, NULL));
+    }
+}
+
 /* ============================ hash_authtok () ============================ */
 /* INPUT: fp, file containing encrypted stream; cipher; authtok, the key 
  *        to unlock stream contained in fs
@@ -121,7 +137,7 @@ decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
 /* FIXME: this function may need to be broken up and made more readable */
 #ifdef HAVE_LIBCRYPTO
 	int ret = 1;
-	size_t segment_len;
+	int segment_len;
 	unsigned char ct_fs_key[MAX_PAR];	/* encrypted filesystem key. */
 	size_t ct_fs_key_len;
 	unsigned char hashed_authtok[EVP_MAX_KEY_LENGTH];	/* hash(system authtok) */
@@ -139,6 +155,7 @@ decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
 	memset(pt_fs_key, 0x00, MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 	OpenSSL_add_all_ciphers();
 	EVP_CIPHER_CTX_init(&ctx);
+	SSL_load_error_strings();
 	if (!(fs_key_fp = fopen(fs_key_path, "r"))) {
 		l0g("pam_mount: error opening %s\n", fs_key_path);
 		ret = 0;
@@ -162,8 +179,7 @@ decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
 	}
 	if (EVP_DecryptInit_ex(&ctx, cipher, NULL, hashed_authtok, iv) ==
 	    0) {
-		l0g("pam_mount: %s\n",
-		    "failed to initialize decryption code");
+		sslerror("failed to initialize decryption code");
 		ret = 0;
 		goto _return;
 	}
@@ -172,15 +188,14 @@ decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
 	if (EVP_DecryptUpdate
 	    (&ctx, pt_fs_key, &segment_len, ct_fs_key,
 	     ct_fs_key_len) == 0) {
-		l0g("pam_mount: %s\n", "failed to decrypt key");
+		sslerror("failed to decrypt key");
 		ret = 0;
 		goto _return;
 	}
 	*pt_fs_key_len = segment_len;
 	if (EVP_DecryptFinal_ex
 	    (&ctx, &pt_fs_key[*pt_fs_key_len], &segment_len) == 0) {
-		l0g("pam_mount: %s\n",
-		    "bad pad on end of encrypted file (wrong algorithm or key size?)");
+		sslerror("bad pad on end of encrypted file (wrong algorithm or key size?)");
 		ret = 0;
 		goto _return;
 	}
@@ -192,10 +207,11 @@ decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
 	}
       _return_no_close:
 	if (EVP_CIPHER_CTX_cleanup(&ctx) == 0) {
-		l0g("pam_mount: error cleaning up cipher context\n");
+		sslerror("error cleaning up cipher context");
 		ret = 0;
 	}
 
+	ERR_free_strings();
 	/* pt_fs_key_len is unsigned */
 	assert(ret == 0
 	       || *pt_fs_key_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
@@ -245,6 +261,7 @@ static void run_lsof(const struct config_t *const config,
 	for (i = 0; config->command[i][LSOF]; i++)
 		add_to_argv(_argv, &_argc, config->command[i][LSOF],
 			    vinfo);
+	log_argv(_argv);
 	if (g_spawn_async_with_pipes
 	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	     &pid, NULL, &cstdout, NULL, &err) == FALSE) {
@@ -258,52 +275,6 @@ static void run_lsof(const struct config_t *const config,
 	if (waitpid(pid, &child_exit, 0) == -1)
 		l0g("pam_mount: error waiting for child\n");
 	CLOSE(cstdout);
-}
-
-/* ============================ mkmountpoint () ============================ */
-/* POST:   the directory named d exists && volume->created_mntpt = TRUE
- * FN VAL: if error 0 else 1, errors are logged
- */
-static int mkmountpoint(vol_t * const volume, const char *const d)
-{
-	int ret = 1;
-	struct passwd *passwd_ent;
-	char dcopy[PATH_MAX + 1], *parent;
-
-	assert(vol_t_valid(volume));
-	assert(d != NULL);
-
-	w4rn("pam_mount: creating mount point %s\n", d);
-	strncpy(dcopy, d, PATH_MAX);
-	dcopy[PATH_MAX] = (char) 0x00;
-	parent = g_dirname(dcopy);
-	if (exists(parent) == 0 && mkmountpoint(volume, parent) == 0) {
-		ret = 0;
-		goto _return;
-	}
-	if ((passwd_ent = getpwnam(volume->user))) {
-		if (mkdir(d, 0700) != 0) {
-			l0g("pam_mount: tried to create %s but failed\n",
-			    d);
-			ret = 0;
-			goto _return;
-		}
-		if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid)
-		    != 0) {
-			l0g("pam_mount: could not chown %s to %s\n",
-			    d, volume->user);
-			ret = 0;
-			goto _return;
-		}
-	} else {
-		l0g("pam_mount: could not determine uid from %s to make %s\n", volume->user, d);
-		ret = 0;
-		goto _return;
-	}
-	volume->created_mntpt = TRUE;
-      _return:
-	g_free(parent);
-	return ret;
 }
 
 /* ============================ already_mounted () ========================= */
@@ -382,9 +353,30 @@ static int already_mounted(const struct config_t *const config,
 	}
 	w4rn("pam_mount: checking to see if %s is already mounted at %s\n",
 	     match, config->volume[vol].mountpoint);
-	while (mtab_record = getmntent(mtab))
+	while ((mtab_record = getmntent(mtab)) != NULL) {
+               char const *mnt_fsname = mtab_record->mnt_fsname;
+               struct stat statbuf;
+		/* FIXME: need to figure out where LOOP_GET_STATUS64 is from
+               if (stat(mnt_fsname, &statbuf) == 0 &&
+                    S_ISBLK(statbuf.st_mode) &&
+                    major(statbuf.st_rdev) == LOOP_MAJOR) {
+		*/
+			/* if /etc/mtab is a link to /proc/mounts then the loop
+			 * device instead of the real device will be listed --
+			 * resolve it.
+			 */
+		/*
+                       int fd = open(mnt_fsname, O_RDONLY);
+                       if (fd != -1) {
+                               struct loop_info64 loopinfo64;
+                               if (ioctl(fd, LOOP_GET_STATUS64, &loopinfo64) == 0)
+                                       mnt_fsname = loopinfo64.lo_file_name;
+                               close(fd);
+                       }
+               }
+		*/
 		/* FIXME: okay to always ignore case (needed for NCP)? */
-		if (!strcasecmp(mtab_record->mnt_fsname, match)) {
+		if (!strcasecmp(mnt_fsname, match)) {
 			strncpy(mntpt, mtab_record->mnt_dir, PATH_MAX);
 			mntpt[PATH_MAX] = 0x00;
 			mounted = 1;
@@ -396,6 +388,7 @@ static int already_mounted(const struct config_t *const config,
 				break;
 			}
 		}
+	}
 	fclose(mtab);
 	return mounted;
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
@@ -416,6 +409,7 @@ static int already_mounted(const struct config_t *const config,
 		for (i = 0; config->command[i][MNTCHECK]; i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTCHECK], vinfo);
+		log_argv(_argv);
 		if (g_spawn_async_with_pipes
 		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
 		     NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
@@ -500,6 +494,52 @@ static void log_pm_input(const struct config_t *const config,
 	w4rn("pam_mount: %s\n", "--------");
 }
 
+/* ============================ mkmountpoint () ============================ */
+/* POST:   the directory named d exists && volume->created_mntpt = TRUE
+ * FN VAL: if error 0 else 1, errors are logged
+ */
+static int mkmountpoint(vol_t * const volume, const char *const d)
+{
+	int ret = 1;
+	struct passwd *passwd_ent;
+	char dcopy[PATH_MAX + 1], *parent;
+
+	assert(vol_t_valid(volume));
+	assert(d != NULL);
+
+	w4rn("pam_mount: creating mount point %s\n", d);
+	strncpy(dcopy, d, PATH_MAX);
+	dcopy[PATH_MAX] = (char) 0x00;
+	parent = g_dirname(dcopy);
+	if (exists(parent) == 0 && mkmountpoint(volume, parent) == 0) {
+		ret = 0;
+		goto _return;
+	}
+	if ((passwd_ent = getpwnam(volume->user))) {
+		if (mkdir(d, 0700) != 0) {
+			l0g("pam_mount: tried to create %s but failed\n",
+			    d);
+			ret = 0;
+			goto _return;
+		}
+		if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid)
+		    != 0) {
+			l0g("pam_mount: could not chown %s to %s\n",
+			    d, volume->user);
+			ret = 0;
+			goto _return;
+		}
+	} else {
+		l0g("pam_mount: could not determine uid from %s to make %s\n", volume->user, d);
+		ret = 0;
+		goto _return;
+	}
+	volume->created_mntpt = TRUE;
+      _return:
+	g_free(parent);
+	return ret;
+}
+
 /* ============================ do_unmount () ============================== */
 int
 do_unmount(struct config_t *config, const unsigned int vol,
@@ -508,7 +548,7 @@ do_unmount(struct config_t *config, const unsigned int vol,
 /* PRE:    config points to a valid struct config_t*
  *         config->volume[vol] is a valid struct vol_t
  *         vinfo is a valid struct fmt_ptrn_t
- *         mkmountpoint is true if mount point should be rmdir'ed
+ *         mkmntpoint is true if mount point should be rmdir'ed
  * POST:   volume is unmounted
  * FN VAL: if error 0 else 1, errors are logged
  */
@@ -539,6 +579,7 @@ do_unmount(struct config_t *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, "/usr/bin/umount.crypt", vinfo);
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
 	}
+	log_argv(_argv);
 	if (g_spawn_async_with_pipes
 	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, setrootid, NULL,
 	     &pid, NULL, NULL, &cstderr, &err) == FALSE) {
@@ -615,7 +656,7 @@ do_losetup(struct config_t *config, const unsigned int vol,
 {
 	pid_t pid;
 	GError *err = NULL;
-	int i, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
+	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	char *_argv[MAX_PAR + 1];
 	const char *cipher =
 	    optlist_value(config->volume[vol].options, "encryption");
@@ -643,35 +684,29 @@ do_losetup(struct config_t *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc,
 			    config->command[i][LOSETUP], vinfo);
 	}
-	if (cipher) {
-		if (g_spawn_async_with_pipes
-		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
-		     NULL, &pid, &cstdin, NULL, &cstderr, &err) == FALSE) {
-			l0g("pam_mount: %s\n", err->message);
-			g_error_free(err);
-			return 0;
-		}
-		if (pipewrite(cstdin, password, password_len) != password_len)
-			/* FIXME: clean: returns value of exit below */
-			l0g("pam_mount: error sending password to losetup\n");
-		CLOSE(cstdin);
-	} else {
-		if (g_spawn_async_with_pipes
-		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
-		     NULL, &pid, NULL, NULL, &cstderr, &err) == FALSE) {
-			l0g("pam_mount: %s\n", err->message);
-			g_error_free(err);
-			return 0;
-		}
+	log_argv(_argv);
+	if (g_spawn_async_with_pipes
+	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, setrootid, NULL,
+	     &pid, NULL, NULL, &cstderr, &err) == FALSE) {
+		l0g("pam_mount: %s\n", err->message);
+		g_error_free(err);
+		ret = 0;
+		goto _return;
 	}
+	w4rn("pam_mount: umount errors (should be empty):\n");
 	log_output(cstderr);
-	w4rn("pam_mount: %s\n", "waiting for losetup");
+	CLOSE(cstderr);
+	w4rn("pam_mount: %s\n", "waiting for umount");
 	if (waitpid(pid, &child_exit, 0) == -1) {
 		l0g("pam_mount: error waiting for child\n");
-		return 0;
+		ret = 0;
+		goto _return;
+	} else {
+		/* pass on through the result from the umount process */
+		ret = !WEXITSTATUS(child_exit);
 	}
-	/* pass on through the result */
-	return (!WEXITSTATUS(child_exit));
+      _return:
+	return ret;
 }
 
 /* ============================ do_unlosetup () ============================ */
@@ -699,6 +734,7 @@ int do_unlosetup(struct config_t *config, fmt_ptrn_t * vinfo)
 	for (i = 0; config->command[i][UNLOSETUP]; i++)
 		add_to_argv(_argv, &_argc,
 			    config->command[i][UNLOSETUP], vinfo);
+	log_argv(_argv);
 	if (g_spawn_async_with_pipes
 	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	     &pid, NULL, NULL, NULL, &err) == FALSE) {
@@ -756,6 +792,7 @@ check_filesystem(struct config_t *config, const unsigned int vol,
 	for (i = 0; config->command[i][FSCK]; i++)
 		add_to_argv(_argv, &_argc, config->command[i][FSCK],
 			    vinfo);
+	log_argv(_argv);
 	if (g_spawn_async_with_pipes
 	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	     &pid, NULL, &cstdout, &cstderr, &err) == FALSE) {
@@ -797,7 +834,6 @@ do_mount(struct config_t *config, const unsigned int vol,
  */
 {
 	char *_argv[MAX_PAR + 1];
-	char options[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];
 	size_t _password_len;
 	int i, mount_again = 0;
@@ -810,7 +846,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 	assert(password);
 
 	/* FIXME: This is a little ugly, especially check for != LCLMOUNT */
-	if ((mount_again = already_mounted(config, vol, prev_mntpt)))
+	if ((mount_again = already_mounted(config, vol, prev_mntpt))) {
 		if (mount_again == -1) {
 			l0g("pam_mount: could not determine if %s is already mounted, failing\n", config->volume[vol].volume);
 			return 0;
@@ -828,7 +864,8 @@ do_mount(struct config_t *config, const unsigned int vol,
 			    && config->volume[vol].type != CRYPTMOUNT)
 				mount_again = 0;
 		}
-	if (!exists(config->volume[vol].mountpoint))
+	}
+	if (!exists(config->volume[vol].mountpoint)) {
 		if (mkmntpoint) {
 			if (!mkmountpoint
 			    (&config->volume[vol],
@@ -838,6 +875,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 			l0g("pam_mount: mount point %s does not exist (pam_mount not configured to make it)\n", config->volume[vol].mountpoint);
 			return 0;
 		}
+	}
 	if (mount_again) {
 		GError *err = NULL;
 		if (!config->command[0][MNTAGAIN]) {
@@ -850,6 +888,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 		for (i = 0; config->command[i][MNTAGAIN]; i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTAGAIN], vinfo);
+		log_argv(_argv);
 		if (g_spawn_async_with_pipes
 		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
 		     setrootid, NULL, &pid, NULL, NULL, &cstderr,
@@ -906,7 +945,8 @@ do_mount(struct config_t *config, const unsigned int vol,
 			add_to_argv(_argv, &_argc,
 				    config->command[i][config->volume[vol].
 						       type], vinfo);
-		 if (config->volume[vol].type == LCLMOUNT
+		log_argv(_argv);
+		if (config->volume[vol].type == LCLMOUNT
 		    && !check_filesystem(config, vol, vinfo, _password,
 					 _password_len))
 			l0g("pam_mount: %s\n",

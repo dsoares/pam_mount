@@ -131,7 +131,6 @@ static gboolean _modifier_t_valid(const modifier_t * m)
 /* ============================ _stack_t_valid () ========================== */
 static gboolean _stack_t_valid(const stack_t * s)
 {
-	int i;
 	if (s == NULL && s->size != 0)
 		return FALSE;
 	return TRUE;
@@ -236,6 +235,37 @@ static char *_matching_paren(char *str)
 		str++;
 	}
 	return NULL;
+}
+
+/* ============================ _copy_fillers () =========================== */
+gboolean _copy_fillers(gpointer key, gpointer val, gpointer data)
+{
+	assert(key != NULL);
+	assert(val != NULL);
+	assert(_fmt_ptrn_t_valid(data));
+
+	g_tree_insert(((fmt_ptrn_t *) data)->fillers,
+		      strdup(key), strdup(val));
+
+	assert(_fmt_ptrn_t_valid(data));
+
+	return FALSE;
+}
+
+/* ============================ _fmt_ptrn_copy_fillers () ================== */
+int _fmt_ptrn_copy_fillers(fmt_ptrn_t * x, fmt_ptrn_t * y)
+/* Copies fillers from one fmt_ptrn to another. */
+{
+	assert(_fmt_ptrn_t_valid(x));
+	assert(_fmt_ptrn_t_valid(y));
+
+	/* FIXME: tried using g_node_copy but that did not seem to work */
+	g_tree_foreach(y->fillers, _copy_fillers, x);
+
+	assert(_fmt_ptrn_t_valid(x));
+	assert(_fmt_ptrn_t_valid(y));
+
+	return 1;
 }
 
 /* ============================ _read_alternate () ========================= */
@@ -650,37 +680,6 @@ int fmt_ptrn_init(fmt_ptrn_t * x)
 	return 1;
 }
 
-/* ============================ _copy_fillers () =========================== */
-gboolean _copy_fillers(gpointer key, gpointer val, gpointer data)
-{
-	assert(key != NULL);
-	assert(val != NULL);
-	assert(_fmt_ptrn_t_valid(data));
-
-	g_tree_insert(((fmt_ptrn_t *) data)->fillers,
-		      strdup(key), strdup(val));
-
-	assert(_fmt_ptrn_t_valid(data));
-
-	return FALSE;
-}
-
-/* ============================ _fmt_ptrn_copy_fillers () ================== */
-int _fmt_ptrn_copy_fillers(fmt_ptrn_t * x, fmt_ptrn_t * y)
-/* Copies fillers from one fmt_ptrn to another. */
-{
-	assert(_fmt_ptrn_t_valid(x));
-	assert(_fmt_ptrn_t_valid(y));
-
-	/* FIXME: tried using g_node_copy but that did not seem to work */
-	g_tree_foreach(y->fillers, _copy_fillers, x);
-
-	assert(_fmt_ptrn_t_valid(x));
-	assert(_fmt_ptrn_t_valid(y));
-
-	return 1;
-}
-
 /* ============================ fmt_ptrn_open () =========================== */
 gboolean fmt_ptrn_open(const char *path, fmt_ptrn_t * x)
 {
@@ -757,7 +756,7 @@ int fmt_ptrn_close(fmt_ptrn_t * x)
 
 	assert(_fmt_ptrn_t_valid(x));
 
-	while (ptr = g_queue_pop_head(x->parse_errmsg))
+	while ((ptr = g_queue_pop_head(x->parse_errmsg)) != NULL)
 		g_free(ptr);
 	g_tree_foreach(x->fillers, _free_tree_node, NULL);
 	buffer_destroy(x->raw_buf);

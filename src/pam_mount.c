@@ -75,6 +75,7 @@ void parse_pam_args(int argc, const char **argv)
  * NOTE: this is registered as a PAM callback function and called directly */
 void clean_system_authtok(pam_handle_t * pamh, void *data, int errcode)
 {
+	w4rn("pam_mount: clean system authtok (%d)\n", errcode);
 /* FIXME: not binary password safe */
 /* FIXME: valgrind does not like -- called previously?
 	if (data) {
@@ -103,8 +104,9 @@ converse(pam_handle_t * pamh, int nargs,
 	*resp = NULL;
 	retval = pam_get_item(pamh, PAM_CONV, (const void **) &conv);
 	if (retval == PAM_SUCCESS)
-		retval =
-		    conv->conv(nargs, message, resp, conv->appdata_ptr);
+		retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
+        else
+               l0g("pam_mount: %s\n", pam_strerror(pamh, retval));
 	if (!*resp)
 		retval = PAM_AUTH_ERR;
 
@@ -164,10 +166,12 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
 	assert(pamh);
 
+	/* FIXME: this is called again in pam_sm_open_session.  this is because 
+         * pam_sm_authenticate is never called when root su's to another user.
+	 */
 	initconfig(&config);
 	parse_pam_args(argc, argv);
 	/* needed because gdm does not prompt for username as login does: */
-	//if ((ret = pam_get_user(pamh, &config.user, NULL)) != PAM_SUCCESS) {
 	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
 		l0g("pam_mount: %s\n", "could not get user");
 		/* do NOT return PAM_SERVICE_ERR or root will not be able 
@@ -182,7 +186,9 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		if ((ret =
 		     pam_get_item(pamh, PAM_AUTHTOK,
 				  (const void **) &ptr)) != PAM_SUCCESS
-		    || !ptr) {
+                    || !ptr) {
+                        if (ret == PAM_SUCCESS && !ptr)
+                                ret = PAM_AUTHINFO_UNAVAIL;
 			l0g("pam_mount: %s\n",
 			    "could not get password from PAM system");
 			if (args.auth_type == USE_FIRST_PASS)
@@ -211,6 +217,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		ret = PAM_AUTH_ERR;
 		goto _return;
 	}
+	w4rn("pam_mount: saving authtok for session code\n");
 	if ((ret =
 	     pam_set_data(pamh, "pam_mount_system_authtok", authtok,
 			  clean_system_authtok)) != PAM_SUCCESS) {
@@ -260,6 +267,7 @@ int modify_pm_count(config_t *config, char *user, char *operation)
 	for (i = 0; config->command[i][PMVARRUN]; i++)
                 add_to_argv(_argv, &_argc, config->command[i][PMVARRUN], &vinfo);
 	fmt_ptrn_close(&vinfo);
+	log_argv(_argv);
 	if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
 		l0g("pam_mount: error executing /usr/sbin/pmvarrun\n");
 		fnval = -1;
@@ -305,19 +313,23 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	int vol;
 	int ret = PAM_SUCCESS;
 	char *system_authtok;
+	const char *pam_user = NULL;
 
 	assert(pamh);
 
-	/* if our CWD is in the home directory, it might not get umounted */
-	/* Needed for KDM.  FIXME: Bug in KDM? */
-	if (chdir("/"))
-		l0g("pam_mount %s\n", "could not chdir");
-	if (config.user == NULL) {
-		l0g("pam_mount: username not read: pam_mount not conf. for auth?\n");
-		/* do NOT return PAM_SERVICE_ERR or root will not be able 
-		 * to su to other users */
-		goto _return;
+	initconfig(&config);
+	/* call pam_get_user again because ssh calls PAM fns from seperate
+ 	 * processes.
+	 */
+	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
+		l0g("pam_mount: %s\n", "could not get user");
+                /* do NOT return PAM_SERVICE_ERR or root will not be able
+                 * to su to other users */
+                goto _return;
 	}
+	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
+	config.user = g_strdup(pam_user);
+	w4rn("pam_mount: user is %s\n", config.user);
 	if (strlen(config.user) > MAX_PAR) {
 		l0g("pam_mount: username %s is too long\n", config.user);
 		ret = PAM_SERVICE_ERR;
@@ -329,7 +341,13 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	{
 		l0g("pam_mount: %s\n",
 		    "error trying to retrieve authtok from auth code");
-		goto _return;
+		if ((ret = read_password(pamh, "reenter password:",
+                                        &system_authtok)) != PAM_SUCCESS) {
+                       l0g("pam_mount: %s\n",
+                           "error trying to read password");
+                       goto _return;
+               }
+
 	}
 	if (!readconfig(config.user, CONFIGFILE, 1, &config)) {
 		ret = PAM_SERVICE_ERR;
@@ -374,7 +392,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		     "about to perform mount operations");
 		if (!mount_op
 		    (do_mount, &config, vol, system_authtok,
-		     config.mkmountpoint))
+		     config.mkmntpoint))
 			l0g("pam_mount: mount of %s failed\n",
 			    config.volume[vol].volume);
 	}
@@ -412,18 +430,28 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 	int vol;
 	/* FIXME: this currently always returns PAM_SUCCESS should return something else when errors occur but only after all unmounts are attempted??? */
 	int ret = PAM_SUCCESS;
+	const char *pam_user = NULL;
 
 	assert(pamh);
 
 	w4rn("pam_mount: %s\n", "received order to close things");
 	w4rn("pam_mount: real and effective user ID are %d and %d.\n",
 	     getuid(), geteuid());
-	if (config.user == NULL) {
-		l0g("pam_mount: username not read: pam_mount not conf. for auth?\n");
+	/* call pam_get_user again because ssh calls PAM fns from seperate
+ 	 * processes.
+	 */
+	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
+		l0g("pam_mount: %s\n", "could not get user");
 		/* do NOT return PAM_SERVICE_ERR or root will not be able 
 		 * to su to other users */
 		goto _return;
 	}
+	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
+	config.user = g_strdup(pam_user);
+	w4rn("pam_mount: user is %s\n", config.user);
+	/* if our CWD is in the home directory, it might not get umounted */
+	if (chdir("/"))
+		l0g("pam_mount %s\n", "could not chdir");
 	if (config.volcount <= 0)
 		w4rn("pam_mount: %s\n", "volcount is zero");
 /* This code needs root priv. */
@@ -433,7 +461,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 			w4rn("pam_mount: %s\n", "going to unmount");
 			if (!mount_op
 			    (do_unmount, &config, vol, NULL,
-			     config.mkmountpoint))
+			     config.mkmntpoint))
 				l0g("pam_mount: unmount of %s failed\n",
 				    config.volume[vol].volume);
 	} else
@@ -452,3 +480,25 @@ pam_sm_setcred(pam_handle_t * pamh, int flags, int argc, const char **argv)
 {
 	return PAM_SUCCESS;
 }
+
+/* ============================ pam_sm_acct_mgmt () ======================== */
+PAM_EXTERN int 
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
+                    const char **argv) {
+    return PAM_IGNORE;
+}
+
+#ifdef PAM_STATIC
+/* static module data */
+
+struct pam_module _pam_mount_modstruct = {
+    "pam_mount",
+    pam_sm_authenticate,
+    pam_sm_setcred,
+    pam_sm_acct_mgmt,
+    pam_sm_open_session,
+    pam_sm_close_session,
+    pam_sm_chauthtok,
+};
+
+#endif
