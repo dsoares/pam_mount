@@ -51,7 +51,7 @@ allow pam_mount_t pam_mount_t:capability { chown fsetid };
 
 # allow users to mount volumes within and as their home directory:
 allow mount_t user_home_t:dir { mounton getattr };
-allow mount_t user_home_dir_t:dir { mounton };
+allow mount_t user_home_dir_t:dir { getattr mounton };
 
 # allow users to losetup in home directory:
 allow fsadm_t user_home_t:dir { search };
@@ -64,10 +64,12 @@ allow mount_t user_home_t:file { getattr read write };
 
 # FIXME: from here down is an ugly hack to support umount.crypt script.  
 # I hope that util-linux will have native dm_crypt support some day
+allow mount_t selinux_config_t:file { read getattr };
 allow mount_t mount_t:capability { setuid setgid mknod };
 allow mount_t mount_exec_t:file { execute_no_trans };
 allow mount_t shell_exec_t:file { execute read };
 allow mount_t devtty_t:chr_file { read write };
+allow mount_t user_tty_device_t:chr_file { read write };
 allow mount_t devpts_t:dir { search };
 allow mount_t user_home_t:dir { getattr };
 allow mount_t mount_t:fifo_file { getattr read write };
@@ -82,8 +84,8 @@ allow mount_t mount_t:fifo_file { ioctl };
 allow mount_t proc_t:lnk_file { read };
 
 # manipulate /dev/mapper/control:
-# allow mount_t lvm_control_t:chr_file { read write ioctl };
-allow mount_t device_t:chr_file { read write ioctl };
+allow mount_t lvm_control_t:chr_file { read write ioctl };
+# allow mount_t device_t:chr_file { read write ioctl };
 
 # create a device within /dev/mapper:
 allow mount_t device_t:dir { write add_name remove_name };

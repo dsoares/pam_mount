@@ -241,12 +241,11 @@ static DOTCONF_CB(read_command)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
 	COMMAND(0) = g_strdup(cmd->data.list[0]);
-	COMMAND(1) = g_strdup(g_basename(cmd->data.list[0]));
 	for (i = 1; i < cmd->arg_count; i++) {
 		if (i > MAX_PAR)
 			return
 			    "pam_mount: command line configured to be too long";
-		COMMAND(i + 1) = g_strdup(cmd->data.list[i]);
+		COMMAND(i) = g_strdup(cmd->data.list[i]);
 	}
 	return NULL;
 }
@@ -425,7 +424,7 @@ gboolean luserconf_volume_record_sane(config_t * config, int vol)
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 gboolean volume_record_sane(config_t * config, int vol)
 {
-	w4rn("pam_mount: %s\n", "checking sanity of volume record");
+	w4rn("pam_mount: checking sanity of volume record (%s)\n", config->volume[vol].volume);
 	if (!config->command[0][config->volume[vol].type]) {
 		l0g("mount command not defined for this type\n");
 		return FALSE;
@@ -728,9 +727,8 @@ int initconfig(config_t * config)
 	/* set commands to defaults */
 	for (i = 0; command[i].type != -1; i++) {
 		config->command[0][command[i].type] = g_strdup(command[i].def[0]);
-		config->command[1][command[i].type] = g_strdup(g_basename(command[i].def[0]));
 		for (j = 1; command[i].def[j]; j++) {
-			config->command[j + 1][command[i].type] = g_strdup(command[i].def[j]);
+			config->command[j][command[i].type] = g_strdup(command[i].def[j]);
 		}
 		config->command[j + 1][command[i].type] = 0x00;
 	}

@@ -232,18 +232,21 @@ static void run_lsof(const struct config_t *const config, fmt_ptrn_t *vinfo)
 {
 	int i, _argc = 0, cstdout = -1, child_exit;
 	char *_argv[MAX_PAR + 1];
+	GError *err = NULL;
 	pid_t pid;
 	if (!config->command[0][LSOF])
 		l0g("pam_mount: lsof not defined in pam_mount.conf\n");
 	/* FIXME: NEW */
 	for (i = 0; config->command[i][LSOF]; i++)
 		add_to_argv(_argv, &_argc, config->command[i][LSOF], vinfo);
-	if ((pid =
-	     procopen(_argv[0], &_argv[1], 0, NULL, &cstdout, NULL)) == -1)
+	if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
+		l0g("pam_mount: %s\n", err->message);
+		g_error_free(err);
 		return;
+	}
 	w4rn("pam_mount: lsof output (should be empty)...\n");
 	log_output(cstdout);
-	w4rn("pam_mount: %s\n", "waiting for mount");
+	w4rn("pam_mount: %s\n", "waiting for lsof");
 	if (waitpid(pid, &child_exit, 0) == -1)
 		l0g("pam_mount: error waiting for child\n");
 	CLOSE(cstdout);
@@ -391,6 +394,7 @@ static int already_mounted(const struct config_t *const config,
 #elif defined(__FreeBSD__) || defined(__OpenBSD__)
 	{
 		FILE *fp;
+		GError *err = NULL;
 		int i, _argc = 0, cstdout = -1;
 		char *_argv[MAX_PAR + 1], dev[BUFSIZ + 1];
 		/*
@@ -405,10 +409,11 @@ static int already_mounted(const struct config_t *const config,
 		for (i = 0; config->command[i][MNTCHECK]; i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTCHECK], vinfo);
-		if ((pid =
-		     procopen(_argv[0], &_argv[1], 0, NULL, &cstdout,
-			      NULL)) == -1)
+		if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
+			l0g("pam_mount: %s\n", err->message);
+			g_error_free(err);
 			return -1;
+		}
 		fp = fdopen(cstdout, "r");
 		while (fgets(dev, BUFSIZ, fp)) {
 			/*
@@ -498,7 +503,8 @@ do_unmount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
  * FN VAL: if error 0 else 1, errors are logged
  */
 {
-	int i, child_exit, _argc = 0, ret = 1;
+	GError *err = NULL;
+	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
 	char *_argv[MAX_PAR + 1];
 
@@ -520,14 +526,18 @@ do_unmount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 	if (config->volume[vol].type  == CRYPTMOUNT ) {
 		_argc = 0;
 		add_to_argv(_argv, &_argc, "/usr/bin/umount.crypt", vinfo);
-		add_to_argv(_argv, &_argc, "umount.crypt", vinfo);
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
 	}
-	if ((pid =
-	     procopen(_argv[0], &_argv[1], 1, NULL, NULL, NULL)) == -1) {
+	if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, setrootid, NULL, &pid, NULL, NULL, &cstderr, &err) == FALSE) {
+		l0g("pam_mount: %s\n", err->message);
+		g_error_free(err);
 		ret = 0;
 		goto _return;
 	}
+	w4rn("pam_mount: umount errors (should be empty):\n");
+	log_output(cstderr);
+	CLOSE(cstderr);
+	w4rn("pam_mount: %s\n", "waiting for umount");
 	if (waitpid(pid, &child_exit, 0) == -1) {
 		l0g("pam_mount: error waiting for child\n");
 		ret = 0;
@@ -558,6 +568,7 @@ do_losetup(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
  */
 {
 	pid_t pid;
+	GError *err = NULL;
 	int i, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	char *_argv[MAX_PAR + 1];
 	const char *cipher =
@@ -587,17 +598,22 @@ do_losetup(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 			    config->command[i][LOSETUP], vinfo);
 	}
 	if (cipher) {
-		if ((pid =
-		     procopen(_argv[0], &_argv[1], 1, &cstdin, NULL, &cstderr)) == -1)
+		if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, &cstdin, NULL, &cstderr, &err) == FALSE) {
+			l0g("pam_mount: %s\n", err->message);
+			g_error_free(err);
 			return 0;
+		}
 		if (write(cstdin, password, password_len) != password_len) {
 			l0g("pam_mount: error sending password to losetup\n");
 			return 0;
 		}
 		CLOSE(cstdin);
 	} else {
-		if ((pid = procopen(_argv[0], &_argv[1], 1, NULL, NULL, &cstderr)) == -1)
+		if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, NULL, &cstderr, &err) == FALSE) {
+			l0g("pam_mount: %s\n", err->message);
+			g_error_free(err);
 			return 0;
+		}
 	}
 	log_output(cstderr);
 	w4rn("pam_mount: %s\n", "waiting for losetup");
@@ -618,6 +634,7 @@ int do_unlosetup(struct config_t *config, fmt_ptrn_t *vinfo)
  */
 {
 	pid_t pid;
+	GError *err = NULL;
 	char *_argv[MAX_PAR + 1];
 	int i, child_exit, _argc = 0;
 
@@ -633,9 +650,11 @@ int do_unlosetup(struct config_t *config, fmt_ptrn_t *vinfo)
 	for (i = 0; config->command[i][UNLOSETUP]; i++)
 		add_to_argv(_argv, &_argc,
 			    config->command[i][UNLOSETUP], vinfo);
-	if ((pid =
-	     procopen(_argv[0], &_argv[1], 1, NULL, NULL, NULL)) == -1)
+	if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, NULL, NULL, &err) == FALSE) {
+		l0g("pam_mount: %s\n", err->message);
+		g_error_free(err);
 		return 0;
+	}
 	w4rn("pam_mount: %s\n", "waiting for losetup delete");
 	waitpid(pid, &child_exit, 0);
 	/* pass on through the result */
@@ -655,6 +674,7 @@ check_filesystem(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vi
 {
 #if defined (__linux__)
 	pid_t pid;
+	GError *err = NULL;
 	int i, child_exit, _argc = 0, cstdout = -1, cstderr = -1;
 	char *_argv[MAX_PAR + 1];
 	char *fsck_target =
@@ -680,9 +700,11 @@ check_filesystem(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vi
 	/* FIXME: NEW */
 	for (i = 0; config->command[i][FSCK]; i++)
 		add_to_argv(_argv, &_argc, config->command[i][FSCK], vinfo);
-	if ((pid =
-	     procopen(_argv[0], &_argv[1], 1, NULL, &cstdout, &cstderr)) == -1)
+	if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &cstdout, &cstderr, &err) == FALSE) {
+		l0g("pam_mount: %s\n", err->message);
+		g_error_free(err);
 		return 0;
+	}
 	log_output(cstdout); /* stdout and stderr most be logged for fsck */
 	log_output(cstderr);
 	CLOSE(cstderr);
@@ -756,6 +778,7 @@ do_mount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo, con
 			return 0;
 		}
 	if (mount_again) {
+		GError *err = NULL;
 		if (!config->command[0][MNTAGAIN]) {
 			l0g("pam_mount: mntagain not defined in pam_mount.conf\n");
 			return 0;
@@ -766,10 +789,11 @@ do_mount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo, con
 		for (i = 0; config->command[i][MNTAGAIN]; i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTAGAIN], vinfo);
-		if ((pid =
-		     procopen(_argv[0], &_argv[1], 1, NULL, NULL,
-			      &cstderr)) == -1)
+		if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, setrootid, NULL, &pid, NULL, NULL, &cstderr, &err) == FALSE) {
+			l0g("pam_mount: %s\n", err->message);
+			g_error_free(err);
 			return 0;
+		}
 #else
 		/* FIXME */
 		l0g("pam_mount: %s\n",
@@ -777,6 +801,7 @@ do_mount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo, con
 		return 0;
 #endif
 	} else {
+		GError *err = NULL;
 		if (!config->command[0][config->volume[vol].type]) {
 			l0g("pam_mount: proper mount command not defined in pam_mount.conf\n");
 			return 0;
@@ -823,10 +848,11 @@ do_mount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo, con
 		/* send password down pipe to mount process */
 		if (config->volume[vol].type == SMBMOUNT)
 			setenv("PASSWD_FD", "0", 1);
-		if ((pid =
-		     procopen(_argv[0], &_argv[1], 1, &cstdin, NULL,
-			      &cstderr)) == -1)
+		if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, setrootid, NULL, &pid, &cstdin, NULL, &cstderr, &err) == FALSE) {
+			l0g("pam_mount: %s\n", err->message);
+			g_error_free(err);
 			return 0;
+		}
 		if (config->volume[vol].type != NFSMOUNT) {
 			if (write(cstdin, _password, _password_len) != _password_len) {
 				l0g("pam_mount: error sending password to mount\n");
@@ -841,9 +867,13 @@ do_mount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo, con
 	log_output(cstderr);
 	CLOSE(cstderr);
 	w4rn("pam_mount: %s\n", "waiting for mount");
-	waitpid(pid, &child_exit, 0);
-	/* pass on through the result from the mount process */
-	return !WEXITSTATUS(child_exit);
+	if (waitpid(pid, &child_exit, 0) == -1) {
+		l0g("pam_mount: error waiting for child\n");
+		return 0;
+	} else {
+		/* pass on through the result from the umount process */
+		return !WEXITSTATUS(child_exit);
+	}
 }
 
 /* ============================ mount_op () ================================ */

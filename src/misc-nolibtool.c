@@ -30,6 +30,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <glib.h>
+#include <stdlib.h>
 #include <security/pam_modules.h>
 #include <pam_mount.h>
 
@@ -300,108 +301,14 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 	argv[*argc] = NULL;
 }
 
-/* ============================ procopen () ================================ */
-/* INPUT: path, a program to execute; argv, a null-terminated array of 
- *        argument strings; do_setuid, whether to setuid(0) or not
- * SIDE AFFECTS: cstdin; cstdout; cstderr; errors are logged
- * OUTPUT: if error -1 else PID of child process
- */
-pid_t procopen(const char *const path, char *const argv[],
-	       const int do_setuid, /*@null@ */ int *const cstdin,
-	       /*@null@ */ int *const cstdout,
-	       /*@null@ */ int *const cstderr)
+/* ============================ setrootid () =============================== */ 
+/* SIDE AFFECTS: sets uid to 0 */
+void setrootid(void *ignored)
 {
-	int _stdin[2], _stdout[2], _stderr[2];
-	pid_t pid = -1;
-
-	assert(path != NULL);
-	assert(argv != NULL);
-
-	if (cstdin)
-		if (pipe(_stdin) == -1) {
-			l0g("pam_mount: creating pipe failed: %s\n",
-			    strerror(errno));
-			return -1;
-		}
-	if (cstdout)
-		if (pipe(_stdout) == -1) {
-			l0g("pam_mount: creating pipe failed: %s\n",
-			    strerror(errno));
-			return -1;
-		}
-	if (cstderr)
-		if (pipe(_stderr) == -1) {
-			l0g("pam_mount: creating pipe failed: %s\n",
-			    strerror(errno));
-			return -1;
-		}
-	log_argv(argv);		/* log before fork in case things get mucked up */
-	if ((pid = fork()) < 0) {
-		l0g("pam_mount: fork failed\n");
-		return -1;
-	} else if (pid == 0) {	/* child */
-		if (cstdin) {
-			CLOSE(_stdin[1]);
-			if (dup2(_stdin[0], STDIN_FILENO) == -1) {
-				l0g("pam_mount: %s\n",
-				    "error setting up pipe: %s",
-				    strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-		}
-		if (cstdout) {
-			CLOSE(_stdout[0]);
-			if (dup2(_stdout[1], STDOUT_FILENO) == -1) {
-				l0g("pam_mount: %s\n",
-				    "error setting up pipe: %s",
-				    strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-		}
-		if (cstderr) {
-			CLOSE(_stderr[0]);
-			if (dup2(_stderr[1], STDERR_FILENO) == -1) {
-				l0g("pam_mount: %s\n",
-				    "error setting up pipe: %s",
-				    strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-		}
-		if (do_setuid != 0) {
-			/*
-			 * setuid 0 since GNU/Linux mount balks at euid of 0, 
-			 * uid != 0. I think this is safe because volume 
-			 * and mount point must be owned by user if mount 
-			 * is defined in ~/.pam_mount.
-			 */
-			if (setuid(0) == -1)
-				w4rn("pam_mount: %s\n",
-				     "error setting uid to 0");
+	if (setuid(0) == -1)
+		w4rn("pam_mount: %s\n", "error setting uid to 0");
 #ifdef HAVE_SETFSUID
-			/* Red Hat's su changes fsuid to the processes' uid instead of euid */
-			setfsuid(0);
+	/* Red Hat's su changes fsuid to the processes' uid instead of euid */
+	setfsuid(0);
 #endif				/* HAVE_SETFSUID */
-		}
-		execv(path, argv);
-		/* FIXME: if this is reached, we may terminate with a broken
-		 * pipe before this log is written.  How to ensure command
-		 * was executing before writting password? */
-		l0g("pam_mount: error running %s: %s\n", path,
-		    strerror(errno));
-		exit(EXIT_FAILURE);
-	} else {		/* parent */
-		if (cstdin) {
-			CLOSE(_stdin[0])
-			    * cstdin = _stdin[1];
-		}
-		if (cstdout) {
-			CLOSE(_stdout[1])
-			    * cstdout = _stdout[0];
-		}
-		if (cstderr) {
-			CLOSE(_stderr[1])
-			    * cstderr = _stderr[0];
-		}
-	}
-	return pid;
 }

@@ -188,6 +188,8 @@ pam_mount_macros.te.
 Any filesystem that is mounted on $HOME must have the context of its
 root directory set to user_home_dir_t.
 
+Encrypted filesystems keys should generally have the context of user_home_t.
+
 If you wish to mount user-owned loopback filesystem images then these
 images must have their file context set to user_home_t.
 

@@ -2,15 +2,15 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.18
+Version: 0.9.19
 Release: %rel
 License: LGPL
 Group: System Environment/Base
 Source: http://www.flyn.org/projects/%name/%name-%{PACKAGE_VERSION}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: http://www.flyn.org
-Requires: policy-sources pam
-BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel policy policy-sources checkpolicy policycoreutils
+Requires: pam
+BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel
 
 %description
 This module is aimed at environments with SMB (Samba or Windows NT) 
@@ -61,11 +61,12 @@ make %{?_smp_mflags}
 %install
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
-mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/macros
-mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/file_contexts/misc
+mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
+mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/macros
+mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/file_contexts/misc
 install --owner=root --group=root --mode=0644 config/pam_mount.conf ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
-install --owner=root --group=root --mode=0644 config/pam_mount_macros.te ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/macros
-install --owner=root --group=root --mode=0644 config/pam_mount.fc ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/file_contexts/misc
+install --owner=root --group=root --mode=0644 config/pam_mount_macros.te ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/macros
+install --owner=root --group=root --mode=0644 config/pam_mount.fc ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/file_contexts/misc
 rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.a
 rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.la
 
@@ -88,14 +89,19 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/umount.crypt
 %{_mandir}/man8/*
 %config(noreplace) %{_sysconfdir}/security/pam_mount.conf
-%policy %{_sysconfdir}/security/selinux/src/policy/macros/pam_mount_macros.te
-%policy %{_sysconfdir}/security/selinux/src/policy/file_contexts/misc/pam_mount.fc
+%policy %{_sysconfdir}/selinux/strict/src/policy/macros/pam_mount_macros.te
+%policy %{_sysconfdir}/selinux/strict/src/policy/file_contexts/misc/pam_mount.fc
 
 
 %doc	AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ
 
 
 %changelog
+* Sun Jun 27 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.19-0.fdr.1
+   - Updated to pam_mount 0.9.19.
+
+   - Moved policy sources to /etc/selinux.
+
 * Sun Apr 25 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.18-0.fdr.1
    - Updated to pam_mount 0.9.18.
 

@@ -76,7 +76,7 @@ void parse_pam_args(int argc, const char **argv)
 void clean_system_authtok(pam_handle_t * pamh, void *data, int errcode)
 {
 /* FIXME: not binary password safe */
-/* FIXME: valgrind does not like
+/* FIXME: valgrind does not like -- called previously?
 	if (data) {
 		memset(data, 0x00, strlen(data));
 		free(data);
@@ -197,6 +197,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 			    "error trying to read password");
 			goto _return;
 		}
+		/* p_s_i copies to PAM-internal memory */
 		if ((ret =
 		     pam_set_item(pamh, PAM_AUTHTOK,
 				  authtok)) != PAM_SUCCESS) {
@@ -239,6 +240,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 int modify_pm_count(config_t *config, char *user, char *operation)
 {
 	FILE *fp;
+	GError *err;
 	fmt_ptrn_t vinfo;
 	int _argc = 0, child_exit, cstdout = -1, fnval = -1, i;
 	char *_argv[MAX_PAR + 1];
@@ -258,8 +260,7 @@ int modify_pm_count(config_t *config, char *user, char *operation)
 	for (i = 0; config->command[i][PMVARRUN]; i++)
                 add_to_argv(_argv, &_argc, config->command[i][PMVARRUN], &vinfo);
 	fmt_ptrn_close(&vinfo);
-	if ((pid =
-	     procopen(_argv[0], &_argv[1], 1, NULL, &cstdout, NULL)) == -1) {
+	if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
 		l0g("pam_mount: error executing /usr/sbin/pmvarrun\n");
 		fnval = -1;
 		goto _return;

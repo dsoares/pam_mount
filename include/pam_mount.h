@@ -185,12 +185,8 @@ extern "C" {
 /* ============================ config_t_valid () ========================== */
 	gboolean config_t_valid(const config_t * c);
 
-/* ============================ procopen () ================================ */
-	pid_t procopen(const char *const path, char *const argv[],
-			      const int do_setuid, /*@null@ */
-			      int *const cstdin, /*@null@ */
-			      int *const cstdout,
-			      /*@null@ */ int *const cstderr);
+/* ============================ setrootid () =============================== */ 
+	void setrootid(void *ignored);
 
 /* ============================ str_to_long () ============================= */
 	long str_to_long(char *n);

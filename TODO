@@ -1,9 +1,11 @@
 = For Next Fedora Release =====================================================
 
-o email cryptsetup guy (see email) about new release.
+o NO MORE SIGCHLD!
 
-o why does su fail with broken pipe after X times of executing it?
-	- pam_xauth??? (currently commented out -- have I seen this problem in a while?)
+o make a test system that takes XML and creates  pam_mount.conf, images,
+efsk's, mnt points and check script.
+
+o email cryptsetup guy (see email) about new release.
 
 o release announcement:
 This release focuses on:
