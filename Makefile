@@ -10,8 +10,8 @@ sysconfdir	= /etc
 
 all: pam_mount.so pmhelper
 
-pam_mount.so: pam_mount.c pam_mount.h misc.o readconfig.o
-	$(CC) $(CFLAGS) $(SHARED) -o pam_mount.so pam_mount.c misc.o readconfig.o
+pam_mount.so: pam_mount.c pam_mount.h misc.o readconfig.o converse.o
+	$(CC) $(CFLAGS) $(SHARED) -o pam_mount.so pam_mount.c misc.o readconfig.o converse.o
 
 pmhelper: pmhelper.c pam_mount.h misc.o
 	$(CC) $(CFLAGS) -o pmhelper pmhelper.c misc.o
@@ -21,6 +21,9 @@ misc.o: misc.c pam_mount.h
 
 readconfig.o: readconfig.c pam_mount.h
 	$(CC) $(CFLAGS) -c readconfig.c
+
+converse.o: converse.c
+	$(CC) $(CFLAGS) -c converse.c
 
 install: all
 	install -m 0755 pmhelper \

@@ -26,6 +26,8 @@ const char *user;
 int get_volumes(pm_data **data[], const char *user, const char *password);
 int invoke_child(pm_data *data, char *command[]);
 
+int read_password(pam_handle_t * pamh, const char *prompt1, char **pass);
+
 /*
 
 int pam_start(const char *service_name, const char *username,
@@ -61,9 +63,24 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
 
 	int x;
 	int ret;
+	int get_pass = GETPASS_DEFAULT;
+	int i;
 
 	debug = DEBUG_DEFAULT;
-	w4rn("%s", "pam_mount: beggining");
+
+	w4rn("pam_mount: pam_sm_autenticate with %d args", argc);
+
+	for (i=0; i < argc; i++) {
+		if (!strcmp("use_first_pass", argv[i])) {
+			get_pass = 0;
+		} else if (!strcmp("try_first_pass", argv[i])) {
+			get_pass = 1;
+		}
+
+		w4rn("pam_mount: pam_sm_authenticate args: %s", argv[i]);
+	}
+	
+	w4rn("%s", "pam_mount: beginning");
 
 	for(x = 0; x < COMMAND_MAX; ++x) {
 		command[x] = NULL;
@@ -74,38 +91,52 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **ar
 	
 	pam_get_item(pamh, PAM_AUTHTOK, (const void **) &password);
 	if (!password) {
-		w4rn("%s", "Could not get password");
+		log("%s", "pam_mount: could not get password");
 		return PAM_SUCCESS;
 	}
 
-	w4rn("User=%s", user);
-	// w4rn("Password=%s", password);
+	w4rn("pam_mount: user=%s", user);
+	/* w4rn("Password=%s", password); */
 
 	if (strlen(user) > MAX_PAR || strlen(password) > MAX_PAR) {
-		w4rn("%s", "User or password too long");
+		log("%s", "pam_mount: user or password too long");
 		return PAM_SUCCESS;
 	}
 
 	volcount = 0;
 
-	w4rn("%s", "Going to readconfig");
+	w4rn("%s", "pam_mount: going to readconfig");
 
 	if (! readconfig(user, password, command, &volcount, &data)) {
-		w4rn("%s", "Could not get mountable volumes for user");
+		log("%s", "pam_mount: could not get mountable volumes for user");
 		return PAM_SUCCESS;
 	}
 
-	w4rn("%s", "Back from readconfig");
+	w4rn("%s", "pam_mount: back from readconfig");
 	if (volcount <= 0) {
-		w4rn("%s", "No volumes to mount");
+		w4rn("%s", "pam_mount: no volumes to mount");
 	}
 
 	signal(SIGPIPE, SIG_IGN);
 
 	for(x=0; x < volcount; ++x) {
-		w4rn("%s", "FATHER> calling child proc");
-		if (! (invoke_child(data+x, command))) {
-			w4rn("%s", "FATHER> Could not start helper process");
+		w4rn("%s", "pam_mount: FATHER calling child proc");
+		if (invoke_child(data+x, command)!=1) {
+			w4rn("%s", "pam_mount: FATHER Could not start helper process");
+
+		if (get_pass) {
+			char *passread;
+			
+			/* get the password */
+			read_password(pamh, "mount password:", &passread);
+			
+			/* try with the password read */
+			strcpy((data)[x].password, passread);
+			invoke_child(data+x, command);		
+			_pam_overwrite(passread);
+			_pam_drop(passread);
+}
+
 			return PAM_SUCCESS;
 		}
 	}
@@ -118,21 +149,21 @@ int pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **a
 {
 	int x;
 
-	w4rn("%s", "Received order to close thingz");
+	w4rn("%s", "pam_mount: received order to close things");
 	sleep(1);
 	if (volcount <= 0) {
-		w4rn("%s", "Fuck, volcount is zero !!!");
+		w4rn("%s", "pam_mount: volcount is zero");
 		sleep(2);
 	}
 
 	signal(SIGPIPE, SIG_IGN);
 
 	for(x=0; x < volcount; ++x) {
-		w4rn("%s", "FATHER> calling child proc to unmount");
+		w4rn("%s", "pam_mount: FATHER calling child proc to unmount");
 		sleep(1);
 		data[x].unmount = 1;
-		if (! (invoke_child(data+x, command))) {
-			w4rn("%s", "FATHER> Could not start helper process");
+		if (invoke_child(data+x, command) != 1) {
+			log("%s", "pam_mount: FATHER could not start helper process to umount");
 			return PAM_SUCCESS;
 		}
 	}
@@ -145,22 +176,23 @@ int invoke_child(pm_data *data, char *command[])
 	int filedes[2];
 	int count, n;
 	int child;
+	int child_exit;
 
 	if (pipe(filedes)) {
-		w4rn("%s", "Could not create pipe pair");
+		log("%s", "pam_mount: could not create pipe pair");
 		return 0;
 	}
 
 	if (debug) {
 		fprintf(stderr, 
-		   "\nBTW our real and effective user ID are %d and %d.\n", 
+		   "pam_mount: BTW our real and effective user ID are %d and %d.\n", 
 		   getuid(), geteuid());
 	}
 
 	child = fork();
 
 	if (child == -1) {
-		w4rn("%s", "Could not invoke helper child");
+		log("%s", "pam_mount: could not invoke helper child");
 		return 0;
 	}
 
@@ -170,24 +202,24 @@ int invoke_child(pm_data *data, char *command[])
 		dup2(filedes[0], 0);
 		execl(command[PMHELPER], "pmhelper", NULL);
 		/* could not execl ... */
-		w4rn("%s", "CHILD> Could not execl helper child");
-		w4rn("CHILD> Command was %s", command[PMHELPER]);
+		log("%s", "pam_mount: CHILD Could not execl helper child");
+		log("pam_mount: CHILD command was %s", command[PMHELPER]);
 		_exit(1);
 	}
 
 	/* Father code */
 
-	w4rn("%s", "*********************** sending data...");
+	w4rn("%s", "pam_mount: sending data...");
 
 	close(filedes[0]);
 	count = 0;
 	while (count < sizeof(pm_data)) {
-		w4rn("%s", "Inside loop...");
+		w4rn("%s", "pam_mount: inside loop...");
 		n = write(filedes[1], 
 		          ( (char *) data ) + count, 
 		          sizeof(pm_data) - count);
 		if (n < 0) {
-			w4rn("%s", "Could not write data to child");
+			log("%s", "pam_mount: could not write data to child");
 			close(filedes[1]);
 			kill(child, SIGKILL);
 			return 0;
@@ -195,11 +227,16 @@ int invoke_child(pm_data *data, char *command[])
 		count += n;
 	}
 
-	w4rn("%s", "********************** PAM returning");
+	w4rn("%s", "pam_mount: PAM returning");
 	close(filedes[1]);
-	waitpid(child, NULL, 0);
+	waitpid(child, &child_exit, 0);
 
-	return 1;
+	/* if child was successful, it will return 0.
+	   hence return 1 to caller to indicate success. */
+	if (WEXITSTATUS(child_exit) == 0)
+		return 1;
+	else
+		return WEXITSTATUS(child_exit);
 }
 
 PAM_EXTERN

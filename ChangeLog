@@ -1,0 +1,45 @@
+30 June 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed error that prevented encrypted volumes from working when
+	debugging was off.
+
+	* Updated CREDITS file.
+
+27 June 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed bug that caused segfault when unmounting with debugging
+	on.
+
+	* Location of config file is now /etc/security/pam_mount.conf
+	by default.
+
+	* UID of pmhelper process is now set to 0 since euid of 0 is
+	not enough for using mount (makes u+s su work).
+
+	* Mount point is now optional in pam_mount.conf for local mount
+	type.  See pam_mount.conf example.  
+
+	* Debug messages are now logged with syslog.
+
+	* Cleaned up debug messages a bit.  Separated into log and
+	debug messages.  Log messages are important and are printed even
+	if debugging is off.
+
+	* Got rid of some C++ style comments.
+
+	* Applied Mukesh Agrawal's encryption patch.
+
+2000-xx-xx	0.01	First public version
+
+2000-xx-xx	0.1	Several modifications in /etc/pam_mount.conf format
+
+2000-11-14	0.2	pmhelper no longer stays in memory during the user session
+
+2000-11-15      0.3pre  applied patch that enables template volumes (see CREDITS)
+
+2000-11-29      0.3.1.  applied patch that waits mount to be completed if the 
+			mount point happens to be the user's home dir (see CREDITS)
+
+2001-12-17	0.2.3   Removed broken test in pmhelper.c to see if monting
+			directory is $HOME - now it will always wait for mount()
+			to complete. If this poses problems, please notify.

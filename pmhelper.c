@@ -26,6 +26,9 @@ int main(int argc, char **argv)
 	char *cmdarg[20];
 	char **parg;
 	int child;
+	int fds[2];
+	int child_exit;
+	int i;
 
 	bzero(&data, sizeof(data));
 
@@ -50,19 +53,20 @@ int main(int argc, char **argv)
 
 	debug = data.debug;
 
-	w4rn("%s", "Received");
-	w4rn("%s", "--------");
-	w4rn("%s", data.server);
-	w4rn("%s", data.user);
-	// w4rn("%s", data.password);
-	w4rn("%s", data.volume);
-	w4rn("%s", data.mountpoint);
-	w4rn("%s", data.command);
+	w4rn("%s", "pmhelper: received");
+	w4rn("%s", "pmhelper: --------");
+	w4rn("pmhelper: %s", data.server);
+	w4rn("pmhelper: %s", data.user);
+	/* w4rn("pmhelper: %s", data.password); */
+	w4rn("pmhelper: %s", data.volume);
+	w4rn("pmhelper: %s", data.mountpoint);
+	w4rn("pmhelper: %s", data.command);
+	w4rn("%s", "pmhelper: --------");
 
 	sleep(1);
 
 	if (data.unmount) {
-		w4rn("%s", "Unmounting");
+		w4rn("%s", "pmhelper: unmounting");
 		unmount_volume();
 		return 0;
 	}
@@ -82,56 +86,102 @@ int main(int argc, char **argv)
 	} else if (data.type == SMBMOUNT) {
 		parsecommand(data.command, "smbmount", &parg);
 		asprintf(parg++, "//%s/%s", data.server, data.volume);
-		w4rn("asprintf %s\n", *(parg-1));
+		w4rn("pmhelper: asprintf %s", *(parg-1));
 		*(parg++) = data.mountpoint;
 		*(parg++) = "-o";
 		asprintf(parg++, "username=%s%%%s%s%s",
 			 data.user, data.password, 
 			 data.options[0] ? "," : "",
 			 data.options);
+	} else if (data.type == LCLMOUNT) {
+		parsecommand(data.command, "mount", &parg);
+		*(parg++) = data.volume;
+
+		if (data.mountpoint[0])
+			*(parg++) = data.mountpoint;
+		
+		if (data.options[0]) {
+			*(parg++) = "-o";
+			*(parg++) = data.options;
+		}
+
+		/* XXX should check that we actually need to send a password
+		  before creating the pipe */
+		if (pipe(fds) != 0) {
+			log("%s", "pmhelper: could not make pipe\n");
+			return 0;
+		}
 	} else {
-		w4rn("%s", "oops... data.type is unkonwn !!");
+		log("%s", "pmhelper: data.type is unkonwn");
 		return 0;
 	}
 	*(parg++) = NULL;
 
+	w4rn("%s", "pmhelper: about to fork");
 	child = fork();
 	if (child == -1) {
-		w4rn("%s", "pam_mount failed to fork");
+		log("%s", "pmhelper: failed to fork");
 		return 0;
 	}
 
 	if (child == 0) {
 		/* This is the child */
-		if (! debug) {
-			close(0);
-			close(1);
-			close(2);
+
+		if (data.type == LCLMOUNT) {
+			/* XXX want to use same fd as specified in config file
+			   (rather than STDIN) */
+			/* XXX may want to check that password is actually needed
+			   for this mount */
+			close(fds[1]);
+			dup2(fds[0], STDIN_FILENO);
 		}
 
+		for (i=0; cmdarg[i]; i++) {
+			w4rn("pmhelper: arg is: %s", cmdarg[i]);
+		}
+		
+		if(setuid(0) == -1)
+			w4rn("%s", "pmhelper: could not set uid to 0");
 		execv(cmdarg[0], &cmdarg[1]);
 
 		/* should not reach next instruction */
-		w4rn("%s", "pam_mount failed to execv mount command");
+		log("%s", "pmhelper: failed to execv mount command");
 		return 0;
+	}
+
+	if (data.type == LCLMOUNT) {
+		/* XXX might want to check that password is actually needed
+		   for this mount */
+	
+		/* send password down pipe to mount process */
+		write(fds[1], data.password, strlen(data.password)+1);
+		close(fds[0]);
+		close(fds[1]);
 	}
 
 	/* Clean password so virtual memory does not retain it */
 	bzero(&(data.password), sizeof(data.password));
 
-	w4rn ("%s", "Waiting for homedir mount\n");
+#if 0
+	w4rn ("%s", "pmhelper: waiting for homedir mount\n");
 	waitpid (child, NULL, 0);
+#endif
 
-	/* Unmounting is PAM module responsability */
-	return 0;
+	w4rn ("%s", "pmhelper: waiting for homedir mount\n");
+	waitpid (child, &child_exit, 0);
+	w4rn ("pmhelper: mount returning %d\n", WEXITSTATUS(child_exit));
+ 
+ 	/* Unmounting is PAM module responsability */
+
+	/* pass on through the result from the mount process */
+	return WEXITSTATUS(child_exit);
 }
 
 void config_signals()
 {
 	signal(SIGCHLD, sigchld);
 
-	// Pipe will be eventually closed by parent
-	// but we don't mind
+	/* Pipe will be eventually closed by parent but we don't mind */
 
 	signal(SIGPIPE, SIG_IGN);
 }
@@ -148,20 +198,25 @@ void sigchld(int arg)
 
 void unmount_volume()
 {
+	int i;
 	char *cmdarg[4];
 	cmdarg[0] = data.ucommand;
 	cmdarg[1] = "umount";
-	cmdarg[2] = data.mountpoint;
+	cmdarg[2] = data.volume;
 	cmdarg[3] = NULL;
 
-	close(0);
-	close(1);
-	close(2);
+	for (i=0; cmdarg[i]; i++) {
+		w4rn("pmhelper: arg is: %s", cmdarg[i]);
+	}
 
+	if(setuid(0) == -1)
+		w4rn("%s", "pmhelper: could not set uid to 0");
+	/* FIXME */
+	system("/usr/sbin/lsof | grep /home/mike");
 	execv(cmdarg[0], &cmdarg[1]);
 
 	/* should not reach next instruction */
-	w4rn("%s", "pmhelper failed to execv umount command");
+	log("%s", "pmhelper: failed to execv umount command");
 	_exit(1);
 }
 
@@ -170,15 +225,15 @@ void parsecommand(const char *command, const char *name, char ***pparg)
 	char *sprov = strdup(command);
 	char *argument;
 
-	w4rn("%s", "Entering parsecommand");
+	w4rn("%s", "pmhelper: entering parsecommand");
 
 	argument = strtok(sprov, "\t\n ");
 	while (argument) {
-		w4rn("Adding token %s", argument);
+		w4rn("pmhelper: adding token %s", argument);
 		**pparg = strdup(argument);
 		(*pparg)++;
 		if (name) {
-			w4rn("Adding token %s", name);
+			w4rn("pmhelper: adding token %s", name);
 			**pparg = strdup(name);
 			(*pparg)++;
 			name = NULL;
@@ -186,7 +241,7 @@ void parsecommand(const char *command, const char *name, char ***pparg)
 		argument = strtok(NULL, "\t\n ");
 	}
 
-	w4rn("%s", "Finishing parsecommand");
+	w4rn("%s", "pmhelper: leaving parsecommand");
 
 	free(sprov);
 }

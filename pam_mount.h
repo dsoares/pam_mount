@@ -1,7 +1,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define CONFIGFILE	"/etc/pam_mount.conf"
+#define CONFIGFILE	"/etc/security/pam_mount.conf"
 
 #define MAX_PAR		127
 #include <stdio.h>
@@ -10,9 +10,11 @@
 #define NCPMOUNT	1
 #define UMOUNT		2
 #define PMHELPER	3
-#define COMMAND_MAX	PMHELPER+1
+#define LCLMOUNT	4
+#define COMMAND_MAX	LCLMOUNT+1
 
 #define DEBUG_DEFAULT	0
+#define GETPASS_DEFAULT	0
 
 typedef struct pm_data {
 	int unmount;
@@ -36,6 +38,7 @@ int exists(const char *file);
 
 int owns(const char *user, const char *file);
 
+void log(const char *mask, const char *arg);
 void w4rn(const char *mask, const char *arg);
 
 void debugsleep(int sec);

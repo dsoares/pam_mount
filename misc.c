@@ -5,19 +5,25 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
+#include <syslog.h>
 #include "pam_mount.h"
 
 extern int debug;
 
+void log(const char *mask, const char *arg)
+{
+	char *maskprov = malloc( strlen(mask)+3 );
+	strcpy(maskprov, mask);
+	strcat(maskprov, "\n");
+	fprintf(stderr, maskprov, arg);
+	syslog(LOG_DEBUG, maskprov, arg);
+	free(maskprov);
+}
+
 void w4rn(const char *mask, const char *arg)
 {
 	if (debug) {
-		char *maskprov = malloc( strlen(mask)+3 );
-		strcpy(maskprov, mask);
-		strcat(maskprov, "\n");
-	       	fprintf(stderr, maskprov, arg);
-		free(maskprov);
-		// usleep(333333);
+		log(mask, arg);
 	}
 }
 
@@ -28,11 +34,11 @@ int exists(const char *file)
 	struct stat filestat;
 
 	if (stat(file, &filestat)) {
-		w4rn("File %s could not be stat'ed", file);
+		log("pam_mount: file %s could not be stat'ed", file);
 		return 0;	
 	}
 	if (S_ISLNK(filestat.st_mode)) {
-		w4rn("File %s is a symlink, strange...", file);
+		log("pam_mount: file %s is a symlink, strange...", file);
 		return -1;
 	}
 	return 1;
@@ -45,12 +51,12 @@ int owns(const char *user, const char *file)
 
 	userinfo = getpwnam(user);
 	if (! userinfo) {
-		w4rn("User %s could not be translated to UID", user);
+		log("pam_mount: user %s could not be translated to UID", user);
 		return 0;
 	}
 
 	if (stat(file, &filestat)) {
-		w4rn("File %s could not be stat'ed", file);
+		w4rn("pam_mount: file %s could not be stat'ed", file);
 		return 0;	
 	}
 

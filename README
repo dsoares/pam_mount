@@ -4,23 +4,28 @@ pam_mount is a module that can mount remote volumes for a user session.
 
 This module is aimed to environments with SMB (Samba or Windows NT) and/or
 NCP (Netware or Mars-NWE) servers that Unix users want or need to access,
-and some users have / every user has private volumes in that servers.
+and some users have / every user has private volumes in
+that servers.  The module also supports mounting home
+directories using loopback encrypted filesystems (see also
+http://www.tldp.org/HOWTO/Loopback-Encrypted-Filesystem-HOWTO.html).
 
-- every user can access his/her own volumes;
-- the user needs to type the password just once (at login) (*);
-- the mouting process is transparent to the users;
-- there is no need to keep the login passwords in any additional file;
-- the volumes are unmount upon logout, so it saves system resources, avoiding
-  the need of listing every every possibly useful remote volume in /etc/fstab 
-  or in an automount/supermount config file.
+- Every user can access his/her own volumes;
+- The user needs to type the password just once (at login) (*);
+- The mouting process is transparent to the users;
+- There is no need to keep the login passwords in any additional file;
+- The volumes are unmount upon logout, so it saves system resources, avoiding
+  The need of listing every every possibly useful remote volume in /etc/fstab 
+  or in an automount/supermount config file.  This is also necessary
+  for securing encrypted filesystems.
 
 (*) Obviously, the user password in the Unix system and in the remote
     servers must be the same ;)
 
 
-pam_mount "understands" SMB and NCP volumes, but this can be extended very 
-easily. If someone has a particular need for a different filesystem, feel 
-free to ask me to include it and / or send me patches.
+pam_mount "understands" SMB, NCP, and encrypted loopback volumes, but
+this can be extended very easily. If someone has a particular need for
+a different filesystem, feel free to ask me to include it and / or send
+me patches.
 
 
 2. Configuring /etc/pam.d/login (or xdm, kdm, ssh and others)
@@ -42,6 +47,9 @@ session    optional     /lib/security/pam_console.so
 
 (To see why we need two entries, see BUGS)
 
+If you want to support having different passwords for login and mounting,
+replace use_firstpass with try_firstpass. This depends on proper support
+of the PAM conversation mechanism by the PAM applications.
 
 3. Configuring /etc/pam_mount.conf
 
@@ -52,18 +60,18 @@ In general, you will leave all the first (general) parameters as provided by
 default. You only have to provide the user/volume list in the end of the 
 file, following the examples.
 
-To ensure that your system and the remote server are all properly configured,
-you should try to mount all or some of the remote volumes by hand, using the
-same commands and mount points provided in /etc/pam_mount.conf. This will 
-save you a lot of grief, since it is more difficult to debug the mounting
-process via pam_mount.
+To ensure that your system and, possibly, the remote server are all
+properly configured, you should try to mount all or some of the
+volumes by hand, using the same commands and mount points provided in
+/etc/pam_mount.conf. This will save you a lot of grief, since it is more
+difficult to debug the mounting process via pam_mount.
 
 
 4. Debugging
 
-If you can mount the remote volumes by hand but it is not happening via
-pam_mount, you may want to enable the "debug" option in /etc/pam_mount.conf to
-see what is happening.
+If you can mount the volumes by hand but it is not happening via pam_mount, 
+you may want to enable the "debug" option in /etc/pam_mount.conf to see
+what is happening.
 
 - Verify if the user owns the mount point and has sufficient permissions over 
 that. pam_mount will verify this and will refuse to mount the remote volume if 
