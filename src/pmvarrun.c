@@ -425,7 +425,8 @@ static int write_count(int fd, long nv, const char *filename) {
 		 * Fallback to just blanking the file. This can happen when
 		 * pmvarrun is called as unprivileged user.
 		 */
-		ftruncate(fd, 0);
+		if (ftruncate(fd, 0) < 0)
+			w4rn("truncate failed: %s\n", strerror(errno));
 		return true;
 	}
 
@@ -443,7 +444,12 @@ static int write_count(int fd, long nv, const char *filename) {
 		return ret;
 	}
 
-	ftruncate(fd, len);
+	if (ftruncate(fd, len) < 0) {
+		ret = -errno;
+		l0g("truncate failed: %s\n", strerror(errno));
+		return ret;
+	}
+
 	return 1;
 }
 
