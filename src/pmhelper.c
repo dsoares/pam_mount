@@ -43,7 +43,7 @@ int read_salt(BIO * fp, unsigned char *salt)
 }
 #endif				/* HAVE_LIBSSL */
 
-int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher,
+int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password, char *fs_key_cipher,
 		  char *fs_key_path)
 {
 #ifdef HAVE_LIBSSL
@@ -91,6 +91,7 @@ int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher,
 	log("pmhelper: %s\n", "failed to initialize decryption code");
 	return 0;
     }
+    memset(pt_fs_key, 0x00, pt_fs_key_len);
     if (!EVP_DecryptUpdate
 	(&ctx, pt_fs_key, &outlen, ct_fs_key, strlen(ct_fs_key))) {
 	log("pmhelper: %s\n", "failed to decrypt key");
@@ -254,17 +255,16 @@ int main(int argc, char **argv)
     }
 
     if (strlen(data.fs_key_cipher)) {
+        w4rn("pmhelper: %s\n", "decrypting FS key using system auth. token...");
 	/* data.fs_key_path contains real filesystem key. */
 	char k[MAX_PAR + 1];	/* FIXME: is this big enough?  If not MAX_PAR
 				 * needs changing.  See EVP_DecryptUpdate. */
 	if (!decrypted_key
-	    (k, data.password, data.fs_key_cipher, data.fs_key_path))
+	    (k, sizeof (k), data.password, data.fs_key_cipher, data.fs_key_path))
 	    exit(EXIT_FAILURE);
 	memset(data.password, 0x00, MAX_PAR + 1);
 	strncpy(data.password, k, MAX_PAR + 1);
     }
-
-// FIXME: scrub stopped here.
 
     parg = cmdarg;
     if (data.type == NCPMOUNT) {
@@ -273,8 +273,8 @@ int main(int argc, char **argv)
 	*(parg++) = data.server;
 	*(parg++) = "-U";
 	*(parg++) = data.user;
-	*(parg++) = "-P";
-	*(parg++) = data.password;
+	/* NCPPASS *(parg++) = "-P";
+	*(parg++) = data.password; */
 	*(parg++) = "-V";
 	*(parg++) = data.volume;
 	*(parg++) = data.mountpoint;
@@ -292,22 +292,21 @@ int main(int argc, char **argv)
 
 	if (data.mountpoint[0])	/* If this is used, fstab will not be used. */
 	    *(parg++) = data.mountpoint;
-
 	if (data.options[0]) {
 	    *(parg++) = "-o";
 	    *(parg++) = data.options;
-	}
-
-	/* XXX should check that we actually need to send a password
-	   before creating the pipe */
-	if (pipe(fds) != 0) {
-	    log("pmhelper: %s\n", "could not make pipe");
-	    exit(EXIT_FAILURE);
 	}
     } else {
 	log("pmhelper: %s\n", "data.type is unknown");
 	exit(EXIT_FAILURE);
     }
+
+    /* NCPPASS: was in above LCLMOUNT only condition. */
+    if (pipe(fds) != 0) {
+	log("pmhelper: %s\n", "could not make pipe");
+	exit(EXIT_FAILURE);
+    }
+
     *(parg++) = NULL;
 
     w4rn("pmhelper: %s\n", "about to fork");
@@ -320,18 +319,14 @@ int main(int argc, char **argv)
     if (child == 0) {
 	/* This is the child */
 
-	if (data.type == LCLMOUNT) {
-	    /* XXX want to use same fd as specified in config file
-	       (rather than STDIN) */
-	    /* XXX may want to check that password is actually needed
-	       for this mount */
+	if (/* data.type == LCLMOUNT NCPPASS */ 1) {
 	    close(fds[1]);
 	    dup2(fds[0], STDIN_FILENO);
-	} else if (data.type == SMBMOUNT) {
+	} /* NCPPASS else if (data.type == SMBMOUNT) {
 	    snprintf(envpass, sizeof(envpass), "PASSWD=%s", data.password);
 	    putenv(envpass);
 	    _pam_overwrite(envpass);
-	}
+	} */
 
 	for (i = 0; cmdarg[i]; i++) {
 	    w4rn("pmhelper: arg is: %s\n", cmdarg[i]);
@@ -346,23 +341,17 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    if (data.type == LCLMOUNT) {
-	/* XXX might want to check that password is actually needed
-	   for this mount */
-
+    if (/* data.type == LCLMOUNT NCPPASS */ 1) {
 	/* send password down pipe to mount process */
 	write(fds[1], data.password, strlen(data.password) + 1);
 	close(fds[0]);
 	close(fds[1]);
     }
 
-    /* Clean password so virtual memory does not retain it */
     _pam_overwrite(data.password);
 
-    w4rn("pmhelper: %s\n", "waiting for homedir mount\n");
+    w4rn("pmhelper: %s\n", "waiting for homedir mount");
     waitpid(child, &child_exit, 0);
-
-    /* Unmounting is PAM module responsability */
 
     /* pass on through the result from the mount process */
     return WEXITSTATUS(child_exit);

@@ -2,6 +2,8 @@
 
 For 1.0:
 
+o Password not transmitted on commandline to ncpmount.
+
 o All w4rn calls before readconfig are always turned off.  Fix this.
 
 o Readconfig function (and maybe config format) needs to be redone.

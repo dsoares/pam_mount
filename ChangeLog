@@ -3,6 +3,12 @@
 	* Now chowns homedir to owner if pam_mount has to create it.
 	Make sure nsswitch is configured if using, for example, winbindd.
 
+	* More code scrubbing.
+
+	* (Following release 0.4.1) fixed a bug that causes filesystem
+	keys to decrypt wrong, breaking encrypted home directory method
+	three (an array not initialized to [0, ..., 0].
+
 16 October 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Pam_mount not creates user's home directory if it doesn't exist.
