@@ -20,14 +20,14 @@ extern          "C" {
 	extern int      errno;
 
 #define CLOSE(a) if (close(a)==-1) { \
-    log("pam_mount: could not close fd: %s\n", strerror(errno)); \
-    log("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
+    l0g("pam_mount: could not close fd: %s\n", strerror(errno)); \
+    l0g("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
     exit(EXIT_FAILURE); \
 }
 
 #define PIPE(a) if (pipe(a)==-1) { \
-    log("pam_mount: could open pipe: %s\n", strerror(errno)); \
-    log("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
+    l0g("pam_mount: could open pipe: %s\n", strerror(errno)); \
+    l0g("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
     exit(EXIT_FAILURE); \
 }
 
@@ -91,8 +91,8 @@ extern          "C" {
 /* ============================ owns () ==================================== */
 	int             owns(const char *user, const char *file);
 
-/* ============================ log () ===================================== */
-	void            log(const char *format, ...);
+/* ============================ l0g () ===================================== */
+	void            l0g(const char *format, ...);
 
 /* ============================ w4rn () ==================================== */
 	void            w4rn(const char *format, ...);

@@ -37,12 +37,12 @@ read_salt (FILE * fp, unsigned char *salt)
   if ((fread (magic, 1, sizeof magic, fp) != sizeof magic)
       || (fread (salt, 1, PKCS5_SALT_LEN, fp) != PKCS5_SALT_LEN))
     {
-      log ("pam_mount: %s\n", "error reading from ecrypted filesystem key");
+      l0g ("pam_mount: %s\n", "error reading from ecrypted filesystem key");
       return 0;
     }
   else if (memcmp (magic, "Salted__", sizeof "Salted__" - 1))
     {
-      log ("pam_mount: %s\n",
+      l0g ("pam_mount: %s\n",
 	   "magic string Salted__ not in filesystem key file");
       return 0;
     }
@@ -81,12 +81,12 @@ decrypted_key (char *pt_fs_key, int *pt_fs_key_len, const char *key,
   OpenSSL_add_all_ciphers ();
   if (!(cipher = EVP_get_cipherbyname (fs_key_cipher)))
     {
-      log ("pam_mount: error getting cipher \"%s\"\n", fs_key_cipher);
+      l0g ("pam_mount: error getting cipher \"%s\"\n", fs_key_cipher);
       return 0;
     }
   if ((fs_key_fp = fopen (fs_key_path, "r")) <= 0)
     {
-      log ("pam_mount: error opening %s\n", fs_key_path);
+      l0g ("pam_mount: error opening %s\n", fs_key_path);
       return 0;
     }
   if (!read_salt (fs_key_fp, salt))
@@ -94,39 +94,39 @@ decrypted_key (char *pt_fs_key, int *pt_fs_key_len, const char *key,
   if (!EVP_BytesToKey
       (cipher, EVP_md5 (), salt, key, strlen (key), 1, hashed_key, iv))
     {
-      log ("pam_mount: %s\n", "failed to hash system password");
+      l0g ("pam_mount: %s\n", "failed to hash system password");
       return 0;
     }
   /* ct_fs_key is MAX_PAR + 1 bytes and binary data has not 0x00 terminator */
   if ((ct_fs_key_len = fread (ct_fs_key, 1, MAX_PAR + 1, fs_key_fp)) <= 0)
     {
-      log ("pam_mount: failed to read encrypted filesystem key from %s\n",
+      l0g ("pam_mount: failed to read encrypted filesystem key from %s\n",
 	   fs_key_path);
       return 0;
     }
   EVP_CIPHER_CTX_init (&ctx);
   if (!EVP_DecryptInit (&ctx, cipher, hashed_key, iv))
     {
-      log ("pam_mount: %s\n", "failed to initialize decryption code");
+      l0g ("pam_mount: %s\n", "failed to initialize decryption code");
       return 0;
     }
   /* assumes plaintexts is always <= ciphertext in length */
   if (!EVP_DecryptUpdate
       (&ctx, pt_fs_key, pt_fs_key_len, ct_fs_key, ct_fs_key_len))
     {
-      log ("pam_mount: %s\n", "failed to decrypt key");
+      l0g ("pam_mount: %s\n", "failed to decrypt key");
       return 0;
     }
   if (!EVP_DecryptFinal (&ctx, pt_fs_key, &scratch))
     {
-      log ("pam_mount: %s\n", "bad pad on end of encrypted file");
+      l0g ("pam_mount: %s\n", "bad pad on end of encrypted file");
       return 0;
     }
   EVP_CIPHER_CTX_cleanup (&ctx);
   fclose (fs_key_fp);
   return 1;
 #else
-  log ("pam_mount: %s\n",
+  l0g ("pam_mount: %s\n",
        "encrypted filesystem key not supported: no openssl");
   return 0;
 #endif /* HAVE_LIBCRYPTO */
@@ -146,19 +146,19 @@ get_fstab_mountpoint (const char *volume, char *mountpoint)
   struct fstab *fstab_record;
   if (!setfsent ())
     {
-      log
+      l0g
 	("pam_mount: could not open fstab to determine mount point for %s\n",
 	 volume);
       return 0;
     }
   if (!(fstab_record = getfsspec (volume)))
     {
-      log ("pam_mount: could not determine mount point for %s\n", volume);
+      l0g ("pam_mount: could not determine mount point for %s\n", volume);
       return 0;
     }
   if (strlen (fstab_record->fs_file) > FILENAME_MAX)
     {
-      log ("pam_mount: mnt point listed in /etc/fstab for %s too long",
+      l0g ("pam_mount: mnt point listed in /etc/fstab for %s too long",
 	   volume);
       return 0;
     }
@@ -170,7 +170,7 @@ get_fstab_mountpoint (const char *volume, char *mountpoint)
   struct mntent *fstab_record;
   if (!(fstab = fopen ("/etc/fstab", "r")))
     {
-      log
+      l0g
 	("pam_mount: could not open fstab to determine mount point for %s\n",
 	 volume);
       return 0;
@@ -180,12 +180,12 @@ get_fstab_mountpoint (const char *volume, char *mountpoint)
     fstab_record = getmntent (fstab);
   if (!fstab_record)
     {
-      log ("pam_mount: could not determine mount point for %s\n", volume);
+      l0g ("pam_mount: could not determine mount point for %s\n", volume);
       return 0;
     }
   if (strlen (fstab_record->mnt_dir) > FILENAME_MAX)
     {
-      log ("pam_mount: mnt point listed in /etc/fstab for %s too long",
+      l0g ("pam_mount: mnt point listed in /etc/fstab for %s too long",
 	   volume);
       return 0;
     }
@@ -194,7 +194,7 @@ get_fstab_mountpoint (const char *volume, char *mountpoint)
   return 1;
 #else
   /* FIXME */
-  log ("pam_mount: %s\n", "reading fstab not implemented on arch.");
+  l0g ("pam_mount: %s\n", "reading fstab not implemented on arch.");
   return 0;
 #endif
 }
@@ -212,7 +212,7 @@ run_lsof (const struct config_t *config, const int vol)
   PIPE (pipefds);
   if ((pid = fork ()) < 0)
     {
-      log ("pam_mount: %s\n", "fork failed for lsof");
+      l0g ("pam_mount: %s\n", "fork failed for lsof");
     }
   else
     {
@@ -224,7 +224,7 @@ run_lsof (const struct config_t *config, const int vol)
 	  CLOSE (pipefds[0]);
 	  execl (config->command[0][LSOF], "lsof",
 		 config->volume[vol].mountpoint, NULL);
-	  log
+	  l0g
 	    ("pam_mount: failed to exec lsof command (%s) (check pam_mount.conf?)\n",
 	     config->command[0][LSOF]);
 	  exit (EXIT_FAILURE);
@@ -271,7 +271,7 @@ exec_unmount_volume (struct config_t *config, const int vol)
   /* Need to unmount mount point not volume to support SMB mounts, etc. */
   execl (config->command[0][UMOUNT], "umount", config->volume[vol].mountpoint,
 	 NULL);
-  log
+  l0g
     ("pam_mount: failed to exec umount command (%s) (check pam_mount.conf?)\n",
      config->command[0][UMOUNT]);
   exit (EXIT_FAILURE);
@@ -291,20 +291,20 @@ mkmountpoint (vol_t * volume)
       w4rn ("pam_mount: creating mount %s\n", volume->mountpoint);
       if (mkdir (volume->mountpoint, 0700) != 0)
 	{
-	  log ("pam_mount: tried to create %s but failed\n",
+	  l0g ("pam_mount: tried to create %s but failed\n",
 	       volume->mountpoint);
 	  return 0;
 	}
       if (chown (volume->mountpoint, passwd_ent->pw_uid, passwd_ent->pw_gid)
 	  != 0)
 	{
-	  log ("pam_mount: could not chown homedir to %s\n", volume->user);
+	  l0g ("pam_mount: could not chown homedir to %s\n", volume->user);
 	  return 0;
 	}
     }
   else
     {
-      log ("pam_mount: could not determine uid from %s to make homedir\n",
+      l0g ("pam_mount: could not determine uid from %s to make homedir\n",
 	   volume->user);
       return 0;
     }
@@ -360,7 +360,7 @@ already_mounted (struct config_t *config, const int vol)
 #if defined(__linux__)
   if (!(mtab = fopen ("/etc/mtab", "r")))
     {
-      log ("pam_mount: %s\n", "could not open /etc/mtab");
+      l0g ("pam_mount: %s\n", "could not open /etc/mtab");
       return 0;
     }
   mtab_record = getmntent (mtab);
@@ -379,7 +379,7 @@ already_mounted (struct config_t *config, const int vol)
   PIPE (pipefds);
   if ((pid = fork ()) < 0)
     {
-      log ("pam_mount: %s\n", "fork failed for mntcheck");
+      l0g ("pam_mount: %s\n", "fork failed for mntcheck");
       return 0;			/* (I don't know) */
     }
   else
@@ -391,7 +391,7 @@ already_mounted (struct config_t *config, const int vol)
 	  CLOSE (pipefds[1]);
 	  CLOSE (pipefds[0]);
 	  execl (config->command[0][MNTCHECK], "mount", NULL);
-	  log
+	  l0g
 	    ("pam_mount: failed to exec mntcheck command (%s) (check pam_mount.conf?)\n",
 	     config->command[0][MNTCHECK]);
 	  exit (EXIT_FAILURE);
@@ -431,7 +431,7 @@ already_mounted (struct config_t *config, const int vol)
     }
 #else
   /* FIXME */
-  log ("pam_mount: %s\n",
+  l0g ("pam_mount: %s\n",
        "check for previous mount not implemented on arch.");
   return 0;
 #endif
@@ -452,7 +452,7 @@ add_to_argv (char *argv[], int *argc, char *arg)
 {
   if (*argc == MAX_PAR)
     {
-      log ("pam_mount: %s\n", "too many arguments to mount command");
+      l0g ("pam_mount: %s\n", "too many arguments to mount command");
       exit (EXIT_FAILURE);
     }
   argv[(*argc)++] = arg;
@@ -497,7 +497,7 @@ exec_mount_volume (const int fds[2], char *_argv[])
   CLOSE (fds[1]);
   if (dup2 (fds[0], STDIN_FILENO) == -1)
     {
-      log ("pam_mount: %s\n", "error setting up mount's pipe");
+      l0g ("pam_mount: %s\n", "error setting up mount's pipe");
       exit (EXIT_FAILURE);
     }
   for (i = 0; _argv[i]; i++)
@@ -510,7 +510,7 @@ exec_mount_volume (const int fds[2], char *_argv[])
   if (setuid (0) == -1)
     w4rn ("pam_mount: %s\n", "error setting uid to 0");
   execv (_argv[0], &_argv[1]);
-  log
+  l0g
     ("pam_mount: failed to exec mount command (%s) (check pam_mount.conf?)\n",
      _argv[0]);
   exit (EXIT_FAILURE);
@@ -533,7 +533,7 @@ do_unmount (struct config_t *config, const int vol, const char *password,
   pid_t pid = -1;
   if ((pid = fork ()) < 0)
     {
-      log ("pam_mount: %s\n", "fork failed for umount");
+      l0g ("pam_mount: %s\n", "fork failed for umount");
       return 0;
     }
   if (pid == 0)
@@ -545,7 +545,7 @@ do_unmount (struct config_t *config, const int vol, const char *password,
   if (mkmntpoint && config->volume[vol].created_mntpt)
     {
       if (rmdir (config->volume[vol].mountpoint) == -1)	/* non-fatal */
-	log ("pam_mount: could not remove %s\n",
+	l0g ("pam_mount: could not remove %s\n",
 	     config->volume[vol].mountpoint);
     }
   /* pass on through the result from the umount process */
@@ -574,7 +574,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
   pid_t pid = -1;
   if (already_mounted (config, vol))
     {
-      log ("pam_mount: %s already seems to be mounted, skipping\n",
+      l0g ("pam_mount: %s already seems to be mounted, skipping\n",
 	   config->volume[vol].volume);
       return 1;			/* success so try_first_pass does not try
 				 * again */
@@ -587,7 +587,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
       }
     else
       {
-	log
+	l0g
 	  ("pam_mount: mount point %s does not exist (pam_mount not configured to make it)\n",
 	   config->volume[vol].mountpoint);
 	return 0;
@@ -629,7 +629,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
 	  (&tmp, "%s/%s", config->volume[vol].server,
 	   config->volume[vol].user) == -1)
 	{
-	  log ("pam_mount: asprintf error: %s\n", strerror (errno));
+	  l0g ("pam_mount: asprintf error: %s\n", strerror (errno));
 	  return 0;
 	}
       add_to_argv (_argv, &_argc, tmp);
@@ -640,7 +640,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
 	   config->volume[vol].options[0] ? "," : "",
 	   config->volume[vol].options) == -1)
 	{
-	  log ("pam_mount: asprintf error: %s\n", strerror (errno));
+	  l0g ("pam_mount: asprintf error: %s\n", strerror (errno));
 	  return 0;
 	}
       add_to_argv (_argv, &_argc, tmp);
@@ -653,7 +653,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
 	  (&tmp, "//%s/%s", config->volume[vol].server,
 	   config->volume[vol].volume) == -1)
 	{
-	  log ("pam_mount: asprintf error: %s\n", strerror (errno));
+	  l0g ("pam_mount: asprintf error: %s\n", strerror (errno));
 	  return 0;
 	}
       add_to_argv (_argv, &_argc, tmp);
@@ -664,7 +664,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
 		    config->volume[vol].options[0] ? "," : "",
 		    config->volume[vol].options) == -1)
 	{
-	  log ("pam_mount: asprintf error: %s\n", strerror (errno));
+	  l0g ("pam_mount: asprintf error: %s\n", strerror (errno));
 	  return 0;
 	}
       add_to_argv (_argv, &_argc, tmp);
@@ -677,7 +677,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
 	  (&tmp, "//%s/%s", config->volume[vol].server,
 	   config->volume[vol].volume) == -1)
 	{
-	  log ("pam_mount: asprintf error: %s\n", strerror (errno));
+	  l0g ("pam_mount: asprintf error: %s\n", strerror (errno));
 	  return 0;
 	}
       add_to_argv (_argv, &_argc, tmp);
@@ -690,7 +690,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
 	   config->volume[vol].options[0] ? "," : "",
 	   config->volume[vol].options) == -1)
 	{
-	  log ("pam_mount: asprintf error: %s\n", strerror (errno));
+	  l0g ("pam_mount: asprintf error: %s\n", strerror (errno));
 	  return 0;
 	}
       add_to_argv (_argv, &_argc, tmp);
@@ -709,7 +709,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
     }
   else
     {
-      log ("pam_mount: %s\n", "config->volume[vol].type is unknown");
+      l0g ("pam_mount: %s\n", "config->volume[vol].type is unknown");
       return 0;
     }
   PIPE (fds);
@@ -718,7 +718,7 @@ do_mount (struct config_t *config, const int vol, const char *password,
     setenv ("PASSWD_FD", "0", 1);
   if ((pid = fork ()) < 0)
     {
-      log ("pam_mount: %s\n", "fork failed for mount");
+      l0g ("pam_mount: %s\n", "fork failed for mount");
       return 0;
     }
   if (!pid)

@@ -1,14 +1,17 @@
 = For 1.0 =====================================================================
 
-o See Debain patch that fixes security flaw.
+o /etc/fctk/config.mk's false does not cause make to stop.
 
-o Re-enable rpm in top-level makefile publish target.
+o See Debain patch that fixes security flaw (?).
+
+o Finish rpm spec (see fctk TODO)
 
 o Why does pam_mount not work with ssh?
 	Because of privelege separation?  Supposively this breaks pam
 	code that needs to be root.
 
 o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
+	I HAVE REPORTS THAT IT WORKS NOW
 
 o Does new smbmount code work?
 
@@ -17,6 +20,8 @@ o Does new ncpmount code work?
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
 unstable.  In Red Hat bugzilla.
+
+o fix cifs code (insecure password transmission)
 
 = OpenBSD =====================================================================
 
@@ -31,9 +36,8 @@ on OpenBSD.
 
 o openpam su is broken.  memcpy causes "su mike" to try and execute
 "mike".  Also, gives up root privelages before forking, resulting
-in pam's close_session code being run with weak privelages.
-
-o fix cifs code (insecure password transmission)
+in pam's close_session code being run with weak privelages. (submitted
+patch)
 
 = Past 1.0 (punted) ===========================================================
 

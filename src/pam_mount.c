@@ -37,7 +37,7 @@ pam_sm_authenticate (pam_handle_t * pamh, int flags,
   char *tmp_pass;
   if ((ret = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &tmp_pass)))
     {
-      log ("pam_mount: %s\n", "could not get password");
+      l0g ("pam_mount: %s\n", "could not get password");
       return ret;
     }
   if (!tmp_pass)
@@ -50,7 +50,7 @@ pam_sm_authenticate (pam_handle_t * pamh, int flags,
     {
       if (strlen (tmp_pass) > MAX_PAR)
 	{
-	  log ("pam_mount: %s\n", "password too long");
+	  l0g ("pam_mount: %s\n", "password too long");
 	  return PAM_SUCCESS;
 	}
       /*
@@ -74,12 +74,12 @@ str_to_long (char *n)
   char *ptr = n;
   if (!n)
     {
-      log ("pam_mount: %s\n", "count string is NULL");
+      l0g ("pam_mount: %s\n", "count string is NULL");
       return LONG_MAX;
     }
   if (!*n || *n == '\n')
     {
-      log ("pam_mount: %s\n", "count string has no length");
+      l0g ("pam_mount: %s\n", "count string has no length");
       return LONG_MAX;
     }
   do
@@ -87,7 +87,7 @@ str_to_long (char *n)
       /* "123\n" okay, "1a23" bad, "1\n23" bad, "123" okay */
       if (!(isdigit (*ptr)))
 	{
-	  log ("pam_mount: %s\n", "count contains non-digits");
+	  l0g ("pam_mount: %s\n", "count contains non-digits");
 	  return LONG_MAX;
 	}
       ptr++;
@@ -281,7 +281,7 @@ top:
       buf[st.st_size] = '\0';
       if ((val = str_to_long (buf)) == LONG_MAX || val == LONG_MIN)
 	{
-	  log ("pam_mount: %s\n", "session count corrupt (overflow)");
+	  l0g ("pam_mount: %s\n", "session count corrupt (overflow)");
 	  err = -1;
 	  goto return_error;
 	}
@@ -363,13 +363,13 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
   get_pass = pass_type (argc, argv);
   if ((ret = pam_get_user (pamh, &config.user, NULL)) != PAM_SUCCESS)
     {
-      log ("pam_mount: %s\n", "could not get user");
+      l0g ("pam_mount: %s\n", "could not get user");
       return ret;
     }
   w4rn ("pam_mount: user is %s\n", config.user);
   if (strlen (config.user) > MAX_PAR)
     {
-      log ("pam_mount: username %s is too long\n", config.user);
+      l0g ("pam_mount: username %s is too long\n", config.user);
       return PAM_SUCCESS;
     }
   initconfig (&config);
@@ -393,7 +393,7 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
     }
   if (!expandconfig (&config))
     {
-      log ("pam_mount: %s\n", "error expanding configuration");
+      l0g ("pam_mount: %s\n", "error expanding configuration");
       return PAM_SUCCESS;
     }
   w4rn ("pam_mount: real and effective user ID are %d and %d.\n",
@@ -417,14 +417,14 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
 		  if (!mount_op
 		      (do_mount, &config, vol, passread, config.mkmountpoint))
 		    {
-		      log ("pam_mount: %s\n",
+		      l0g ("pam_mount: %s\n",
 			   "mount process failed using get_pass");
 		      return PAM_SUCCESS;
 		    }
 		}
 	      else
 		{
-		  log ("pam_mount: %s\n", "error trying to read password");
+		  l0g ("pam_mount: %s\n", "error trying to read password");
 		  return PAM_SUCCESS;
 		}
 	    }
@@ -470,7 +470,7 @@ pam_sm_close_session (pam_handle_t * pamh, int flags, int argc,
 	w4rn ("pam_mount: %s\n", "going to unmount");
 	if (!mount_op (do_unmount, &config, vol, NULL, config.mkmountpoint))
 	  {
-	    log ("pam_mount:%s\n", "could not umount");
+	    l0g ("pam_mount:%s\n", "could not umount");
 	    freeconfig (config);
 	    return PAM_SUCCESS;
 	  }

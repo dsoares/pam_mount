@@ -10,11 +10,11 @@
 
 extern int debug;
 
-/* ============================ log () ===================================== */ 
+/* ============================ l0g () ===================================== */ 
 /* PRE:  format points to a valid string != NULL
  *       args point to valid strings != NULL
  * POST: format + args are logged and displayed */
-void log(const char *format, ...)
+void l0g(const char *format, ...)
 {
     /* Used to log issues that cause pam_mount to fail. */
     va_list args;
@@ -72,7 +72,7 @@ int owns(const char *user, const char *file)
 
     userinfo = getpwnam(user);
     if (!userinfo) {
-	log("pam_mount: user %s could not be translated to UID\n", user);
+	l0g("pam_mount: user %s could not be translated to UID\n", user);
 	return 0;
     }
 

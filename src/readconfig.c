@@ -66,7 +66,7 @@ static const configoption_t legal_config[] = {
 static 
 FUNC_ERRORHANDLER(log_error)
 {
-	log("pam_mount: %s\n", msg);
+	l0g("pam_mount: %s\n", msg);
 	free((char *) msg); /* FIXME: broken? (some users report symptoms) */
 	return 0;
 }
@@ -409,12 +409,12 @@ options_allow_ok(char *conf[], const char *options)
 	if (!strcmp(conf[0], "*") || !strlen(options))
 		return 1;
 	if ((err = read_options(opt, options))) {
-		log("pam_mount: %s\n", err);
+		l0g("pam_mount: %s\n", err);
 		return 0;
 	}
 	for (i = 0; opt[i]; i++)
 		if (!option_in_list(opt[i], conf)) {
-			log("pam_mount: option %s not allowed\n", opt[i]);
+			l0g("pam_mount: option %s not allowed\n", opt[i]);
 			free_options(opt);
 			return 0;
 		}
@@ -433,12 +433,12 @@ options_required_ok(char *conf[], const char *options)
 	int             i;
 	char           *opt[MAX_PAR + 1], *err;
 	if ((err = read_options(opt, options))) {
-		log("pam_mount: %s\n", err);
+		l0g("pam_mount: %s\n", err);
 		return 0;
 	}
 	for (i = 0; conf[i]; i++)
 		if (!option_in_list(conf[i], opt)) {
-			log("pam_mount: option %s required\n", conf[i]);
+			l0g("pam_mount: option %s required\n", conf[i]);
 			free_options(opt);
 			return 0;
 		}
@@ -461,17 +461,17 @@ options_deny_ok(char *conf[], const char *options)
 		w4rn("pam_mount: %s\n", "no denied options");
 		return 1;
 	} else if (!strcmp(conf[0], "*") && strlen(options)) {
-		log("pam_mount: %s\n",
+		l0g("pam_mount: %s\n",
 		    "all mount options denied, user tried to specify one");
 		return 0;
 	}
 	if ((err = read_options(opt, options))) {
-		log("pam_mount: %s\n", err);
+		l0g("pam_mount: %s\n", err);
 		return 0;
 	}
 	for (i = 0; conf[i]; i++) {
 		if (option_in_list(conf[i], opt)) {
-			log("pam_mount: option %s denied\n", conf[i]);
+			l0g("pam_mount: option %s denied\n", conf[i]);
 			free_options(opt);
 			return 0;
 		}
@@ -496,16 +496,16 @@ readconfig(const char *user, char *file, int globalconf,
 	if (!
 	    (configfile =
 	     dotconf_create(file, legal_config, &globalconf, NONE))) {
-		log("pam_mount: error opening %s\n", file);
+		l0g("pam_mount: error opening %s\n", file);
 		return 0;
 	}
 	configfile->errorhandler = (dotconf_errorhandler_t) log_error;
 	if (!dotconf_command_loop(configfile))
-		log("pam_mount: error reading %s\n", file);	/* may not be fatal */
+		l0g("pam_mount: error reading %s\n", file);	/* may not be fatal */
 	if (!globalconf) {
 		int             i;
 		if (config->options_allow[0] && config->options_deny[0]) {
-			log("pam_mount: %s\n",
+			l0g("pam_mount: %s\n",
 			"possible conflicting option settings, denying all");
 			config->options_deny[0] = "*";
 		}
@@ -536,7 +536,7 @@ readconfig(const char *user, char *file, int globalconf,
 				}
 			} else {
 				if (*config->volume[i].options) {
-					log("pam_mount: %s\n",
+					l0g("pam_mount: %s\n",
 					    "user specified options denied by default");
 					return 0;
 				}
@@ -591,7 +591,7 @@ expand_home(char *path, const char *user)
 			strcpy(tmp, p->pw_dir);
 			strcat(tmp, path + 1);
 		} else
-			log("pam_mount: %s\n", "error allocating memory");
+			l0g("pam_mount: %s\n", "error allocating memory");
 	}
 	return tmp;
 }
@@ -624,7 +624,7 @@ expand_wildcard(const char *str, const char *user)
 				result = next;
 			}
 		} else
-			log("pam_mount %s\n", "error allocating memory");
+			l0g("pam_mount %s\n", "error allocating memory");
 	}
 	return (result);
 }
