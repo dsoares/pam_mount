@@ -1,3 +1,9 @@
+10 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Pmhelper now uses env. var. PASSWD to give ncpmount a password.
+	As of ncpfs 2.2.0.19, a patch from http://www.flyn.org is needed
+	for ncpmount.
+
 09 November 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Fixed potential buffer overflow in pmhelper.c.

@@ -427,8 +427,10 @@ int main(int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
     /* send password down pipe to mount process */
-    if (data.type == SMBMOUNT) {
+    if (data.type == SMBMOUNT || data.type == NCPMOUNT) {
 	/* smbmount reads password from /dev/tty; no good for pipe */
+	/* ncpmount (as of 2.2.0.19) requires a patch for this 
+	 * (see http://www.flyn.org) */
 	setenv("PASSWD", data.password, 1);
     }
 
@@ -456,8 +458,8 @@ int main(int argc, char **argv)
 	log("pmhelper: %s\n", "failed to execv mount command");
 	exit(EXIT_FAILURE);
     }
-    if (data.type != SMBMOUNT) {
-        /* SMBMOUNT uses env. var. PASSWD code above */
+    if (!(data.type == SMBMOUNT || data.type == NCPMOUNT)) {
+        /* SMBMOUNT and NCPMOUNT use env. var. PASSWD code above */
 	write(fds[1], data.password, strlen(data.password) + 1);
 	close(fds[0]);
 	close(fds[1]);

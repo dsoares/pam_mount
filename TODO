@@ -1,12 +1,10 @@
-===============================================================================
-
-For 1.0:
-
-o Evaluate fns related to options_allow, deny, and require.
+= For 1.0 =====================================================================
 
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
 unstable.  In Red Hat bugzilla.
+
+o Evaluate fns related to options_allow, deny, and require.
 
 o Security audit.  Scrub code for buffer overflows and other
 security-related bugs (use splint?):
@@ -17,12 +15,10 @@ o Finish LJ article.
 
 o Send letter.
 
-===============================================================================
-
-Past 1.0 (punted):
+= Past 1.0 (punted) ===========================================================
 
 o Get smbmount and ncpmount to support mount-like -p0 option to simplify
-pmhelper's code.
+pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
 
 o Fix Debian:
 	Mounting encrypted loopback volumes with keybits option broken
