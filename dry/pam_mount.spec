@@ -10,8 +10,9 @@
 %define prefix /usr
 
 Summary: a PAM module that can mount remote volumes for a user session
+
 Name: pam_mount
-Version: 0.3.7
+Version: 0.3.8
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
@@ -34,14 +35,11 @@ Requires: pam
    Windows NT) and/or NCP (Netware or Mars-NWE) servers that Unix
    users want or need to access, and some users have / every user
    has  private volumes in that servers. The module also supports
-   mounting home directories using loopback encrypted filesystems
-   (see also
-   http://www.tldp.org/HOWTO/Loopback-Encrypted-Filesystem-HOWTO.
-   html).
+   mounting    home    directories   using   loopback   encrypted
+   filesystems.
 
-     * Every user can access his/her own volumes
-     * The  user  needs to type the password just once (at login)
-       (*)
+     * Every user can access his own volumes
+     * The user needs to type the password just once (at login)
      * The mouting process is transparent to the users
      * There  is  no  need  to  keep  the  login passwords in any
        additional file
@@ -50,9 +48,6 @@ Requires: pam
        possibly  useful  remote  volume  in  /etc/fstab  or in an
        automount/supermount  config  file. This is also necessary
        for securing encrypted filesystems.
-
-   (*) Obviously, the user password in the Unix system and in the
-   remote servers must be the same ;)
 
    Pam_mount  "understands"  SMB,  NCP,  and  encrypted  loopback
    volumes,  but this can be extended very easily. If someone has

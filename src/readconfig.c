@@ -390,7 +390,7 @@ void readvolume(const char *user, const char *password, int *volcount,
     }
 
     if (strcmp(mountpoint, "-") == 0) {
-	mountpoint = "";
+        mountpoint = "";
     }
     if (strcmp(options, "-") == 0) {
 	options = "";
@@ -466,16 +466,6 @@ void readvolume(const char *user, const char *password, int *volcount,
 	log("%s", "pam_mount: mount point parameter too long");
 	return;
     }
-
-    if (! mountpoint || exists(mountpoint) != 1) {
-       w4rn("%s", "Mountpoint does not exist");
-       return;
-       }
-
-    if (! mountpoint || (! automount && ! owns(user, mountpoint))) {
-       w4rn("%s", "User does not own the mountpoint");
-       return;
-       }
 
     /* for local mounts, require that either
        - it's from the global config file

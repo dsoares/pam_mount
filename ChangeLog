@@ -1,3 +1,9 @@
+14 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Pmhelper now unmounts the mount point, not the volume.  If the
+	mount point is not specified in pam_mount.conf, then it is read
+	from fstab.  This is necessary to unmount SMB volumes like "home."
+
 11 August 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Got rid of some compiler warnings.
