@@ -22,4 +22,4 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-include_HEADERS = pam_mount.h
+include_HEADERS = pam_mount.h dotconf.h

@@ -2,7 +2,7 @@
 #	toplevel configure.in
 #	../Makefile.am
 
-confdir = /etc/security
+confdir = $(prefix)/../etc/security
 
 EXTRA_DIST = pam_mount.conf
 

@@ -26,14 +26,16 @@ bin_PROGRAMS = pmhelper
 pmhelper_SOURCES = pmhelper.c misc.c
 pmhelper_LDFLAGS = -lcrypt -lssl
 
-moduledir = /lib/security
+moduledir = $(prefix)/../lib/security
 module_LTLIBRARIES = pam_mount.la
-pam_mount_la_SOURCES = converse.c misc.c pam_mount.c readconfig.c
+# miscso.c link is to fix complaint of misc.o being used both with libtool
+# and without
+pam_mount_la_SOURCES = converse.c miscso.c pam_mount.c readconfig.c dotconf.c
 pam_mount_la_LDFLAGS = -module -avoid-version
 
 INCLUDES = -I$(srcdir)/../include
 
-CFLAGS = -g -Wall
+AM_CFLAGS = -g -Werror
 
 install-exec-hook:
 	chmod 4755 $(DESTDIR)$(bindir)/pmhelper

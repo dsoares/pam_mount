@@ -1,558 +1,562 @@
 #include <config.h>
-#include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
-#include <sys/stat.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <dotconf.h>
+#include <libgen.h>
+#include <pwd.h>
 #include <pam_mount.h>
 
-#define BUFSIZE ( ( ( MAX_PAR + 1 ) * 3 ) + FILENAME_MAX + 1 )
+extern config_t config;
+extern debug;
 
-#define MAX_FILTERS	20
+pm_command_t command[] = {
+    {SMBMOUNT, "smb", "smbmount"},
+    {SMBMOUNT, "smbfs", "smbmount"},
+    {NCPMOUNT, "ncp", "ncpmount"},
+    {NCPMOUNT, "ncpfs", "ncpmount"},
+    {LCLMOUNT, "local", "lclmount"},
+    {LCLMOUNT, "nfs", "lclmount"},
+    {PMHELPER, NULL, "pmhelper"},
+    {UMOUNT, NULL, "umount"},
+    {LSOF, NULL, "lsof"},
+    {-1, NULL, NULL}
+};
 
-#define OPTIONS_UNINIT	0
-#define OPTIONS_ALLOW 	1
-#define OPTIONS_DENY  	2
-#define OPTIONS_ERROR	3
+DOTCONF_CB(read_int_param);
+DOTCONF_CB(read_debug);
+DOTCONF_CB(read_luserconf);
+DOTCONF_CB(read_command);
+DOTCONF_CB(read_options_require);
+DOTCONF_CB(read_options_allow);
+DOTCONF_CB(read_options_deny);
+DOTCONF_CB(read_volume);
 
-#define FILTERS_OKAY	0
-#define FILTERS_TRUNC	1
-#define FILTERS_BAD	2
-#define FILTERS_WILD	3
+static const configoption_t legal_config[] = {
+    {"debug", ARG_INT, read_debug, &config.debug, CTX_ALL},
+    {"mkmountpoint", ARG_INT, read_int_param, &config.mkmountpoint,
+     CTX_ALL},
+    {"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
+    {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
+    {"smbmount", ARG_LIST, read_command, &config, CTX_ALL},
+    {"ncpmount", ARG_LIST, read_command, &config, CTX_ALL},
+    {"umount", ARG_LIST, read_command, &config, CTX_ALL},
+    {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
+    {"lclmount", ARG_LIST, read_command, &config, CTX_ALL},
+    {"lsof", ARG_LIST, read_command, &config, CTX_ALL},
+    {"options_require", ARG_STR, read_options_require, &config, CTX_ALL},
+    {"options_allow", ARG_STR, read_options_allow, &config, CTX_ALL},
+    {"options_deny", ARG_STR, read_options_deny, &config, CTX_ALL},
+    {"volume", ARG_LIST, read_volume, &config, CTX_ALL},
+    LAST_OPTION
+};
 
-extern int debug;
-
-char *opt_allow_filter[MAX_FILTERS];
-char *opt_deny_filter[MAX_FILTERS];
-char *opt_required[MAX_FILTERS];
-int opt_filter_count;
-int opt_req_count;
-int options_state;
-
-const char *delim = "\t\n ";
-
-void readcommand(char *command[], char *argument, int v);
-char *expand_wildcard(const char *value, const char *user);
-int read_filters(char **filter_array, int *filter_count, char *opt_list);
-int filter_options(const char *options);
-int required_options(const char *options);
-
-int readvolume(const char *user, const char *password, int *volcount,
-		pm_data ** data, char *command[], char *argument,
-		int luserconf, int mkhome)
+/* ============================ log_error () =============================== */
+/* NOTE: callback helper function for handling errors */
+FUNC_ERRORHANDLER(log_error)
 {
-    char *type;
-    int ntype;
-    char *fuser;
-    char *server;
-    char *volume;
-    char *mountpoint;
-    char *options;
-    char *fs_key_cipher;
-    char *fs_key_path;
-    char *automount = NULL;
-    char *autovolume = NULL;
-    char *autooptions = NULL;
-    fuser = argument;
-    type = strtok(NULL, "\t\n ");
-    server = strtok(NULL, "\t\n ");
-    volume = strtok(NULL, "\t\n ");
-    mountpoint = strtok(NULL, "\t\n ");
-    options = strtok(NULL, "\t\n ");
-    fs_key_cipher = strtok(NULL, "\t\n ");
-    fs_key_path = strtok(NULL, "\t\n ");
-    w4rn("pam_mount: fuser: %s\n", fuser);
-    w4rn("pam_mount: user: %s\n", user);
-    w4rn("pam_mount: type: %s\n", type);
-    w4rn("pam_mount: server: %s\n", server);
-    w4rn("pam_mount: volume: %s\n", volume);
-    w4rn("pam_mount: mountpoint: %s\n", mountpoint);
-    w4rn("pam_mount: options: %s\n", options);
-    w4rn("pam_mount: fs_key_cipher: %s\n", fs_key_cipher);
-    w4rn("pam_mount: fs_key_path: %s\n", fs_key_path);
+    log("%s\n", msg);
+}
 
-    if (strcmp(fuser, "*") == 0) {
-	if (luserconf) {
-	    /* local user config file cannot have wildcards */
+/* ============================ read_options () ============================ */
+/* NOTE: callback helper function for reading options_require, options_allow,
+ *       and options_deny */
+char *read_options(char *options[], char *options_str)
+{
+    int count = 0;
+    char *ptr = options_str;
+    w4rn("%s", "pam_mount: options (req., allow, or deny): ");
+    while (ptr = strchr(ptr, ',')) {
+	*ptr++ = 0x00;
+	options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
+	strncpy(options[count], options_str, MAX_PAR);
+	options_str = ptr;
+	w4rn("%s ", options[count++]);
+    }
+    options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
+    strncpy(options[count], options_str, MAX_PAR);
+    w4rn("%s\n", options[count++]);
+    return NULL;
+}
+
+/* ============================ read_options_require () ==================== */
+/* NOTE: callback function for reading required options */
+DOTCONF_CB(read_options_require)
+{
+    if (!*((int *) cmd->context)) {
+	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+	strcpy(errmsg, "tried to set options_require from user config");
+	return errmsg;
+    }
+    return read_options(((config_t *) cmd->option->info)->options_require,
+			cmd->data.str);
+}
+
+/* ============================ read_options_allow () ====================== */
+/* NOTE: callback function for reading required options */
+DOTCONF_CB(read_options_allow)
+{
+    if (!*((int *) cmd->context)) {
+	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+	strcpy(errmsg, "tried to set options_allow from user config");
+	return errmsg;
+    }
+    return read_options(((config_t *) cmd->option->info)->options_allow,
+			cmd->data.str);
+}
+
+/* ============================ read_options_deny () ======================= */
+/* NOTE: callback function for reading required options */
+DOTCONF_CB(read_options_deny)
+{
+    if (!*((int *) cmd->context)) {
+	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+	strcpy(errmsg, "tried to set options_deny from user config");
+	return errmsg;
+    }
+    return read_options(((config_t *) cmd->option->info)->options_deny,
+			cmd->data.str);
+}
+
+/* ============================ read_command () ============================ */
+/* NOTE: callback function for reading command configurations */
+DOTCONF_CB(read_command)
+{
+    int i, command_index = -1;
+    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+    for (i = 0; command[i].type != -1; i++)
+	if (!strcmp(command[i].command_name, cmd->name)) {
+	    command_index = command[i].type;
+	    break;
+	}
+    if (command_index == -1) {
+	snprintf(errmsg, BUFSIZ + 1,
+		 "pam_mount: bad command in config: %s", cmd->name);
+	return errmsg;
+    }
+    ((config_t *) cmd->option->info)->command[0][command_index] =
+	(char *) calloc(MAX_PAR + 1, sizeof(char));
+    strncpy(((config_t *) cmd->option->info)->command[0][command_index],
+	    cmd->data.list[0], MAX_PAR + 1);
+    w4rn("pam_mount: adding to command: %s ", cmd->data.list[0]);
+    ((config_t *) cmd->option->info)->command[1][command_index] =
+	(char *) calloc(MAX_PAR + 1, sizeof(char));
+    strncpy(((config_t *) cmd->option->info)->command[1][command_index],
+	    basename(cmd->data.list[0]), MAX_PAR + 1);
+    w4rn("%s ", basename(cmd->data.list[0]));
+    for (i = 1; i < cmd->arg_count; i++) {
+	if (i > MAX_PAR) {
+	    strcpy(errmsg,
+		   "pam_mount: command line configured to be too long");
+	    return errmsg;
+	}
+	((config_t *) cmd->option->info)->command[i + 1][command_index] =
+	    (char *) calloc(MAX_PAR + 1, sizeof(char));
+	w4rn("%s ", cmd->data.list[i]);
+	strncpy(((config_t *) cmd->option->info)->
+		command[i + 1][command_index], cmd->data.list[i],
+		MAX_PAR + 1);
+    }
+    ((config_t *) cmd->option->info)->command[i + 1][command_index] = NULL;
+    w4rn("%s", "\n");
+    return NULL;
+}
+
+/* ============================ luserconf_volume_record_sane () ============ */
+/* PRE:    volume is an array containing 8 fields from pam_mount.conf
+ *         config points to a valid config_t structure
+ *         errmsg points to an char array of length >= BUFSIZ + 1
+ * FN VAL: if error a pointed to a malloced string error message else NULL */
+int luserconf_volume_record_sane(char *volume[], config_t * config,
+				 char *errmsg)
+{
+    if (! strcmp(volume[0], "*")) {
+	strcpy(errmsg, "pam_mount: wildcard used in user-defined volume");
+	return 0;
+    }
+    return 1;
+}
+
+/* ============================ volume_record_sane () ====================== */
+/* PRE:    volume is an array containing 8 fields from pam_mount.conf
+ *         config points to a valid config_t structure
+ *         errmsg points to an char array of length >= BUFSIZ + 1
+ * FN VAL: if error a pointed to a malloced string error message else NULL */
+int volume_record_sane(char *volume[], config_t * config, char *errmsg)
+{
+    w4rn("pam_mount: %s\n", "checking sanity of volume record");
+    if (!config->command[0][config->data[config->volcount].type]) {
+	snprintf(errmsg, BUFSIZ + 1,
+		 "pam_mount: mount command not defined for %s", volume[1]);
+	return 0;
+    } else if (!config->command[0][UMOUNT]) {
+	strcpy(errmsg, "pam_mount: umount command not defined");
+	return 0;
+    } else if (!config->data[config->volcount].globalconf
+	       && config->data[config->volcount].type == LCLMOUNT
+	       && !owns(config->user,
+			config->data[config->volcount].volume)) {
+	strcpy(errmsg,
+	       "pam_mount: user-defined volume, volume not owned by user");
+	return 0;
+    } else if (!config->data[config->volcount].globalconf
+	       && config->data[config->volcount].type == LCLMOUNT
+	       && !owns(config->user,
+			config->data[config->volcount].mountpoint)) {
+	strcpy(errmsg,
+	       "pam_mount: user-defined volume, mountpoint not owned by user");
+	return 0;
+    }
+    return 1;
+}
+
+/* ============================ read_luserconf () ========================== */
+/* NOTE: callback function for reading configuration parameters */
+DOTCONF_CB(read_luserconf)
+{
+    char *home_dir;
+    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+    struct passwd *passwd_ent;
+    if (!*((int *) cmd->context)) {
+	strcpy(errmsg, "tried to set luserconf from user config");
+	return errmsg;
+    }
+    passwd_ent = getpwnam(((config_t *) cmd->option->info)->user);
+    if (!passwd_ent) {
+	home_dir = "~";
+    } else {
+	home_dir = passwd_ent->pw_dir;
+    }
+    if (strlen(home_dir) + strlen("/") + strlen(cmd->data.str) >
+	FILENAME_MAX + 1) {
+	strcpy(errmsg, "pam_mount: expanded luserconf path too long");
+	return errmsg;
+    }
+    strcpy(((config_t *) cmd->option->info)->luserconf, home_dir);
+    strcat(((config_t *) cmd->option->info)->luserconf, "/");
+    strcat(((config_t *) cmd->option->info)->luserconf, cmd->data.str);
+    w4rn("pam_mount: path to luserconf set to %s\n",
+	 ((config_t *) cmd->option->info)->luserconf);
+    return NULL;
+}
+
+/* ============================ read_int_param () ========================== */
+/* NOTE: callback function for reading configuration parameters */
+DOTCONF_CB(read_int_param)
+{
+    if (!*((int *) cmd->context)) {
+	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+	strcpy(errmsg, "tried to set int param from user config");
+	return errmsg;
+    }
+    *((int *) cmd->option->info) = cmd->data.value;
+    return NULL;
+}
+
+/* ============================ read_debug () ============================== */
+/* NOTE: callback function for reading debug parameter */
+DOTCONF_CB(read_debug)
+{
+    debug = cmd->data.value;
+    return read_int_param(cmd, ctx);
+}
+
+/* ============================ read_volume () ============================= */
+/* NOTE: callback function for reading volume parameters */
+DOTCONF_CB(read_volume)
+{
+#define DATA ((config_t *)cmd->option->info)->data
+#define VOLCOUNT ((config_t *)cmd->option->info)->volcount
+    /* FIXME: all of the strncpys in this function need to be fixed */
+    int i;
+    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+    if (cmd->arg_count != 8) {
+	strcpy(errmsg, "pam_mount: bad number of args for volume");
+	return errmsg;
+    } else
+	if (strcmp
+	    (cmd->data.list[0], ((config_t *) cmd->option->info)->user)
+	    && strcmp(cmd->data.list[0], "*")) {
+	snprintf(errmsg, BUFSIZ + 1,
+		 "pam_mount: ignoring volume record for %s",
+		 cmd->data.list[0]);
+	return NULL;
+    }
+    DATA = realloc(DATA, sizeof(data_t) * (VOLCOUNT + 1));
+    memset(&DATA[VOLCOUNT], 0x00, sizeof(data_t));
+    DATA[VOLCOUNT].globalconf = *((int *) cmd->context);
+    strncpy(DATA[VOLCOUNT].user, cmd->data.list[0], MAX_PAR + 1);
+    DATA[VOLCOUNT].type = -1;
+    for (i = 0; command[i].type != -1; i++)
+	if (command[i].fs && !strcasecmp(cmd->data.list[1], command[i].fs)) {
+	    DATA[VOLCOUNT].type = command[i].type;
+	    break;
+	}
+    if (DATA[VOLCOUNT].type == -1) {
+	snprintf(errmsg, BUFSIZ + 1,
+		 "pam_mount: %s filesystem not supported",
+		 cmd->data.list[1]);
+	return errmsg;
+    }
+    if (*cmd->data.list[2] == '-')
+	*DATA[VOLCOUNT].server = 0x00;
+    else
+	strncpy(DATA[VOLCOUNT].server, cmd->data.list[2], MAX_PAR + 1);
+    strncpy(DATA[VOLCOUNT].volume, cmd->data.list[3], MAX_PAR + 1);
+    if (*cmd->data.list[4] == '-')
+	*DATA[VOLCOUNT].mountpoint = 0x00;
+    else
+	strncpy(DATA[VOLCOUNT].mountpoint, cmd->data.list[4], MAX_PAR + 1);
+    if (*cmd->data.list[5] == '-')
+	*DATA[VOLCOUNT].options = 0x00;
+    else
+	strncpy(DATA[VOLCOUNT].options, cmd->data.list[5], MAX_PAR + 1);
+    if (*cmd->data.list[6] == '-')
+	*DATA[VOLCOUNT].fs_key_cipher = 0x00;
+    else
+	strncpy(DATA[VOLCOUNT].fs_key_cipher, cmd->data.list[6],
+		MAX_PAR + 1);
+    if (*cmd->data.list[7] == '-')
+	*DATA[VOLCOUNT].fs_key_path = 0x00;
+    else
+	strncpy(DATA[VOLCOUNT].fs_key_path, cmd->data.list[7],
+		MAX_PAR + 1);
+    strncpy(DATA[VOLCOUNT].password,
+	    ((config_t *) cmd->option->info)->system_password,
+	    MAX_PAR + 1);
+    if (!volume_record_sane
+	(cmd->data.list, ((config_t *) cmd->option->info), errmsg))
+	return errmsg;
+    if (! DATA[VOLCOUNT].globalconf
+	&& !luserconf_volume_record_sane(cmd->data.list,
+					 ((config_t *) cmd->option->info),
+					 errmsg))
+	return errmsg;
+    VOLCOUNT++;
+    return NULL;
+#undef DATA
+#undef VOLCOUNT
+}
+
+/* ============================ option_in_string () ======================== */
+/* PRE:    opt points to an option != NULL
+ *         str points to list of options (ie: "opt1,opt2,...") != NULL
+ * FN VAL: if opt appears in str then 1 else 0 */
+int option_in_string(char *opt, char *str)
+{
+    char *ptr;
+    w4rn("pam_mount: %s passed to option_in_string()\n", str);
+    while (ptr = strchr(str, ',')) {
+	w4rn("pam_mount: checking %s\n", str);
+	if (!strncmp(opt, str, ptr - str))
 	    return 1;
+	str = ptr + 1;
+    }
+    w4rn("pam_mount: checking %s\n", str);
+    if (!strcmp(opt, str))
+	return 1;
+    return 0;
+}
+
+/* ============================ options_allow_ok () ======================== */
+/* PRE:    conf points to an array of allowed options (first item may be 
+ *           NULL if no options sepcified)
+ *         options points to a string representing a list of options requested
+ *           for a volume or ""
+ * FN VAL: if options acceptable by conf 1 else 0 with error logged */
+options_allow_ok(char *conf[], char *options)
+{
+    int i, ok;
+    char *ptr;
+    w4rn("pam_mount: checking %s\n", options);
+    while (ptr = strchr(options, ',')) {
+	ok = 0;
+	w4rn("pam_mount: checking %s\n", options);
+	for (i = 0; conf[i]; i++) {
+	    if (!strncmp(conf[i], options, ptr - options))
+		ok = 1;
 	}
-	autovolume = expand_wildcard(volume, user);
-	if (autovolume) {
-	    volume = autovolume;
-	    w4rn("pam_mount: volume: %s\n", autovolume);
-	}
-	if (*mountpoint == '~') {
-	    struct passwd *p;
-	    p = getpwnam(user);
-	    if (p != NULL) {
-		automount = malloc(strlen(p->pw_dir) + 5);
-		if (automount != NULL) {
-		    strcpy(automount, p->pw_dir);
-		    strcat(automount, mountpoint + 1);
-		}
-	    } else {
-		log("pam_mount: failed to get %s's mount point\n", user);
-		return 0;
-	    }
-	} else
-	    automount = expand_wildcard(mountpoint, user);
-	if (automount) {
-	    mountpoint = automount;
-	    w4rn("pam_mount: automount: %s\n", automount);
-	}
-	/* FIXME: Should this be rmdir'ed when one logs out? */
-	if (mkhome && !exists(automount)) {
-            struct passwd *passwd_ent;
-	    if ((passwd_ent = getpwnam(user))) {
-	        w4rn("pam_mount: creating mount %s\n", automount);
-	        if (mkdir(automount, 0700) != 0)
-	            log("pam_mount: tried to create %s but failed\n", automount);
-	        if (chown (automount, passwd_ent->pw_uid, passwd_ent->pw_gid) != 0)
-		    log("pam_mount: could not chown homedir to %s\n", passwd_ent->pw_uid);
-	    } else
-	        log("pam_mount: could not determine uid from %s to make homedir\n", user);
-	}
-	autooptions = expand_wildcard(options, user);
-	if (autooptions) {
-	    options = autooptions;
-	    w4rn("pam_mount: autooptions: %s\n", autooptions);
-	}
-    } else if (strcmp(fuser, user) != 0) {
-	w4rn("pam_mount: %s\n", "not me");
+	options = ptr + 1;
+	if (!ok)
+	    return 0;
+    }
+    ok = 0;
+    w4rn("pam_mount: checking %s\n", options);
+    for (i = 0; conf[i]; i++) {
+	if (!strcmp(conf[i], options))
+	    ok = 1;
+    }
+    return ok;
+}
+
+/* ============================ options_required_ok () ===================== */
+/* PRE:    conf points to an array of required options (first item may be 
+ *           NULL if no options sepcified)
+ *         options points to a string representing a list of options requested
+ *           for a volume or ""
+ * FN VAL: if options acceptable by conf 1 else 0 with error logged */
+options_required_ok(char *conf[], char *options)
+{
+    int i;
+    if (!conf[0]) {
+	w4rn("pam_mount: %s\n", "no required options");
 	return 1;
     }
-    if (strcmp(mountpoint, "-") == 0) {
-	mountpoint = "";
-    }
-    if (strcmp(options, "-") == 0) {
-	options = "";
-    }
-    if (strcmp(fs_key_cipher, "-") == 0) {
-	fs_key_cipher = "";
-    }
-    if (strcmp(fs_key_path, "-") == 0) {
-	fs_key_path = "";
-    }
-    w4rn("pam_mount: fs_key_path: %s\n", fs_key_path);
-    /* if we have options, and this is the user config file,
-       check the options against the allow/deny filter from
-       the global config file */
-    if (*options != '\0' && luserconf) {
-	if (!filter_options(options)) {
-	    log("%s", "pam_mount: options conflict with filters\n");
+    for (i = 0; conf[i]; i++) {
+	if (!option_in_string(conf[i], options)) {
+	    log("pam_mount: option %s required\n", conf[i]);
 	    return 0;
 	}
     }
-    /* for the user config file, make sure the required options
-       specified in the global config file are present */
-    if (luserconf && !required_options(options)) {
-	log("%s", "pam_mount: does not contain required options\n");
-	return 0;
-    }
-    if (!fuser || !server || !volume || !type) {
-	log("%s", "pam_mount: missing parameters\n");
-	return 0;
-    }
-    if (strlen(server) > MAX_PAR) {
-	w4rn("pam_mount: %s\n", "server parameter too long");
-	return 0;
-    }
-    if (strlen(volume) > MAX_PAR) {
-	log("%s", "pam_mount: volume parameter too long\n");
-	return 0;
-    }
-    if (strlen(options) > MAX_PAR) {
-	log("%s", "pam_mount: options parameter too long\n");
-	return 0;
-    }
-    if (strlen(fs_key_cipher) > MAX_PAR) {
-	log("%s", "pam_mount: fs_key_cipher parameter too long\n");
-	return 0;
-    }
-    if (strlen(fs_key_path) > FILENAME_MAX) {
-	log("%s", "pam_mount: fs_key_path parameter too long\n");
-	return 0;
-    }
-    ntype = -1;
-    ntype = strcasecmp(type, "smb") == 0 ? SMBMOUNT : ntype;
-    ntype = strcasecmp(type, "smbfs") == 0 ? SMBMOUNT : ntype;
-    ntype = strcasecmp(type, "ncp") == 0 ? NCPMOUNT : ntype;
-    ntype = strcasecmp(type, "ncpfs") == 0 ? NCPMOUNT : ntype;
-    ntype = strcasecmp(type, "local") == 0 ? LCLMOUNT : ntype;
-    ntype = strcasecmp(type, "nfs") == 0 ? LCLMOUNT : ntype;
-    if (ntype == -1) {
-	log("%s", "pam_mount: this filesystem type is not supported\n");
-	return 0;
-    }
-    if (mountpoint && strlen(mountpoint) > FILENAME_MAX) {
-	log("%s", "pam_mount: mount point parameter too long\n");
-	return 0;
-    }
-    /* for local mounts, require that either
-       - it's from the global config file
-       - or the user owns the (file or device) that is being
-       mounted */
-    if ((ntype == LCLMOUNT) && luserconf && !owns(user, volume)) {
-	w4rn("pam_mount: %s\n", "user does not own mount source");
+    return 1;
+}
+
+/* ============================ options_deny_ok () ========================= */
+/* PRE:    conf points to an array of denied options (first item may be 
+ *           NULL if no options sepcified)
+ *         options points to a string representing a list of options requested
+ *           for a volume or ""
+ * FN VAL: if options acceptable by conf 1 else 0 with error logged */
+options_deny_ok(char *conf[], char *options)
+{
+    int i;
+    if (!conf[0]) {
+	w4rn("pam_mount: %s\n", "no denied options");
 	return 1;
+    } else if (!strcmp(conf[0], "*") && strlen(options)) {
+	log("pam_mount: %s\n",
+	    "all mount options denied, user tried to specify one");
+	return 0;
     }
-    if (!command[ntype]) {
-	w4rn("pam_mount: mount command not defined for %s\n", type);
-	return 1;
-    }
-    if (!command[UMOUNT]) {
-	w4rn("pam_mount: %s\n", "unmount command not defined");
-	return 1;
-    }
-    *data = realloc(*data, sizeof(pm_data) * (*volcount + 1));
-    /* data is a pointer to a flat pm_data array */
-    memset(&((*data)[*volcount]), 0x00, sizeof(pm_data));
-    (*data)[*volcount].type = ntype;
-    strcpy((*data)[*volcount].user, user);
-    strcpy((*data)[*volcount].password, password);
-    strcpy((*data)[*volcount].server, server);
-    strcpy((*data)[*volcount].volume, volume);
-    strcpy((*data)[*volcount].mountpoint, mountpoint);
-    strcpy((*data)[*volcount].options, options);
-    strcpy((*data)[*volcount].fs_key_cipher, fs_key_cipher);
-    strcpy((*data)[*volcount].fs_key_path, fs_key_path);
-    (*data)[*volcount].debug = debug;
-    strcpy((*data)[*volcount].command, command[ntype]);
-    strcpy((*data)[*volcount].ucommand, command[UMOUNT]);
-    strcpy((*data)[*volcount].lsof, command[LSOF]);
-    (*data)[*volcount].unmount = 0;
-    w4rn("pam_mount: %s\n", "added one\n");
-    (*volcount)++;
-    if (autovolume) {
-	free(autovolume);
-    }
-    if (automount) {
-	free(automount);
+    for (i = 0; conf[i]; i++) {
+	if (option_in_string(conf[i], options)) {
+	    log("pam_mount: option %s denied\n", conf[i]);
+	    return 0;
+	}
     }
     return 1;
 }
 
-int readconfig(const char *user, const char *password, char *command[],
-	       int *volcount, pm_data ** data)
+/* ============================ readconfig () ============================== */
+/* PRE:    user is a valid string != NULL
+ *         file is the path of config file to read
+ *         globalconf == 1 if file is a global config, else 0
+ *         config points to a valid config_t structure
+ * POST:   command is an array containing configured mount command lines
+ *         config points to a config_t structure containing configuration read
+ * FN VAL: if error 0 else 1, errors are logged */
+int readconfig(const char *user, char *file, int globalconf,
+	       config_t * config)
 {
-    FILE *conffile;
-    int mkhome; /* If 1, pam_mount will mkdir home if neccessary. */
-    char line[BUFSIZE];
-    char *parameter;
-    char *argument;
-    char *luserconf;
-    struct passwd *passwd_ent;
-    char *home_dir;
-
-    options_state = OPTIONS_UNINIT;
-    opt_filter_count = 0;
-    opt_req_count = 0;
-
-    *volcount = 0;
-    *data = (pm_data *) malloc(0);
-    luserconf = NULL;
-
-    w4rn("pam_mount: trying to open %s", CONFIGFILE);
-
-    conffile = fopen(CONFIGFILE, "r");
-    if (!conffile) {
-	log("pam_mount: could not open config file: %s\n", CONFIGFILE);
+    configfile_t *configfile;
+    const char *errmsg;
+    if (!
+	(configfile =
+	 dotconf_create(file, legal_config, &globalconf, NONE))) {
+	log("pam_mount: error opening %s\n", file);
 	return 0;
     }
-
-    while (fgets(line, BUFSIZE - 1, conffile)) {
-
-	parameter = strtok(line, delim);
-	argument = strtok(NULL, delim);
-
-	if (!parameter || !argument)
-	    continue;
-	w4rn("pam_mount: reading %s\n", parameter);
-
-	if (strchr(parameter, '#'))
-	    continue;
-
-	if (strcmp(parameter, "debug") == 0) {
-	    debug = strcmp(argument, "1") == 0 ? 1 : 0;
-	    continue;
+    configfile->errorhandler = (dotconf_errorhandler_t) log_error;
+    if (!dotconf_command_loop(configfile))
+        log("pam_mount: error reading %s\n", file); /* may not be fatal */
+    if (!globalconf) {
+	int i;
+	if (config->options_allow[0] && config->options_deny[0]) {
+	    log("pam_mount: %s\n",
+		"possible conflicting option settings, denying all");
+	    config->options_deny[0] = "*";
 	}
-
-	if (strcmp(parameter, "mkhome") == 0) {
-	    mkhome = strcmp(argument, "1") == 0 ? 1 : 0;
-	    continue;
-	}
-
-	if (strcmp(parameter, "options_allow") == 0) {
-	    /* don't allow ambiguity on the options filter.
-	       fallback to most restrictive (allow none). */
-	    if (options_state != OPTIONS_UNINIT) {
-		w4rn("pam_mount: %s\n",
-		     "potentially conflicting options filters. disallowing all options.");
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-
+	for (i = 0; i < config->volcount; i++) {
+	    if (config->data[i].globalconf)
 		continue;
+	    if (config->options_require[0]) {
+		w4rn("pam_mount: %s\n", "verifying options required");
+		if (!options_required_ok
+		    (config->options_require, config->data[i].options)) {
+		    dotconf_cleanup(configfile);
+		    return 0;
+		}
 	    }
-
-	    options_state = OPTIONS_ALLOW;
-
-	    switch (read_filters(opt_allow_filter, &opt_filter_count,
-				 argument)) {
-	    case FILTERS_OKAY:	/* success */
-		break;
-	    case FILTERS_TRUNC:	/* truncated */
-		w4rn("pam_mount: %s\n",
-		     "too many allowed options truncating list.");
-		break;
-	    case FILTERS_BAD:	/* bad filter */
-		w4rn("pam_mount: %s\n", "bad filter description.");
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-		break;
-	    case FILTERS_WILD:	/* wildcard */
-		/* allow all is same as deny none */
-		options_state = OPTIONS_DENY;
-		opt_filter_count = 0;
-		break;
-	    default:
-		w4rn("pam_mount: %s\n", "unknown error while reading"
-		     " filter");
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-		break;
-	    }
-
-	    continue;
-	}
-
-	if (strcmp(parameter, "options_deny") == 0) {
-	    /* don't allow ambiguity on the options filter.
-	       fallback to most restrictive (allow none). */
-	    if (options_state != OPTIONS_UNINIT) {
-		w4rn("pam_mount: %s\n",
-		     "potentially conflicting options filters. disallowing all options.");
-
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-
-		continue;
-	    }
-
-	    options_state = OPTIONS_DENY;
-
-	    switch (read_filters(opt_deny_filter, &opt_filter_count,
-				 argument)) {
-	    case FILTERS_OKAY:	/* success */
-		break;
-	    case FILTERS_TRUNC:	/* truncated */
-		w4rn("pam_mount: %s\n",
-		     "too many denied options -- falling back to deny all.");
-
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-		break;
-	    case FILTERS_BAD:	/* bad filter */
-		w4rn("pam_mount: %s\n", "bad filter description");
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-		break;
-	    case FILTERS_WILD:	/* wildcard */
-		/* deny all is same as allow none */
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-		break;
-	    default:
-		w4rn("pam_mount: %s\n",
-		     "unknown error while reading filter");
-		options_state = OPTIONS_ALLOW;
-		opt_filter_count = 0;
-		break;
-	    }
-
-	    continue;
-	}
-
-	if (strcmp(parameter, "options_require") == 0) {
-	    w4rn("pam_mount: options_require: %s\n", argument);
-	    /* don't allow multiple directives. if that happens,
-	       disable luser configs */
-	    if (opt_req_count != 0) {
-		w4rn("pam_mount: %s\n",
-		     "multiple options_require directives -- disabling luserconf.");
-		options_state = OPTIONS_ERROR;
-		continue;
-	    }
-
-	    /* if the list is truncated, or contains wildcard,
-	       then fallback as above */
-	    if (read_filters(opt_required, &opt_req_count, argument) != 0) {
-		w4rn("pam_mount: %s\n",
-		     "too many required options -- disabling luserconf.");
-		options_state = OPTIONS_ERROR;
-		opt_req_count = 0;
-	    }
-	    continue;
-	}
-
-	if (strcmp(parameter, "luserconf") == 0) {
-	    if (strlen(argument) > FILENAME_MAX) {
-		w4rn("pam_mount: %s\n", "strlen(luserconf) > FILENAME_MAX");
-		continue;
-	    }
-
-	    passwd_ent = getpwnam(user);
-	    if (!passwd_ent) {
-		home_dir = "~";
+	    if (config->options_allow[0]) {
+		w4rn("pam_mount: %s\n", "verifying options allow");
+		if (!options_allow_ok
+		    (config->options_allow, config->data[i].options)) {
+		    dotconf_cleanup(configfile);
+		    return 0;
+		}
+	    } else if (config->options_deny[0]) {
+		w4rn("pam_mount: %s\n", "verifying options deny");
+		if (!options_deny_ok
+		    (config->options_deny, config->data[i].options)) {
+		    dotconf_cleanup(configfile);
+		    return 0;
+		}
 	    } else {
-		home_dir = passwd_ent->pw_dir;
+		if (*config->data[i].options) {
+		    log("pam_mount: %s\n",
+			"user specified options denied by default");
+		    return 0;
+		}
 	    }
-
-	    /* home_directory/argument\0 */
-	    luserconf = (char *) malloc(strlen(home_dir) + 1 +
-					strlen(argument) + 1);
-	    luserconf[0] = '\0';
-	    strcat(luserconf, home_dir);
-	    strcat(luserconf, "/");
-	    strcat(luserconf, argument);
-
-	    if (!owns(user, luserconf)) {
-		w4rn("pam_mount: %s\n", "user does not own <luserconf>");
-		free(luserconf);
-		luserconf = NULL;
-		continue;
-	    }
-
-	    continue;
-	}
-
-	if (strcmp(parameter, "smbmount") == 0) {
-	    readcommand(command, argument, SMBMOUNT);
-	    continue;
-	}
-
-	if (strcmp(parameter, "ncpmount") == 0) {
-	    readcommand(command, argument, NCPMOUNT);
-	    continue;
-	}
-
-	if (strcmp(parameter, "lclmount") == 0) {
-	    readcommand(command, argument, LCLMOUNT);
-	}
-
-	if (strcmp(parameter, "umount") == 0) {
-	    readcommand(command, argument, UMOUNT);
-	    continue;
-	}
-
-	if (strcmp(parameter, "pmhelper") == 0) {
-	    readcommand(command, argument, PMHELPER);
-	    continue;
-	}
-
-	if (strcmp(parameter, "lsof") == 0) {
-	    readcommand(command, argument, LSOF);
-	    continue;
-	}
-
-	if (strcmp(parameter, "volume") == 0) {
-	    if (! readvolume(user, password, volcount, data, command,
-		       argument, 0, mkhome))
-		       return 0;
-	    continue;
 	}
     }
-    fclose(conffile);
-
-    if (!luserconf) {
-	return 1;
-    }
-
-    /* if the options filters haven't been specified, do
-       the safe thing: don't allow user config files */
-    if (options_state == OPTIONS_UNINIT) {
-	log("pam_mount: %s\n",
-	     "options filtering not specified");
-	return 0;
-    }
-
-    if (options_state == OPTIONS_ERROR) {
-	log("pam_mount: %s\n",
-	     "an options error occurred");
-	return 0;
-    }
-
-    conffile = fopen(luserconf, "r");
-    if (!conffile) {
-	w4rn("pam_mount: %s\n", "could not open local config file");
-	return 0;
-    }
-
-    while (fgets(line, BUFSIZE - 1, conffile)) {
-
-	parameter = strtok(line, delim);
-	argument = strtok(NULL, delim);
-
-	if (!parameter || !argument)
-	    continue;
-	if (strchr(parameter, '#'))
-	    continue;
-
-	if (strcmp(parameter, "debug") == 0) {
-	    debug = strcmp(argument, "1") == 0;
-	    continue;
-	}
-
-	if (strcmp(parameter, "volume") == 0) {
-	    if (!readvolume(user, password, volcount, data, command,
-		       argument, 1, mkhome))
-                return 0;
-	    continue;
-	}
-    }
-    fclose(conffile);
-
+    dotconf_cleanup(configfile);
     return 1;
 }
 
-void readcommand(char *command[], char *argument, int v)
+/* ============================ initconfig () ============================== */
+/* PRE:  config points to a valid config_t structure
+ * POST: config is initialized (ie: config.volcount == 0) */
+void initconfig(config_t * config)
 {
-    command[v] = (char *) malloc(FILENAME_MAX + 1);
-    command[v][0] = '\0';
-
-    while (argument) {
-	if (strlen(argument) + strlen(command[v]) + 1 < FILENAME_MAX) {
-	    w4rn("pam_mount: adding %s to command\n", argument);
-	    strcat(command[v], argument);
-	}
-	if ((argument = strtok(NULL, delim))) {
-	    strcat(command[v], " ");
-	}
-    }
-
-    command[v][FILENAME_MAX] = '\0';
-    w4rn("pam_mount: complete command is %s\n", command[v]);
+    int i;
+    config->volcount = 0;
+    config->debug = DEBUG_DEFAULT;
+    config->mkmountpoint = MKMOUNTPOINT_DEFAULT;
+    for (i = 0; i < COMMAND_MAX; i++)
+	*config->command[i] = 0x00;
+    memset(config->options_require, 0x00, MAX_PAR + 1);
+    memset(config->options_allow, 0x00, MAX_PAR + 1);
+    memset(config->options_deny, 0x00, MAX_PAR + 1);
 }
 
-/* Replaces first occurence of & with user.  Returns NULL if no work
-   was necessary, or a new copy otherwise. */
+/* ============================ expand_home () ============================= */
+/* PRE:    path points to the path to expand (ie: ~/foo)
+ * FN VAL: expanded path (ie: /home/usr/foo) */
+char *expand_home(char *path, const char *user)
+{
+    char *tmp = NULL;
+    struct passwd *p = getpwnam(user);
+    if (p) {
+	/* don't need to + 1 len because ~ is dropped from path */
+	tmp = (char *) malloc(strlen(p->pw_dir) + strlen(path));
+	if (tmp) {
+	    strcpy(tmp, p->pw_dir);
+	    strcat(tmp, path + 1);
+	}
+    }
+    return tmp;
+}
 
-char *expand_wildcard(const char *value, const char *user)
+/* ============================ expand_wildcard () ========================= */
+/* PRE:    str points to the string to expand (must contain at least one &)
+ *         user is the username to expand to
+ * FN VAL: str with any &s expanded into user */
+char *expand_wildcard(char *str, const char *user)
 {
     char *result = NULL;
     char *pos;
-
-    w4rn("pam_mount: expand_wildcard for %s\n", value);
-
-    if (value == NULL) {
+    w4rn("pam_mount: expand_wildcard for %s\n", str);
+    if (str == NULL) {
 	return NULL;
     }
-    pos = strchr(value, '&');
+    pos = strchr(str, '&');
     if (pos) {
 	char *next;
-
-	result = malloc(strlen(value) + strlen(user));
-	strcpy(result, value);
-	strcpy(result + (pos - value), user);
+	/* don't need to + 1 len because & is dropped from path */
+	result = malloc(strlen(str) + strlen(user));
+	strcpy(result, str);
+	strcpy(result + (pos - str), user);
 	strcat(result, pos + 1);
 	next = expand_wildcard(result, user);
 	if (next) {
@@ -560,163 +564,42 @@ char *expand_wildcard(const char *value, const char *user)
 	    result = next;
 	}
     }
-
     return (result);
 }
 
-
-int read_filters(char **filter_array, int *filter_count, char *opt_list)
+/* ============================ expandconfig () ============================ */
+/* PRE:  config points to a valid config_t structure that has been filled
+ * POST: any wildcards in config->data are expanded */
+void expandconfig(config_t * config)
 {
-    int i = 0;
-
-    *filter_count = 0;
-    w4rn("pam_mount: read_filters: %s\n", opt_list);
-
-    filter_array[0] = strtok(opt_list, ",");
-    i = 1;
-    w4rn("pam_mount: read_filters: %s\n", filter_array[0]);
-
-    /* either there was an empty allow/deny line, or the strdup failed.
-       we treat either as a truncated list. */
-    if (!filter_array[0] || !(filter_array[0] = strdup(filter_array[0]))) {
-	return FILTERS_TRUNC;
-    }
-
-    /* read the rest of the filters, unless we got the wildcard filter */
-    if (strcmp(filter_array[0], "*") != 0) {
-	while (i < MAX_FILTERS && (filter_array[i] = strtok(NULL, ","))) {
-	    /* wildcard cannot be mixed with others */
-	    if (strcmp(filter_array[i], "*") == 0) {
-		return FILTERS_BAD;
+    int i;
+    for (i = 0; i < config->volcount; i++) {
+	char *tmp;
+	if (*config->data[i].mountpoint == '~') {
+	    tmp = expand_home(config->data[i].mountpoint, config->user);
+	    if (tmp) {
+		strncpy(config->data[i].mountpoint, tmp, FILENAME_MAX + 1);
+		free(tmp);
 	    }
-
-	    if (!(filter_array[i] = strdup(filter_array[i]))) {
-		/* couldn't get this filter... return 1
-		   to indicate truncation */
-		*filter_count = i;
-		return FILTERS_TRUNC;
+	}
+	if (!strcmp(config->data[i].user, "*")) {
+	    strcpy(config->data[i].user, config->user);
+	    tmp = expand_wildcard(config->data[i].volume, config->user);
+	    if (tmp) {
+		strncpy(config->data[i].volume, tmp, MAX_PAR + 1);
+		free(tmp);
 	    }
-	    w4rn("pam_mount: read_filters: %s\n", filter_array[i]);
-	    ++i;
+	    tmp =
+		expand_wildcard(config->data[i].mountpoint, config->user);
+	    if (tmp) {
+		strncpy(config->data[i].mountpoint, tmp, FILENAME_MAX + 1);
+		free(tmp);
+	    }
+	    tmp = expand_wildcard(config->data[i].options, config->user);
+	    if (tmp) {
+		strncpy(config->data[i].options, tmp, MAX_PAR + 1);
+		free(tmp);
+	    }
 	}
-    } else {
-	return FILTERS_WILD;
     }
-
-    *filter_count = i;
-
-    /* any remaining tokens? */
-    if (strtok(NULL, ",") != NULL) {
-	return FILTERS_TRUNC;
-    } else {
-	return FILTERS_OKAY;
-    }
-}
-
-/* not particularly elegant implementations, but they should work anyway */
-int filter_allow(char *opts)
-{
-    char *opt;
-    int i;
-
-    opt = strtok(opts, ",");
-    while (opt != NULL) {
-	int matched = 0;
-
-	for (i = 0; i < opt_filter_count && !matched; ++i) {
-	    matched = strcmp(opt_allow_filter[i], opt) ? 0 : 1;
-	}
-
-	/* this option not on the allowed list */
-	if (!matched) {
-	    log("pam_mount: option %s not allowed!\n", opt);
-	    return 0;
-	}
-
-	opt = strtok(NULL, ",");
-    }
-
-    /* everything we saw was allowed */
-    return 1;
-}
-
-int filter_deny(char *opts)
-{
-    char *opt;
-    int i;
-
-    opt = strtok(opts, ",");
-    while (opt != NULL) {
-	int matched = 0;
-
-	for (i = 0; i < opt_filter_count && !matched; ++i) {
-	    matched = strcmp(opt_deny_filter[i], opt) ? 0 : 1;
-	}
-
-	/* this option is on the deny list */
-	if (matched) {
-	    w4rn("pam_mount: option %s denied!\n", opt);
-	    return 0;
-	}
-
-	opt = strtok(NULL, ",");
-    }
-
-    /* nothing we saw was denied */
-    return 1;
-}
-
-int filter_options(const char *options)
-{
-    char *my_options = strdup(options);
-    int retval;
-
-    switch (options_state) {
-    case OPTIONS_ALLOW:
-	retval = filter_allow(my_options);
-	break;
-    case OPTIONS_DENY:
-	retval = filter_deny(my_options);
-	break;
-    default:
-	/* shouldn't happen */
-	w4rn("pam_mount: %s\n", "BUG");
-	retval = 0;
-	break;
-    }
-
-    free(my_options);
-    return retval;
-}
-
-int required_options(const char *opts)
-{
-    char *opt, *my_opts;
-    int i;
-    int num_matched = 0;
-
-    if ((opts == NULL) && (opt_req_count != 0)) {
-	return 0;
-    }
-
-    my_opts = strdup(opts);
-    opt = strtok(my_opts, ",");
-    while (opt != NULL) {
-	int matched = 0;
-
-	for (i = 0; i < opt_req_count && !matched; ++i) {
-	    matched = strcmp(opt_required[i], opt) ? 0 : 1;
-	}
-
-	/* this option was required */
-	if (matched) {
-	    w4rn("pam_mount: required option %s found\n", opt);
-	    num_matched++;
-	}
-
-	opt = strtok(NULL, ",");
-    }
-
-    free(my_opts);
-    return (num_matched == opt_req_count) ? 1 : 0;
 }

@@ -1,4 +1,50 @@
+26 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Added checks to luserconf can only configure commands and
+	volumes.
+
+	* Pmhelper now checks to see if a volume is already mounted
+	before it tries to mount it.
+
+	* Cleaned up some of the new readconfig code a bit.
+
+	* Always returns PAM_SUCCESS again so login is not refused.
+
+	* Fixed complaint about misc.o being used both with and without
+	libtool (linked misc.c to miscso.c).
+
+21 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Began to use dotconf to read configuration files.  This work
+	ended up spanning several days, as expected.  Though this is
+	a bit difficult, the old readconfig.c need to be scrapped --
+	it was difficult to maintain and scrub for security flaws.
+	The new code still needs work, but has a more well designed core.
+	A little pain now will save more later.
+
+20 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Applied some code cleanups from Bastian Kleineidam.
+
+	* Moved mkhomedir code to pmhelper.c.  Now creates homedirs when
+	wildcards are not used too.
+
+	* Changed mkhome option to mkmountpoint.
+
+19 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Added mention of mkehd to nasty-details_pam_mount.xml.
+
+	* Added documentation to functions in pmhelper.c.
+
+18 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed buffer issue in readconfig.c (thanks Miguel Freitas).
+
 17 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* All mount types now avoid using the command line to pass
+	passwords.  Needs testing!
 
 	* Now chowns homedir to owner if pam_mount has to create it.
 	Make sure nsswitch is configured if using, for example, winbindd.

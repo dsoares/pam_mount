@@ -2,27 +2,28 @@
 
 For 1.0:
 
-o Password not transmitted on commandline to ncpmount.
+o Test config reading fn, especially luserconfs.  Test required, allowed,
+and denied options a lot.
 
-o All w4rn calls before readconfig are always turned off.  Fix this.
+o All w4rn calls before readconfig are always turned off.  Fix this?
 
 o Readconfig function (and maybe config format) needs to be redone.
 
-o Make all optional code (openssl, openldap, etc) configured by autoconf.
-
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
-unstable.
+unstable.  In Red Hat bugzilla.
 
 o Test mkehd a lot and recommend using it to simplify documentation.
 
-o Use comments to document pre, post, and FNVAL conditions and insure they
-are met (related to code scrub).
-
 o Security audit.  Scrub code for buffer overflows and other
 security-related bugs:
-pmhelper.c: See FIXME to learn where code cleanup stopped.
-readconfig.c
+pmhelper.c
+pam_mount.c
+readconfg.c
+
+o Finish LJ article.
+
+o Send letter.
 
 ===============================================================================
 

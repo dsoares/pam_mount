@@ -27,7 +27,7 @@ endif
 
 AUTOMAKE_OPTIONS = gnu
 
-EXTRA_DIST = README_DEBIAN
+EXTRA_DIST = README_DEBIAN autogen.sh
 
 SUBDIRS = src include dry config scripts
 
