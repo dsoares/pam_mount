@@ -26,7 +26,7 @@ AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
 MINOR_VERSION=9
-MICRO_VERSION=3
+MICRO_VERSION=4
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -43,6 +43,13 @@ AM_PROG_LIBTOOL
 AM_CONDITIONAL(FLYN, test "$FLYN")
 
 AC_CHECK_LIB(crypto, EVP_CIPHER_CTX_init)
+
+# Use -lfmt_ptrn if it exists else compile locally (see also src/Makefile.am).
+# ./include-fmt_ptrn should contain libfmt_ptrn's headers for use if
+# -lfmt_ptrn does not exist.
+# AC_CHECK_LIB(fmt_ptrn, mt_ptrn_init, AM_CONDITIONAL(SYSTEM_LIBFMT_PTRN, true), LOCAL_FMT_PTRN_INCLUDES="-I\$(srcdir)/../include-fmt_ptrn", -ltemplate)
+AC_SUBST(LOCAL_FMT_PTRN_INCLUDES)
+
 AC_CHECK_HEADER(security/pam_modules.h,,AC_MSG_ERROR(You are missing security/pam_modules.h))
 
 case "$host" in

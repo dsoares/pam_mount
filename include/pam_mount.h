@@ -11,6 +11,7 @@ extern          "C" {
 #include <security/pam_modules.h>
 #include <errno.h>
 #include <limits.h>
+#include <optlist.h>
 
 #ifdef __OpenBSD__
 #define CONFIGFILE	"/etc/pam_mount.conf"
@@ -36,6 +37,7 @@ extern          "C" {
 
 #define DEBUG_DEFAULT		0
 #define MKMOUNTPOINT_DEFAULT	0
+#define FSCKLOOP_DEFAULT	"/dev/loop7"
 
 	typedef enum command_type_t {
 		SMBMOUNT,
@@ -46,9 +48,11 @@ extern          "C" {
 		UMOUNT,
 		PMHELPER,
 		LSOF,
+		MNTAGAIN,
 		MNTCHECK,
 		FSCK,
 		LOSETUP,
+		UNLOSETUP,
 		COMMAND_MAX
 	}               command_type_t;
 	
@@ -80,9 +84,10 @@ extern          "C" {
 		char            user[MAX_PAR + 1];	/* user field in a
 							 * single volume config
 							 * record; can be "*" */
-		char            volume[MAX_PAR + 1];
-		char            options[MAX_PAR + 1];
+		char            volume[MAX_PAR + 1]; /* FIXME: PATH_MAX */
+		optlist_t       options;
 		char            mountpoint[PATH_MAX + 1];
+		int 		use_fstab;
 	}               vol_t;
 
 	typedef struct config_t {
@@ -91,10 +96,11 @@ extern          "C" {
 		int             mkmountpoint;
 		int             volcount;
 		char            luserconf[PATH_MAX + 1];
+		char		fsckloop[PATH_MAX + 1];
 		char           *command[MAX_PAR + 1][COMMAND_MAX];
-		char           *options_require[MAX_PAR + 1];
-		char           *options_allow[MAX_PAR + 1];
-		char           *options_deny[MAX_PAR + 1];
+		optlist_t	options_require;
+		optlist_t	options_allow;
+		optlist_t	options_deny;
 		vol_t          *volume;
 	}               config_t;
 
@@ -115,13 +121,13 @@ extern          "C" {
 				                      char **pass);
 
 /* ============================ do_mount () ================================ */
-	int             do_mount(struct config_t * config, const int vol, const char *password, const int mkmntpoint, const int mntpt_from_fstab);
+	int             do_mount(struct config_t * config, const int vol, const char *password, const int mkmntpoint);
 
 /* ============================ do_unmount () ============================== */
-	int             do_unmount(struct config_t * config, const int vol, const char *password, const int mkmntpoint, const int mntpt_from_fstab);
+	int             do_unmount(struct config_t * config, const int vol, const char *password, const int mkmntpoint);
 
 /* ============================ mount_op () ================================ */
-	int             mount_op(int (*mnt) (struct config_t * config, const int vol, const char *password, const int mkmntpoint, const int mntpt_from_fstab), struct config_t * config, const int vol, const char *password, const int mkmntpoint);
+	int             mount_op(int (*mnt) (struct config_t * config, const int vol, const char *password, const int mkmntpoint), struct config_t * config, const int vol, const char *password, const int mkmntpoint);
 
 #ifdef __cplusplus
 }

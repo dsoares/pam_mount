@@ -30,15 +30,15 @@ _USER=$USER
 
 USAGE="[OPTION]...
 
-  -h, -?       print this message
-  -c cipher    set the cipher used in the filesystem     [ $CIPHER ]
-  -i cipher    set the fsk cipher                        [ from pam_mount.conf ]
-  -f filename  name of the disk image to generate        [ from pam_mount.conf ]
-  -k keybits   set the number of bits in cipher key      [ $KEYBITS ]
-  -p path      set the path to the efsk                  [ from pam_mount.conf ]
-  -s size      size in MB of generated filesystem        [ $SIZE ]
-  -t fs type   type of filesystem to create              [ $FSTYPE ]
-  -u user      name of user to create ehd for            [ $_USER ]"
+  -h, -?      print this message
+  -c cipher   set the cipher used in the filesystem [ $CIPHER ]
+  -i cipher   set the fsk cipher                    [ from pam_mount.conf ]
+  -f filename name of the disk image to generate    [ from pam_mount.conf ]
+  -k keybits  set the number of bits in cipher key  [ $KEYBITS ]
+  -p path     set the path to the efsk              [ from pam_mount.conf ]
+  -s size     size in MB of generated filesystem    [ $SIZE ]
+  -t fs type  type of filesystem to create          [ $FSTYPE ]
+  -u user     name of user to create ehd for        [ $_USER ]"
 
 while :;
 	do case "$1" in
@@ -124,7 +124,7 @@ for (( ; $volcount >= 0; volcount=$(($volcount - 1)) )); do
 			exit 1
 		fi
 		echo "Creating filesystem image using /dev/urandom (may take a LONG time)..."
-		dd if=/dev/urandom of=${FILENAME[$volcount]} bs=1M count=$SIZE > /dev/nul
+		dd if=/dev/urandom of=${FILENAME[$volcount]} bs=1M count=$SIZE > /dev/null
 		# Use a named pipe because env. vars. are viewable by all 
 		# and random string is already being piped into openssl's 
 		# stdin

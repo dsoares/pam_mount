@@ -150,7 +150,7 @@ str_to_long (char *n)
  * FN VAL: new value else -1 on error, errors are logged 
  * NOTE:   code is modified version of pam_console.c's use_count 
  * FIXME:  should this be replaced with utmp (man utmp) usage?  
- *         Is utmp portable?
+ *         Is utmp portable?  This function is nasty.
  */
 int
 modify_pm_count (const char *user, long amount)
@@ -216,7 +216,11 @@ top:
        * su creates file group owned by user and the releases root
        * perms.  User needs to be able to access file on logout.
        */
+/* FIXME: testing root owned /var/run/pam_mount/* -- requires that pam_mount
+ *        has root privileges when clossing session.
       if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
+*/
+      if (fchown (fd, 0, 0) == -1)
 	{
 	  w4rn ("pam_mount: unable to chown %s\n", filename);
 	  err = -1;
@@ -471,11 +475,7 @@ pam_sm_close_session (pam_handle_t * pamh, int flags, int argc,
       {
 	w4rn ("pam_mount: %s\n", "going to unmount");
 	if (!mount_op (do_unmount, &config, vol, NULL, config.mkmountpoint))
-	  {
-	    l0g ("pam_mount:%s\n", "could not umount");
-	    freeconfig (config);
-	    return PAM_SERVICE_ERR;
-	  }
+	    l0g ("pam_mount: unmount of %s failed\n", config.volume[vol].volume);
       }
   else
     w4rn ("pam_mount: %s seems to have other remaining open sessions\n",

@@ -1,22 +1,19 @@
 = For 1.0 =====================================================================
 
-o Don't quit after one mount fails?
+o Mention cryptoswap/tmp in documentation for ehd.
 
-o Make pam_mount.c and mount.c completely binary passwd safe.
+o Need to encrypt /tmp, etc. like swap?
 
-o Does auth code still work with null password?
+o If losetup does not regain -k option, modify scripts.
 
-o Automate debian/changelog because it determines the version of deb package.
+o Check out pam_losetup.
 
-o Debian-guy security flaw?  If changed, update luserconf info in
-pam_mount.conf and pam_mount.xml.
+o Scrub code one last time and allow people to test for a few weeks.
 
-o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
-	I HAVE REPORTS THAT IT WORKS NOW.  DOES IT?
+o Get rid of FIXMEs.
 
-o Fix GNOME so that Gconfd does not hang around after a user exits.
-This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
-unstable.  In Red Hat bugzilla.
+o Perhaps /var/run/pam_mount/* should be owned by root so users can not
+edit it (see related FIXMEs)?  Currently testing.
 
 = OpenBSD =====================================================================
 
@@ -35,12 +32,29 @@ o Test new openpam to ensure OpenBSD patches are integrated.
 
 = Past 1.0 (punted) ===========================================================
 
-o How to have two people log in, access the same encrypted loopback
-filesystem at the same time safely?
-	- Only mount it once in a shared location?  How to handle
-	/var/run/pam_mount?
-	- Make loopback mounting multiple-mount safe?
-	- See mount's --bind?
+o Use format like smbmount /usr/bin/smbmount %(user) ... in pam_mount.conf
+to simplify code in pmhelper.c.  This will make pam_mount much more
+flexible too.  No smbmount, ncpmount, lclmount-specific code will
+be required in smbmount.c.  Use libfmt_ptrn if on system, otherwise use
+local copy (SEE CONFIGURE.IN and SRC/MAKEFILE.AM COMMENTS).
+
+o Get umount -l to release loop device when appropriate and possible?
+
+o Ensure util-linux-2.11z-mountpoint.patch is in mail util-linux.
+
+o Make pam_mount.c and mount.c completely binary passwd safe.
+
+o Does auth code still work with null password?
+
+o Debian-guy security flaw?  If changed, update luserconf info in
+pam_mount.conf and pam_mount.xml.
+
+o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
+	I HAVE REPORTS THAT IT WORKS NOW.  DOES IT?
+
+o Fix GNOME so that Gconfd does not hang around after a user exits.
+This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
+unstable.  In Red Hat bugzilla.
 
 o Deamon to unmount volume after all processes finally exit after a user logs
 out?  What if a user uses nohup?
@@ -49,25 +63,18 @@ o Change & config syntax to allow groups to be used.
 
 o Remove pmhelper code completely from readconfig.c.
 
-o Use format like smbmount /usr/bin/smbmount %(user) ... in pam_mount.conf
-to simplify code in pmhelper.c.  This will make pam_mount much more
-flexible too.  No smbmount, ncpmount, lclmount-specific code will
-be required in smbmount.c.  Use libnew if on system, otherwise use
-local copy.
-
 o Get smbmount and ncpmount to support mount-like -p0 option to simplify
 pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
 
 o Fix Debian: see README_DEBIAN.
-
-o Get rid of FIXMEs.
 
 o Ensure that NFS shares are working.  Document NFS use.  Get TCFS
 working.  Get SSLed NFS shares working.
 
 o Add the ability to create an encrypted loopback filesystem to useradd.
 This should also create a README file in, for example, /home/mike that
-explains setup.
+explains setup.  (useradd is a part of passwd package, adduser is a part
+of adduser package).
 
 o Modify passwd to update /home/mike.key.  Add -p, --post-script option
 to run passwdehd?  (See passwdehd script)
@@ -96,7 +103,12 @@ pam_ldap might be a great solution.
 	INFO TO BE REFERENCED IN VOLUME DEFINITIONS UNTIL NICE, NEW
 	VOLUME DEF. CODE IS IMPLEENTED.
 
+o Write a nice GNOME control center applet to configre mounts.
+
+o Tie in to xscreensaver?
+
 = Personal ====================================================================
 
 o Figure out better way to handle ~/.gnome/photo and move
-/home/mike-nocrypt/.gnome back into ~.
+/home/mike-nocrypt/.gnome back into ~.  Linux does not support union
+mounting?

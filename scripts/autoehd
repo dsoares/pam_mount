@@ -51,6 +51,8 @@ if [ ! -f $CONF ]; then
 fi
 
 REGEX="^volume $USER"
+MNTPT=`grep "$REGEX" $CONF | awk '{ print $6 }'`
+OPTIONS=`grep "$REGEX" $CONF | awk '{ print $7 }'`
 CIPHER=`grep "$REGEX" $CONF | awk '{ print $8 }'`
 KEYPATH=`grep "$REGEX" $CONF | awk '{ print $9 }'`
 VOLUME=`grep "$REGEX" $CONF | awk '{ print $5 }'`
@@ -60,8 +62,18 @@ if [ -z "$VOLUME" ]; then
 	exit 1
 fi
 
-if [ x${CIPHER} = x- ]; then
-	mount $VOLUME
+if [ x${MNTPT} = x- ]; then
+	MNTPT=""	
+fi
+
+if [ x${OPTIONS} = x- ]; then
+	OPTIONS=""	
 else
-	openssl enc -d -$CIPHER -in $KEYPATH | mount -p0 $VOLUME
+	OPTIONS="-o $OPTIONS"
+fi
+
+if [ x${CIPHER} = x- ]; then
+	mount $OPTIONS $VOLUME $MNTPT
+else
+	openssl enc -d -$CIPHER -in $KEYPATH | mount -p0 $OPTIONS $VOLUME $MNTPT
 fi

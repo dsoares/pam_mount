@@ -1,6 +1,67 @@
+15 August 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Finished migrating mount.c to execv.
+
+	* Added unlosetup configuration.
+
+	* Added fsckloop configuration.
+
+	* Pam_mount now checks to ensure a command exists before
+	execv'ing it.
+
+12 August 2003 W. Michael Petullo <mike@flyn.org>
+
+	* exec_unmount_volume and exec_mount_volume_again now use execv
+	in anticipation of post 1.0 additions.
+
+7 August 2003 W. Michael Petullo <mike@flyn.org>
+
+	* mkehd now chowns key and image it creates for user.
+
+	* autoehd can now mount volumes that are defined in pam_mount.conf
+	instead of fstab.
+
+22 July 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up some configuration expansion code.
+
+20 July 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added several regression tests to my test account and fixed
+	some code throughout readconfig.c.
+
+19 July 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Overhaul of option parsing code.
+
+18 July 2003 W. Michael Petullo <mike@flyn.org>
+	
+	* Fsck should now run on any local volume.
+
+15 July 2003 W. Michael Petullo <mike@flyn.org>
+	
+	* Got rid of some silly debugging statements.
+
+	* Added check: if /etc/fstab is to be used for a volume, then
+	no options should be specified.
+
+14 July 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Warning about volumes "not for me" no longer logged when
+	debugging is turned off.
+
+	* Now mounts same volume multiple times correctly on Linux.
+
+12 July 2003 W. Michael Petullo <mike@flyn.org>
+	
+	* Fixed array size issue associated with FSK decryption code
+	that could potentially cause a problem.
+
 7 July 2003 W. Michael Petullo <mike@flyn.org>
 	
 	* Fixed bug in mount.c's efsk code.
+
+	* Pam_mount now continues to try and unmount volumes after one fails.
 
 5 July 2003 W. Michael Petullo <mike@flyn.org>
 
