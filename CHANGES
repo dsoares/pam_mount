@@ -1,0 +1,5 @@
+2000-xx-xx	0.01	First public version
+
+2000-xx-xx	0.1	Several modifications in /etc/pam_mount.conf format
+
+2000-11-14	0.2	pmhelper no longer stays in memory during the user session

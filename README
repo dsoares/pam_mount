@@ -1,0 +1,80 @@
+1. What is pam_mount
+
+pam_mount is a module that can mount remote volumes for a user session.
+
+This module is aimed to environments with SMB (Samba or Windows NT) and/or
+NCP (Netware or Mars-NWE) servers that Unix users want or need to access,
+and some users have / every user has private volumes in that servers.
+
+- every user can access his/her own volumes;
+- the user needs to type the password just once (at login) (*);
+- the mouting process is transparent to the users;
+- there is no need to keep the login passwords in any additional file;
+- the volumes are unmount upon logout, so it saves system resources, avoiding
+  the need of listing every every possibly useful remote volume in /etc/fstab 
+  or in an automount/supermount config file.
+
+(*) Obviously, the user password in the Unix system and in the remote
+    servers must be the same ;)
+
+
+pam_mount "understands" SMB and NCP volumes, but this can be extended very 
+easily. If someone has a particular need for a different filesystem, feel 
+free to ask me to include it and / or send me patches.
+
+
+2. Configuring /etc/pam.d/login (or xdm, kdm, ssh and others)
+
+You must include two entries in the /etc/pam.d/SERVICE config file, as the
+following example shows:
+
+#%PAM-1.0
+auth       required     /lib/security/pam_securetty.so
+auth       required     /lib/security/pam_pwdb.so shadow nullok
+auth       required     /lib/security/pam_nologin.so
+>>> auth       required     /lib/security/pam_mount.so use_firstpass
+account    required     /lib/security/pam_pwdb.so
+password   required     /lib/security/pam_cracklib.so
+password   required     /lib/security/pam_pwdb.so shadow nullok use_authtok
+session    required     /lib/security/pam_pwdb.so
+session    optional     /lib/security/pam_console.so
+>>> session    optional     /lib/security/pam_mount.so
+
+(To see why we need two entries, see BUGS)
+
+
+3. Configuring /etc/pam_mount.conf
+
+The /etc/pam_mount.conf file itself has a lot of commented lines that explain
+what every parameter means. 
+
+In general, you will leave all the first (general) parameters as provided by 
+default. You only have to provide the user/volume list in the end of the 
+file, following the examples.
+
+To ensure that your system and the remote server are all properly configured,
+you should try to mount all or some of the remote volumes by hand, using the
+same commands and mount points provided in /etc/pam_mount.conf. This will 
+save you a lot of grief, since it is more difficult to debug the mounting
+process via pam_mount.
+
+
+4. Debugging
+
+If you can mount the remote volumes by hand but it is not happening via
+pam_mount, you may want to enable the "debug" option in /etc/pam_mount.conf to
+see what is happening.
+
+- Verify if the user owns the mount point and has sufficient permissions over 
+that. pam_mount will verify this and will refuse to mount the remote volume if 
+the user does not own that directory.
+
+
+5. Blurb
+
+This program shall be distributed under the terms of the most recent version
+of the GNU Public License.
+
+Copyright (C) 2000 Conectiva SA 
+                   Elvis Pfützenreuter <epx@conectiva.com>
+
