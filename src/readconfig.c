@@ -34,8 +34,7 @@ DOTCONF_CB(read_volume);
 
 static const configoption_t legal_config[] = {
     {"debug", ARG_INT, read_debug, &config.debug, CTX_ALL},
-    {"mkmountpoint", ARG_INT, read_int_param, &config.mkmountpoint,
-     CTX_ALL},
+    {"mkmountpoint", ARG_INT, read_int_param, &config.mkmountpoint, CTX_ALL},
     {"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
     {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
     {"smbmount", ARG_LIST, read_command, &config, CTX_ALL},
@@ -60,22 +59,29 @@ FUNC_ERRORHANDLER(log_error)
 
 /* ============================ read_options () ============================ */
 /* NOTE: callback helper function for reading options_require, options_allow,
- *       and options_deny */
-char *read_options(char *options[], char *options_str)
+ *       and options_deny.  options must be initialized to 
+ *       [ 0x00, ..., 0x00 ] (see initconfig) */
+char *read_options(char *options[], char *opt_str)
 {
     int count = 0;
-    char *ptr = options_str;
+    char *ptr = strchr(opt_str, ',') ? strchr(opt_str, ',') : opt_str + strlen (opt_str);
     w4rn("%s", "pam_mount: options (req., allow, or deny): ");
-    while (ptr = strchr(ptr, ',')) {
-	*ptr++ = 0x00;
+    do {
+        if (count > MAX_PAR) {
+	    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+	    strcpy(errmsg, "too many options");
+	    return errmsg;
+	} 
+	else if (ptr - opt_str > MAX_PAR) {
+	    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+	    strcpy(errmsg, "option too long");
+	    return errmsg;
+	} 
 	options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
-	strncpy(options[count], options_str, MAX_PAR);
-	options_str = ptr;
+	strncpy(options[count], opt_str, ptr - opt_str);
+	opt_str = ptr;
 	w4rn("%s ", options[count++]);
-    }
-    options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
-    strncpy(options[count], options_str, MAX_PAR);
-    w4rn("%s\n", options[count++]);
+    } while (ptr = strchr(ptr, ','));
     return NULL;
 }
 
@@ -118,21 +124,39 @@ DOTCONF_CB(read_options_deny)
 			cmd->data.str);
 }
 
+/* ============================ get_command_index () ======================= */ 
+/* PRE:    command is assigned an initialized pm_command_t array
+ *         name points to a valid string != NULL
+ * FN VAL: if name in command then cooresponding type, else -1 */
+command_type_t get_command_index(const pm_command_t command[], const char *name)
+{
+    int i;
+    for (i = 0; command[i].type != -1; i++)
+	if (!strcmp(command[i].command_name, name)) {
+	    return command[i].type;
+	}
+    return -1;
+}
+
 /* ============================ read_command () ============================ */
-/* NOTE: callback function for reading command configurations */
+/* NOTE: callback function for reading command configurations
+ *       command array must be initialized to [ 0x00, ..., 0x00 ] 
+ *       (see initconfig) */
 DOTCONF_CB(read_command)
 {
-    int i, command_index = -1;
+    int i;
+    command_type_t command_index;
     char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-    for (i = 0; command[i].type != -1; i++)
-	if (!strcmp(command[i].command_name, cmd->name)) {
-	    command_index = command[i].type;
-	    break;
-	}
-    if (command_index == -1) {
+    if ((command_index = get_command_index(command, cmd->name)) == -1) {
 	snprintf(errmsg, BUFSIZ + 1,
 		 "pam_mount: bad command in config: %s", cmd->name);
 	return errmsg;
+    }
+    for (i = 0; i < cmd->arg_count; i++)
+        if (strlen(cmd->data.list[i]) > MAX_PAR) {
+	    snprintf(errmsg, BUFSIZ + 1,
+		 "pam_mount: command too long: %s", cmd->data.list[0]);
+            return errmsg;
     }
     ((config_t *) cmd->option->info)->command[0][command_index] =
 	(char *) calloc(MAX_PAR + 1, sizeof(char));
@@ -157,7 +181,6 @@ DOTCONF_CB(read_command)
 		command[i + 1][command_index], cmd->data.list[i],
 		MAX_PAR + 1);
     }
-    ((config_t *) cmd->option->info)->command[i + 1][command_index] = NULL;
     w4rn("%s", "\n");
     return NULL;
 }
@@ -228,7 +251,7 @@ DOTCONF_CB(read_luserconf)
 	home_dir = passwd_ent->pw_dir;
     }
     if (strlen(home_dir) + strlen("/") + strlen(cmd->data.str) >
-	FILENAME_MAX + 1) {
+	FILENAME_MAX) {
 	strcpy(errmsg, "pam_mount: expanded luserconf path too long");
 	return errmsg;
     }
@@ -257,6 +280,7 @@ DOTCONF_CB(read_int_param)
 /* NOTE: callback function for reading debug parameter */
 DOTCONF_CB(read_debug)
 {
+    /* debug is handled as a special case so global debug can be set ASAP */
     debug = cmd->data.value;
     return read_int_param(cmd, ctx);
 }
@@ -267,25 +291,31 @@ DOTCONF_CB(read_volume)
 {
 #define DATA ((config_t *)cmd->option->info)->data
 #define VOLCOUNT ((config_t *)cmd->option->info)->volcount
-    /* FIXME: all of the strncpys in this function need to be fixed */
     int i;
     char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
     if (cmd->arg_count != 8) {
 	strcpy(errmsg, "pam_mount: bad number of args for volume");
 	return errmsg;
     } else
-	if (strcmp
+	if (*((int *) cmd->context) && strcmp
 	    (cmd->data.list[0], ((config_t *) cmd->option->info)->user)
 	    && strcmp(cmd->data.list[0], "*")) {
+	/* user may use other usernames to mount volumes using luserconf */
 	snprintf(errmsg, BUFSIZ + 1,
 		 "pam_mount: ignoring volume record for %s",
 		 cmd->data.list[0]);
 	return NULL;
     }
+    for (i = 0; i < cmd->arg_count; i++)
+        if (strlen(cmd->data.list[i]) > MAX_PAR) {
+	    snprintf(errmsg, BUFSIZ + 1,
+		 "pam_mount: command too long: %s", cmd->data.list[0]);
+            return errmsg;
+    }
     DATA = realloc(DATA, sizeof(data_t) * (VOLCOUNT + 1));
     memset(&DATA[VOLCOUNT], 0x00, sizeof(data_t));
     DATA[VOLCOUNT].globalconf = *((int *) cmd->context);
-    strncpy(DATA[VOLCOUNT].user, cmd->data.list[0], MAX_PAR + 1);
+    strncpy(DATA[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
     DATA[VOLCOUNT].type = -1;
     for (i = 0; command[i].type != -1; i++)
 	if (command[i].fs && !strcasecmp(cmd->data.list[1], command[i].fs)) {
@@ -301,29 +331,29 @@ DOTCONF_CB(read_volume)
     if (*cmd->data.list[2] == '-')
 	*DATA[VOLCOUNT].server = 0x00;
     else
-	strncpy(DATA[VOLCOUNT].server, cmd->data.list[2], MAX_PAR + 1);
-    strncpy(DATA[VOLCOUNT].volume, cmd->data.list[3], MAX_PAR + 1);
+	strncpy(DATA[VOLCOUNT].server, cmd->data.list[2], MAX_PAR);
+    strncpy(DATA[VOLCOUNT].volume, cmd->data.list[3], MAX_PAR);
     if (*cmd->data.list[4] == '-')
 	*DATA[VOLCOUNT].mountpoint = 0x00;
     else
-	strncpy(DATA[VOLCOUNT].mountpoint, cmd->data.list[4], MAX_PAR + 1);
+	strncpy(DATA[VOLCOUNT].mountpoint, cmd->data.list[4], MAX_PAR);
     if (*cmd->data.list[5] == '-')
 	*DATA[VOLCOUNT].options = 0x00;
     else
-	strncpy(DATA[VOLCOUNT].options, cmd->data.list[5], MAX_PAR + 1);
+	strncpy(DATA[VOLCOUNT].options, cmd->data.list[5], MAX_PAR);
     if (*cmd->data.list[6] == '-')
 	*DATA[VOLCOUNT].fs_key_cipher = 0x00;
     else
 	strncpy(DATA[VOLCOUNT].fs_key_cipher, cmd->data.list[6],
-		MAX_PAR + 1);
+		MAX_PAR);
     if (*cmd->data.list[7] == '-')
 	*DATA[VOLCOUNT].fs_key_path = 0x00;
     else
 	strncpy(DATA[VOLCOUNT].fs_key_path, cmd->data.list[7],
-		MAX_PAR + 1);
+		MAX_PAR);
     strncpy(DATA[VOLCOUNT].password,
 	    ((config_t *) cmd->option->info)->system_password,
-	    MAX_PAR + 1);
+	    MAX_PAR);
     if (!volume_record_sane
 	(cmd->data.list, ((config_t *) cmd->option->info), errmsg))
 	return errmsg;

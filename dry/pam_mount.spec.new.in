@@ -16,7 +16,7 @@ Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
 Source: %name-%{PACKAGE_VERSION}.tar.gz
-BuildRoot: /home/mike/development/live
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Packager: W. Michael Petullo <mike@flyn.org>
 Vendor: Flyn Computing
 Distribution: Flyn Linux

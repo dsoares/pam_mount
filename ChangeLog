@@ -1,6 +1,20 @@
+28 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed asprintf misuse that caused pmhelper to segfault when
+	mounting a smbfs volume.
+
+27 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* A user can now use luserconf to mount volumes using other
+	usernames.
+
+	* Cleaned up code a bit.
+
+	* Build error fix (thanks Michael Rhee).
+
 26 October 2002 W. Michael Petullo <mike@flyn.org>
 
-	* Added checks to luserconf can only configure commands and
+	* Added checks so luserconf can only configure commands and
 	volumes.
 
 	* Pmhelper now checks to see if a volume is already mounted

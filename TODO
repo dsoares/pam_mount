@@ -2,24 +2,21 @@
 
 For 1.0:
 
+o Make sure tarball installs into correct directory (see an example).
+
+o Free alloced memory.  Test returned value from malloc/calloc.
+
 o Test config reading fn, especially luserconfs.  Test required, allowed,
 and denied options a lot.
-
-o All w4rn calls before readconfig are always turned off.  Fix this?
-
-o Readconfig function (and maybe config format) needs to be redone.
 
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
 unstable.  In Red Hat bugzilla.
 
-o Test mkehd a lot and recommend using it to simplify documentation.
-
 o Security audit.  Scrub code for buffer overflows and other
 security-related bugs:
 pmhelper.c
 pam_mount.c
-readconfg.c
 
 o Finish LJ article.
 
@@ -28,6 +25,11 @@ o Send letter.
 ===============================================================================
 
 Past 1.0 (punted):
+
+o Fix Debian:
+	Mounting encrypted loopback volumes with keybits option broken
+		in unstable (bug 163639)
+	CLOSE_SESSION set to no in /etc/login.defs (bug 163635)
 
 o Get rid of FIXME and XXXs.
 

@@ -351,15 +351,17 @@ int main(int argc, char **argv)
 	exit(EXIT_SUCCESS); /* success so try_first_pass does not try again */
     }
 
+    w4rn("pmhelper: %s\n", "checking for encrypted filesystem key configuration");
+
     /* FIXME: Should this be rmdir'ed when one logs out? How? */
     if (getenv("PAM_MOUNT_MKMOUNTPOINT") && !exists(data.mountpoint))
 	if (!mkmountpoint(data))
 	    exit(EXIT_FAILURE);
     if (strlen(data.fs_key_cipher)) {
+	char k[MAX_PAR + 1];
 	w4rn("pmhelper: %s\n",
 	     "decrypting FS key using system auth. token...");
 	/* data.fs_key_path contains real filesystem key. */
-	char k[MAX_PAR + 1];
 	if (!decrypted_key
 	    (k, sizeof(k), data.password, data.fs_key_cipher,
 	     data.fs_key_path))
@@ -368,8 +370,11 @@ int main(int argc, char **argv)
 	strncpy(data.password, k, MAX_PAR + 1);
     }
 
+    w4rn("pmhelper: %s\n", "about to start building mount command");
+
     /* FIXME: overflow possibility on _argv (users can define commands) */
     if (data.type == NCPMOUNT) {
+        w4rn("pmhelper: %s\n", "mount type is NCPMOUNT");
 	_argv[_argc++] = "-S";
 	_argv[_argc++] = data.server;
 	_argv[_argc++] = "-U";
@@ -378,13 +383,18 @@ int main(int argc, char **argv)
 	_argv[_argc++] = data.volume;
 	_argv[_argc++] = data.mountpoint;
     } else if (data.type == SMBMOUNT) {
-	asprintf(_argv[_argc++], "//%s/%s", data.server, data.volume);
-	w4rn("pmhelper: asprintf %s\n", *(_argv - 1));
+        w4rn("pmhelper: %s\n", "mount type is SMBMOUNT");
+	asprintf(&_argv[_argc++], "//%s/%s", data.server, data.volume);
+	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
 	_argv[_argc++] = data.mountpoint;
+	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
 	_argv[_argc++] = "-o";
-	asprintf(_argv[argc++], "username=%s%s%s",
+	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
+	asprintf(&_argv[_argc++], "username=%s%s%s",
 		 data.user, data.options[0] ? "," : "", data.options);
+	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
     } else if (data.type == LCLMOUNT) {
+        w4rn("pmhelper: %s\n", "mount type is LCLMOUNT");
 	_argv[_argc++] = data.volume;
 
 	if (! mntpt_from_fstab)
