@@ -111,8 +111,8 @@ int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password,
 	/* FIXME: docs seem to imply last arg should be 
 	 * MAX_PAR - EVP_MAX_IV_LENGTH + 2 (see below).  this causes 
 	 * EVP_DecryptUpdate to fail.  strlen(ct_fs_key) is 40 and works.  
-	 * 39 and 41 fail.  ???
-	 /* Fn. will decrypt no more that inl (last param) + block size - 1 
+	 * 39 and 41 fail.  ??? */
+	/* Fn. will decrypt no more that inl (last param) + block size - 1 
 	 * bytes: k[MP + 1] = (MP - MAX + 2) + MAX - 1 */
 	log("pmhelper: %s\n", "failed to decrypt key");
 	return 0;
@@ -273,6 +273,24 @@ int already_mounted(char *volume, char *mountpoint)
     return mtab_record ? !strcmp(mtab_record->mnt_dir, mountpoint) : 0;
 }
 
+/* ============================ add_to_argv () ============================= */ 
+/* PRE:  argv points to an array of MAX_PAR + 1 char *s (incl. term. 0x00)
+ *       argc points to the current number of entries in argv
+ *       arg points to a valid string != NULL
+ * POST: arg has been added to end of argv, which is NULL terminated
+ *       argc++
+ * NOTE: this function exits on an error as an error means a buffer overflow 
+ *       would otherwise have occured */
+void add_to_argv(char *argv[], int *argc, char *arg)
+{
+    if (*argc == MAX_PAR) {
+        log("pmhelper: %s\n", "too many arguments to mount command");
+	exit(EXIT_FAILURE);
+    }
+    argv[(*argc)++] = arg;
+    argv[*argc] = 0x00;
+}
+
 /* ============================ main () ==================================== */
 /* NOTE: expects to read a data_t structure from stdin which determines what
  *       is mounted or unmounted and how. */
@@ -280,7 +298,7 @@ int main(int argc, char **argv)
 {
     int total = 0, n;
     char *_argv[MAX_PAR + 1];
-    int _argc;
+    int _argc = 0;
     int child;
     int fds[2];
     int child_exit;
@@ -313,14 +331,8 @@ int main(int argc, char **argv)
 	}
 	mntpt_from_fstab = 1;
     }
-    for (_argc = 0; strlen(data.argv[_argc]); _argc++) {
-	if (_argc >= MAX_PAR + 1) {
-	    log("pmhelper: %s\n", "mount command line too long");
-	    exit(EXIT_FAILURE);
-	}
-	_argv[_argc] = data.argv[_argc];
-    }
-
+    while (strlen(data.argv[_argc]))
+	add_to_argv(_argv, &_argc,  data.argv[_argc]);
     w4rn("pmhelper: %s\n", "received");
     w4rn("pmhelper: %s\n", "--------");
     /* w4rn("pmhelper: %s\n", data.password); */
@@ -351,7 +363,7 @@ int main(int argc, char **argv)
     }
 
     if (already_mounted(data.volume, data.mountpoint)) {
-	log("pmhelper: %s already seems to be mounted, skipping",
+	log("pmhelper: %s already seems to be mounted, skipping\n",
 	    data.volume);
 	exit(EXIT_SUCCESS);	/* success so try_first_pass does not try again */
     }
@@ -378,44 +390,38 @@ int main(int argc, char **argv)
 
     w4rn("pmhelper: %s\n", "about to start building mount command");
 
-    /* FIXME: overflow possibility on _argv (users can define commands) */
     if (data.type == NCPMOUNT) {
 	w4rn("pmhelper: %s\n", "mount type is NCPMOUNT");
-	_argv[_argc++] = "-S";
-	_argv[_argc++] = data.server;
-	_argv[_argc++] = "-U";
-	_argv[_argc++] = data.user;
-	_argv[_argc++] = "-V";
-	_argv[_argc++] = data.volume;
-	_argv[_argc++] = data.mountpoint;
+	add_to_argv(_argv, &_argc, "-S");
+	add_to_argv(_argv, &_argc, data.server);
+	add_to_argv(_argv, &_argc, "-U");
+	add_to_argv(_argv, &_argc, data.user);
+	add_to_argv(_argv, &_argc, "-V");
+	add_to_argv(_argv, &_argc, data.volume);
+	add_to_argv(_argv, &_argc, data.mountpoint);
     } else if (data.type == SMBMOUNT) {
+	char *tmp; /* FIXME: never freed */
 	w4rn("pmhelper: %s\n", "mount type is SMBMOUNT");
-	asprintf(&_argv[_argc++], "//%s/%s", data.server, data.volume);
-	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
-	_argv[_argc++] = data.mountpoint;
-	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
-	_argv[_argc++] = "-o";
-	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
-	asprintf(&_argv[_argc++], "username=%s%s%s",
+	asprintf(&tmp, "//%s/%s", data.server, data.volume);
+	add_to_argv(_argv, &_argc, tmp);
+	add_to_argv(_argv, &_argc, data.mountpoint);
+	add_to_argv(_argv, &_argc, "-o");
+	asprintf(&tmp, "username=%s%s%s",
 		 data.user, data.options[0] ? "," : "", data.options);
-	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
+	add_to_argv(_argv, &_argc, tmp);
     } else if (data.type == LCLMOUNT) {
 	w4rn("pmhelper: %s\n", "mount type is LCLMOUNT");
-	_argv[_argc++] = data.volume;
-
+	add_to_argv(_argv, &_argc, data.volume);
 	if (!mntpt_from_fstab)
-	    _argv[_argc++] = data.mountpoint;
+	    add_to_argv(_argv, &_argc, data.mountpoint);
 	if (data.options[0]) {
-	    _argv[_argc++] = "-o";
-	    _argv[_argc++] = data.options;
+	    add_to_argv(_argv, &_argc, "-o");
+	    add_to_argv(_argv, &_argc, data.options);
 	}
     } else {
 	log("pmhelper: %s\n", "data.type is unknown");
 	exit(EXIT_FAILURE);
     }
-
-    _argv[_argc++] = NULL;
-
     if (pipe(fds) != 0) {
 	log("pmhelper: %s\n", "could not make pipe");
 	exit(EXIT_FAILURE);
@@ -451,6 +457,7 @@ int main(int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
     if (data.type != SMBMOUNT) {
+        /* SMBMOUNT uses env. var. PASSWD code above */
 	write(fds[1], data.password, strlen(data.password) + 1);
 	close(fds[0]);
 	close(fds[1]);

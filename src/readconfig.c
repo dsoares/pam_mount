@@ -34,7 +34,8 @@ DOTCONF_CB(read_volume);
 
 static const configoption_t legal_config[] = {
     {"debug", ARG_INT, read_debug, &config.debug, CTX_ALL},
-    {"mkmountpoint", ARG_INT, read_int_param, &config.mkmountpoint, CTX_ALL},
+    {"mkmountpoint", ARG_INT, read_int_param, &config.mkmountpoint,
+     CTX_ALL},
     {"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
     {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
     {"smbmount", ARG_LIST, read_command, &config, CTX_ALL},
@@ -67,29 +68,23 @@ char *read_options(char *options[], char *opt_str)
 {
     int count = 0;
     char *ptr = opt_str;
-    if (! opt_str) {
-	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-        strcpy(errmsg, "empty options string");
-	return errmsg;
-    }
+    if (!opt_str)
+	return "empty options string";
     w4rn("%s", "pam_mount: options (req., allow, or deny): ");
     while (ptr = strchr(ptr, ',')) {
-        if (count >= MAX_PAR) {
+	if (count >= MAX_PAR)
 	    /* >= because one last iteration happens outside loop */
-	    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-	    strcpy(errmsg, "too many options");
-	    return errmsg;
-	} else if (ptr - opt_str > MAX_PAR) {
-	    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-	    strcpy(errmsg, "option too long");
-	    return errmsg;
-	} 
-        options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
-        strncpy(options[count], opt_str, ptr - opt_str);
-        opt_str = ++ptr;
-        w4rn("%s ", options[count++]);
+	    return "too many options";
+	else if (ptr - opt_str > MAX_PAR)
+	    return "option too long";
+	if (!(options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char))))
+	    return "error allocating memory";
+	strncpy(options[count], opt_str, ptr - opt_str);
+	opt_str = ++ptr;
+	w4rn("%s ", options[count++]);
     }
-    options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
+    if (!(options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char))))
+        return "error allocating memory";
     strncpy(options[count], opt_str, MAX_PAR);
     w4rn("%s\n", options[count]);
     return NULL;
@@ -99,11 +94,8 @@ char *read_options(char *options[], char *opt_str)
 /* NOTE: callback function for reading required options */
 DOTCONF_CB(read_options_require)
 {
-    if (!*((int *) cmd->context)) {
-	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-	strcpy(errmsg, "tried to set options_require from user config");
-	return errmsg;
-    }
+    if (!*((int *) cmd->context))
+	return "tried to set options_require from user config";
     return read_options(((config_t *) cmd->option->info)->options_require,
 			cmd->data.str);
 }
@@ -112,11 +104,8 @@ DOTCONF_CB(read_options_require)
 /* NOTE: callback function for reading required options */
 DOTCONF_CB(read_options_allow)
 {
-    if (!*((int *) cmd->context)) {
-	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-	strcpy(errmsg, "tried to set options_allow from user config");
-	return errmsg;
-    }
+    if (!*((int *) cmd->context))
+	return "tried to set options_allow from user config";
     return read_options(((config_t *) cmd->option->info)->options_allow,
 			cmd->data.str);
 }
@@ -125,20 +114,18 @@ DOTCONF_CB(read_options_allow)
 /* NOTE: callback function for reading required options */
 DOTCONF_CB(read_options_deny)
 {
-    if (!*((int *) cmd->context)) {
-	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-	strcpy(errmsg, "tried to set options_deny from user config");
-	return errmsg;
-    }
+    if (!*((int *) cmd->context))
+	return "tried to set options_deny from user config";
     return read_options(((config_t *) cmd->option->info)->options_deny,
 			cmd->data.str);
 }
 
-/* ============================ get_command_index () ======================= */ 
+/* ============================ get_command_index () ======================= */
 /* PRE:    command is assigned an initialized pm_command_t array
  *         name points to a valid string != NULL
  * FN VAL: if name in command then cooresponding type, else -1 */
-command_type_t get_command_index(const pm_command_t command[], const char *name)
+command_type_t get_command_index(const pm_command_t command[],
+				 const char *name)
 {
     int i;
     for (i = 0; command[i].type != -1; i++)
@@ -156,36 +143,29 @@ DOTCONF_CB(read_command)
 {
     int i;
     command_type_t command_index;
-    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-    if ((command_index = get_command_index(command, cmd->name)) == -1) {
-	snprintf(errmsg, BUFSIZ + 1,
-		 "pam_mount: bad command in config: %s", cmd->name);
-	return errmsg;
-    }
+    if ((command_index = get_command_index(command, cmd->name)) == -1)
+	return "pam_mount: bad command in config";
     for (i = 0; i < cmd->arg_count; i++)
-        if (strlen(cmd->data.list[i]) > MAX_PAR) {
-	    snprintf(errmsg, BUFSIZ + 1,
-		 "pam_mount: command too long: %s", cmd->data.list[0]);
-            return errmsg;
-    }
-    ((config_t *) cmd->option->info)->command[0][command_index] =
-	(char *) calloc(MAX_PAR + 1, sizeof(char));
+	if (strlen(cmd->data.list[i]) > MAX_PAR)
+	    return "pam_mount: command too long";
+    if (!(((config_t *) cmd->option->info)->command[0][command_index] =
+	(char *) calloc(MAX_PAR + 1, sizeof(char))))
+	return "error allocating memory";
     strncpy(((config_t *) cmd->option->info)->command[0][command_index],
 	    cmd->data.list[0], MAX_PAR + 1);
     w4rn("pam_mount: adding to command: %s ", cmd->data.list[0]);
-    ((config_t *) cmd->option->info)->command[1][command_index] =
-	(char *) calloc(MAX_PAR + 1, sizeof(char));
+    if (!(((config_t *) cmd->option->info)->command[1][command_index] =
+	(char *) calloc(MAX_PAR + 1, sizeof(char))))
+	return "error allocating memory";
     strncpy(((config_t *) cmd->option->info)->command[1][command_index],
 	    basename(cmd->data.list[0]), MAX_PAR + 1);
     w4rn("%s ", basename(cmd->data.list[0]));
     for (i = 1; i < cmd->arg_count; i++) {
-	if (i > MAX_PAR) {
-	    strcpy(errmsg,
-		   "pam_mount: command line configured to be too long");
-	    return errmsg;
-	}
-	((config_t *) cmd->option->info)->command[i + 1][command_index] =
-	    (char *) calloc(MAX_PAR + 1, sizeof(char));
+	if (i > MAX_PAR)
+	    return "pam_mount: command line configured to be too long";
+	if (!(((config_t *) cmd->option->info)->command[i + 1][command_index] =
+	    (char *) calloc(MAX_PAR + 1, sizeof(char))))
+	        return "error allocating memory";
 	w4rn("%s ", cmd->data.list[i]);
 	strncpy(((config_t *) cmd->option->info)->
 		command[i + 1][command_index], cmd->data.list[i],
@@ -198,49 +178,36 @@ DOTCONF_CB(read_command)
 /* ============================ luserconf_volume_record_sane () ============ */
 /* PRE:    volume is an array containing 8 fields from pam_mount.conf
  *         config points to a valid config_t structure
- *         errmsg points to an char array of length >= BUFSIZ + 1
- * FN VAL: if error a pointed to a malloced string error message else NULL */
-int luserconf_volume_record_sane(char *volume[], config_t * config,
-				 char *errmsg)
+ * FN VAL: if error a string error message else NULL */
+char *luserconf_volume_record_sane(char *volume[], config_t * config)
 {
-    if (! strcmp(volume[0], "*")) {
-	strcpy(errmsg, "pam_mount: wildcard used in user-defined volume");
-	return 0;
-    }
-    return 1;
+    if (!strcmp(volume[0], "*"))
+	return "pam_mount: wildcard used in user-defined volume";
+    return NULL;
 }
 
 /* ============================ volume_record_sane () ====================== */
 /* PRE:    volume is an array containing 8 fields from pam_mount.conf
  *         config points to a valid config_t structure
- *         errmsg points to an char array of length >= BUFSIZ + 1
- * FN VAL: if error a pointer to a malloced string error message else NULL */
-int volume_record_sane(char *volume[], config_t * config, char *errmsg)
+ * FN VAL: if error string error message else NULL */
+char *volume_record_sane(char *volume[], config_t * config)
 {
     w4rn("pam_mount: %s\n", "checking sanity of volume record");
-    if (!config->command[0][config->data[config->volcount].type]) {
-	snprintf(errmsg, BUFSIZ + 1,
-		 "pam_mount: mount command not defined for %s", volume[1]);
-	return 0;
-    } else if (!config->command[0][UMOUNT]) {
-	strcpy(errmsg, "pam_mount: umount command not defined");
-	return 0;
-    } else if (!config->data[config->volcount].globalconf
-	       && config->data[config->volcount].type == LCLMOUNT
-	       && !owns(config->user,
-			config->data[config->volcount].volume)) {
-	strcpy(errmsg,
-	       "pam_mount: user-defined volume, volume not owned by user");
-	return 0;
-    } else if (!config->data[config->volcount].globalconf
-	       && config->data[config->volcount].type == LCLMOUNT
-	       && !owns(config->user,
-			config->data[config->volcount].mountpoint)) {
-	strcpy(errmsg,
-	       "pam_mount: user-defined volume, mountpoint not owned by user");
-	return 0;
-    }
-    return 1;
+    if (!config->command[0][config->data[config->volcount].type])
+	return "pam_mount: mount command not defined for this type";
+    else if (!config->command[0][UMOUNT])
+	return "pam_mount: umount command not defined";
+    else if (!config->data[config->volcount].globalconf
+	     && config->data[config->volcount].type == LCLMOUNT
+	     && !owns(config->user, config->data[config->volcount].volume))
+	return "pam_mount: user-defined volume, volume not owned by user";
+    else if (!config->data[config->volcount].globalconf
+	     && config->data[config->volcount].type == LCLMOUNT
+	     && !owns(config->user,
+		      config->data[config->volcount].mountpoint))
+	return
+	    "pam_mount: user-defined volume, mountpoint not owned by user";
+    return NULL;
 }
 
 /* ============================ read_luserconf () ========================== */
@@ -248,12 +215,9 @@ int volume_record_sane(char *volume[], config_t * config, char *errmsg)
 DOTCONF_CB(read_luserconf)
 {
     char *home_dir;
-    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
     struct passwd *passwd_ent;
-    if (!*((int *) cmd->context)) {
-	strcpy(errmsg, "tried to set luserconf from user config");
-	return errmsg;
-    }
+    if (!*((int *) cmd->context))
+	return "tried to set luserconf from user config";
     passwd_ent = getpwnam(((config_t *) cmd->option->info)->user);
     if (!passwd_ent) {
 	home_dir = "~";
@@ -261,10 +225,8 @@ DOTCONF_CB(read_luserconf)
 	home_dir = passwd_ent->pw_dir;
     }
     if (strlen(home_dir) + strlen("/") + strlen(cmd->data.str) >
-	FILENAME_MAX) {
-	strcpy(errmsg, "pam_mount: expanded luserconf path too long");
-	return errmsg;
-    }
+	FILENAME_MAX)
+	return "pam_mount: expanded luserconf path too long";
     strcpy(((config_t *) cmd->option->info)->luserconf, home_dir);
     strcat(((config_t *) cmd->option->info)->luserconf, "/");
     strcat(((config_t *) cmd->option->info)->luserconf, cmd->data.str);
@@ -277,11 +239,8 @@ DOTCONF_CB(read_luserconf)
 /* NOTE: callback function for reading configuration parameters */
 DOTCONF_CB(read_int_param)
 {
-    if (!*((int *) cmd->context)) {
-	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-	strcpy(errmsg, "tried to set int param from user config");
-	return errmsg;
-    }
+    if (!*((int *) cmd->context))
+	return "tried to set int param from user config";
     *((int *) cmd->option->info) = cmd->data.value;
     return NULL;
 }
@@ -302,27 +261,19 @@ DOTCONF_CB(read_volume)
 #define DATA ((config_t *)cmd->option->info)->data
 #define VOLCOUNT ((config_t *)cmd->option->info)->volcount
     int i;
-    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
-    if (cmd->arg_count != 8) {
-	strcpy(errmsg, "pam_mount: bad number of args for volume");
-	return errmsg;
-    } else
-	if (*((int *) cmd->context) && strcmp
-	    (cmd->data.list[0], ((config_t *) cmd->option->info)->user)
-	    && strcmp(cmd->data.list[0], "*")) {
+    char *errmsg;
+    if (cmd->arg_count != 8)
+	return "pam_mount: bad number of args for volume";
+    else if (*((int *) cmd->context) && strcmp
+	     (cmd->data.list[0], ((config_t *) cmd->option->info)->user)
+	     && strcmp(cmd->data.list[0], "*"))
 	/* user may use other usernames to mount volumes using luserconf */
-	snprintf(errmsg, BUFSIZ + 1,
-		 "pam_mount: ignoring volume record for %s",
-		 cmd->data.list[0]);
-	return NULL;
-    }
+	return "pam_mount: ignoring volume record";
     for (i = 0; i < cmd->arg_count; i++)
-        if (strlen(cmd->data.list[i]) > MAX_PAR) {
-	    snprintf(errmsg, BUFSIZ + 1,
-		 "pam_mount: command too long: %s", cmd->data.list[0]);
-            return errmsg;
-    }
-    DATA = realloc(DATA, sizeof(data_t) * (VOLCOUNT + 1));
+	if (strlen(cmd->data.list[i]) > MAX_PAR)
+	    return "pam_mount: command too long";
+    if (! (DATA = realloc(DATA, sizeof(data_t) * (VOLCOUNT + 1))))
+        return "error allocating memory";
     memset(&DATA[VOLCOUNT], 0x00, sizeof(data_t));
     DATA[VOLCOUNT].globalconf = *((int *) cmd->context);
     strncpy(DATA[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
@@ -332,12 +283,8 @@ DOTCONF_CB(read_volume)
 	    DATA[VOLCOUNT].type = command[i].type;
 	    break;
 	}
-    if (DATA[VOLCOUNT].type == -1) {
-	snprintf(errmsg, BUFSIZ + 1,
-		 "pam_mount: %s filesystem not supported",
-		 cmd->data.list[1]);
-	return errmsg;
-    }
+    if (DATA[VOLCOUNT].type == -1)
+	return "pam_mount: filesystem not supported";
     if (*cmd->data.list[2] == '-')
 	*DATA[VOLCOUNT].server = 0x00;
     else
@@ -354,23 +301,20 @@ DOTCONF_CB(read_volume)
     if (*cmd->data.list[6] == '-')
 	*DATA[VOLCOUNT].fs_key_cipher = 0x00;
     else
-	strncpy(DATA[VOLCOUNT].fs_key_cipher, cmd->data.list[6],
-		MAX_PAR);
+	strncpy(DATA[VOLCOUNT].fs_key_cipher, cmd->data.list[6], MAX_PAR);
     if (*cmd->data.list[7] == '-')
 	*DATA[VOLCOUNT].fs_key_path = 0x00;
     else
-	strncpy(DATA[VOLCOUNT].fs_key_path, cmd->data.list[7],
-		MAX_PAR);
+	strncpy(DATA[VOLCOUNT].fs_key_path, cmd->data.list[7], MAX_PAR);
     strncpy(DATA[VOLCOUNT].password,
-	    ((config_t *) cmd->option->info)->system_password,
-	    MAX_PAR);
-    if (!volume_record_sane
-	(cmd->data.list, ((config_t *) cmd->option->info), errmsg))
+	    ((config_t *) cmd->option->info)->system_password, MAX_PAR);
+    if ((errmsg = volume_record_sane
+	 (cmd->data.list, ((config_t *) cmd->option->info))))
 	return errmsg;
-    if (! DATA[VOLCOUNT].globalconf
-	&& !luserconf_volume_record_sane(cmd->data.list,
-					 ((config_t *) cmd->option->info),
-					 errmsg))
+    if (!DATA[VOLCOUNT].globalconf
+	&& (errmsg = luserconf_volume_record_sane(cmd->data.list,
+						  ((config_t *) cmd->
+						   option->info))))
 	return errmsg;
     VOLCOUNT++;
     return NULL;
@@ -410,7 +354,7 @@ options_allow_ok(char *conf[], char *options)
     char *ptr;
     w4rn("pam_mount: checking %s\n", options);
     if (strcmp(options, "*"))
-        return 1;
+	return 1;
     while (ptr = strchr(options, ',')) {
 	ok = 0;
 	w4rn("pam_mount: checking %s\n", options);
@@ -491,7 +435,6 @@ int readconfig(const char *user, char *file, int globalconf,
 	       config_t * config)
 {
     configfile_t *configfile;
-    const char *errmsg;
     if (!
 	(configfile =
 	 dotconf_create(file, legal_config, &globalconf, NONE))) {
@@ -500,7 +443,7 @@ int readconfig(const char *user, char *file, int globalconf,
     }
     configfile->errorhandler = (dotconf_errorhandler_t) log_error;
     if (!dotconf_command_loop(configfile))
-        log("pam_mount: error reading %s\n", file); /* may not be fatal */
+	log("pam_mount: error reading %s\n", file);	/* may not be fatal */
     if (!globalconf) {
 	int i;
 	if (config->options_allow[0] && config->options_deny[0]) {
@@ -562,29 +505,29 @@ void initconfig(config_t * config)
     memset(config->options_deny, 0x00, MAX_PAR + 1);
 }
 
-/* ============================ freeconfig () ============================== */ 
+/* ============================ freeconfig () ============================== */
 /* PRE:  config is a valid, initialized config_t structure
  * POST: all dynamically allocated memory in config is freed */
 void freeconfig(config_t config)
 {
     int i = 0, j = 0;
-    while(config.options_require[i])
-        free(config.options_require[i++]);
+    while (config.options_require[i])
+	free(config.options_require[i++]);
     i = 0;
-    while(config.options_allow[i])
-        free(config.options_allow[i++]);
+    while (config.options_allow[i])
+	free(config.options_allow[i++]);
     i = 0;
-    while(config.options_deny[i])
-        free(config.options_deny[i++]);
+    while (config.options_deny[i])
+	free(config.options_deny[i++]);
     i = 0;
     for (i = 0; i < COMMAND_MAX; i++)
-        while(config.command[j][i])
+	while (config.command[j][i])
 	    free(config.command[j++][i]);
 }
 
 /* ============================ expand_home () ============================= */
 /* PRE:    path points to the path to expand (ie: ~/foo)
- * FN VAL: expanded path (ie: /home/usr/foo) */
+ * FN VAL: expanded path (ie: /home/usr/foo) or NULL on error */
 char *expand_home(char *path, const char *user)
 {
     char *tmp = NULL;
@@ -595,7 +538,8 @@ char *expand_home(char *path, const char *user)
 	if (tmp) {
 	    strcpy(tmp, p->pw_dir);
 	    strcat(tmp, path + 1);
-	}
+	} else
+	    log("pam_mount: %s\n", "error allocating memory");
     }
     return tmp;
 }
@@ -603,7 +547,7 @@ char *expand_home(char *path, const char *user)
 /* ============================ expand_wildcard () ========================= */
 /* PRE:    str points to the string to expand (must contain at least one &)
  *         user is the username to expand to
- * FN VAL: str with any &s expanded into user */
+ * FN VAL: str with any &s expanded into user or NULL on error */
 char *expand_wildcard(char *str, const char *user)
 {
     char *result = NULL;
@@ -617,14 +561,17 @@ char *expand_wildcard(char *str, const char *user)
 	char *next;
 	/* don't need to + 1 len because & is dropped from path */
 	result = malloc(strlen(str) + strlen(user));
-	strcpy(result, str);
-	strcpy(result + (pos - str), user);
-	strcat(result, pos + 1);
-	next = expand_wildcard(result, user);
-	if (next) {
-	    free(result);
-	    result = next;
-	}
+	if (result) {
+	    strcpy(result, str);
+	    strcpy(result + (pos - str), user);
+	    strcat(result, pos + 1);
+	    next = expand_wildcard(result, user);
+	    if (next) {
+		free(result);
+		result = next;
+	    }
+	} else
+	    log("pam_mount %s\n", "error allocating memory");
     }
     return (result);
 }

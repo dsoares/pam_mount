@@ -2,17 +2,14 @@
 
 For 1.0:
 
-o Free alloced memory.  Test returned value from malloc/calloc.
-
-o Test config reading fn, especially luserconfs.  Test required, allowed,
-and denied options a lot.
+o Evaluate fns related to options_allow, deny, and require.
 
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
 unstable.  In Red Hat bugzilla.
 
 o Security audit.  Scrub code for buffer overflows and other
-security-related bugs:
+security-related bugs (use splint?):
 pmhelper.c
 pam_mount.c
 
@@ -23,6 +20,9 @@ o Send letter.
 ===============================================================================
 
 Past 1.0 (punted):
+
+o Get smbmount and ncpmount to support mount-like -p0 option to simplify
+pmhelper's code.
 
 o Fix Debian:
 	Mounting encrypted loopback volumes with keybits option broken

@@ -1,3 +1,16 @@
+09 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed potential buffer overflow in pmhelper.c.
+
+06 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* pam_mount.conf now installed in /etc/security, not
+	${prefix}../etc/security.
+
+03 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Added code to test return value of malloc/calloc/reallocs.
+
 02 November 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Smbmount now gets its password from the PASSWD environment variable.
