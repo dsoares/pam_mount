@@ -3,7 +3,7 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.11
+Version: 0.9.12
 Release: %rel
 License: LGPL
 Group: System Environment/Base
@@ -13,7 +13,7 @@ Packager: W. Michael Petullo <mike@flyn.org>
 Distribution: Flyn Linux
 URL: http://www.flyn.org
 Requires: pam
-BuildRequires: glib2-devel
+BuildRequires: glib2-devel pam-devel openssl-devel
 
 %description
 This module is aimed at environments with SMB (Samba or Windows NT) 
@@ -51,9 +51,6 @@ system is secure without carefully considering potential threats.
 
 
 
-%changelog
-
-
 %prep
 
 
@@ -67,10 +64,10 @@ make %{?_smp_mflags}
 %install
 %makeinstall
 gzip -9 AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ
-mkdir -p ${RPM_BUILD_ROOT}/etc/security
-cp config/pam_mount.conf ${RPM_BUILD_ROOT}/etc/security
-rm -f ${RPM_BUILD_ROOT}/lib/security/pam_mount.a
-rm -f ${RPM_BUILD_ROOT}/lib/security/pam_mount.la
+mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
+cp config/pam_mount.conf ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
+rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.a
+rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.la
 
 
 %clean
@@ -87,15 +84,23 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-, root, root)
-/lib/security/pam_mount.so
-%{prefix}/bin/mkehd
-%{prefix}/bin/autoehd
-%{prefix}/bin/passwdehd
-%{prefix}/bin/mount_ehd
-%doc %{_mandir}
+/%{_lib}/security/pam_mount.so
+%{_bindir}/mkehd
+%{_bindir}/autoehd
+%{_bindir}/passwdehd
+%{_bindir}/mount_ehd
+%{_mandir}/man8/pam_mount.8
 %config(noreplace) %{_sysconfdir}/security/pam_mount.conf
 
 
 %doc	AUTHORS.gz COPYING.gz ChangeLog.gz INSTALL.gz NEWS.gz README.gz FAQ.gz
+
+
+%changelog
+* Fri Jan 23 2004 W. Michael Petullo <mike[@]flyn.org>
+ - 0.9.11-0.fdr.1
+   - Updated to pam_mount 0.9.11.
+
+
 
 

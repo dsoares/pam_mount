@@ -1,3 +1,7 @@
+23 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Worked on RPM specification (with help from some Fedora folks).
+
 04 January 2004 W. Michael Petullo <mike@flyn.org>
 
 	* RPM spec file is now rebuilt from XML on make rpm.

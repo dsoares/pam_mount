@@ -2,8 +2,6 @@
 
 o splint -I. -I.. -I../include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include +posixlib mount.c | less
 
-o see email (should be fixed)
-
 o ensure include/new/* and include/new are cvs rm'ed
 
 o scrub code on Savannah after break in?
