@@ -226,7 +226,7 @@ void dotconf_register_options(configfile_t *configfile, const configoption_t * o
 	{
 		if ( !(num % GROW_BY) )
 			configfile->config_options = realloc(configfile->config_options,
-											 sizeof(void *) * (num + GROW_BY));
+											 sizeof(void *) * (num + GROW_BY + 1));
 	}
 
 #undef GROW_BY
@@ -506,7 +506,7 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 		signed char *cp = args;
 
 		/* check if it's a here-document and act accordingly */
-		skip_whitespace(&cp, (int)eob - (int)cp, 0);
+		skip_whitespace(&cp, eob - cp, 0);
 
 		if (!strncmp("<<", cp, 2)) {
 			cmd->data.str = dotconf_get_here_document(configfile, cp + 2);
@@ -605,7 +605,7 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 	cp1 = buffer;
 	eob = cp1 + strlen(cp1);
 
-	skip_whitespace(&cp1, (int)eob - (int)cp1, 0);
+	skip_whitespace(&cp1, eob - cp1, 0);
 
 	/* ignore comments and empty lines */
 	if (!cp1 || !*cp1 || *cp1 == '#' || *cp1 == '\n' || *cp1 == EOF)

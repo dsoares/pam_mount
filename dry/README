@@ -66,16 +66,36 @@ In addition, you must include two entries in the system's applicable
 +++ auth      optional  /lib/security/pam_mount.so use_first_pass
 
 
-If you want to support having different passwords for login and 
-mounting, replace use_first_pass with try_first_pass. This depends on 
-proper support of the PAM conversation mechanism by the applications 
-using PAM for authentication.
+If you use pam_ldap, pam_winbind, or any other authentication services 
+that make use of PAM's sufficient keyword then model your 
+configuration on the following:
 
-Another solution is to encrypt the password to the volume you wish 
-mounted using your system password as the key and store it somewhere 
-on your system's local filesystem. Pam_mount supports transparently 
-decrypting this filesystem key, as long as the cipher used is 
-supported by openssl. Given:
+
+...
+auth       required   /lib/security/pam_mount.so
+auth       sufficient /lib/security/pam_ldap.so		use_first_pass
+account    sufficient /lib/security/pam_ldap.so		use_first_pass
+auth       required   /lib/security/pam_unix.so		use_first_pass
+...
+
+
+This allows the following:
+
+ o Pam_mount will prompt for a password and export it to the PAM system.
+
+ o Pam_ldap will use the password from the PAM system to try and 
+ authenticate the user. If this succedes, the user will be 
+ authenticated. If it fails, pam_unix will try to authenticate.
+
+ o Pam_unix will try to authenticate the user if pam_ldap fails. If 
+ pam_unix fails, then the authentication will be refused.
+
+If your volume has a different password than your system account, 
+then encrypt the password to the volume you wish mounted using your 
+system password as the key and store it somewhere on your system's 
+local filesystem. Pam_mount supports transparently decrypting this 
+filesystem key, as long as the cipher used is supported by openssl. 
+ 
 
 sk
 	system key, the key or password used to log into the system
@@ -103,9 +123,14 @@ encrypted home directories. If you have an entry for a user using
 encrypted home directories in pam_mount.conf, mkehd will create 
 necessary filesystem images and possibly encrypted filesystem keys.
 
-Individual users may define additional volumes to mount in 
-~/.pam_mount.conf. The volume keyword is the only valid keyword in 
-these per-user configuration files.
+Individual users may define additional volumes to mount if allowed by 
+pam_mount.conf (usually ~/.pam_mount.conf). The volume keyword is the 
+only valid keyword in these per-user configuration files. If the 
+luserconf parameter is set in pam_mount.conf, allowing user-defined 
+volume, then users may mount and unmount any volume they own at any 
+mount point they own. On some filesystem configurations this may be 
+a security flaw so user-defined volumes are not allowed by the 
+example pam_mount.conf distributed with pam_mount.
 
 In general, you will leave all the first (general) parameters as 
 provided by default. You only have to provide the user/volume list 

@@ -35,17 +35,20 @@ extern          "C" {
 
 #define DEBUG_DEFAULT		0
 #define MKMOUNTPOINT_DEFAULT	0
-#define GETPASS_DEFAULT		0
+#define GETPASS_DEFAULT		1
 
 	typedef enum command_type_t {
 		SMBMOUNT,
 		CIFSMOUNT,
 		NCPMOUNT,
 		LCLMOUNT,
+		NFSMOUNT,
 		UMOUNT,
 		PMHELPER,
 		LSOF,
 		MNTCHECK,
+		FSCK,
+		LOSETUP,
 		COMMAND_MAX
 	}               command_type_t;
 

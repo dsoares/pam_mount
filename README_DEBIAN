@@ -5,5 +5,9 @@ your volume will not be unmounted upon logging out.
 loopback filesystem using the keybits option.  I had to build my own
 mount binary using the patch at kerneli.org.
 
+3.  Debian's PAM distribution does not allow session modules to retrieve
+a user's password from the PAM subsystem.  This is why pam_mount must be
+used as an auth module (in addition to a session module) on all systems.
+
 Bug reports have been submitted to the Debian project documenting
 these issues.

@@ -34,10 +34,29 @@ pam_sm_authenticate (pam_handle_t * pamh, int flags,
 		     int argc, const char **argv)
 {
   int ret;
+  int get_pass;
   char *tmp_pass;
-  if ((ret = pam_get_item (pamh, PAM_AUTHTOK, (const void **) &tmp_pass)))
+  get_pass = pass_type (argc, argv);
+  if (get_pass)
     {
-      l0g ("pam_mount: %s\n", "could not get password");
+      /* get the password */
+      if ((ret =
+	   read_password (pamh, "password:", &tmp_pass)) != PAM_SUCCESS)
+	{
+	  l0g ("pam_mount: %s\n", "error trying to read password");
+	  return ret;
+	}
+      if ((ret = pam_set_item (pamh, PAM_AUTHTOK, tmp_pass)) != PAM_SUCCESS)
+	{
+	  l0g ("pam_mount: %s\n", "error trying to export password");
+	  return ret;
+	}
+    }
+  else if ((ret =
+	    pam_get_item (pamh, PAM_AUTHTOK,
+			  (const void **) &tmp_pass)) != PAM_SUCCESS)
+    {
+      l0g ("pam_mount: %s\n", "could not get password from PAM system");
       return ret;
     }
   if (!tmp_pass)
@@ -320,7 +339,7 @@ return_error:
 /* ============================ pass_type () =============================== */
 /* PRE:    argv is valid
  *         argc >= 1
- * FN VAL: 1 if try_first_pass, else 0
+ * FN VAL: 1 if use_first_pass, else 0
  */
 int
 pass_type (int argc, const char **argv)
@@ -331,8 +350,6 @@ pass_type (int argc, const char **argv)
       w4rn ("pam_mount: pam_sm_open_session args: %s\n", argv[i]);
       if (!strcmp ("use_first_pass", argv[i]))
 	return 0;
-      else if (!strcmp ("try_first_pass", argv[i]))
-	return 1;
       else if (argc > 1)
 	w4rn ("pam_mount: %s\n", "bad pam_mount option");
     }
@@ -355,13 +372,11 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
 {
   int vol;
   int ret;
-  int get_pass;
   w4rn ("pam_mount: %s\n", "beginning");
   /* if our CWD is in the home directory, it might not get umounted */
   /* Needed for KDM.  FIXME: Bug in KDM? */
   if (chdir ("/"))
     w4rn ("pam_mount %s\n", "could not chdir");
-  get_pass = pass_type (argc, argv);
   if ((ret = pam_get_user (pamh, &config.user, NULL)) != PAM_SUCCESS)
     {
       l0g ("pam_mount: %s\n", "could not get user");
@@ -378,7 +393,10 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
   if (!readconfig (config.user, CONFIGFILE, 1, &config))
     return PAM_SERVICE_ERR;
   w4rn ("pam_mount: %s\n", "back from global readconfig");
-  if (exists (config.luserconf) && owns (config.user, config.luserconf))
+  if (!strlen (config.luserconf))
+    w4rn ("pam_mount: %s\n",
+	  "per-user configurations not allowed by pam_mount.conf");
+  else if (exists (config.luserconf) && owns (config.user, config.luserconf))
     {
       w4rn ("pam_mount: %s\n", "going to readconfig user");
       if (!readconfig (config.user, config.luserconf, 0, &config))
@@ -405,31 +423,7 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
       /* system_password is "" if account has no password */
       if (!mount_op
 	  (do_mount, &config, vol, system_password, config.mkmountpoint))
-	{
-	  w4rn ("pam_mount: %s\n", "mount process failed using use_pass");
-	  if (get_pass)
-	    {
-	      char *passread;
-	      /* get the password */
-	      if (read_password (pamh, "mount password:", &passread) ==
-		  PAM_SUCCESS)
-		{
-		  /* try with the password read */
-		  if (!mount_op
-		      (do_mount, &config, vol, passread, config.mkmountpoint))
-		    {
-		      l0g ("pam_mount: %s\n",
-			   "mount process failed using get_pass");
-		      return PAM_SERVICE_ERR;
-		    }
-		}
-	      else
-		{
-		  l0g ("pam_mount: %s\n", "error trying to read password");
-		  return PAM_SERVICE_ERR;
-		}
-	    }
-	}
+	l0g ("pam_mount: %s\n", "mount process failed");
     }
   /* Paranoia? */
   memset (system_password, 0x00, MAX_PAR + 1);
@@ -456,7 +450,6 @@ pam_sm_close_session (pam_handle_t * pamh, int flags, int argc,
 		      const char **argv)
 {
   int vol;
-
   w4rn ("pam_mount: %s\n", "received order to close things");
   w4rn ("pam_mount: real and effective user ID are %d and %d.\n",
 	getuid (), geteuid ());

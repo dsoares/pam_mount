@@ -124,7 +124,7 @@ converse(pam_handle_t * pamh, int nargs,
  * POST:   pass points to the volume password
  * FN VAL: any PAM error code encountered or PAM_SUCCESS
  * NOTE:   adapted from pam_unix/support.c (_unix_read_password)
- *         fn used to implement try_first_pass when "fist pass" failed */
+ */
 int 
 read_password(pam_handle_t * pamh, char *prompt1, char **pass)
 /* FIXME: take a close look at this logic for correctness */

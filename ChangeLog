@@ -1,7 +1,33 @@
+4 June 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed use_first_pass behavior and figured out how to configure
+	for use with pam_ldap (and I hope pam_winbind).
+
+	* Old try_first_pass is no longer supported.  See README for how to
+	support different mount and system passwords.
+
+1 June 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up new fsck code a little.
+
+31 May 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added ability to run fsck on local filesystems before mounting
+	(needs work).
+
+	* Fixed bug in readconfig.c:freeconfig() that caused segfault.
+
+30 May 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Password is now passed to cifsmount using stdin for security
+	reasons.
+
 28 May 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Fixed bug in expandconfig that cause & expansion to fail when
 	all fields did not contain a &.
+
+	* Now use dotconf 1.0.12.
 
 27 May 2003 W. Michael Petullo <mike@flyn.org>
 

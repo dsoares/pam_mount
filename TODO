@@ -1,23 +1,36 @@
 = For 1.0 =====================================================================
 
+o Inspect new use_first_pass-related code.  Test a lot with new test account.
+
+o Document use with pam_ldap and pam_winbind (see /etc/pam.d/su).
+Release new version on Freshmeat.
+
+o Does try_first_pass work?
+
+o Stop logging password in pam_mount.c and mount.c when done fixing LDAP!
+
+o Move all mike's config to /etc/pam_mount.conf and use test account
+for regression testing.  Add lot's of regression tests to test account.
+
+o Test and check for security and readability: new fsck code and log_argv.
+
+o Get winbind working!
+
 o Automate debian/changelog because it determines the version of deb package.
 
-o See Debain patch that fixes security flaw (?).
+o Debian-guy security flaw?  If changed, update luserconf info in
+pam_mount.conf and pam_mount.xml.
 
 o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
-	I HAVE REPORTS THAT IT WORKS NOW
-
-o Does new smbmount code work?
-
-o Does new ncpmount code work?
+	I HAVE REPORTS THAT IT WORKS NOW.  DOES IT?
 
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
 unstable.  In Red Hat bugzilla.
 
-o fix cifs code (insecure password transmission)
-
 = OpenBSD =====================================================================
+
+o Add losetup/fsck code.
 
 o Add support to vnconfig for reading passwords from stdin so that
 it can be used for EHD on OBSD.
@@ -37,10 +50,11 @@ patch)
 
 o Remove pmhelper code completely from readconfig.c.
 
-o Use format like smbmount /usr/bin/smbmount %user ... in pam_mount.conf
+o Use format like smbmount /usr/bin/smbmount %(user) ... in pam_mount.conf
 to simplify code in pmhelper.c.  This will make pam_mount much more
 flexible too.  No smbmount, ncpmount, lclmount-specific code will
-be required in smbmount.c.
+be required in smbmount.c.  Use libnew if on system, otherwise use
+local copy.
 
 o Get smbmount and ncpmount to support mount-like -p0 option to simplify
 pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
@@ -49,10 +63,12 @@ o Fix Debian:
 	Mounting encrypted loopback volumes with keybits option broken
 		in unstable (bug 163639)
 	CLOSE_SESSION set to no in /etc/login.defs (bug 163635)
+	login drops root privileges before closing PAM session (bug ????)
 
 o Get rid of FIXMEs.
 
-o Ensure that NFS shares are working.  Document NFS use.  Get TCFS working.
+o Ensure that NFS shares are working.  Document NFS use.  Get TCFS
+working.  Get SSLed NFS shares working.
 
 o Add the ability to create an encrypted loopback filesystem to useradd.
 This should also create a README file in, for example, /home/mike that

@@ -17,7 +17,7 @@ pm_command_t    command[] = {
 	{NCPMOUNT, "ncp", "ncpmount"},
 	{NCPMOUNT, "ncpfs", "ncpmount"},
 	{LCLMOUNT, "local", "lclmount"},
-	{LCLMOUNT, "nfs", "lclmount"},
+	{NFSMOUNT, "nfs", "lclmount"}, /* Does not use LCLMOUNT to avoid fsck */
 /* FIXME: PMHELPER no longer needed */
 	{PMHELPER, NULL, "pmhelper"},
 	{UMOUNT, NULL, "umount"},
@@ -27,6 +27,8 @@ pm_command_t    command[] = {
 	 * example
 	 */
 	{MNTCHECK, NULL, "mntcheck"},
+	{FSCK, NULL, "fsck"},
+	{LOSETUP, NULL, "losetup"},
 	{-1, NULL, NULL}
 };
 
@@ -53,6 +55,8 @@ static const configoption_t legal_config[] = {
 	{"lclmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"lsof", ARG_LIST, read_command, &config, CTX_ALL},
 	{"mntcheck", ARG_LIST, read_command, &config, CTX_ALL},
+	{"fsck", ARG_LIST, read_command, &config, CTX_ALL},
+	{"losetup", ARG_LIST, read_command, &config, CTX_ALL},
 	{"options_require", ARG_STR, read_options_require, &config, CTX_ALL},
 	{"options_allow", ARG_STR, read_options_allow, &config, CTX_ALL},
 	{"options_deny", ARG_STR, read_options_deny, &config, CTX_ALL},
@@ -67,7 +71,14 @@ static
 FUNC_ERRORHANDLER(log_error)
 {
 	l0g("pam_mount: %s\n", msg);
-	free((char *) msg); /* FIXME: broken? (some users report symptoms) */
+	/* FIXME: This free is broken.
+	 * If an invalid command definition (ie: foomount) exists in 
+	 * pam_mount.conf then su, loging, gdm, etc. segfault with:
+	 * pam_mount: Unknown Config-Option: 'fsck'
+         * Segmentation fault
+	 * Other circumstances will also cause this segfault.
+	free((char *) msg);
+	*/
 	return 0;
 }
 
@@ -572,8 +583,8 @@ freeconfig(config_t config)
 	free_options(config.options_allow);
 	free_options(config.options_deny);
 	for (i = 0; i < COMMAND_MAX; i++)
-		while (config.command[j][i])
-			free(config.command[j++][i]);
+		for (j = 0; config.command[j][i]; j++)
+			free(config.command[j][i]);
 }
 
 /* ============================ expand_home () ============================= */
