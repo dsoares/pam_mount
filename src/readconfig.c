@@ -311,8 +311,6 @@ DOTCONF_CB(read_volume)
 	*DATA[VOLCOUNT].fs_key_path = 0x00;
     else
 	strncpy(DATA[VOLCOUNT].fs_key_path, cmd->data.list[7], MAX_PAR);
-    strncpy(DATA[VOLCOUNT].password,
-	    ((config_t *) cmd->option->info)->system_password, MAX_PAR);
     if ((errmsg = volume_record_sane
 	 (cmd->data.list, ((config_t *) cmd->option->info))))
 	return errmsg;
@@ -516,6 +514,7 @@ void initconfig(config_t * config)
 void freeconfig(config_t config)
 {
     int i = 0, j = 0;
+    free(config.system_password);
     while (config.options_require[i])
 	free(config.options_require[i++]);
     i = 0;

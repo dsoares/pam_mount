@@ -1,5 +1,5 @@
+#include <string.h>
 #include <config.h>
-#include <security/_pam_macros.h>
 #include <security/pam_modules.h>
 
 /* ============================ converse () ================================ */ 
@@ -38,7 +38,7 @@ static int converse(pam_handle_t * pamh, int nargs,
  * FN VAL: any PAM error code encountered or PAM_SUCCESS
  * NOTE:   adapted from pam_unix/support.c (_unix_read_password)
  *         fn used to implement try_first_pass when "fist pass" failed */
-int read_password(pam_handle_t * pamh, const char *prompt1, char **pass)
+int read_password(pam_handle_t * pamh, char *prompt1, char **pass)
 {
     int retval;
     char *token;
@@ -67,13 +67,15 @@ int read_password(pam_handle_t * pamh, const char *prompt1, char **pass)
 
 	if (resp != NULL) {
 	    if (retval == PAM_SUCCESS) {	/* a good conversation */
-		token = x_strdup(resp->resp);
+		token = strdup(resp->resp);
 	    }
 
-	    _pam_drop_reply(resp, 1);
+	    /* FIXME: Not in openpam _pam_drop_reply(resp, 1); */
 	} else {
-	    retval = (retval == PAM_SUCCESS)
+	    /* FIXME: not in openpam: retval = (retval == PAM_SUCCESS)
 		? PAM_AUTHTOK_RECOVER_ERR : retval;
+*/
+		return PAM_SUCCESS;
 	}
     }
 

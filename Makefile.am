@@ -29,17 +29,20 @@ AUTOMAKE_OPTIONS = gnu
 
 EXTRA_DIST = README_DEBIAN autogen.sh
 
-SUBDIRS = src include dry config scripts
+SUBDIRS = src include config scripts # dry debian 
 
 if FLYN
 # For local development use only.
 # ============================= dist-hook ===================================== 
-dist-hook:
-	make dry
+# dist-hook:
+#	make dry
 
 # ============================= rpm ============================================
 rpm: dry dist
 	$(BUILD_RPM)
+# ============================= =============================================== 
+deb: dry dist
+	$(BUILD_DEB)
 
 # ============================= check ==========================================
 check: rpm

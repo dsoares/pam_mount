@@ -16,7 +16,7 @@
 
 #include <security/pam_modules.h>
 #include <pam_mount.h>
-#include <security/_pam_macros.h>
+/* FIXME: not in openpam #include <security/_pam_macros.h> */
 
 int debug;
 config_t config;
@@ -29,6 +29,10 @@ int number_safe(char *n)
  *         they could try something sneaky */
 {
     char *ptr = n;
+    if (! n) {
+        log("pam_mount: %s\n", "count string is NULL");
+	return 0;
+    }
     if (!*n || *n == '\n') {
 	log("pam_mount: %s\n", "count string has no length");
 	return 0;
@@ -42,7 +46,7 @@ int number_safe(char *n)
 	ptr++;
     }
     while (!(*ptr == '\n' && !*(ptr + 1)) && *ptr);
-    if (strlen(n) > (sizeof(int) * 8)) {
+    if (strlen(n) > (sizeof(int) * 8)) { /* FIXME: not right */
 	log("pam_mount: %s\n", "count string too long (number too big)");
 	return 0;
     }
@@ -133,7 +137,6 @@ int modify_pm_count(const char *user, int amount)
     }
     if (fd < 0) {
 	w4rn("pam_mount: could not open count file %s\n", filename);
-	perror("foo");
 	return 0;
     }
     lockinfo.l_type = F_WRLCK;
@@ -178,7 +181,6 @@ int modify_pm_count(const char *user, int amount)
 	    goto return_error;
 	}
     }
-
     if (!(buf = malloc(st.st_size + 2))) {	/* size will never grow by more than one */
 	w4rn("pam_mount: %s\n", "malloc failed");
 	err = -1;
@@ -212,7 +214,7 @@ int modify_pm_count(const char *user, int amount)
 		w4rn("pam_mount: unlink error on %s\n", filename);
 	    }
 	}
-	sprintf(buf, "%d", val);
+	snprintf(buf, st.st_size + 2, "%d", val);
 	if (write(fd, buf, strlen(buf)) == -1) {
 	    w4rn("pam_mount: write error on %s\n", filename);
 	    err = -1;
@@ -235,10 +237,7 @@ int modify_pm_count(const char *user, int amount)
  * FN VAL: the exit code returned by pmhelper */
 int invoke_child(config_t config, data_t * data)
 {
-    int pipefd[2];
-    int count, n;
-    int child;
-    int child_exit;
+    int pipefd[2], count = 0, n = -1, child = -1, child_exit = 0;
     if (pipe(pipefd)) {
 	log("pam_mount: %s\n", "could not create pipe pair");
 	return 0;
@@ -257,7 +256,7 @@ int invoke_child(config_t config, data_t * data)
     if (config.mkmountpoint)
 	setenv("PAM_MOUNT_MKMOUNTPOINT", "true", 1);
     if ((child = fork()) == -1) {
-	log("pam_mount: %s\n", "could not invoke helper child");
+	log("pam_mount: %s\n", "could not fork for helper child");
 	return 0;
     }
     if (child == 0) {
@@ -267,22 +266,23 @@ int invoke_child(config_t config, data_t * data)
 	    log("pam_mount: %s\n", "CHILD could not dup stdin");
 	    _exit(1);
 	}
-	execv(config.command[0][PMHELPER], config.command[PMHELPER] + 1);
+	execv(config.command[0][PMHELPER], &config.command[1][PMHELPER]);
 	log("pam_mount: %s\n", "CHILD Could not execv helper child");
 	log("pam_mount: CHILD command was %s\n",
 	    config.command[0][PMHELPER]);
+	close(pipefd[0]);
 	_exit(1);
     }
     /* Parent */
     w4rn("pam_mount: %s\n", "sending data to pmhelper");
     close(pipefd[0]);
-    count = 0;
     while (count < sizeof(data_t)) {
 	w4rn("pam_mount: %s\n", "inside write loop");
 	n = write(pipefd[1],
 		  ((char *) data) + count, sizeof(data_t) - count);
 	if (n < 0) {
 	    log("pam-mount: %s\n", "could not write data to child");
+		perror("huh");
 	    close(pipefd[1]);
 	    kill(child, SIGKILL);
 	    return 0;
@@ -297,7 +297,7 @@ int invoke_child(config_t config, data_t * data)
     if (WEXITSTATUS(child_exit) == 0)
 	return 1;
     else
-	return WEXITSTATUS(child_exit);
+	return ! WEXITSTATUS(child_exit);
 }
 
 /* ============================ pam_sm_open_session () ===================== */
@@ -324,7 +324,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t * pamh, int flags,
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 				   int argc, const char **argv)
 {
-    int x;
+    int vol;
     int ret;
     int get_pass = GETPASS_DEFAULT;
     int i;
@@ -343,11 +343,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	return ret;
     }
     if ((ret =
-	 pam_get_item(pamh, PAM_AUTHTOK,
-		      (const void **) &config.system_password))
-	|| !config.system_password) {
+	 pam_get_item(pamh, PAM_AUTHTOK, (const void **) &config.system_password))) {
 	log("pam_mount: %s\n", "could not get password");
 	return ret;
+    }
+    if (! config.system_password) {
+        w4rn("pam_mount: %s\n", "account seems to have no password");
+        config.system_password = (char *) malloc (sizeof (char));
+	*config.system_password = 0x00;
     }
     w4rn("pam_mount: user is %s\n", config.user);
     /* w4rn("pam_mount: password=%s\n", config.system_password); */
@@ -367,45 +370,46 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	    return PAM_SUCCESS;
 	w4rn("pam_mount: %s\n", "back from user readconfig");
     } else
-	w4rn("pam_mount: %s does not exist\n", config.luserconf);
+	w4rn("pam_mount: %s does not exist or is not owned by user\n", config.luserconf);
     if (config.volcount <= 0) {
 	w4rn("pam_mount: %s\n", "no volumes to mount");
     }
     expandconfig(&config);
     signal(SIGPIPE, SIG_IGN);
-    for (x = 0; x < config.volcount; x++) {
+    for (vol = 0; vol < config.volcount; vol++) {
 	w4rn("pam_mount: %s\n", "executing pmhelper");
-	strcpy(config.data[x].lsof, config.command[0][LSOF]);
-	config.data[x].argc = 0;
-	for (i = 0; config.command[i][config.data[x].type]; i++) {
-	    strcpy(config.data[x].argv[i],
-		   config.command[i][config.data[x].type]);
-	    config.data[x].argc++;
+	strncpy(config.data[vol].lsof, config.command[0][LSOF], FILENAME_MAX);
+	config.data[vol].argc = 0;
+	for (i = 0; config.command[i][config.data[vol].type]; i++) {
+	    strncpy(config.data[vol].argv[i],
+		   config.command[i][config.data[vol].type], FILENAME_MAX);
+	    config.data[vol].argc++;
 	}
-	*config.data[x].argv[i] = 0x00;
-	if (invoke_child(config, config.data + x) != 1) {
-	    w4rn("pam_mount: %s\n", "FATHER helper process failed");
+	*config.data[vol].argv[i] = 0x00;
+        /* system_password points to NULL if account has no password */
+        strncpy(config.data[vol].password, config.system_password, MAX_PAR);
+	if (invoke_child(config, config.data + vol) != 1) {
+	    w4rn("pam_mount: %s\n", "FATHER helper process failed using use_pass");
 	    if (get_pass) {
 		char *passread;
 		/* get the password */
 		if (read_password(pamh, "mount password:", &passread) ==
 		    PAM_SUCCESS) {
 		    /* try with the password read */
-		    strcpy(config.data[x].password, passread);
-		    if (invoke_child(config, config.data + x) != 1) {
+		    strncpy(config.data[vol].password, passread, MAX_PAR);
+		    if (invoke_child(config, config.data + vol) != 1) {
 			log("pam_mount: %s\n",
 			    "FATHER helper process failed using get_pass");
 			return PAM_SUCCESS;
 		    }
-		    _pam_overwrite(passread);
-		    _pam_drop(passread);
+		    /* FIXME: not in openpam _pam_overwrite(passread);
+		    _pam_drop(passread); */
 		} else {
 		    log("pam_mount: %s\n",
 			"error trying to read password");
 		    return PAM_SUCCESS;
 		}
 	    }
-	    return PAM_SUCCESS;
 	}
     }
     modify_pm_count(config.user, 1);
@@ -421,7 +425,7 @@ PAM_EXTERN
     int pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 			     const char **argv)
 {
-    int x;
+    int vol;
 
     w4rn("pam_mount: %s\n", "received order to close things");
     if (config.volcount <= 0) {
@@ -431,12 +435,12 @@ PAM_EXTERN
     signal(SIGPIPE, SIG_IGN);
 
     if (modify_pm_count(config.user, -1) <= 0)
-	for (x = 0; x < config.volcount; ++x) {
+	for (vol = 0; vol < config.volcount; vol++) {
 	    w4rn("pam_mount: %s\n",
 		 "FATHER calling child proc to unmount");
-	    config.data[x].unmount = 1;
-	    strcpy(config.data[x].ucommand, config.command[0][UMOUNT]);
-	    if (invoke_child(config, config.data + x) != 1) {
+	    config.data[vol].unmount = 1;
+	    strncpy(config.data[vol].ucommand, config.command[0][UMOUNT], FILENAME_MAX);
+	    if (invoke_child(config, config.data + vol) != 1) {
 		log("pam_mount:%s\n",
 		    "FATHER could not start helper process to umount");
 		return PAM_SUCCESS;

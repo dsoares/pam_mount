@@ -1,3 +1,35 @@
+15 February 2003 W. Michael Petullo <mike@flyn.org>
+
+	* OpenBD port not works, though not very well.
+
+	* Added BSD fstab.h-related code.
+
+	* invoke_child now fails if pmhelper exits with error code (!= 0).
+
+11 February 2003 W. Michael Petullo <mike@flyn.org>
+
+        * Began to port to OpenBSD using openpam, which is used by
+        FreeBSD.  Note that OpenBSD does not use PAM by default.
+
+9 February 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up code in pam_mount.c and pmhelper.c.
+
+25 December 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Debian package generation now works.  I'm new to this, so there may
+	be some problems.
+	
+24 December 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Lots of work on Debian package generation.
+
+	* Updated package requirements.
+
+19 December 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Small logic and bug tweaks.
+
 13 December 2002 W. Michael Petullo <mike@flyn.org>
 
 	* ./configure now checks for security/pam_modules.h.
@@ -7,7 +39,7 @@
 
 	* No longer links against libssl if it does not exist.
 
-	* No uses -o pass-fd to transmit passwords to ncpmount.
+	* Now uses -o pass-fd to transmit passwords to ncpmount.
 
 18 November 2002 W. Michael Petullo <mike@flyn.org>
 

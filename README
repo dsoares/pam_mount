@@ -1,7 +1,4 @@
 
-README
-
-W. Michael Petullo
      _________________________________________________________
 
    Table of Contents
@@ -13,31 +10,31 @@ W. Michael Petullo
 
 COPYRIGHT
 
-   Copyright   (C)   2000   Conectiva   SA   Elvis  Pfützenreuter
+   Copyright (C) 2000 Conectiva SA Elvis Pfützenreuter
    <epx@conectiva.com>
 
 OVERVIEW
 
-   This  module  is  aimed  at  environments  with  SMB (Samba or
-   Windows  NT)  or  NCP  (Netware or Mars-NWE) servers that Unix
-   users  wish  to access transparently. It facilitates access to
-   private  volumes of these types well. The module also supports
-   mounting    home    directories   using   loopback   encrypted
+   This module is aimed at environments with SMB (Samba or
+   Windows NT) or NCP (Netware or Mars-NWE) servers that Unix
+   users wish to access transparently. It facilitates access to
+   private volumes of these types well. The module also supports
+   mounting home directories using loopback encrypted
    filesystems.
 
      * Every user can access his own volumes
      * The user needs to type the password just once (at login)
      * The mouting process is transparent to the users
-     * There  is  no  need  to  keep  the  login passwords in any
+     * There is no need to keep the login passwords in any
        additional file
-     * The  volumes are unmounted upon logout, so it saves system
-       resources,  avoiding  the  need  of  listing  every  every
-       possibly  useful  remote  volume  in  /etc/fstab  or in an
-       automount/supermount  config  file. This is also necessary
+     * The volumes are unmounted upon logout, so it saves system
+       resources, avoiding the need of listing every every
+       possibly useful remote volume in /etc/fstab or in an
+       automount/supermount config file. This is also necessary
        for securing encrypted filesystems.
 
-   Pam_mount  "understands"  SMB, NCP, and any type of filesystem
-   that  can  be  mounted  using  the  standard mount command. If
+   Pam_mount "understands" SMB, NCP, and any type of filesystem
+   that can be mounted using the standard mount command. If
    someone has a particular need for a different filesystem, feel
    free to ask me to include it and send me patches.
 
@@ -48,12 +45,12 @@ BUILDING
     2. make
     3. make install
 
-   Read  the ``INSTALL'' file for generic detailed information on
+   Read the ``INSTALL'' file for generic detailed information on
    installing this program.
 
 NASTY DETAILS
 
-   You  must  include  two  entries  in /etc/pam.d/SERVICE config
+   You must include two entries in /etc/pam.d/SERVICE config
    files, as the following example shows:
 
     #%PAM-1.0
@@ -69,75 +66,81 @@ htok
 +++ session   required  /lib/security/pam_mount.so use_first_pass
 +++ auth      required  /lib/security/pam_mount.so use_first_pass
 
-   If  you  want  to support having different passwords for login
+   If you want to support having different passwords for login
    and mounting, replace use_first_pass with try_first_pass. This
    depends on proper support of the PAM conversation mechanism by
    the applications using PAM for authentication.
 
-   Another  solution is to encrypt the password to the volume you
-   wish  mounted  using your system password as the key and store
-   it  somewhere  on  your  system's  local filesystem. Pam_mount
+   Another solution is to encrypt the password to the volume you
+   wish mounted using your system password as the key and store
+   it somewhere on your system's local filesystem. Pam_mount
    supports transparently decrypting this filesystem key, as long
    as the cipher used is supported by openssl. Given:
 
    sk
-          system  key,  the  key or password used to log into the
+          system key, the key or password used to log into the
           system
 
    fsk
-          filesystem  key,  the  key  that  allows you to use the
+          filesystem key, the key that allows you to use the
           filesystem you wish pam_mount to mount for you
 
    E and D
-          an  openssl supported synchronous encryption/decryption
+          an openssl supported synchronous encryption/decryption
           algorithm
 
    efsk
-          encrypted  filesystem  key,  efsk  = E_sk (fsk), stored
+          encrypted filesystem key, efsk = E_sk (fsk), stored
           somewhere on the local filesystem (ie: /home/user.key)
 
-   Pam_mount  will  read  efsk from the local filesystem, perform
-   fsk  = D_sk (efsk) and use fsk to mount the filesystem. If you
+   Pam_mount will read efsk from the local filesystem, perform
+   fsk = D_sk (efsk) and use fsk to mount the filesystem. If you
    change your system password, simply regenerate efsk using efsk
-   =  E_sk  (fsk).  If you want to mount this volume by hand, use
-   something  like  openssl -d -bf-ecb -in /home/user.key | mount
-   -p0  /home/user.  More  information  about  this  technique is
+   = E_sk (fsk). If you want to mount this volume by hand, use
+   something like openssl -d -bf-ecb -in /home/user.key | mount
+   -p0 /home/user. More information about this technique is
    included in pam_mount.conf.
 
-   A  script  named  <program>mkehd</program>  is  provided  with
-   pam_mount  to  help  create encrypted home directories. If you
-   have  an  entry for a user using encrypted home directories in
+   A script named <program>mkehd</program> is provided with
+   pam_mount to help create encrypted home directories. If you
+   have an entry for a user using encrypted home directories in
    pam_mount.conf, <program>mkehd</program> will create necessary
    filesystem images and possibly encrypted filesystem keys.
 
-   Pam_mount's  main configuration file, /etc/pam_mount.conf, has
-   a  lot  of  commented  lines that explain what every parameter
+   Pam_mount's main configuration file, /etc/pam_mount.conf, has
+   a lot of commented lines that explain what every parameter
    means. Individual users may define additional volumes to mount
-   in  ~/.pam_mount.conf.  The  volume  keyword is the only valid
+   in ~/.pam_mount.conf. The volume keyword is the only valid
    keyword in these per-user configuration files.
 
-   In  general, you will leave all the first (general) parameters
-   as   provided  by  default.  You  only  have  to  provide  the
-   user/volume  list  in  the  end  of  the  file,  following the
+   In general, you will leave all the first (general) parameters
+   as provided by default. You only have to provide the
+   user/volume list in the end of the file, following the
    examples.
 
-   To  ensure  that  your system and, possibly, the remote server
-   are  all  properly  configured, you should try to mount all or
+   To ensure that your system and, possibly, the remote server
+   are all properly configured, you should try to mount all or
    some of the volumes by hand, using the same commands and mount
-   points  provided  in /etc/pam_mount.conf. This will save you a
+   points provided in /etc/pam_mount.conf. This will save you a
    lot of grief, since it is more difficult to debug the mounting
    process via pam_mount.
 
-   If  you  can mount the volumes by hand but it is not happening
-   via  pam_mount,  you  may want to enable the "debug" option in
+   If you can mount the volumes by hand but it is not happening
+   via pam_mount, you may want to enable the "debug" option in
    /etc/pam_mount.conf to see what is happening.
 
-   Verify  if  the  user  owns the mount point and has sufficient
-   permissions  over  that.  pam_mount  will verify this and will
-   refuse  to  mount  the  remote volume if the user does not own
+   Verify if the user owns the mount point and has sufficient
+   permissions over that. pam_mount will verify this and will
+   refuse to mount the remote volume if the user does not own
    that directory.
 
    If pam_mount is having trouble unmounting volumes upon logging
-   out,  enable the debug variable and check the lsof variable in
+   out, enable the debug variable and check the lsof variable in
    pam_mount.conf. This causes pam_mount to run lsof upon logging
    out and write lsof's output to the system's logs.
+
+   Because of the way pmhelper transmits passwords to ncpmount,
+   if you with to mount NCP filesystems then you will need ncpfs
+   >= 2.2.0.19.10. This package is available at
+   http://platan.vc.cvut.cz/ftp/private/ncpfs/ncpfs-2.2.0.19.10.t
+   ar.gz.

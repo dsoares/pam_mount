@@ -5,26 +5,42 @@
 #include <errno.h>
 #include <string.h>
 #include <pwd.h>
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#include <fstab.h>
+#elif defined(__linux__)
 #include <mntent.h>
+#else
+FIXME
+#endif
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <security/_pam_macros.h>
+/* FIXME: not in openpam #include <security/_pam_macros.h> */
 #ifdef HAVE_LIBSSL
 #include <openssl/evp.h>
 #endif				/* HAVE_LIBSSL */
 #include <pam_mount.h>
 
-struct data_t data;
-void sigchld(int arg);
-void signal_handler(int arg);
-void config_signals();
-
-extern pm_command_t command;
-
 int debug;
+
+void sigchld(int arg);
+
+/* ============================ config_signals () ========================== */
+void config_signals()
+{
+    signal(SIGCHLD, sigchld);
+    /* Pipe will be eventually closed by parent but we don't mind */
+    signal(SIGPIPE, SIG_IGN);
+}
+
+/* ============================ sigchild () ================================ */
+void sigchld(int arg)
+{
+    wait((int *) NULL);
+    config_signals();
+}
 
 #ifdef HAVE_LIBSSL
 /* ============================ read_salt () =============================== */
@@ -59,8 +75,8 @@ int read_salt(BIO * fp, unsigned char *salt)
  * FN VAL: if error 0 else 1, errors are logged
  * NOTE:   efsk = encrypted filesystem key (stored in filesystem)
  *         fsk = filesystem key (D(efsk)) */
-int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password,
-		  char *fs_key_cipher, char *fs_key_path)
+int decrypted_key(char *pt_fs_key, const int pt_fs_key_len, const char *password,
+		  const char *fs_key_cipher, const char *fs_key_path)
 {
 #ifdef HAVE_LIBSSL
     int outlen, tmplen;
@@ -138,8 +154,26 @@ int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password,
  *         mountpoint points to a char array of length >= FILENAME_MAX + 1
  * POST:   mountpoint is mp of volume as listed in fstab
  * FN VAL: if error 0 else 1, errors are logged  */
-int get_fstab_mountpoint(char *volume, char *mountpoint)
+int get_fstab_mountpoint(const char *volume, char *mountpoint)
 {
+#if defined (__FreeBSD__) || defined (__OpenBSD__)
+    struct fstab *fstab_record;
+    if (!setfsent()) {
+	log("pmhelper: could not open fstab to determine mount point for %s\n", volume);
+        return 0;
+    }
+    if(!(fstab_record = getfsspec(volume))) {
+	log("pmhelper: could not determine mount point for %s\n", volume);
+	return 0;
+    }
+    if (strlen(fstab_record->fs_file) > FILENAME_MAX) {
+	log("pmhelper: mnt point listed in /etc/fstab for %s too long",
+	    volume);
+	return 0;
+    }
+    strcpy(mountpoint, fstab_record->fs_file);
+    return 1;
+#elif if defined(__linux__)
     FILE *fstab;
     struct mntent *fstab_record;
     if (!(fstab = fopen("/etc/fstab", "r"))) {
@@ -160,12 +194,15 @@ int get_fstab_mountpoint(char *volume, char *mountpoint)
     }
     strcpy(mountpoint, fstab_record->mnt_dir);
     return 1;
+#else
+    FIXME
+#endif
 }
 
 /* ============================ run_lsof () ================================ */
 /* NOTE: this fn simply runs lsof on a directory and logs its output for
  *       debugging purposes */
-void run_lsof(void)
+void run_lsof(const struct data_t *data)
 {
     int pid, pipefds[2];
     if (pipe(pipefds) < 0) {
@@ -179,9 +216,8 @@ void run_lsof(void)
 		dup(pipefds[1]);
 		close(pipefds[1]);
 		close(pipefds[0]);
-		execl(data.lsof, "lsof", data.mountpoint, NULL);
-		/* should not reach next instruction */
-		w4rn("pmhelper: failed to execl %s\n", data.lsof);
+		execl(data->lsof, "lsof", data->mountpoint, NULL);
+		w4rn("pmhelper: failed to execl %s\n", data->lsof);
 	    } else {
 		FILE *fp;
 		char buf[BUFSIZ + 1];
@@ -199,16 +235,16 @@ void run_lsof(void)
     }
 }
 
-/* ============================ unmount_volume () ========================== */
+/* ============================ exec_unmount_volume () ========================== */
 /* FN VAL: if error 0 else 1, errors are logged */
-int unmount_volume()
+int exec_unmount_volume(struct data_t *data)
 {
     int i;
     char *cmdarg[4];
     /* Need to unmount mount point not volume to support SMB mounts, etc. */
-    cmdarg[0] = data.ucommand;
+    cmdarg[0] = data->ucommand;
     cmdarg[1] = "umount";
-    cmdarg[2] = data.mountpoint;
+    cmdarg[2] = data->mountpoint;
     cmdarg[3] = NULL;
     for (i = 0; cmdarg[i]; i++) {
 	w4rn("pmhelper: arg is: %s\n", cmdarg[i]);
@@ -219,9 +255,8 @@ int unmount_volume()
 	/* Often, a process still exists with ~ as its pwd after logging out.  
 	 * Running lsof helps debug this.
 	 */
-	run_lsof();
+	run_lsof(data);
     execv(cmdarg[0], &cmdarg[1]);
-    /* should not reach next instruction */
     log("pmhelper: %s\n", "failed to execv umount command");
     return 0;
 }
@@ -229,24 +264,24 @@ int unmount_volume()
 /* ============================ mkmountpoint () ============================ */
 /* PRE:    data.user and data.mountpoint are valid strings != NULL
  * FN VAL: if error 0 else 1, errors are logged */
-int mkmountpoint(data_t data)
+int mkmountpoint(const data_t *data)
 {
     struct passwd *passwd_ent;
-    if ((passwd_ent = getpwnam(data.user))) {
-	w4rn("pam_mount: creating mount %s\n", data.mountpoint);
-	if (mkdir(data.mountpoint, 0700) != 0) {
+    if ((passwd_ent = getpwnam(data->user))) {
+	w4rn("pam_mount: creating mount %s\n", data->mountpoint);
+	if (mkdir(data->mountpoint, 0700) != 0) {
 	    log("pam_mount: tried to create %s but failed\n",
-		data.mountpoint);
+		data->mountpoint);
 	    return 0;
 	}
-	if (chown(data.mountpoint, passwd_ent->pw_uid, passwd_ent->pw_gid)
+	if (chown(data->mountpoint, passwd_ent->pw_uid, passwd_ent->pw_gid)
 	    != 0) {
-	    log("pam_mount: could not chown homedir to %s\n", data.user);
+	    log("pam_mount: could not chown homedir to %s\n", data->user);
 	    return 0;
 	}
     } else {
 	log("pam_mount: could not determine uid from %s to make homedir\n",
-	    data.user);
+	    data->user);
 	return 0;
     }
     return 1;
@@ -258,10 +293,11 @@ int mkmountpoint(data_t data)
  *         server points to a valid string != NULL         
  *         mountpoint points to a valid string != NULL 
  *           (will be looked up in /etc/fstab if == "")
- * FN VAL: 1 is volume is mounted at mountpoint else 0 
+ * FN VAL: 1 if volume is mounted at mountpoint else 0 
  *           FIXME: calls exit() on error */
-int already_mounted(int type, char *volume, char *server, char *mountpoint)
+int already_mounted(const int type, const char *volume, const char *server, const char *mountpoint)
 {
+#if defined(__linux__)
     FILE *mtab;
     struct mntent *mtab_record;
     char line[BUFSIZ + 1];
@@ -290,6 +326,11 @@ int already_mounted(int type, char *volume, char *server, char *mountpoint)
 	/* must handle multiple users mounting same volume. */
 	mtab_record = getmntent(mtab);
     return mtab_record ? !strcmp(mtab_record->mnt_dir, mountpoint) : 0;
+#else
+    /* FIXME */
+    log("pmhelper: %s\n", "check for previous mount not implemented on arch.");
+    return 0;
+#endif
 }
 
 /* ============================ add_to_argv () ============================= */
@@ -310,190 +351,208 @@ void add_to_argv(char *argv[], int *argc, char *arg)
     argv[*argc] = 0x00;
 }
 
-/* ============================ main () ==================================== */
-/* NOTE: expects to read a data_t structure from stdin which determines what
- *       is mounted or unmounted and how. */
-int main(int argc, char **argv)
+/* ============================ read_pm_input () =========================== */
+/*    PRE: data points to a struct data_t
+ *   POST: data points to a struct data_t, filled with values read from
+ *         stdin (pam_mount parent)
+ * FN VAL: if error 0 else 1, errors are logged */
+int read_pm_input(struct data_t *data) 
 {
     int total = 0, n;
-    char *_argv[MAX_PAR + 1];
-    int _argc = 0;
-    int child;
-    int fds[2];
-    int child_exit;
-    int i;
-    int mntpt_from_fstab = 0;
-
-    debug = getenv("PAM_MOUNT_DEBUG") ? 1 : 0;
-
-    w4rn("pmhelper: %s\n", "I am executing");
-
-    memset(&data, 0x00, sizeof(data_t));
-
-    config_signals();
-
+    memset(data, 0x00, sizeof(data_t));
     while (total < sizeof(data_t)) {
-	n = read(0, ((char *) &data) + total, sizeof(data) - total);
+	n = read(0, ((char *) data) + total, sizeof(data_t) - total);
 	if (n <= 0) {
 	    log("pmhelper: %s\n", "failed to receive mount data");
-	    exit(EXIT_FAILURE);
+            return 0;
 	}
 	total += n;
     }
     if (total != sizeof(data_t)) {
 	log("pmhelper: %s\n", "failed to receive all mount data");
-	exit(EXIT_FAILURE);
+        return 0;
+        }
+    return 1;
+}
+
+/* ============================ log_pm_input () ============================ */
+/*  PRE: data points to a struct data_t */
+void log_pm_input(const struct data_t *data)
+{
+    int i;
+    w4rn("pmhelper: %s\n", "received");
+    w4rn("pmhelper: %s\n", "--------");
+    /* w4rn("pmhelper: %s\n", data->password); */
+    w4rn("pmhelper: %s\n",
+	 data->
+	 globalconf ? "(defined by globalconf)" :
+	 "(defined by luserconf)");
+    w4rn("pmhelper: user:          %s\n", data->user);
+    w4rn("pmhelper: server:        %s\n", data->server);
+    w4rn("pmhelper: volume:        %s\n", data->volume);
+    w4rn("pmhelper: mountpoint:    %s\n", data->mountpoint);
+    w4rn("pmhelper: options:       %s\n", data->options);
+    w4rn("pmhelper: fs_key_cipher: %s\n", data->fs_key_cipher);
+    w4rn("pmhelper: fs_key_path:   %s\n", data->fs_key_path);
+    w4rn("pmhelper: %s", "argv:          ");
+    for (i = 0; strlen(data->argv[i]); i++)
+	w4rn("%s ", data->argv[i]);
+    w4rn("%s", "\n");
+    w4rn("pmhelper: %s\n", "--------");
+}
+
+/* ============================ exec_mount_volume () ======================= */
+/*    PRE: fds points to two fds (pipe)
+ *         _argv points to a valid, NULL-terminated command array
+ *   POST: _argv is executing and has pipe as stdin
+ * FN VAL: if error 0 else 1, errors are logged */
+int exec_mount_volume(const int fds[2], char *_argv[])
+{
+	int i;
+	w4rn("pmhelper: %s\n", "pmhelper CHILD executing");
+	close(fds[1]);
+	if (dup2(fds[0], STDIN_FILENO) == -1) {
+            log("pmhelper: %s\n", "error setting up mount's pipe");
+            return 0;
+        }
+	for (i = 0; _argv[i]; i++)
+	    w4rn("pmhelper: arg is: %s\n", _argv[i]);
+	if (setuid(0) == -1)
+	    w4rn("pmhelper: %s\n", "could not set uid to 0");
+	execv(_argv[0], &_argv[1]);
+        log("pmhelper: %s\n", "error executing mount command");
+	return 0;
+}
+
+/* ============================ mount_volume () ============================ */
+/*    PRE: data points to a valid struct data_t*
+ *         mntpt_from_fstab is true if mount point was read from fstab, false
+ *         if mount point was received from pam_mount
+ *   POST: volume represented in data is mounted
+ * FN VAL: if error 0 else 1, errors are logged */
+int mount_volume(struct data_t* data, const int mntpt_from_fstab)
+{
+    char *_argv[MAX_PAR + 1];
+    int _argc = 0, fds[2], child = -1, child_exit = 0;
+    w4rn("pmhelper: %s\n",
+	 "checking for encrypted filesystem key configuration");
+    /* FIXME: Should this be rmdir'ed when one logs out? How? */
+    if (getenv("PAM_MOUNT_MKMOUNTPOINT") && !exists(data->mountpoint))
+	if (!mkmountpoint(data))
+		return 0;
+    if (strlen(data->fs_key_cipher)) {
+	char k[MAX_PAR + 1];
+	w4rn("pmhelper: %s\n",
+	     "decrypting FS key using system auth. token...");
+	/* data->fs_key_path contains real filesystem key. */
+	if (!decrypted_key
+	    (k, sizeof(k), data->password, data->fs_key_cipher,
+	     data->fs_key_path))
+		return 0;
+	memset(data->password, 0x00, MAX_PAR + 1);
+	strncpy(data->password, k, MAX_PAR + 1);
     }
+    w4rn("pmhelper: %s\n", "about to start building mount command");
+    while (strlen(data->argv[_argc]))
+	add_to_argv(_argv, &_argc, data->argv[_argc]);
+    if (data->type == NCPMOUNT) {
+	char *tmp;		/* FIXME: never freed */
+	w4rn("pmhelper: %s\n", "mount type is NCPMOUNT");
+	add_to_argv(_argv, &_argc, "-S");
+	add_to_argv(_argv, &_argc, data->server);
+	add_to_argv(_argv, &_argc, "-U");
+	add_to_argv(_argv, &_argc, data->user);
+	add_to_argv(_argv, &_argc, "-V");
+	add_to_argv(_argv, &_argc, "-o");
+	asprintf(&tmp, "pass-fd=0", data->options[0] ? "," : "", data->options);
+	add_to_argv(_argv, &_argc, tmp);
+	add_to_argv(_argv, &_argc, data->volume);
+	add_to_argv(_argv, &_argc, data->mountpoint);
+    } else if (data->type == SMBMOUNT) {
+	char *tmp;		/* FIXME: never freed */
+	w4rn("pmhelper: %s\n", "mount type is SMBMOUNT");
+	asprintf(&tmp, "//%s/%s", data->server, data->volume);
+	add_to_argv(_argv, &_argc, tmp);
+	add_to_argv(_argv, &_argc, data->mountpoint);
+	add_to_argv(_argv, &_argc, "-o");
+	asprintf(&tmp, "username=%s%s%s",
+		 data->user, data->options[0] ? "," : "", data->options);
+	add_to_argv(_argv, &_argc, tmp);
+    } else if (data->type == LCLMOUNT) {
+	w4rn("pmhelper: %s\n", "mount type is LCLMOUNT");
+	if (data->options) {
+	    add_to_argv(_argv, &_argc, "-o");
+	    add_to_argv(_argv, &_argc, data->options);
+	}
+	add_to_argv(_argv, &_argc, data->volume);
+	if (!mntpt_from_fstab)
+	    add_to_argv(_argv, &_argc, data->mountpoint);
+    } else {
+	log("pmhelper: %s\n", "data->type is unknown");
+		return 0;
+    }
+    if (pipe(fds) != 0) {
+	log("pmhelper: %s\n", "could not make pipe");
+		return 0;
+    }
+    /* send password down pipe to mount process */
+    if (data->type == SMBMOUNT)
+	setenv("PASSWD_FD", "0", 1);
+    w4rn("pmhelper: %s\n", "about to fork");
+    child = fork();
+    if (child == -1) {
+	log("pmhelper: %s\n", "failed to fork");
+		return 0;
+    }
+    if (! child) {
+	/* This is the child */
+        exec_mount_volume(fds, _argv);
+	log("pmhelper: %s\n", "failed to execv mount command");
+	return 0;
+    }
+    write(fds[1], data->password, strlen(data->password) + 1);
+    close(fds[0]);
+    close(fds[1]);
+    /* FIXME: not in openpam: _pam_overwrite(data->password); */
+    w4rn("pmhelper: %s\n", "waiting for homedir mount");
+    waitpid(child, &child_exit, 0);
+    /* pass on through the result from the mount process */
+    return(! WEXITSTATUS(child_exit));
+}
+
+/* ============================ main () ==================================== */
+/* NOTE: expects to read a data_t structure from stdin which determines what
+ *       is mounted or unmounted and how. */
+int main(int argc, char **argv)
+{
+
+    int i;
+    struct data_t data;
+    int mntpt_from_fstab = 0;
+    debug = getenv("PAM_MOUNT_DEBUG") ? 1 : 0;
+    w4rn("pmhelper: %s\n", "I am executing");
+    config_signals();
+    if (!read_pm_input(&data))
+        exit(EXIT_FAILURE);
+    if (debug)
+        log_pm_input(&data);
     if (!strlen(data.mountpoint)) {
 	if (!get_fstab_mountpoint(data.volume, data.mountpoint)) {
 	    exit(EXIT_FAILURE);
 	}
 	mntpt_from_fstab = 1;
     }
-    while (strlen(data.argv[_argc]))
-	add_to_argv(_argv, &_argc, data.argv[_argc]);
-    w4rn("pmhelper: %s\n", "received");
-    w4rn("pmhelper: %s\n", "--------");
-    /* w4rn("pmhelper: %s\n", data.password); */
-    w4rn("pmhelper: %s\n",
-	 data.
-	 globalconf ? "(defined by globalconf)" :
-	 "(defined by luserconf)");
-    w4rn("pmhelper: user:          %s\n", data.user);
-    w4rn("pmhelper: server:        %s\n", data.server);
-    w4rn("pmhelper: volume:        %s\n", data.volume);
-    w4rn("pmhelper: mountpoint:    %s\n", data.mountpoint);
-    w4rn("pmhelper: options:       %s\n", data.options);
-    w4rn("pmhelper: fs_key_cipher: %s\n", data.fs_key_cipher);
-    w4rn("pmhelper: fs_key_path:   %s\n", data.fs_key_path);
-    w4rn("pmhelper: %s", "argv:          ");
-    for (i = 0; strlen(data.argv[i]); i++)
-	w4rn("%s ", data.argv[i]);
-    w4rn("%s", "\n");
-    w4rn("pmhelper: %s\n", "--------");
     if (data.unmount) {
 	w4rn("pmhelper: %s\n", "unmounting");
-	if (!unmount_volume())	/* FIXME: Should not return (exec) -- 
-				 * clean logic */
+	if (!exec_unmount_volume(&data))
 	    exit(EXIT_FAILURE);
-    }
-
-    if (already_mounted
+    } else if (already_mounted
 	(data.type, data.volume, data.server, data.mountpoint)) {
 	log("pmhelper: %s already seems to be mounted, skipping\n",
 	    data.volume);
 	exit(EXIT_SUCCESS);	/* success so try_first_pass does not try again */
-    }
-
-    w4rn("pmhelper: %s\n",
-	 "checking for encrypted filesystem key configuration");
-
-    /* FIXME: Should this be rmdir'ed when one logs out? How? */
-    if (getenv("PAM_MOUNT_MKMOUNTPOINT") && !exists(data.mountpoint))
-	if (!mkmountpoint(data))
-	    exit(EXIT_FAILURE);
-    if (strlen(data.fs_key_cipher)) {
-	char k[MAX_PAR + 1];
-	w4rn("pmhelper: %s\n",
-	     "decrypting FS key using system auth. token...");
-	/* data.fs_key_path contains real filesystem key. */
-	if (!decrypted_key
-	    (k, sizeof(k), data.password, data.fs_key_cipher,
-	     data.fs_key_path))
-	    exit(EXIT_FAILURE);
-	memset(data.password, 0x00, MAX_PAR + 1);
-	strncpy(data.password, k, MAX_PAR + 1);
-    }
-
-    w4rn("pmhelper: %s\n", "about to start building mount command");
-
-    if (data.type == NCPMOUNT) {
-	w4rn("pmhelper: %s\n", "mount type is NCPMOUNT");
-	add_to_argv(_argv, &_argc, "-S");
-	add_to_argv(_argv, &_argc, data.server);
-	add_to_argv(_argv, &_argc, "-U");
-	add_to_argv(_argv, &_argc, data.user);
-	add_to_argv(_argv, &_argc, "-V");
-	add_to_argv(_argv, &_argc, data.volume);
-	add_to_argv(_argv, &_argc, data.mountpoint);
-    } else if (data.type == SMBMOUNT) {
-	char *tmp;		/* FIXME: never freed */
-	w4rn("pmhelper: %s\n", "mount type is SMBMOUNT");
-	asprintf(&tmp, "//%s/%s", data.server, data.volume);
-	add_to_argv(_argv, &_argc, tmp);
-	add_to_argv(_argv, &_argc, data.mountpoint);
-	add_to_argv(_argv, &_argc, "-o");
-	asprintf(&tmp, "username=%s%s%s",
-		 data.user, data.options[0] ? "," : "", data.options);
-	add_to_argv(_argv, &_argc, tmp);
-    } else if (data.type == LCLMOUNT) {
-	char *tmp;		/* FIXME: never freed */
-	w4rn("pmhelper: %s\n", "mount type is LCLMOUNT");
-	add_to_argv(_argv, &_argc, data.volume);
-	if (!mntpt_from_fstab)
-	    add_to_argv(_argv, &_argc, data.mountpoint);
-	add_to_argv(_argv, &_argc, "-o");
-	asprintf(&tmp, "pass-fd=0", data.options[0] ? "," : "", data.options);
-	add_to_argv(_argv, &_argc, tmp);
-    } else {
-	log("pmhelper: %s\n", "data.type is unknown");
-	exit(EXIT_FAILURE);
-    }
-    if (pipe(fds) != 0) {
-	log("pmhelper: %s\n", "could not make pipe");
-	exit(EXIT_FAILURE);
-    }
-    /* send password down pipe to mount process */
-    if (data.type == SMBMOUNT)
-	setenv("PASSWD_FD", "0", 1);
-
-    w4rn("pmhelper: %s\n", "about to fork");
-    child = fork();
-    if (child == -1) {
-	log("pmhelper: %s\n", "failed to fork");
-	exit(EXIT_FAILURE);
-    }
-
-    if (child == 0) {
-	w4rn("pmhelper: %s\n", "pmhelper CHILD executing");
-	/* This is the child */
-
-	close(fds[1]);
-	dup2(fds[0], STDIN_FILENO);
-	if (setuid(0) == -1)
-	    w4rn("pmhelper: %s\n", "could not set uid to 0");
-	argv[i] = NULL;
-	for (i = 0; _argv[i]; i++)
-	    w4rn("pmhelper: arg is: %s\n", _argv[i]);
-	execv(_argv[0], _argv + 1);
-
-	/* should not reach next instruction */
-	log("pmhelper: %s\n", "failed to execv mount command");
-	exit(EXIT_FAILURE);
-    }
-    write(fds[1], data.password, strlen(data.password) + 1);
-    close(fds[0]);
-    close(fds[1]);
-
-    _pam_overwrite(data.password);
-
-    w4rn("pmhelper: %s\n", "waiting for homedir mount");
-    waitpid(child, &child_exit, 0);
-    /* pass on through the result from the mount process */
-    exit(WEXITSTATUS(child_exit));
-}
-
-/* ============================ config_signals () ========================== */
-void config_signals()
-{
-    signal(SIGCHLD, sigchld);
-    /* Pipe will be eventually closed by parent but we don't mind */
-    signal(SIGPIPE, SIG_IGN);
-}
-
-/* ============================ sigchild () ================================ */
-void sigchld(int arg)
-{
-    wait((int *) NULL);
-    config_signals();
+    } else
+        if (!mount_volume(&data, mntpt_from_fstab))
+            exit(EXIT_FAILURE);
+    exit(EXIT_SUCCESS);
 }

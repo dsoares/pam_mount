@@ -10,7 +10,11 @@ extern "C" {
 #include <stdio.h>
 #include <security/pam_modules.h>
 
+#ifdef __OpenBSD__
+#define CONFIGFILE	"/etc/pam_mount.conf"
+#else
 #define CONFIGFILE	"/etc/security/pam_mount.conf"
+#endif /* __OpenBSD */
 
 #define MAX_PAR		127
 
