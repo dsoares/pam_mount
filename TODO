@@ -1,33 +1,20 @@
 = For 1.0 =====================================================================
 
-o Re-enable rpm and deb in top-level makefile publish target.
-
-o Does configure's libcrypt check work?  Is -lcrypt or -lssl req.
-on Linux?  It seems only -lcrypto is required on OpenBSD.  I need to
-install OpenSSL on Debian to test this.
+o Re-enable rpm in top-level makefile publish target.
 
 o Why does pam_mount not work with ssh?
+	Because of privelege separation?  Supposively this breaks pam
+	code that needs to be root.
 
-o Why does pam_mount not work with RH 9.0's gdm?
+o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
 
 o Does new smbmount code work?
 
 o Does new ncpmount code work?
 
-o Ensure mounting a volume as root does not prohibit user from changing
-permissions on it.  Ensure users can unmount pam_mounted volumes
-(or document).
-
 o Fix GNOME so that Gconfd does not hang around after a user exits.
 This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
 unstable.  In Red Hat bugzilla.
-
-o Evaluate fns related to options_allow, deny, and require (use splint?).
-
-o Security audit.  Scrub code for buffer overflows and other
-security-related bugs (use splint?):
-mount.c
-pam_mount.c
 
 = OpenBSD =====================================================================
 
@@ -43,6 +30,8 @@ on OpenBSD.
 o openpam su is broken.  memcpy causes "su mike" to try and execute
 "mike".  Also, gives up root privelages before forking, resulting
 in pam's close_session code being run with weak privelages.
+
+o fix cifs code (insecure password transmission)
 
 = Past 1.0 (punted) ===========================================================
 
@@ -61,7 +50,7 @@ o Fix Debian:
 		in unstable (bug 163639)
 	CLOSE_SESSION set to no in /etc/login.defs (bug 163635)
 
-o Get rid of FIXME and XXXs.
+o Get rid of FIXMEs.
 
 o Ensure that NFS shares are working.  Document NFS use.  Get TCFS working.
 

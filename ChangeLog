@@ -1,3 +1,57 @@
+7 May 2003 W. Michael Petullo <mike@flyn.org>
+	
+	* Mkehd no longer uses an env. var. to transmit password to openssl.
+
+	* Mkehd now supports multiple volumes per user in /etc/pam_mount.conf.
+
+6 May 2003 W. Michael Petullo <mike@flyn.org>
+	
+	* Did some work on mkehd.
+
+	* Now builds .deb.
+	
+	* Pam_mount.so is installed in $(prefix)/../lib/security instead
+	of /lib/security on Linux (mainly to facilitate building .debs).
+
+5 May 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Re-added free in readconfig.c:log_error().
+	
+	* Readconfig.c:read_command() now checks to ensure command
+	specifications contain at least one parameter (was causing a
+	core dump on bad pam_mount.confs).  Also fixed default
+	pam_mount.conf which was broken.
+
+28 April 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed (I hope) ncpmount parameters (thanks Bastian Kleineidam).
+
+	* Added some error checking (thanks Bastian Kleineidam).
+
+	* Changed some strcpy's to strncpy (thanks Bastian Kleineidam).
+
+	* Failed mallocs in readconfig.c are now handled better.
+
+	* Fixed some minor errors pointed out by OpenBSD's lint.
+
+ 27 April 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Got rid of some calls to sleep that seem unnecessary.
+
+	* Got rid of some useless signal handling code.
+
+	* session counting now used strtol instead of atoi.
+
+	* pam_mount now rmdirs mount points it mkdirs.
+
+21 April 2003 W. Michael Petullo <mike@flyn.org>
+	
+        * Started to make checks for valid mount options a little
+        cleaner so that it is more apparent that they are coded
+        right.
+
+	* Made some functions static as appropriate.
+
 19 April 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Added some checks to volume_record_sane.

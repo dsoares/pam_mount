@@ -58,11 +58,11 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	}
 }
 
-/* ============================ number_safe () ============================= */
-int
-number_safe(char *n)
+/* ============================ str_to_long () ============================= */
+long
+str_to_long(char *n)
 /* PRE:    dosn't assume anything about n
- * FN VAL: if error 0 else 1, errors are logged 
+ * FN VAL: if error LONG_MAX or LONG_MIN else long value of n, errors are logged 
  * NOTE:   this is needed because users own /var/run/pam_mount/<user> 
  *         and they could try something sneaky
  */
@@ -70,26 +70,22 @@ number_safe(char *n)
 	char           *ptr = n;
 	if (!n) {
 		log("pam_mount: %s\n", "count string is NULL");
-		return 0;
+		return LONG_MAX;
 	}
 	if (!*n || *n == '\n') {
 		log("pam_mount: %s\n", "count string has no length");
-		return 0;
+		return LONG_MAX;
 	}
 	do {
 		/* "123\n" okay, "1a23" bad, "1\n23" bad, "123" okay */
 		if (!(isdigit(*ptr))) {
 			log("pam_mount: %s\n", "count contains non-digits");
-			return 0;
+			return LONG_MAX;
 		}
 		ptr++;
 	}
 	while (!(*ptr == '\n' && !*(ptr + 1)) && *ptr);
-	if (strlen(n) > (sizeof(int) * 8)) {	/* FIXME: not right */
-		log("pam_mount: %s\n", "count string too long (number too big)");
-		return 0;
-	}
-	return 1;
+	return strtol(n, NULL, 10);
 }
 
 /* ============================ modify_pm_count () ========================= */
@@ -102,11 +98,12 @@ number_safe(char *n)
  *         Is utmp portable?
  */
 int
-modify_pm_count(const char *user, int amount)
+modify_pm_count(const char *user, long amount)
 {
 	char            filename[PATH_MAX + 1];
 	int             tries = 0;
-	int             fd, err, val;
+	int             fd, err;
+	long            val;
 	struct stat     st;
 	struct flock    lockinfo;
 	char           *buf = NULL;
@@ -136,7 +133,8 @@ modify_pm_count(const char *user, int amount)
 		 */
 		/*
 		 * FIXME: user can modify /var/.../<user> at will; security
-		 * problem?
+		 * problem?  Note that this file's contents is checked by 
+                 * str_to_long.
 		 */
 		if (chmod("/var/run/pam_mount", 0755) == -1) {
 			w4rn("pam_mount: unable to chmod %s\n", "/var/run/pam_mount");
@@ -226,7 +224,7 @@ top:
 			w4rn("pam_mount: could not access %s, trying again\n",
 			     filename);
 			sleep(1);
-			close(fd);
+			CLOSE(fd);
 			goto top;
 		} else {
 			w4rn("pam_mount: %s\n", "tried ten times, quitting");
@@ -252,12 +250,11 @@ top:
 			goto return_error;
 		}
 		buf[st.st_size] = '\0';
-		if (!number_safe(buf)) {
-			log("pam_mount: %s\n", "session count is corrupt");
+		if ((val = str_to_long(buf)) == LONG_MAX || val == LONG_MIN) {
+			log("pam_mount: %s\n", "session count corrupt (overflow)");
 			err = -1;
 			goto return_error;
 		}
-		val = atoi(buf);
 	} else {
 		val = 0;
 	}
@@ -268,7 +265,7 @@ top:
 				w4rn("pam_mount: unlink error on %s\n", filename);
 			}
 		}
-		snprintf(buf, st.st_size + 2, "%d", val);
+		snprintf(buf, st.st_size + 2, "%ld", val);
 		if (write(fd, buf, strlen(buf)) == -1) {
 			w4rn("pam_mount: write error on %s\n", filename);
 			err = -1;
@@ -277,7 +274,7 @@ top:
 	}
 	err = val;
 return_error:
-	close(fd);
+	CLOSE(fd);
 	if (buf)
 		free(buf);
 	return err;
@@ -320,7 +317,6 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	int             vol;
 	int             ret;
 	int             get_pass;
-	int             i;
 	w4rn("pam_mount: %s\n", "beginning");
 	/* if our CWD is in the home directory, it might not get umounted */
 	/* Needed for KDM.  FIXME: Bug in KDM? */
@@ -351,7 +347,10 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	if (config.volcount <= 0) {
 		w4rn("pam_mount: %s\n", "no volumes to mount");
 	}
-	expandconfig(&config);
+	if (! expandconfig(&config)) {
+		log("pam_mount: %s\n", "error expanding configuration");
+		return PAM_SUCCESS;
+	}
 	if (config.debug)
 		fprintf(stderr,
 		   "pam_mount: real and effective user ID are %d and %d.\n",

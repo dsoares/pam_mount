@@ -23,7 +23,6 @@
 
 CONF=/etc/security/pam_mount.conf
 CIPHER=aes
-FILENAME=ciphertext.img
 KEYBITS=256
 SIZE=20
 FSTYPE=ext2
@@ -32,9 +31,11 @@ _USER=$USER
 USAGE="[OPTION]...
 
   -h, -?       print this message
-  -c cipher    set the cipher used by in the filesystem  [ $CIPHER ]
-  -f filename  name of the disk image to generate        [ $FILENAME ]
+  -c cipher    set the cipher used in the filesystem     [ $CIPHER ]
+  -i cipher    set the fsk cipher                        [ from pam_mount.conf ]
+  -f filename  name of the disk image to generate        [ from pam_mount.conf ]
   -k keybits   set the number of bits in cipher key      [ $KEYBITS ]
+  -p path      set the path to the efsk                  [ from pam_mount.conf ]
   -s size      size in MB of generated filesystem        [ $SIZE ]
   -t fs type   type of filesystem to create              [ $FSTYPE ]
   -u user      name of user to create ehd for            [ $_USER ]"
@@ -48,7 +49,13 @@ while :;
 			CIPHER=$2
 			shift ;;
 		-f )
-			FILENAME=$2
+			FILENAME[0]=$2
+			shift ;;
+		-i )
+			FSK_CIPHER=$2
+			shift ;;
+		-p )
+			KEYPATH=$2
 			shift ;;
 		-s )
 			SIZE=$2
@@ -70,32 +77,27 @@ if [ ! -f $CONF ]; then
 	exit 1
 fi
 
-REGEX="^volume $_USER"
-FSK_CIPHER=`grep "$REGEX" $CONF | awk '{ print $8 }'`
-KEYPATH=`grep "$REGEX" $CONF | awk '{ print $9 }'`
-
-if [ x${FSK_CIPHER} != x- ]; then
-	if [ -z "${CIPHER}" -o -z "${KEYPATH}" ]; then
-		echo "${0##*/}: \"fs key cipher\" or \"fs key path\" not defined in "
-		echo "$CONF for user $_USER"
-		echo
-		echo "You need to edit $CONF correctly for method three."
-		exit 1
-	fi
-
-	if [ -f $KEYPATH ]; then
-		echo "${0##*/}: $KEYPATH already exists: don't want to risk losing it"
-		exit 1
-	fi
+volcount=0
+# if no image filename is specified then we grab all out of pam_mount.conf
+if [ -z ${FILENAME[0]} ]; then 
+	while read LINE; do
+		if echo $LINE | grep "^volume ${_USER}" > /dev/null; then
+			FILENAME[$volcount]=`echo $LINE | awk '{ print $5 }'`
+			FSK_CIPHER[$volcount]=`echo $LINE | awk '{ print $8 }'`
+			KEYPATH[$volcount]=`echo $LINE | awk '{ print $9 }'`
+			volcount=$(($volcount + 1))
+		fi
+	done < $CONF
+	volcount=$(($volcount - 1))
 fi
 
-if [ -z $NEW_EFSK_PASSWORD ]; then
+if [ -z $PASSWORD ]; then
 	echo -n "(current) UNIX password: "
 	stty -echo > /dev/tty
-	read NEW_EFSK_PASSWORD < /dev/tty; echo
+	read PASSWORD < /dev/tty; echo
 	echo -n "Retype UNIX password: "
 	read VERIFY < /dev/tty; echo
-	if [ ${NEW_EFSK_PASSWORD} != ${VERIFY} ]; then
+	if [ ${PASSWORD} != ${VERIFY} ]; then
 		echo "Sorry, passwords do not match"
 		stty echo > /dev/tty
 		exit 1
@@ -103,17 +105,44 @@ if [ -z $NEW_EFSK_PASSWORD ]; then
 	stty echo > /dev/tty
 fi
 
-export NEW_EFSK_PASSWORD
-
-if [ x${FSK_CIPHER} = x- ]; then
-	dd if=/dev/urandom of=$FILENAME bs=1M count=$SIZE
-	losetup -e $CIPHER /dev/loop1 $FILENAME
-	mkfs -t $FSTYPE /dev/loop1
-else
-	dd if=/dev/urandom of=$FILENAME bs=1M count=$SIZE
-	dd if=/dev/urandom bs=1c count=$(($KEYBITS / 8)) | openssl enc -$FSK_CIPER -pass env:NEW_EFSK_PASSWORD > $KEYPATH
-	openssl enc -d -$FSK_CIPHER -in $KEYPATH -pass env:NEW_EFSK_PASSWORD | losetup -e $CIPHER -k $KEYBITS -p0 /dev/loop1 $FILENAME
-	mkfs -t $FSTYPE /dev/loop1
-fi
-
-losetup -d /dev/loop1
+for (( ; $volcount >= 0; volcount=$(($volcount - 1)) )); do
+	if [ x${FSK_CIPHER[$volcount]} != x- ]; then
+		echo Using encrypted filesystem key...
+		if [ x"${KEYPATH[$volcount]}" = x- ]; then
+			echo "${0##*/}: \"fs key path\" not defined in "
+			echo "$CONF for user $_USER"
+			echo
+			echo "You need to edit $CONF correctly for efsk method."
+			exit 1
+		fi
+		if [ -f ${KEYPATH[$volcount]} ]; then
+			echo "${0##*/}: ${KEYPATH[$volcount]} already exists: don't want to risk losing it"
+			exit 1
+		fi
+		if [ -f ${FILENAME[$volcount]} ]; then
+			echo "${0##*/}: ${FILENAME[$volcount]} already exists: don't want to risk losing it"
+			exit 1
+		fi
+		echo "Creating filesystem image using /dev/urandom (may take a LONG time)..."
+		dd if=/dev/urandom of=${FILENAME[$volcount]} bs=1M count=$SIZE > /dev/nul
+		# Use a named pipe because env. vars. are viewable by all 
+		# and random string is already being piped into openssl's 
+		# stdin
+		SYS_PASS_PIPE=`mktemp -u /tmp/mkehd.XXXXXX`
+		mkfifo -m 0600 $SYS_PASS_PIPE
+		echo $PASSWORD > $SYS_PASS_PIPE &
+		dd if=/dev/urandom bs=1c count=$(($KEYBITS / 8)) | openssl enc -${FSK_CIPHER[$volcount]} -pass file:$SYS_PASS_PIPE > ${KEYPATH[$volcount]}
+		echo $PASSWORD > $SYS_PASS_PIPE &
+		openssl enc -d -${FSK_CIPHER[$volcount]} -in ${KEYPATH[$volcount]} -pass file:$SYS_PASS_PIPE | losetup -e $CIPHER -k $KEYBITS -p0 /dev/loop1 ${FILENAME[$volcount]}
+		mkfs -t $FSTYPE /dev/loop1 > /dev/null
+		losetup -d /dev/loop1
+		rm $SYS_PASS_PIPE
+	else
+		echo NOT using encrypted filesystem key...
+		echo "Creating filesystem image using /dev/urandom (may take a LONG time)..."
+		dd if=/dev/urandom of=${FILENAME[$volcount]} bs=1M count=$SIZE
+		echo $PASSWORD | losetup -e $CIPHER -k $KEYBITS -p0 /dev/loop1 ${FILENAME[$volcount]}
+		mkfs -t $FSTYPE /dev/loop1 > /dev/null
+		losetup -d /dev/loop1
+	fi
+done
