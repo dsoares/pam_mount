@@ -51,8 +51,8 @@ pm_command_t command[] = {
 	{CIFSMOUNT, "cifs", "cifsmount"},
 	{NCPMOUNT, "ncp", "ncpmount"},
 	{NCPMOUNT, "ncpfs", "ncpmount"},
+	{NFSMOUNT, "nfs", "nfsmount"},	/* Don't use LCLMOUNT to avoid fsck */
 	{LCLMOUNT, "local", "lclmount"},
-	{NFSMOUNT, "nfs", "lclmount"},	/* Don't use LCLMOUNT to avoid fsck */
 /* FIXME: PMHELPER no longer needed */
 	{PMHELPER, NULL, "pmhelper"},
 	{UMOUNT, NULL, "umount"},
@@ -92,6 +92,7 @@ static const configoption_t legal_config[] = {
 	{"ncpmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"umount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"lclmount", ARG_LIST, read_command, &config, CTX_ALL},
+	{"nfsmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"lsof", ARG_LIST, read_command, &config, CTX_ALL},
 	{"mntagain", ARG_LIST, read_command, &config, CTX_ALL},
 	{"mntcheck", ARG_LIST, read_command, &config, CTX_ALL},
@@ -362,7 +363,8 @@ static char *volume_record_sane(config_t * config)
 		    "pam_mount: mount command not defined for this type";
 	else if ((config->volume[config->volcount].type == SMBMOUNT
 		  || config->volume[config->volcount].type == NCPMOUNT
-		  || config->volume[config->volcount].type == CIFSMOUNT)
+		  || config->volume[config->volcount].type == CIFSMOUNT
+		  || config->volume[config->volcount].type == NFSMOUNT)
 		 && !strlen(config->volume[config->volcount].server))
 		return
 		    "pam_mount: remote mount type specified without server";

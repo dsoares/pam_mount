@@ -1,6 +1,6 @@
 = For 1.0 =====================================================================
 
-o Get in fedora (http://www.fedora.us/wiki/PackageSubmissionQAPolicy).
+o Get in fedora (http://www.fedora.us/wiki/PackageSubmissionQAPolicy Fedora Bugzilla #1013).
 
 o Fix building deb in Makefile.am: make conditional?
 
