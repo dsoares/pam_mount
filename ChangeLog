@@ -1,3 +1,22 @@
+19 April 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added some checks to volume_record_sane.
+
+16 April 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Combined mount_volume and do_mount in mount.c.
+
+        * Fixed exec logic in mount.c.  Failed unmounts should now
+        be noticed.  Failed mntchecks or lsofs no longer continue
+        to run a second pam_mount process (they exit(EXIT_FAILURE)).
+
+15 April 2003 W. Michael Petullo <mike@flyn.org>
+
+        * pam_mount.so is now installed to /lib/security on Linux,
+        /usr/lib on OpenBSD.
+
+	* Made exec failure message a bit more descriptive.
+
 4 April 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Tested Linux build.

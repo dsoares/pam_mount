@@ -22,7 +22,7 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-moduledir = /lib/security
+moduledir = @PAM_MODDIR@
 module_LTLIBRARIES = pam_mount.la
 pam_mount_la_SOURCES = converse.c misc.c pam_mount.c readconfig.c dotconf.c mount.c
 pam_mount_la_LDFLAGS = -module -avoid-version @LIBCRYPTO@

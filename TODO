@@ -1,26 +1,5 @@
 = For 1.0 =====================================================================
 
-o With openpam's su, euid and uid of su process is 1000/1000 during
-close_session.  Should be 0/1000 for unmount.  Is the same true on
-Linux?  NOT ON DEBIAN WOODY! I modified openpam's su so it wouldn't 
-do this anymore.  Should I report change to openpam folks?
-	|
-	+-> related: does /var/run/pam_mount/user have to owned by user or not?
-	|	if not do I need to check the number it contains carefully.
-	|
-	--> If su should drop privs then how will I unmount on OBSD?!
-	|
-	|
-	--> But when I logout of a Debian /login/ session, PAM's e/uid
-	is 1000/1000!  What about Red Hat or newer Debian?  What is the
-	correct behavior here?
-
-o Also related to openpam su: memcpy is broken?  Causes username argument
-to be used as first argument to bash when "su mike" is issued!
-
-o Make EHD on OpenBSD and Linux as similar as possible document EHD
-on OpenBSD.
-
 o Re-enable rpm and deb in top-level makefile publish target.
 
 o Does configure's libcrypt check work?  Is -lcrypt or -lssl req.
@@ -28,6 +7,8 @@ on Linux?  It seems only -lcrypto is required on OpenBSD.  I need to
 install OpenSSL on Debian to test this.
 
 o Why does pam_mount not work with ssh?
+
+o Why does pam_mount not work with RH 9.0's gdm?
 
 o Does new smbmount code work?
 
@@ -47,6 +28,21 @@ o Security audit.  Scrub code for buffer overflows and other
 security-related bugs (use splint?):
 mount.c
 pam_mount.c
+
+= OpenBSD =====================================================================
+
+o Add support to vnconfig for reading passwords from stdin so that
+it can be used for EHD on OBSD.
+
+o Can't tell if EHD is already mounted on OpenBSD because mount says:
+/dev/svnd0c on /home/mike/enc..., not /home/mike.img on /home/mike/enc.
+
+o Make EHD on OpenBSD and Linux as similar as possible document EHD
+on OpenBSD.
+
+o openpam su is broken.  memcpy causes "su mike" to try and execute
+"mike".  Also, gives up root privelages before forking, resulting
+in pam's close_session code being run with weak privelages.
 
 = Past 1.0 (punted) ===========================================================
 

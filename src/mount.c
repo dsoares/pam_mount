@@ -223,7 +223,8 @@ get_fstab_mountpoint(const char *volume, char *mountpoint)
 void
 run_lsof(const struct config_t * config, const int vol)
 {
-	int             pid, pipefds[2];
+	int             pipefds[2];
+	pid_t           pid;
 	if (pipe(pipefds) < 0) {
 		log("pam_mount: %s\n", "failed to create pipe for lsof");
 	} else {
@@ -236,7 +237,8 @@ run_lsof(const struct config_t * config, const int vol)
 				close(pipefds[1]);
 				close(pipefds[0]);
 				execl(config->command[0][LSOF], "lsof", config->data[vol].mountpoint, NULL);
-				log("pam_mount: failed to exec %s (check pam_mount.conf?)\n", config->command[0][LSOF]);
+				log("pam_mount: failed to exec lsof command (%s) (check pam_mount.conf?)\n", config->command[0][LSOF]);
+				exit(EXIT_FAILURE);
 			} else {
 				FILE           *fp;
 				char            buf[BUFSIZ + 1];
@@ -259,6 +261,11 @@ run_lsof(const struct config_t * config, const int vol)
 /* FN VAL: if error 0 else 1, errors are logged */
 int
 exec_unmount_volume(struct config_t * config, const int vol)
+/*
+ * PRE:    config->data[vol].mountpoint points to a valid string
+ * POST:   umount config->data[vol].mountpoint is executed
+ * FN VAL: should never return
+ */
 {
 	w4rn("pam_mount: unmount arg is %s\n", config->data[vol].mountpoint);
 	if (debug)
@@ -267,16 +274,17 @@ exec_unmount_volume(struct config_t * config, const int vol)
 		 * logging out.  Running lsof helps debug this.
 		 */
 		run_lsof(config, vol);
-	/* setuid 0 since Linux umount balks at euid of 0, uid != 0. */
-	/* I think this is safe because volume and mount point must be
-	 * owned by user.
+	/*
+	 * setuid 0 since Linux umount balks at euid of 0, uid != 0. I think
+	 * this is safe because volume and mount point must be owned by user
+         * if mount is defined in ~/.pam_mount.
 	 */
 	if (setuid(0) == -1)
 		w4rn("pam_mount: %s\n", "error setting uid to 0");
 	/* Need to unmount mount point not volume to support SMB mounts, etc. */
 	execl(config->command[0][UMOUNT], "umount", config->data[vol].mountpoint, NULL);
-	log("pam_mount: failed to exec %s (check pam_mount.conf?)\n", config->command[0][UMOUNT]);
-	return 0;
+	log("pam_mount: failed to exec umount command (%s) (check pam_mount.conf?)\n", config->command[0][UMOUNT]);
+	exit(EXIT_FAILURE);
 }
 
 /* ============================ mkmountpoint () ============================ */
@@ -361,12 +369,13 @@ already_mounted(struct config_t * config, const int vol)
 	 * /etc/mtab?
 	 */
 	{
-		int             pid, pipefds[2];
+		int             pipefds[2];
+		pid_t           pid;
 		if (pipe(pipefds) < 0) {
 			log("pam_mount: %s\n", "failed to create pipe while checking mount status");
 		} else {
 			if ((pid = fork()) < 0) {
-				log("pam_mount: %s\n", "fork failed while checking mount status");
+				log("pam_mount: %s\n", "fork failed for mntcheck");
 			} else {
 				if (pid == 0) {
 					close(1);
@@ -374,7 +383,8 @@ already_mounted(struct config_t * config, const int vol)
 					close(pipefds[1]);
 					close(pipefds[0]);
 					execl(config->command[0][MNTCHECK], "mount", NULL);
-					log("pam_mount: failed to exec %s (check pam_mount.conf?)\n", config->command[0][MNTCHECK]);
+					log("pam_mount: failed to exec mntcheck command (%s) (check pam_mount.conf?)\n", config->command[0][MNTCHECK]);
+					exit(EXIT_FAILURE);
 				} else {
 					FILE           *fp;
 					char            dev[BUFSIZ + 1];
@@ -389,8 +399,7 @@ already_mounted(struct config_t * config, const int vol)
 						 * FIXME: A bit ugly but
 						 * works.
 						 */
-						char           *mntpt,
-						               *trash;
+						char           *mntpt, *trash;
 						w4rn("pam_mount: mounted filesystem: %s", dev);	/* dev includes '\n' */
 						trash = strchr(dev, ' ');
 						if (!trash)
@@ -469,10 +478,10 @@ log_pm_input(const struct config_t * config, const int vol)
 
 /* ============================ exec_mount_volume () ======================= */
 /*
- * PRE:    fds points to two fds (pipe) _argv points to a valid, NULL-
- *         terminated command array
+ * PRE:    fds points to two fds (pipe) 
+ *         _argv points to a valid, NULL-terminated command array
  * POST:   _argv is executing and has pipe as stdin
- * FN VAL: if * error 0 else 1, errors are logged
+ * FN VAL: should never return
  */
 int
 exec_mount_volume(const int fds[2], char *_argv[])
@@ -481,42 +490,85 @@ exec_mount_volume(const int fds[2], char *_argv[])
 	close(fds[1]);
 	if (dup2(fds[0], STDIN_FILENO) == -1) {
 		log("pam_mount: %s\n", "error setting up mount's pipe");
-		return 0;
+		exit(EXIT_FAILURE);
 	}
 	for (i = 0; _argv[i]; i++)
 		w4rn("pam_mount: arg is: %s\n", _argv[i]);
-	/* setuid 0 since Linux mount balks at euid of 0, uid != 0. */
-	/* I think this is safe because volume and mount point must be
-	 * owned by user.
+	/*
+	 * setuid 0 since Linux mount balks at euid of 0, uid != 0. I think
+	 * this is safe because volume and mount point must be owned by user
+         * if mount is defined in ~/.pam_mount.
 	 */
 	if (setuid(0) == -1)
 		w4rn("pam_mount: %s\n", "error setting uid to 0");
 	execv(_argv[0], &_argv[1]);
-	log("pam_mount: failed to exec %s (check pam_mount.conf?)\n", _argv[0]);
-	return 0;
+	log("pam_mount: failed to exec mount command (%s) (check pam_mount.conf?)\n", _argv[0]);
+	exit(EXIT_FAILURE);
 }
 
-/* ============================ mount_volume () ============================ */
-/*
- * PRE:    config points to a valid struct config_t*
+/* ============================ do_unmount () ============================== */
+int
+do_unmount(struct config_t * config, const int vol, const char *password, const int mkmntpoint, const int mntpt_from_fstab)
+/* PRE:    config points to a valid struct config_t*
  *         config->data[vol] is a valid struct data_t
  *         password points to a valid string != NULL
+ *         mkmountpoint FIXME: is what in this case???
+ *         mntpt_from_fstab FIXME: is what in this case???
+ * POST:   volume represented in data is unmounted
+ * FN VAL: if error 0 else 1, errors are logged
+ */
+{
+	int             child_exit;
+	pid_t           pid = -1;
+	if ((pid = fork()) < 0) {
+		log("pam_mount: %s\n", "fork failed for umount");
+		return 0;
+	}
+	if (pid == 0) {
+		exec_unmount_volume(config, vol);
+		exit(EXIT_FAILURE);
+	}
+	waitpid(pid, &child_exit, 0);
+	/* pass on through the result from the umount process */
+	return (!WEXITSTATUS(child_exit));
+}
+
+/* ============================ do_mount () ================================ */
+int
+do_mount(struct config_t * config, const int vol, const char *password, const int mkmntpoint, const int mntpt_from_fstab)
+/* PRE:    config points to a valid struct config_t*
+ *         config->data[vol] is a valid struct data_t
+ *         password points to a valid string != NULL
+ *         mkmountpoint is true if mount point should be mkdir'ed
  *         mntpt_from_fstab is true if mount point was read from fstab,
  *         false if mount point was received from pam_mount
  * POST:   volume represented in data is mounted
  * FN VAL: if error 0 else 1, errors are logged
  */
-int
-mount_volume(struct config_t * config, const int vol, const char *password, const int mntpt_from_fstab)
 {
+
 	char           *_argv[MAX_PAR + 1], _password[MAX_PAR + 1];
-	int             _argc = 0, fds[2], child = -1, child_exit = 0;
+	int             _argc = 0, fds[2], child_exit = 0;
+	pid_t           pid = -1;
+	if (already_mounted(config, vol)) {
+		log("pam_mount: %s already seems to be mounted, skipping\n",
+		    config->data[vol].volume);
+		return 1;	/* success so try_first_pass does not try
+				 * again */
+	}
+	/* FIXME: Should this be rmdir'ed when one logs out? How? */
+	if (mkmntpoint && !exists(config->data[vol].mountpoint))
+		if (!mkmountpoint(&config->data[vol]))
+			return 0;
 	w4rn("pam_mount: %s\n",
 	     "checking for encrypted filesystem key configuration");
 	if (strlen(config->data[vol].fs_key_cipher)) {
 		w4rn("pam_mount: %s\n",
 		     "decrypting FS key using system auth. token...");
-		/* config->data[vol].fs_key_path contains real filesystem key. */
+		/*
+		 * config->data[vol].fs_key_path contains real filesystem
+		 * key.
+		 */
 		if (!decrypted_key
 		    (_password, sizeof(_password), password, config->data[vol].fs_key_cipher, config->data[vol].fs_key_path))
 			return 0;
@@ -546,7 +598,7 @@ mount_volume(struct config_t * config, const int vol, const char *password, cons
 		add_to_argv(_argv, &_argc, config->data[vol].mountpoint);
 		add_to_argv(_argv, &_argc, "-o");
 		asprintf(&tmp, "username=%s%s%s",
-		    config->data[vol].user, config->data[vol].options[0] ? "," : "", config->data[vol].options);
+			 config->data[vol].user, config->data[vol].options[0] ? "," : "", config->data[vol].options);
 		add_to_argv(_argv, &_argc, tmp);
 	} else if (config->data[vol].type == CIFSMOUNT) {
 		char           *tmp;	/* FIXME: never freed */
@@ -578,16 +630,14 @@ mount_volume(struct config_t * config, const int vol, const char *password, cons
 	/* send password down pipe to mount process */
 	if (config->data[vol].type == SMBMOUNT)
 		setenv("PASSWD_FD", "0", 1);
-	w4rn("pam_mount: %s\n", "about to fork");
-	child = fork();
-	if (child == -1) {
-		log("pam_mount: %s\n", "failed to fork");
+	if ((pid = fork()) < 0) {
+		log("pam_mount: %s\n", "fork failed for mount");
 		return 0;
 	}
-	if (!child) {
+	if (!pid) {
 		/* This is the child */
 		exec_mount_volume(fds, _argv);
-		return 0;
+		exit(EXIT_FAILURE);
 	}
 	write(fds[1], _password, strlen(_password) + 1);
 	/* Paranoia? */
@@ -595,89 +645,39 @@ mount_volume(struct config_t * config, const int vol, const char *password, cons
 	close(fds[0]);
 	close(fds[1]);
 	w4rn("pam_mount: %s\n", "waiting for homedir mount");
-	waitpid(child, &child_exit, 0);
+	waitpid(pid, &child_exit, 0);
 	/* pass on through the result from the mount process */
 	return (!WEXITSTATUS(child_exit));
 }
 
-/* ============================ do_unmount () ============================== */
-int
-do_unmount(struct config_t * config, const int vol, const char * password, const int mkmntpoint, const int mntpt_from_fstab)
-{
-	w4rn("pam_mount: %s\n", "unmounting");
-	if (!exec_unmount_volume(config, vol))
-		return 0;
-	return 1;
-}
-
-/* ============================ do_mount () ================================ */
-int
-do_mount(struct config_t * config, const int vol, const char *password, const int mkmntpoint, const int mntpt_from_fstab)
-{
-	if (already_mounted(config, vol)) {
-		log("pam_mount: %s already seems to be mounted, skipping\n",
-		    config->data[vol].volume);
-		return 1;	/* success so try_first_pass does not try
-				 * again */
-	}
-	/* FIXME: Should this be rmdir'ed when one logs out? How? */
-	if (mkmntpoint && !exists(config->data[vol].mountpoint))
-		if (!mkmountpoint(&config->data[vol]))
-			return 0;
-	if (!mount_volume(config, vol, password, mntpt_from_fstab))
-		return 0;
-	return 1;
-}
-
-#if 0 /* Do not think this is needed because volume and mount point must be owned by user */
-/* ============================ user_mount_authorized () =================== */
-/* PRE:    volume points to a valid string
- * FN VAL: 1 if /etc/fstab lists volume as user mountable else 0
- */
-int user_mount_authorized(char *volume)
-{
-#if defined(__linux__)
-	FILE           *fstab;
-	struct mntent  *fstab_record;
-	if (!(fstab = fopen("/etc/fstab", "r"))) {
-		log("pam_mount: could not open fstab to determine if %s is user mountable\n", volume);
-		return 0;
-	}
-	fstab_record = getmntent(fstab);
-	while (fstab_record && strcmp(fstab_record->mnt_fsname, volume))
-		fstab_record = getmntent(fstab);
-	if (!fstab_record) {
-		log("pam_mount: could not determine if %s is user mountable\n", volume);
-		return 0;
-	}
-	/* FIXME: weak weak weak! */
-	if (! strstr(fstab_record->mnt_opts, "user"))
-		return 0;
-	return 1;
-#else
-	/* FIXME */
-	log("pam_mount: %s\n", "testing for user mountable volume not implemented on arch.");
-	return 0;
-#endif
-}
-#endif
-
 /* ============================ mount_op () ================================ */
 /*
- * PRE:    mnt is function to execute mount operations: do_mount or do_unomunt
- *         config points to a valid struct config_t 
+ * PRE:    mnt is function to execute mount operations: do_mount or do_unmount
+ *         vol > 0
+ *         config points to a valid struct config_t
  *         config->data[vol] is a valid struct data_t
+ *         0 <= config->data[vol].type < COMMAND_MAX
+ *         config->data[vol].fs_key_cipher points to a valid string (strlen >= 0)
+ *         config->data[vol].fs_key_path points to a valid string *
+ *           (strlen must be > 0 if strlen of config->data[vol].fs_key_cipher > 0)
+ *         config->data[vol].server points to a valid string (strlen >= 0) *
+ *           (strlen must be > 0 if mount type is not local)
+ *         config->data[vol].user points to a valid string (strlen > 0) **
+ *         config->data[vol].volume points to a valid string (strlen > 0) **
+ *         config->data[vol].options points to a valid string (strlen >= 0)
+ *         config->data[vol].mountpoint points to a valid string (strlen >= 0)
  *         password points to a valid string (can be NULL if UNmounting)
- *         mkmntpoint is true if mount point should be created when it does 
+ *         mkmntpoint is true if mount point should be created when it does
  *         not already exist
  * POST:   appropriate mount or unmount operations are performed
  * FN VAL: if error 0 else 1, errors are logged
+ * NOTE:   * checked by volume_record_sane
+ *         ** checked by read_volume()
  */
 int             mount_op(int (*mnt) (struct config_t * config, const int vol, const char *password, const int mkmntpoint, const int mntpt_from_fstab), struct config_t * config, const int vol, const char *password, const int mkmntpoint) {
 
-	int             i;
 	int             mntpt_from_fstab = 0;
-	config_signals();	/* FIXME: Still needed? */
+	config_signals();
 	if (debug)
 		log_pm_input(config, vol);
 	if (!strlen(config->data[vol].mountpoint)) {
@@ -686,16 +686,6 @@ int             mount_op(int (*mnt) (struct config_t * config, const int vol, co
 		}
 		mntpt_from_fstab = 1;
 	}
-#if 0 /* Do not think this is needed because volume and mount point must be owned by user */
-	if (! config->data[vol].globalconf && ! mntpt_from_fstab) {
-		log("pam_mount: user specified volume not authorised by /etc/fstab (%s)\n", config->data[vol].volume); 
-		return 1;
-	}
-	if (! config->data[vol].globalconf  && ! user_mount_authorized(config->data[vol].volume)) {
-		log("pam_mount: user specified volume not authorised by /etc/fstab (%s)\n", config->data[vol].volume); 
-		return 1;
-	}
-#endif
 	mnt(config, vol, password, mkmntpoint, mntpt_from_fstab);
 	return 1;
 }
