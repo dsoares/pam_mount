@@ -1,5 +1,21 @@
 = For 1.0 =====================================================================
 
+o cvs add include-fmt_ptrn/new/*.h
+
+o cvs add src/<all new sources>
+
+o cvs rm include/new/*
+
+o email as many pam_mount users as I can requesting that they test the
+CVS pam_mount and subscribe to pam_mount's mailing list.
+
+o replace vol_t fields with one fmt_ptrn and add value_query fn to
+fmt_ptrn lib?
+
+o regression tests:
+	options = '-', do not use fstab
+	options = '-', use fstab (mnt pt not defined either)
+
 o Get in fedora (http://www.fedora.us/wiki/PackageSubmissionQAPolicy Fedora Bugzilla #1013).
 
 o Fix building deb in Makefile.am: make conditional?
@@ -16,21 +32,22 @@ o fix detecting of previously mounted volumes that used --bind.
 o test new "no --bind with remote mount" code.  (and ensure --bind is
 used for local mounts)
 
-o ensure I have enough loop devices for regression tests.
-
 o Test/scrub glib code in optlist.c, etc.
 
 o Should -N go in pam_mount.conf like it is now?  Shall I put this in
 conf/pam_mount.conf?  How does hashing/not hashing affect scripts?
 
-o why does fsck not run when login with gdm?
-
 o ensure const's are used (see esp. hash argument to hash_authtok).
 
 o replace PRE, POST and FN VAL conditions with asserts in code where applicable
 	- Document fns with INPUT, SIDE AFFECTS and OUTPUT
-	- assert that side affects if OUTPUT is not an error code
+	- assert that side affects happen if OUTPUT is not an error code
 	- only one return statement per function so assertions may be made
+
+	- misc.c
+	- optlist.c
+	- pair.c
+	- pam_mount.c
 	- mount.c
 	- readconfig.c
 
@@ -69,13 +86,6 @@ on OpenBSD.
 o Test new openpam to ensure OpenBSD patches are integrated.
 
 = Past 1.0 (punted) ===========================================================
-
-o Use format like smbmount /usr/bin/smbmount %(user) ... in pam_mount.conf
-to simplify code in pmhelper.c.  This will make pam_mount much more
-flexible too.  No smbmount, ncpmount, lclmount-specific code will
-be required in smbmount.c.  Use libfmt_ptrn if on system, otherwise use
-local copy (SEE CONFIGURE.IN and SRC/MAKEFILE.AM COMMENTS).  BUT FIRST
-I NEED TO MAKE NEW USE GLIB.
 
 o fork a (one, don't fork again if its already running) daemon that
 continues to try and unmount volumes after a user logs out.  pam_mount

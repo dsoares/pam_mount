@@ -80,8 +80,8 @@ static DOTCONF_CB(read_volume);
 static DOTCONF_CB(read_fsckloop);
 
 static const configoption_t legal_config[] = {
-	{"debug", ARG_INT, read_debug, &config.debug, CTX_ALL},
-	{"mkmountpoint", ARG_INT, read_int_param, &config.mkmountpoint,
+	{"debug", ARG_TOGGLE, read_debug, &config.debug, CTX_ALL},
+	{"mkmountpoint", ARG_TOGGLE, read_int_param, &config.mkmountpoint,
 	 CTX_ALL},
 	{"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
 	{"fsckloop", ARG_STR, read_fsckloop, &config, CTX_ALL},
@@ -134,7 +134,7 @@ static DOTCONF_CB(read_options_require)
 	w4rn("pam_mount: %s\n", "reading options_require...");
 	if (!str_to_optlist(&((config_t *) cmd->option->info)->
 			    options_require, cmd->data.str))
-		return "pam_mount: error parsing required options";
+		return "error parsing required options";
 	return NULL;
 }
 
@@ -147,7 +147,7 @@ static DOTCONF_CB(read_options_allow)
 	w4rn("pam_mount: %s\n", "reading options_allow...");
 	if (!str_to_optlist(&((config_t *) cmd->option->info)->
 			    options_allow, cmd->data.str))
-		return "pam_mount: error parsing allowed options";
+		return "error parsing allowed options";
 	return NULL;
 }
 
@@ -160,7 +160,7 @@ static DOTCONF_CB(read_options_deny)
 	w4rn("pam_mount: %s\n", "reading options_deny...");
 	if (!str_to_optlist(&((config_t *) cmd->option->info)->
 			    options_deny, cmd->data.str))
-		return "pam_mount: error parsing denied options";
+		return "error parsing denied options";
 	return NULL;
 }
 
@@ -197,7 +197,7 @@ static DOTCONF_CB(read_command)
 		return "command type specified without definition";
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
-			return "pam_mount: command too long";
+			return "command too long";
 	if (!(COMMAND(0) = (char *) calloc(MAX_PAR + 1, sizeof(char))))
 		return "error allocating memory";
 	strncpy(COMMAND(0), cmd->data.list[0], MAX_PAR);
@@ -222,8 +222,7 @@ static DOTCONF_CB(read_command)
  *         needle points to a valid optlist_element_t
  * FN VAL: 1 if haystak[needle] exists, else 0
  */
-static int _option_in_list(optlist_t * haystack,
-		       const char* needle)
+static int _option_in_list(optlist_t * haystack, const char *needle)
 {
 	/* FIXME: this fn. is not needed, just call the following directly: */
 	return optlist_exists(haystack, needle);
@@ -234,8 +233,7 @@ static int _option_in_list(optlist_t * haystack,
  *         options points to a valid optlist representing a list of options 
  *         requested
  * FN VAL: if options acceptable by allowed 1 else 0 with error logged */
-static options_allow_ok(optlist_t * allowed,
-			optlist_t * options)
+static options_allow_ok(optlist_t * allowed, optlist_t * options)
 {
 	optlist_t *e;
 	if (optlist_exists(allowed, "*") || !optlist_len(options))
@@ -254,8 +252,7 @@ static options_allow_ok(optlist_t * allowed,
  *         options points to a valid optlist representing a list of options 
  *         requested
  * FN VAL: if options acceptable by required 1 else 0 with error logged */
-static options_required_ok(optlist_t * required,
-			   optlist_t * options)
+static options_required_ok(optlist_t * required, optlist_t * options)
 {
 	optlist_t *e;
 	for (e = required; e; e = optlist_next(e))
@@ -330,12 +327,12 @@ static int _options_ok(config_t * config, vol_t * volume)
 static char *luserconf_volume_record_sane(config_t * config)
 {
 	if (!strcmp(config->volume[config->volcount].user, "*"))
-		return "pam_mount: wildcard used in user-defined volume";
+		return "wildcard used in user-defined volume";
 	else if (config->volume[config->volcount].type == LCLMOUNT
 		 && !owns(config->user,
 			  config->volume[config->volcount].volume))
 		return
-		    "pam_mount: user-defined volume, volume not owned by user";
+		    "user-defined volume, volume not owned by user";
 	/*
 	 * If it does not already exist then its okay, pam_mount will mkdir
 	 * it (if configured to do so)
@@ -345,9 +342,9 @@ static char *luserconf_volume_record_sane(config_t * config)
 		 && !owns(config->user,
 			  config->volume[config->volcount].mountpoint))
 		return
-		    "pam_mount: user-defined volume, mountpoint not owned by user";
+		    "user-defined volume, mountpoint not owned by user";
 	else if (!_options_ok(config, &config->volume[config->volcount]))
-		return "pam_mount: illegal option specified by user";
+		return "illegal option specified by user";
 	return NULL;
 }
 
@@ -360,24 +357,24 @@ static char *volume_record_sane(config_t * config)
 	w4rn("pam_mount: %s\n", "checking sanity of volume record");
 	if (!config->command[0][config->volume[config->volcount].type])
 		return
-		    "pam_mount: mount command not defined for this type";
+		    "mount command not defined for this type";
 	else if ((config->volume[config->volcount].type == SMBMOUNT
 		  || config->volume[config->volcount].type == NCPMOUNT
 		  || config->volume[config->volcount].type == CIFSMOUNT
 		  || config->volume[config->volcount].type == NFSMOUNT)
 		 && !strlen(config->volume[config->volcount].server))
 		return
-		    "pam_mount: remote mount type specified without server";
+		    "remote mount type specified without server";
 	else if (!config->command[0][UMOUNT])
-		return "pam_mount: umount command not defined";
+		return "umount command not defined";
 	else if (strlen(config->volume[config->volcount].fs_key_cipher)
 		 && !strlen(config->volume[config->volcount].fs_key_path))
 		return
-		    "pam_mount: fs_key_cipher defined without fs_key_path";
+		    "fs_key_cipher defined without fs_key_path";
 	else if (!strlen(config->volume[config->volcount].fs_key_cipher)
 		 && strlen(config->volume[config->volcount].fs_key_path))
 		return
-		    "pam_mount: fs_key_path defined without fs_key_cipher";
+		    "fs_key_path defined without fs_key_cipher";
 	return NULL;
 }
 
@@ -389,7 +386,7 @@ static DOTCONF_CB(read_luserconf)
 	struct passwd *passwd_ent;
 	if (!*((int *) cmd->context))
 		return
-		    "pam_mount: tried to set luserconf from user config";
+		    "tried to set luserconf from user config";
 	passwd_ent = getpwnam(((config_t *) cmd->option->info)->user);
 	if (!passwd_ent) {
 		home_dir = "~";
@@ -398,7 +395,7 @@ static DOTCONF_CB(read_luserconf)
 	}
 	if (strlen(home_dir) + strlen("/") + strlen(cmd->data.str) >
 	    PATH_MAX)
-		return "pam_mount: expanded luserconf path too long";
+		return "expanded luserconf path too long";
 	strcpy(((config_t *) cmd->option->info)->luserconf, home_dir);
 	strcat(((config_t *) cmd->option->info)->luserconf, "/");
 	strcat(((config_t *) cmd->option->info)->luserconf, cmd->data.str);
@@ -412,9 +409,9 @@ static DOTCONF_CB(read_luserconf)
 static DOTCONF_CB(read_fsckloop)
 {
 	if (!*((int *) cmd->context))
-		return "pam_mount: tried to set fsckloop from user config";
+		return "tried to set fsckloop from user config";
 	if (strlen(cmd->data.str) > PATH_MAX)
-		return "pam_mount: fsckloop path too long";
+		return "fsckloop path too long";
 	strncpy(((config_t *) cmd->option->info)->fsckloop, cmd->data.str,
 		PATH_MAX);
 	((config_t *) cmd->option->info)->fsckloop[PATH_MAX] = 0x00;
@@ -495,8 +492,7 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 	return 1;
 #elif defined (__FreeBSD__) || defined (__OpenBSD__)
 	FIXME ! this code was torn out of another function and needs to be
-	    modified.
-	struct fstab *fstab_record;
+	    modified.struct fstab *fstab_record;
 	if (!setfsent()) {
 		l0g("pam_mount: could not open fstab to determine mount point for %s\n", volume);
 		return 0;
@@ -529,7 +525,7 @@ static DOTCONF_CB(read_volume)
 	int i;
 	char *errmsg;
 	if (cmd->arg_count != 8)
-		return "pam_mount: bad number of args for volume";
+		return "bad number of args for volume";
 	else if (*((int *) cmd->context) && strcmp
 		 (cmd->data.list[0],
 		  ((config_t *) cmd->option->info)->user)
@@ -548,9 +544,9 @@ static DOTCONF_CB(read_volume)
 	}
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
-			return "pam_mount: command too long";
+			return "command too long";
 	if (!(VOL = realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1))))
-		return "pam_mount: error allocating memory";
+		return "error allocating memory";
 	memset(&VOL[VOLCOUNT], 0x00, sizeof(vol_t));
 	VOL[VOLCOUNT].globalconf = *((int *) cmd->context);
 	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
@@ -562,7 +558,7 @@ static DOTCONF_CB(read_volume)
 			break;
 		}
 	if (VOL[VOLCOUNT].type == -1)
-		return "pam_mount: filesystem not supported";
+		return "filesystem not supported";
 	if (*cmd->data.list[2] == '-')
 		*VOL[VOLCOUNT].server = 0x00;
 	else
@@ -573,23 +569,30 @@ static DOTCONF_CB(read_volume)
 		    (VOL[VOLCOUNT].volume, FSTAB_MNTPT,
 		     VOL[VOLCOUNT].mountpoint, PATH_MAX + 1))
 			return
-			    "pam_mount: could not determine mount point";
+			    "could not determine mount point";
 		VOL[VOLCOUNT].use_fstab = 1;
 	} else
 		strncpy(VOL[VOLCOUNT].mountpoint, cmd->data.list[4],
 			MAX_PAR);
 	if (*cmd->data.list[5] == '-') {
-		char options[MAX_PAR + 1];
-		if (!fstab_value
-		    (VOL[VOLCOUNT].volume, FSTAB_OPTS, options,
-		     MAX_PAR + 1))
-			return "pam_mount: could not determine options";
-		if (!str_to_optlist(&VOL[VOLCOUNT].options, options))
-			return "pam_mount: error parsing mount options";
-		VOL[VOLCOUNT].use_fstab = 1;
+		/* three options: field defined, field is '-' and fstab 
+		 * should be used (when no mount point was provided either) 
+		 * or field is '-' and this means no options */
+		if (VOL[VOLCOUNT].use_fstab) {
+			char options[MAX_PAR + 1];
+			if (! fstab_value
+			    (VOL[VOLCOUNT].volume, FSTAB_OPTS, options,
+			     MAX_PAR + 1))
+				return "could not determine options";
+			if (!str_to_optlist
+			    (&VOL[VOLCOUNT].options, options))
+				return
+				    "error parsing mount options";
+		} else
+			VOL[VOLCOUNT].options = NULL;
 	} else
 	    if (!str_to_optlist(&VOL[VOLCOUNT].options, cmd->data.list[5]))
-		return "pam_mount: error parsing mount options";
+		return "error parsing mount options";
 	if (*cmd->data.list[6] == '-')
 		*VOL[VOLCOUNT].fs_key_cipher = 0x00;
 	else
@@ -662,12 +665,12 @@ void freeconfig(config_t config)
 {
 	int i = 0, j = 0;
 	/* FIXME: not implemented:
-	optlist_free(&config.options_require);
-	optlist_free(&config.options_allow);
-	optlist_free(&config.options_deny);
-	for (i = 0; i < config.volcount; i++)
-		optlist_free(&config.volume[i].options);
-	*/
+	   optlist_free(&config.options_require);
+	   optlist_free(&config.options_allow);
+	   optlist_free(&config.options_deny);
+	   for (i = 0; i < config.volcount; i++)
+	   optlist_free(&config.volume[i].options); FIXME: May be NULL!!
+	 */
 	for (i = 0; i < COMMAND_MAX; i++)
 		for (j = 0; config.command[j][i]; j++)
 			free(config.command[j][i]);

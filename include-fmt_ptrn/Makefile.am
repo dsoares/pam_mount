@@ -22,4 +22,4 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-EXTRA_DIST = pair.h 
+SUBDIRS = new

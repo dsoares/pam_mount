@@ -22,19 +22,4 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-moduledir = @PAM_MODDIR@
-module_LTLIBRARIES = pam_mount.la
-# Use -lfmt_ptrn if it exists else compile locally (see also configure.in).
-# ../include-fmt_ptrn should contain libfmt_ptrn's headers for use if
-# -lfmt_ptrn does not exist.
-if SYSTEM_LIBFMT_PTRN
-pam_mount_la_SOURCES = misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c
-pam_mount_la_LDFLAGS = -module -avoid-version -lfmt_ptrn -ltemplate $(GLIB_LIBS)
-else
-pam_mount_la_SOURCES = misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c common.c buffer.c
-pam_mount_la_LDFLAGS = -module -avoid-version $(GLIB_LIBS)
-endif
-
-INCLUDES = -I$(srcdir)/../include @LOCAL_FMT_PTRN_INCLUDES@
-
-AM_CFLAGS = -g -Werror $(GLIB_CFLAGS)
+EXTRA_DIST = pair.h buffer.h fmt_ptrn.h modifiers.h sizes.h common.h pair.h template.h

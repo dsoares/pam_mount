@@ -1,0 +1,148 @@
+=======================================================================
+
+Q.  Is there a pam_mount mailing list?  CVS?
+
+A.  Yes.  See http://savannah.gnu.org/projects/pam-mount/.
+
+=======================================================================
+
+Q.  What does the following error mean: pam_mount: error trying to
+retrieve authtok from session code?
+
+A.  This often means that the pam_mount module was not executed as
+an auth type module.  This error is usually due to a misconfigured auth
+PAM stack (/etc/pam.d/<service>).  For example, if you use an auth PAM
+module configured with the control flag of sufficient, then pam_mount
+needs to be executed before it.
+
+=======================================================================
+
+Q.  What does the following error mean: Error reading password from file
+descriptor 0: empty password?"
+
+A.  This often means that pam_mount was not run as an auth type module,
+so it did not receive a password (file descriptor 0 is stdin and that
+is how pam_mount transmits passwords to mount).  A module above pam_mount
+in the PAM configuration stack that is configured as sufficient can
+cause this.  As the README file states, do this:
+
+auth    required    pam_mount.so
+auth    sufficient  pam_ldap.so use_first_pass
+
+NOT THIS:
+
+auth sufficient pam_ldap.so
+auth required   pam_mount.so use_first_pass
+
+=======================================================================
+
+Q.  Why am I prompted for a password twice after installing pam_mount?
+
+A.  Like most PAM modules, pam_mount prompts the user for a password.
+When used with another auth type module, such as pam_unix, this may
+result in both modules prompting for a password.  In order to get a
+more desirable behavior, instruct the second module to use the first
+password entered by using the use_first_pass option.
+
+=======================================================================
+
+Q.  Why am I having trouble logging in with KDE while using an SMB share
+as my home directory?
+
+A.  SMB (and some other non-UNIX-native network filesystems) does not
+support special file types needed by KDE.  Either mount your SMB share
+as a subdirectory of your home directory or instruct KDE to use /tmp
+for its special files.
+
+=======================================================================
+
+Q.  Why are my volumes not being unmounted when I log out?
+
+A.  Often this is because processes remaining after logging out are
+holding open files in your home directory.  For example, some versions
+of gconf do this.  The best way to figure out what programs are guilty
+is to enable debugging in your pam_mount.conf, configure lsof and watch
+for lsof's output in your logs.
+
+=======================================================================
+
+Q.  Why are my smbmounts hanging when using Red Hat Linux 9?
+
+A.  See https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=103200.
+
+Try creating /sbin/mount.smbfs_no_nptl with this content:
+
+#!/bin/sh
+export LD_ASSUME_KERNEL=2.4.1
+exec smbmount "$@"
+                                                                                
+Then configure pam_mount with the following in pam_mount.conf:
+                                                                                
+smbmount /bin/mount -t smbfs_no_nptl
+
+=======================================================================
+
+Q.  Why does pam_mount not work right with OpenSSH?
+
+A.  As of version 3.3, sshd has a feature called privelege seperation
+that is incompatible with PAM modules needing root privileges.
+In addition, OpenSSH does not use PAM by default.  Read the OpenSSH
+documentation on privilege seperation because messing with it may have
+security implications.
+
+In order to cause sshd to use PAM, add the following to sshd_config:
+
+PAMAuthenticationViaKbdInt yes
+
+If you wish to use sshd with pam_mount either turn of privelege seperation
+in /etc/ssh/sshd_config (UsePrivilegeSeparation no) or ensure that
+pam_mount can operate without root privileges.  Specifying volumes using
+/etc/fstab and allowing users to mount and unmount them using the user
+option may help pam_mount to perform without root privileges:
+
+# /etc/security/pam_mount.conf:
+volume user local - /home/user.img - - - -
+
+# /etc/fstab:
+/home/user.img /home/user ext2 user,loop,encryption=aes,keybits=256,noauto 0 0
+
+Please let me know if you have a better idea allowing pam_mount to work
+with privilege separation.
+
+In addition, Peter Astrand says:
+                                                                                
+RedHat uses a patched version of OpenSSH, which always starts off
+with calling PAM with bogus auth info. The idea is that successful
+logins should take the same amount of time as unsuccessful logins. See
+https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=101157. The problem
+is that pam_mount catches the first (empty) password, and not the real
+one. Thus, the mount fails.
+
+I've found a solution to this problem: I've rearranged my system-auth
+file like this:
+
+auth  optional    /lib/security/pam_mount.so
+auth  required    /lib/security/pam_env.so
+auth  sufficient  /lib/security/pam_unix.so likeauth nullok use_first_pass
+auth  required    /lib/security/pam_deny.so
+
+=======================================================================
+
+Q.  Why are my volumes not being unmounted by pam_mount?  I use Debian.
+
+A.  Ensure that CLOSE_SESSIONS is set to yes in /etc/login.defs,
+otherwise your volume will not be unmounted upon logging out.  I believe
+this default behavior is a bug and have filed it as Debian bug #163635.
+The maintainer is Karl Ramm <kcr@debian.org>.
+
+=======================================================================
+
+Q.  What is with the auth requirement for pam_mount?  Shouldn't this be
+a session module only?
+
+A.  Debian's (and some others) PAM distribution does not allow session
+modules to retrieve a user's password from the PAM subsystem.  This is
+why pam_mount must be used as an auth module (in addition to a session
+module) on all systems.
+
+=======================================================================

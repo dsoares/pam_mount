@@ -34,6 +34,7 @@ extern "C" {
 #include <errno.h>
 #include <limits.h>
 #include <optlist.h>
+#include <new/fmt_ptrn.h>
 
 #ifdef __OpenBSD__
 #define CONFIGFILE	"/etc/pam_mount.conf"
@@ -101,7 +102,7 @@ extern "C" {
 					 * single volume config
 					 * record; can be "*" */
 		char volume[MAX_PAR + 1];	/* FIXME: PATH_MAX */
-		optlist_t* options;
+		optlist_t* options; /* may be NULL if no options */
 		char mountpoint[PATH_MAX + 1];
 		int use_fstab;
 	} vol_t;
@@ -110,7 +111,7 @@ extern "C" {
 		const char *user;	/* user logging in */
 		int debug;
 		int mkmountpoint;
-		int volcount;
+		unsigned int volcount;
 		char luserconf[PATH_MAX + 1];
 		char fsckloop[PATH_MAX + 1];
 		char *command[MAX_PAR + 1][COMMAND_MAX];
@@ -137,18 +138,18 @@ extern "C" {
 			  char **pass);
 
 /* ============================ do_mount () ================================ */
-	int do_mount(struct config_t *config, const int vol,
+	int do_mount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		     const char *password, const int mkmntpoint);
 
 /* ============================ do_unmount () ============================== */
-	int do_unmount(struct config_t *config, const int vol,
+	int do_unmount(struct config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		       const char *password, const int mkmntpoint);
 
 /* ============================ mount_op () ================================ */
 	int mount_op(int (*mnt)
-		     (struct config_t * config, const int vol,
+		     (struct config_t * config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		      const char *password, const int mkmntpoint),
-		     struct config_t *config, const int vol,
+		     struct config_t *config, const unsigned int vol,
 		     const char *password, const int mkmntpoint);
 
 #ifdef __cplusplus

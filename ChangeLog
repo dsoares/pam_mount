@@ -1,3 +1,27 @@
+09 December 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Now uses templates in command definitions.  THIS RENDERS OLD
+	PAM_MOUNT.CONFs OBSOLETE!
+
+06 December 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Fsck should now work with non-terminal-based logins like gdm.
+
+	* Resumed regression testing.
+
+	* Cleaned up some error messages.
+
+05 December 2003 W. Michael Petullo <mike@flyn.org>
+
+	* FAQ should now be included in RPM and tarball.
+
+26 November 2003 W. Michael Petullo <mike@flyn.org>
+
+	* More NFS fixes.
+
+	* Options can now be '-' and not provided by /etc/fstab (no
+	options is okay).
+
 24 November 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Fixed NFS code.  Now requires that nfsmount be defined in

@@ -136,9 +136,10 @@ static int _compare(gconstpointer x, gconstpointer y)
  */
 int optlist_exists(optlist_t * optlist, const char *str)
 {
-	assert(optlist);
 	assert(str);
 
+	if (!optlist)
+		return 0;
 	return g_list_find_custom(optlist, str, _compare) ? 1 : 0;
 }
 
@@ -150,9 +151,10 @@ char *optlist_value(optlist_t * optlist, const char *str)
 {
 	GList *ptr;
 
-	assert(optlist);
 	assert(str);
 
+	if (!optlist)
+		return NULL;
 	ptr = g_list_find_custom(optlist, str, _compare);
 	return ptr ? ((pair_t *)ptr->data)->val : NULL;
 }
@@ -167,9 +169,10 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 	const optlist_t *ptr = optlist;
 
 	assert(str);
-	assert(optlist);
 
 	*str = 0x00;
+	if (!optlist)
+		return str;
 	do {
 		strncat(str, ((pair_t *) ptr->data)->key,
 			MAX_PAR - strlen(str));
