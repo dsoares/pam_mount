@@ -211,8 +211,6 @@ void unmount_volume()
 
 	if(setuid(0) == -1)
 		w4rn("%s", "pmhelper: could not set uid to 0");
-	/* FIXME */
-	system("/usr/sbin/lsof | grep /home/mike");
 	execv(cmdarg[0], &cmdarg[1]);
 
 	/* should not reach next instruction */

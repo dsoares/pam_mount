@@ -29,17 +29,29 @@
 
 	* Applied Mukesh Agrawal's encryption patch.
 
-2000-xx-xx	0.01	First public version
+17 December 2001 Elvis Pfützenreuter <epx@conectiva.com>
 
-2000-xx-xx	0.1	Several modifications in /etc/pam_mount.conf format
+	* Removed broken test in pmhelper.c to see if monting directory
+	is $HOME - now it will always wait for mount() to complete. If
+	this poses problems, please notify (0.3.2).
 
-2000-11-14	0.2	pmhelper no longer stays in memory during the user session
+29 November 2000 Elvis Pfützenreuter <epx@conectiva.com>
 
-2000-11-15      0.3pre  applied patch that enables template volumes (see CREDITS)
+	* applied patch that waits mount to be completed if the mount
+	point happens to be the user's home dir (see CREDITS) (0.3.1).
 
-2000-11-29      0.3.1.  applied patch that waits mount to be completed if the 
-			mount point happens to be the user's home dir (see CREDITS)
+15 November 2000 Elvis Pfützenreuter <epx@conectiva.com>
 
-2001-12-17	0.2.3   Removed broken test in pmhelper.c to see if monting
-			directory is $HOME - now it will always wait for mount()
-			to complete. If this poses problems, please notify.
+	* applied patch that enables template volumes (see CREDITS) (0.3pre)
+
+14 November 2000 Elvis Pfützenreuter <epx@conectiva.com>
+
+	* pmhelper no longer stays in memory during the user session (0.2).
+
+xx xxxx 2000 Elvis Pfützenreuter <epx@conectiva.com>
+	
+	* Several modifications in /etc/pam_mount.conf format (0.1).
+
+xx xxxx 2000 Elvis Pfützenreuter <epx@conectiva.com>
+
+	* First public version (0.01).
