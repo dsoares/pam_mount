@@ -195,6 +195,8 @@ char *volume_record_sane(char *volume[], config_t * config)
     w4rn("pam_mount: %s\n", "checking sanity of volume record");
     if (!config->command[0][config->data[config->volcount].type])
 	return "pam_mount: mount command not defined for this type";
+    else if ((config->data[config->volcount].type == SMBMOUNT || config->data[config->volcount].type == NCPMOUNT) && ! strlen(config->data[config->volcount].server))
+        return "pam_mount: remote mount type specified without server";
     else if (!config->command[0][UMOUNT])
 	return "pam_mount: umount command not defined";
     else if (!config->data[config->volcount].globalconf

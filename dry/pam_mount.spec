@@ -10,8 +10,9 @@
 %define prefix /usr
 
 Summary: a PAM module that can mount remote volumes for a user session
+
 Name: pam_mount
-Version: 0.5.6
+Version: 0.5.7
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
@@ -81,6 +82,7 @@ make
 # ${ENV_DESTDIR}.''
 export ENV_DESTDIR=$RPM_BUILD_ROOT
 make install
+install -D -m 0600 config/pam_mount.conf $RPM_BUILD_ROOT/etc/security/pam_mount.conf
 
 gzip -9 AUTHORS COPYING ChangeLog INSTALL NEWS README
 

@@ -4,6 +4,9 @@
 #include <signal.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <fcntl.h>
+#include <pwd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -16,6 +19,148 @@
 
 int debug;
 config_t config;
+
+/* ============================ modify_pm_count () ========================= */
+/* PRE:    user points to a valid string != NULL
+ * POST:   amount is added to /var/run/pam_mount/<user>'s value; if value == 0,
+ *         then file is removed.
+ * FN VAL: new value else -1 on error, errors are logged
+ * NOTE:   code is modified version of pam_console.c's use_count */
+int modify_pm_count(const char *user, int amount)
+{
+    char filename[PATH_MAX + 1];
+    int tries = 0;
+    int fd, err, val;
+    struct stat st;
+    struct flock lockinfo;
+    char *buf = NULL;
+    struct passwd *passwd_ent;
+    if (!(passwd_ent = getpwnam(user))) {
+	w4rn("pam_mount: could not resolve uid for %s\n", user);
+	return -1;
+    }
+    if (stat("/var/run/pam_mount", &st) == -1) {
+	w4rn("pam_mount: %s\n", "creating /var/run/pam_mount");
+	if (mkdir("/var/run/pam_mount", 0000) == -1) {
+	    w4rn("pam_mount: %s\n",
+		 "unable to create /var/run/pam_mount\n");
+	    return -1;
+	}
+	if (chown("/var/run/pam_mount", 0, 0) == -1) {
+	    w4rn("pam_mount: unable to chown %s\n", "/var/run/pam_mount");
+	    return -1;
+	}
+	/* 0755: su creates file group owned by user and the releases 
+	 * root perms.  User needs to be able to access file on logout. */
+	/* FIXME: user can modify /var/.../<user> at will; security problem? */
+	if (chmod("/var/run/pam_mount", 0755) == -1) {
+	    w4rn("pam_mount: unable to chmod %s\n", "/var/run/pam_mount");
+	    return -1;
+	}
+    }
+    snprintf(filename, PATH_MAX + 1, "/var/run/pam_mount/%s", user);
+  top:
+    tries++;
+    if (stat(filename, &st)) {
+	fd = open(filename, O_RDWR | O_CREAT, 0000);
+	/* su creates file group owned by user and the releases 
+	 * root perms.  User needs to be able to access file on logout. */
+	if (fchown(fd, passwd_ent->pw_uid, passwd_ent->pw_uid) == -1) {
+	    w4rn("pam_mount: unable to chown %s\n", filename);
+	    return -1;
+	}
+	if (fchmod(fd, 0600) == -1) {
+	    w4rn("pam_mount: unable to chmod %s\n", filename);
+	    return -1;
+	}
+    } else
+	fd = open(filename, O_RDWR);
+    if (fd < 0) {
+	w4rn("pam_mount: could not open count file %s\n", filename);
+	perror("foo");
+	return 0;
+    }
+    lockinfo.l_type = F_WRLCK;
+    lockinfo.l_whence = SEEK_SET;
+    lockinfo.l_start = 0;
+    lockinfo.l_len = 0;
+    alarm(20);
+    err = fcntl(fd, F_SETLKW, &lockinfo);
+    alarm(0);
+    if (err == EAGAIN) {
+	/* if someone has locked the file and not written to it in
+	 * at least 20 seconds, we assume they either forgot to unlock
+	 * it or are catatonic -- chances are slim that they are in
+	 * the middle of a read-write cycle and I don't want to make
+	 * us lock users out.  Perhaps I should just return PAM_SUCCESS
+	 * instead and log the event?  Kill the process holding the
+	 * lock?  Options abound...  For now, we ignore it.
+	 */
+	fcntl(fd, F_GETLK, &lockinfo);
+	/* now lockinfo.l_pid == 0 implies that the lock was released
+	 * by the other process between returning from the 20 second
+	 * wait and calling fcntl again, not likely to ever happen, and
+	 * not a problem other than cosmetics even if it does.
+	 */
+	w4rn("pam_mount: ignoring stale lock on file %s\n", filename);
+    }
+    /* it is possible at this point that the file has been removed
+     * by a previous login; if this happens, we need to start over.
+     * Unfortunately, the only way to do this without potential stack
+     * trashing is a goto.
+     */
+    if (access(filename, F_OK) < 0) {
+	if (tries < 10) {
+	    w4rn("pam_mount: could not access %s, trying again\n",
+		 filename);
+	    sleep(1);
+	    close(fd);
+	    goto top;
+	} else {
+	    w4rn("pam_mount: %s\n", "tried ten times, quitting");
+	    err = -1;
+	    goto return_error;
+	}
+    }
+
+    buf = malloc(st.st_size + 2);	/* size will never grow by more than one */
+    if (st.st_size) {
+	if (read(fd, buf, st.st_size) == -1) {
+	    w4rn("pam_mount: read error on %s\n", filename);
+	    err = -1;
+	    goto return_error;
+	}
+	if (lseek(fd, 0, SEEK_SET) == -1) {
+	    w4rn("pam_mount: lseek error on %s\n", filename);
+	    err = -1;
+	    goto return_error;
+	}
+	buf[st.st_size] = '\0';
+	val = atoi(buf);
+    } else {
+	val = 0;
+    }
+    if (amount) {		/* amount == 0 implies query */
+	val += amount;
+	if (val <= 0) {
+	    if (unlink(filename)) {
+		w4rn("pam_mount: unlink error on %s\n", filename);
+	    }
+	}
+	sprintf(buf, "%d", val);
+	if (write(fd, buf, strlen(buf)) == -1) {
+	    w4rn("pam_mount: write error on %s\n", filename);
+	    err = -1;
+	    goto return_error;
+	}
+    }
+    err = val;
+  return_error:
+    close(fd);
+    if (buf)
+	free(buf);
+    return err;
+}
 
 /* ============================ invoke_child () ============================ */
 /* PRE:    config is a valid config_t structure
@@ -118,7 +263,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     int ret;
     int get_pass = GETPASS_DEFAULT;
     int i;
-    
+
     w4rn("pam_mount: %s\n", "beginning");
     for (i = 0; i < argc; i++) {
 	if (!strcmp("use_first_pass", argv[i])) {
@@ -198,6 +343,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	    return PAM_SUCCESS;
 	}
     }
+    modify_pm_count(config.user, 1);
     return PAM_SUCCESS;
 }
 
@@ -213,25 +359,26 @@ PAM_EXTERN
     int x;
 
     w4rn("pam_mount: %s\n", "received order to close things");
-    sleep(1);
     if (config.volcount <= 0) {
 	w4rn("pam_mount: %s\n", "volcount is zero");
-	sleep(2);
     }
 
     signal(SIGPIPE, SIG_IGN);
 
-    for (x = 0; x < config.volcount; ++x) {
-	w4rn("pam_mount: %s\n", "FATHER calling child proc to unmount");
-	sleep(1);
-	config.data[x].unmount = 1;
-	strcpy(config.data[x].ucommand, config.command[0][UMOUNT]);
-	if (invoke_child(config, config.data + x) != 1) {
-	    log("pam_mount:%s\n",
-		"FATHER could not start helper process to umount");
-	    return PAM_SUCCESS;
-	}
-    }
+    if (modify_pm_count(config.user, -1) <= 0)
+	for (x = 0; x < config.volcount; ++x) {
+	    w4rn("pam_mount: %s\n",
+		 "FATHER calling child proc to unmount");
+	    config.data[x].unmount = 1;
+	    strcpy(config.data[x].ucommand, config.command[0][UMOUNT]);
+	    if (invoke_child(config, config.data + x) != 1) {
+		log("pam_mount:%s\n",
+		    "FATHER could not start helper process to umount");
+		return PAM_SUCCESS;
+	    }
+    } else
+	w4rn("pam_mount: %s seems to have other remaining open sessions\n",
+	     config.user);
     freeconfig(config);
     return PAM_SUCCESS;
 }

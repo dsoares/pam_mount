@@ -1,3 +1,22 @@
+17 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* pam_mount now tracks multiple logins, only unmounting anything
+	when a user has logged out of all of his sessions.
+
+16 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Added NCP code to already_mounted.  Does it work?
+
+	* Removed some sleep calls.  Things are now faster.
+
+14 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* When checking if volume is already mounted, pmhelper now checks
+	volume AND mount point.
+
+	* Now complains if mount type is SMB or NCP and no server is
+	specified.
+
 13 November 2002 W. Michael Petullo <mike@flyn.org>
 
 	* When checking if a volume is already mounted, pmhelper now

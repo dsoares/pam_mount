@@ -1,5 +1,11 @@
 = For 1.0 =====================================================================
 
+o Only last PAM close session should actually unmount anything.
+
+o Ensure mounting a volume as root does not prohibit user from changing
+permissions on it.  Ensure users can unmount pam_mounted volumes
+(or document).
+
 o Get smbmount to support stdin passwords and modify pmhelper.c.
 
 o Wait for new ncpmount and implement interface.  Add notes to flyn.org

@@ -254,7 +254,9 @@ int mkmountpoint(data_t data)
 }
 
 /* ============================ already_mounted () ========================= */
-/* PRE:    volume points to a valid string != NULL
+/* PRE:    type is a mount type (LCLMOUNT, SMBMOUNT, ...)
+ *         volume points to a valid string != NULL
+ *         server points to a valid string != NULL         
  *         mountpoint points to a valid string != NULL 
  *           (will be looked up in /etc/fstab if == "")
  * FN VAL: 1 is volume is mounted at mountpoint else 0 
@@ -265,23 +267,28 @@ int already_mounted(int type, char *volume, char *server, char *mountpoint)
     struct mntent *mtab_record;
     char line[BUFSIZ + 1];
     char match[PATH_MAX + 1];
+    memset (match, 0x00, sizeof(match));
     if (!(mtab = fopen("/etc/mtab", "r"))) {
 	log("pmhelper: %s\n", "could not open /etc/mtab");
 	exit(EXIT_FAILURE);
     }
     if (type == SMBMOUNT) {
 	strcpy(match, "//");
-	strncat(match, server, PATH_MAX - strlen(match));	/* FIXME: ensure server is not NULL w/ SMBMONT?  What about terminating NULL? */
+	strncat(match, server, PATH_MAX - strlen(match));
 	strncat(match, "/", PATH_MAX - strlen(match));
 	strncat(match, volume, PATH_MAX - strlen(match));
     } else if (type == NCPMOUNT) {
-	/* FIXME */
+        strncpy(match, server, PATH_MAX - strlen(match));
+	strncat(match, "/", PATH_MAX - strlen(match));
+	strncat(match, volume, PATH_MAX - strlen(match));
     } else {
 	strncpy(match, volume, PATH_MAX);
     }
     mtab_record = getmntent(mtab);
     w4rn("pmhelper: checking to see if %s is already mounted\n", match);
-    while (mtab_record && strcmp(mtab_record->mnt_fsname, match))
+    while (mtab_record && strcmp(mtab_record->mnt_fsname, match)
+	   && strcmp(mtab_record->mnt_dir, mountpoint))
+	/* must handle multiple users mounting same volume. */
 	mtab_record = getmntent(mtab);
     return mtab_record ? !strcmp(mtab_record->mnt_dir, mountpoint) : 0;
 }
@@ -365,9 +372,6 @@ int main(int argc, char **argv)
 	w4rn("%s ", data.argv[i]);
     w4rn("%s", "\n");
     w4rn("pmhelper: %s\n", "--------");
-
-    sleep(1);
-
     if (data.unmount) {
 	w4rn("pmhelper: %s\n", "unmounting");
 	if (!unmount_volume())	/* FIXME: Should not return (exec) -- 
@@ -375,7 +379,8 @@ int main(int argc, char **argv)
 	    exit(EXIT_FAILURE);
     }
 
-    if (already_mounted(data.type, data.volume, data.server, data.mountpoint)) {
+    if (already_mounted
+	(data.type, data.volume, data.server, data.mountpoint)) {
 	log("pmhelper: %s already seems to be mounted, skipping\n",
 	    data.volume);
 	exit(EXIT_SUCCESS);	/* success so try_first_pass does not try again */
@@ -482,7 +487,6 @@ int main(int argc, char **argv)
 
     w4rn("pmhelper: %s\n", "waiting for homedir mount");
     waitpid(child, &child_exit, 0);
-
     /* pass on through the result from the mount process */
     exit(WEXITSTATUS(child_exit));
 }
