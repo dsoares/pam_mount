@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #   FILE: mount.crypt -- mount a dm-crypt encrypted volume
 # AUTHOR: W. Michael Petullo <mike@flyn.org>

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #   FILE: umount.crypt -- unmount a dm-crypt encrypted volume
 # AUTHOR: W. Michael Petullo <mike@flyn.org>

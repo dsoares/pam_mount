@@ -2,7 +2,7 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.21
+Version: 0.9.22
 Release: %rel
 License: LGPL
 Group: System Environment/Base
@@ -55,12 +55,12 @@ system is secure without carefully considering potential threats.
 
 
 %build
-%configure
+%configure --libdir=/%{_lib}
 make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%makeinstall
+%makeinstall libdir=/%{_lib}
 mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
 mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/macros
 mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/file_contexts/misc
@@ -97,6 +97,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Feb 10 2005 W. Michael Petullo <mike[@]flyn.org> - 0.9.22-0.fdr.1
+   - Updated to pam_mount 0.9.22.
+
+   - Should now build properly on x86-64.
+
 * Sun Dec 12 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.21-0.fdr.1
    - Updated to pam_mount 0.9.21.
 

@@ -1,5 +1,3 @@
-=======================================================================
-
 Q.  I want to ask for help.  What information should I provide?
 
 A.  You need to provide us the following:
@@ -145,6 +143,37 @@ auth  optional    /lib/security/pam_mount.so
 auth  required    /lib/security/pam_env.so
 auth  sufficient  /lib/security/pam_unix.so likeauth nullok use_first_pass
 auth  required    /lib/security/pam_deny.so
+
+Finally, Darren Tucker has explained:
+
+OK, here's what's happening: sshd forks when doing challenge-response
+authentication, and the pam_authenticate call happens in the child (the
+authentication "thread", although it's normally a process).
+
+This, BTW, is because pam_authenticate blocks while waiting for
+responses from the conversation function.  In sshd this blocking means
+that the dispatch loop (which is needed to communicate with the user)
+isn't running until pam_authenticate completes, but it can't complete
+until because the dispatch loop isn't running.  Another process is used
+to prevent this deadlock.
+
+It would appear that pam_mount relies on either module-private data set
+during the pam_authenticate or the PAM_AUTHTOK item, both of which are
+lost when the the authentication "thread" exits.  pam_mount goes looking
+for them during session initialization in order to authenticate to the
+SMB server, can't get them and fails.
+
+Since you have OpenSSH 3.9p1, you can set
+"ChallengeResponseAuthentication no" and "PasswordAuthentication yes" in
+sshd_config and it ought to work (with or without privsep).
+
+If you absolutely *must* have challenge-response authentication then you
+can build OpenSSH with the pthread hack, but this it not recommended.
+
+If you have trouble with it not dismounting then you'll need to apply
+the patch in this bug (this one only works with privsep=no, and I can't
+see a good way to fix this for the general case):
+http://bugzilla.mindrot.org/show_bug.cgi?id=926
 
 =======================================================================
 

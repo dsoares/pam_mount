@@ -194,6 +194,11 @@ extern "C" {
 /* ============================ add_to_argv () ============================= */
 void add_to_argv(char *argv[], int *const argc, char *const arg, fmt_ptrn_t *vinfo);
 
+/* ============================ decrypted_key () =========================== */ 
+int decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
+              const char *const fs_key_path,
+              const char *const fs_key_cipher, const char *const authtok);
+
 #ifdef __cplusplus
 }
 #endif

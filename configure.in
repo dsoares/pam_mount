@@ -25,7 +25,7 @@ AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
 MINOR_VERSION=9
-MICRO_VERSION=21
+MICRO_VERSION=22
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -64,7 +64,8 @@ AC_CHECK_HEADER(security/pam_modules.h,,AC_MSG_ERROR(You are missing security/pa
 
 case "$host" in
   *-*-linux*)
-    PAM_MODDIR="\$(prefix)/../lib/security"
+    # See also <configure-flags> in pam_mount.xml.
+    PAM_MODDIR="\$(prefix)/../\$(libdir)/security"
     ;;
   *)
     PAM_MODDIR="/usr/lib"
