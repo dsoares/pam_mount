@@ -1,3 +1,10 @@
+30 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed bug in read_options that caused function to fail, logging
+	"too many options."
+
+	* Fixed bug causing "options_allow *" to not work.
+
 28 October 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Fixed asprintf misuse that caused pmhelper to segfault when

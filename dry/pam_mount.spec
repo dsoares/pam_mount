@@ -11,7 +11,7 @@
 
 Summary: a PAM module that can mount remote volumes for a user session
 Name: pam_mount
-Version: 0.5.1
+Version: 0.5.2
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base

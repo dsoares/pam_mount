@@ -29,7 +29,7 @@ pmhelper_LDFLAGS = -lcrypt -lssl
 moduledir = $(prefix)/../lib/security
 module_LTLIBRARIES = pam_mount.la
 # miscso.c link is to fix complaint of misc.o being used both with libtool
-# and without
+# and without (miscso.c should be a symlink to misc.c)
 pam_mount_la_SOURCES = converse.c miscso.c pam_mount.c readconfig.c dotconf.c
 pam_mount_la_LDFLAGS = -module -avoid-version
 

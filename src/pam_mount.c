@@ -148,9 +148,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     }
     initconfig(&config);
     w4rn("pam_mount: %s\n", "going to readconfig global");
-    if (!readconfig(config.user, CONFIGFILE, 1, &config)) {
+    if (!readconfig(config.user, CONFIGFILE, 1, &config))
 	return PAM_SUCCESS;
-    }
     w4rn("pam_mount: %s\n", "back from global readconfig");
     if (exists(config.luserconf) && owns(config.user, config.luserconf)) {
 	w4rn("pam_mount: %s\n", "going to readconfig user");

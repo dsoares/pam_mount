@@ -54,7 +54,7 @@ static const configoption_t legal_config[] = {
 /* NOTE: callback helper function for handling errors */
 FUNC_ERRORHANDLER(log_error)
 {
-    log("%s\n", msg);
+    log("pam_mount: %s\n", msg);
 }
 
 /* ============================ read_options () ============================ */
@@ -64,24 +64,32 @@ FUNC_ERRORHANDLER(log_error)
 char *read_options(char *options[], char *opt_str)
 {
     int count = 0;
-    char *ptr = strchr(opt_str, ',') ? strchr(opt_str, ',') : opt_str + strlen (opt_str);
+    char *ptr = opt_str;
+    if (! opt_str) {
+	char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
+        strcpy(errmsg, "empty options string");
+	return errmsg;
+    }
     w4rn("%s", "pam_mount: options (req., allow, or deny): ");
-    do {
-        if (count > MAX_PAR) {
+    while (ptr = strchr(ptr, ',')) {
+        if (count >= MAX_PAR) {
+	    /* >= because one last iteration happens outside loop */
 	    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
 	    strcpy(errmsg, "too many options");
 	    return errmsg;
-	} 
-	else if (ptr - opt_str > MAX_PAR) {
+	} else if (ptr - opt_str > MAX_PAR) {
 	    char *errmsg = (char *) malloc(sizeof(char) * BUFSIZ + 1);
 	    strcpy(errmsg, "option too long");
 	    return errmsg;
 	} 
-	options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
-	strncpy(options[count], opt_str, ptr - opt_str);
-	opt_str = ptr;
-	w4rn("%s ", options[count++]);
-    } while (ptr = strchr(ptr, ','));
+        options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
+        strncpy(options[count], opt_str, ptr - opt_str);
+        opt_str = ++ptr;
+        w4rn("%s ", options[count++]);
+    }
+    options[count] = (char *) calloc(MAX_PAR + 1, sizeof(char));
+    strncpy(options[count], opt_str, MAX_PAR);
+    w4rn("%s\n", options[count]);
     return NULL;
 }
 
@@ -399,6 +407,8 @@ options_allow_ok(char *conf[], char *options)
     int i, ok;
     char *ptr;
     w4rn("pam_mount: checking %s\n", options);
+    if (strcmp(options, "*"))
+        return 1;
     while (ptr = strchr(options, ',')) {
 	ok = 0;
 	w4rn("pam_mount: checking %s\n", options);
@@ -407,8 +417,10 @@ options_allow_ok(char *conf[], char *options)
 		ok = 1;
 	}
 	options = ptr + 1;
-	if (!ok)
+	if (!ok) {
+	    log("pam_mount: %s\n", "option not allowed");
 	    return 0;
+	}
     }
     ok = 0;
     w4rn("pam_mount: checking %s\n", options);
@@ -416,22 +428,20 @@ options_allow_ok(char *conf[], char *options)
 	if (!strcmp(conf[i], options))
 	    ok = 1;
     }
+    if (!ok)
+	log("pam_mount: %s\n", "option not allowed");
     return ok;
 }
 
 /* ============================ options_required_ok () ===================== */
-/* PRE:    conf points to an array of required options (first item may be 
- *           NULL if no options sepcified)
+/* PRE:    conf points to an array of required options (first item may not 
+ *           be NULL)
  *         options points to a string representing a list of options requested
  *           for a volume or ""
  * FN VAL: if options acceptable by conf 1 else 0 with error logged */
 options_required_ok(char *conf[], char *options)
 {
     int i;
-    if (!conf[0]) {
-	w4rn("pam_mount: %s\n", "no required options");
-	return 1;
-    }
     for (i = 0; conf[i]; i++) {
 	if (!option_in_string(conf[i], options)) {
 	    log("pam_mount: option %s required\n", conf[i]);
