@@ -22,6 +22,7 @@
 
 #include <new/common.h>
 #include <new/template.h>
+#include <glib.h>
 #include <limits.h>
 #include <string.h>
 #include <time.h>
@@ -36,53 +37,27 @@
 #include <pwd.h>
 #endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
 
-#ifdef HAVE_PWDB_PWDB_PUBLIC_H
-/* ============================ _get_pwdb_entry () ========================= */
-static const struct pwdb_entry *_get_pwdb_entry(const int id, const char *field)
-{
-    const struct pwdb *p = NULL;
-    const struct pwdb_entry *e = NULL;
-    pwdb_locate("user", PWDB_DEFAULT, PWDB_NAME_UNKNOWN, id, &p);
-    pwdb_get_entry(p, field, &e);
-    return e;
-}
-#endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
-
-/* ============================ fullname () ================================= */
-static char *_fullname(char *buf)
-{
-    char *comma;
-    int uid = getuid();
-#ifdef HAVE_PWDB_PWDB_PUBLIC_H
-    const struct pwdb_entry *e = _get_pwdb_entry(uid, "gecos");
-    strncpy(buf, e && e->value ? e->value : "", BUFSIZ);
-#else
-    struct passwd *p = getpwuid(uid);
-    strncpy(buf, p && p->pw_gecos ? p->pw_gecos : "", BUFSIZ);
-#endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
-    comma = strchr(buf, ',');
-    if (comma)
-	*comma = 0x00;
-#ifdef HAVE_PWDB_PWDB_PUBLIC_H
-    return e && e->value ? buf : NULL;
-#else
-    return p && p->pw_gecos ? buf : NULL;
-#endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
-}
+/* FIXME: the code in these functions needs to be checked for:
+ * 1.  a consistent interface for memory management
+ * 2.  memory leaks
+ * 3.  use of g_free/g_strdup/etc. instead of free/strdup/etc.
+ * 4.  does (ie) g_get_real_name() ever return NULL and is this a problem
+ *     for g_strdup?
+ */
 
 /* ============================ firstname () ================================ */
-static char *_firstname(char *buf)
+static char *_firstname(void)
 {
-	char *ptr;
-	if (! _fullname (buf))
+	char *name, *ptr;
+	if (! (name = g_strdup(g_get_real_name())))
 		return NULL;
-	ptr = strchr(buf, ' ');
+	ptr = strchr(name, ' ');
 	if (ptr)
 		*ptr = 0x00;
-	return buf;
+	return name;
 }
 
-/* ============================ shift_str () =============================== */ 
+/* ============================ shift_str () =============================== */
 static void shift_str (char *ptr_0, char *ptr_1)
 {
     while (*ptr_1)
@@ -91,51 +66,45 @@ static void shift_str (char *ptr_0, char *ptr_1)
 }
 
 /* ============================ middlename () =============================== */
-static char *_middlename(char *buf)
+static char *_middlename(void)
 {
-	char *ptr_0, *ptr_1;
-	if (! _fullname (buf))
+	char *name, *ptr_0, *ptr_1;
+	if (! (name = g_strdup(g_get_real_name())))
 		return NULL;
-	ptr_0 = strchr (buf, ' ');
+	ptr_0 = strchr (name, ' ');
 	if (! ptr_0)
 		return NULL;
 	ptr_1 = strchr (++ptr_0, ' ');	
 	if (! ptr_1)
 		return NULL;
 	*ptr_1 = 0x00;
-	shift_str (buf, ptr_0);
-	return ptr_0;
+	shift_str (name, ptr_0);
+        return name;
 }
 
 /* ============================ lastname () =============================== */
-static char *_lastname(char *buf)
+static char *_lastname(void)
 {
-	char *ptr_0, *ptr_1;
-	if (! _fullname (buf))
+	char *name, *ptr_0, *ptr_1;
+	if (! (name = g_strdup(g_get_real_name())))
 		return NULL;
-	ptr_0 = strchr (buf, ' ');
+	ptr_0 = strchr (name, ' ');
 	if (! ptr_0)
 		return NULL;
 	ptr_1 = strchr (++ptr_0, ' ');	
 	if (! ptr_1)
 		return ptr_0;
-	shift_str (buf, ++ptr_1);
-	return ptr_1;
+	shift_str (name, ++ptr_1);
+	return name;
 }
 
 /* ============================ homedir () ================================== */
 char *homedir(char *homedir)
 {
-    int uid = getuid();
-#ifdef HAVE_PWDB_PWDB_PUBLIC_H
-    const struct pwdb_entry *e = _get_pwdb_entry(uid, "dir");
-    strncpy(homedir, e && e->value ? e->value : "", PATH_MAX);
-    return e && e->value ? homedir : NULL;
-#else
-    struct passwd *p = getpwuid(uid);
-    strncpy(homedir, p && p->pw_dir ? p->pw_dir : "", PATH_MAX);
-    return p && p->pw_gecos ? homedir : NULL;
-#endif				/* HAVE_PWDB */
+    char *hd = g_strdup(g_get_home_dir());
+    g_strlcpy(homedir, hd ? hd : "", BUFSIZ + 1);
+    g_free(hd);
+    return hd ? homedir : NULL;
 }
 
 /* ============================ day () ====================================== */
@@ -197,7 +166,7 @@ void initialize_fillers_from_file(fmt_ptrn_t *x, char *path)
     while (fgets(ptr, PATH_MAX + 1, input)) {
         key = strsep(&ptr, "=");
 	value = ptr;
-        fmt_ptrn_update_kv(x, strdup(key), strdup(value));
+        fmt_ptrn_update_kv(x, g_strdup(key), g_strdup(value));
     }
 }
 
@@ -209,14 +178,14 @@ void initialize_fillers(fmt_ptrn_t *x)
     for (i = 0; environ[i] != 0x00; i++)
         if (parse_kv (environ[i], &key, &val))
 	    fmt_ptrn_update_kv(x, key, val);
-    fmt_ptrn_update_kv(x, strdup("DAY"), strdup(day(b)));
-    fmt_ptrn_update_kv(x, strdup("MONTH"), strdup(month(b)));
-    fmt_ptrn_update_kv(x, strdup("YEAR"), strdup(year(b)));
-    fmt_ptrn_update_kv(x, strdup("FULLNAME"), strdup(_fullname(b)?b:""));
-    fmt_ptrn_update_kv(x, strdup("FIRSTNAME"), strdup(_firstname(b)?b:""));
-    fmt_ptrn_update_kv(x, strdup("MIDDLENAME"), strdup(_middlename(b)?b:""));
-    fmt_ptrn_update_kv(x, strdup("LASTNAME"), strdup(_lastname(b)?b:""));
-    fmt_ptrn_update_kv(x, strdup("EMPTY_STR"), strdup(""));
+    fmt_ptrn_update_kv(x, g_strdup("DAY"), g_strdup(day(b)));
+    fmt_ptrn_update_kv(x, g_strdup("MONTH"), g_strdup(month(b)));
+    fmt_ptrn_update_kv(x, g_strdup("YEAR"), g_strdup(year(b)));
+    fmt_ptrn_update_kv(x, g_strdup("FULLNAME"), g_strdup(g_get_real_name()));
+    fmt_ptrn_update_kv(x, g_strdup("FIRSTNAME"), _firstname());
+    fmt_ptrn_update_kv(x, g_strdup("MIDDLENAME"), _middlename());
+    fmt_ptrn_update_kv(x, g_strdup("LASTNAME"), _lastname());
+    fmt_ptrn_update_kv(x, g_strdup("EMPTY_STR"), g_strdup(""));
 }
 
 /* ============================ parse_kv () ================================ */ 

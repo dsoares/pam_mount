@@ -21,6 +21,7 @@
  */
 
 #include <config.h>
+#include <glib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
@@ -423,7 +424,7 @@ static int mkmountpoint(vol_t * const volume, const char *const d)
 	w4rn("pam_mount: creating mount point %s\n", d);
 	strncpy(dcopy, d, PATH_MAX);
 	dcopy[PATH_MAX] = (char) 0x00;
-	parent = dirname(dcopy);
+	parent = g_dirname(dcopy);
 	if (exists(parent) == 0 && mkmountpoint(volume, parent) == 0) {
 		ret = 0;
 		goto _return;

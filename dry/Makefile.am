@@ -50,6 +50,15 @@ control: pam_mount.xml
 pam_mount.8: pam_mount.xml
 	xsltproc -o pam_mount.8 /usr/share/fctk/manpage.xslt pam_mount.xml
 
+maintainer-clean-local:
+	rm -f control 
+	rm -f new.html 
+	rm -f $(PACKAGE).spec
+	rm -f $(PACKAGE)_summary.html 
+	rm -f pam_mount.8
+	rm -f README 
+	rm -f usage_$(PACKAGE).c 
+
 # ============================= all =========================================== 
 all: $(PACKAGE).spec README pam_mount.html pam_mount_summary.html control
 	cp README ..

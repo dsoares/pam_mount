@@ -70,8 +70,8 @@ int template_set_type(char *type, const char *filename)
 /* ============================ template_set_local_dir () =================== */
 int template_set_local_dir(const char *d)
 {
-    char dir[PATH_MAX + 1];
-    if (!homedir(dir)) {
+    const char *dir;
+    if (!(dir = g_get_home_dir())) {
 	sprintf(_template_errmsg, "could not get homedir");
 	return 0;
     }

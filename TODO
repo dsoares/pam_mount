@@ -1,8 +1,10 @@
 = For 1.0 =====================================================================
 
-o Fix fctk so that .spec's Source is http://...pam_mount-*.tar.gz.
+o core dump if pam_mount run as session module w/o auth.
 
-o gdm prompts for password then username.  Pam_unix prompts for username and stores it in PAM?
+o remove include/new from CVS
+
+o Migrate to glib functions.
 
 o splint -I. -I.. -I../include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include +posixlib mount.c | less
 

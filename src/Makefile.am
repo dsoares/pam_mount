@@ -43,6 +43,17 @@ INCLUDES = -I$(srcdir)/../include @LOCAL_FMT_PTRN_INCLUDES@
 
 AM_CFLAGS = -g -Werror $(GLIB_CFLAGS)
 
+install-data-hook:
+	( \
+		cd $(DESTDIR)$(moduledir) && \
+		$(LN_S) pam_mount.so pam_mount_auth.so && \
+		$(LN_S) pam_mount.so pam_mount_session.so \
+	)
+
+uninstall-hook:
+	rm -f $(DESTDIR)$(libdir)/pam_mount_auth.so
+	rm -f $(DESTDIR)$(libdir)/pam_mount_session.so
+
 if FLYN
 # For local development use only.
 lint:

@@ -20,6 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <glib.h>
 #include <optlist.h>
 #include <stdlib.h>
 #include <pam_mount.h>
@@ -53,18 +54,14 @@ static int _parse_string_opt(const char *str, size_t len,
 		ret = 0;
 		goto _return;
 	}
-	pair = (pair_t *) malloc(sizeof(pair_t));
-	key = (char *) malloc(sizeof(char) * (delim - str) + 1);
-	val = (char *) malloc(sizeof(char) * len - (delim - str));	/* '=' is +1 */
-	if (!pair || !key || !val) {
-		ret = 0;
-		goto _return;
-	}
+	pair = g_new0(pair_t, 1);
+	key = g_new0(char, (delim - str) + 1);
+	val = g_new0(char, len - (delim - str));	/* '=' is +1 */
 	strncpy(key, str, delim - str);
 	key[delim - str] = 0x00;
 	strncpy(val, delim + 1, len - (delim - str) - 1);
 	val[len - (delim - str) - 1] = 0x00;
-	pair_init(pair, key, val, free, free);
+	pair_init(pair, key, val, g_free, g_free);
 	*optlist = g_list_append(*optlist, pair);
       _return:
 
@@ -95,17 +92,13 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
 	assert(optlist);
 
-	pair = (pair_t *) malloc(sizeof(pair_t));
-	key = malloc(sizeof(char) * len + 1);
-	val = malloc(1);
-	if (!pair || !key || !val) {
-		ret = 0;
-		goto _return;
-	}
+	pair = g_new0(pair_t, 1);
+	key = g_new0(char, len + 1);
+	val = g_new0(char, 1);
 	strncpy(key, str, len);
 	key[len] = 0x00;
 	*val = 0x00;
-	pair_init(pair, key, val, free, free);
+	pair_init(pair, key, val, g_free, g_free);
 	*optlist = g_list_append(*optlist, pair);
       _return:
 

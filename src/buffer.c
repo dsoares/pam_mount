@@ -20,6 +20,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <glib.h>
 #include <new/buffer.h>
 #include <string.h>
 
@@ -27,8 +28,7 @@
 buffer_t buffer_init(void)
 {
     buffer_t x;
-    x.data = (char *) malloc(sizeof(char) * INIT_BUF_SIZE);
-    *x.data = 0x00;
+    x.data = g_new0(char, INIT_BUF_SIZE);
     x.size = INIT_BUF_SIZE;
     return x;
 }
@@ -36,7 +36,7 @@ buffer_t buffer_init(void)
 /* ============================ buffer_destroy () ========================== */
 void buffer_destroy(buffer_t b)
 {
-    free(b.data);
+    g_free(b.data);
     b.data = NULL;
     b.size = 0;
 }
@@ -66,13 +66,13 @@ void realloc_n_cat(buffer_t * dest, const char *src)
 	strlen(src);
     if (!dest->data) {
 	dest->size = new_len * 2 + 1;
-	dest->data = malloc(sizeof(char) * dest->size);
+	dest->data = g_new0(char, dest->size);
 	*dest->data = 0x00;
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
-	dest->data = realloc(dest->data, sizeof(char) * dest->size);
+	dest->data = g_realloc(dest->data, sizeof(char) * dest->size);
     }
-    strcat(dest->data, src);
+    g_strlcat(dest->data, src, dest->size);
 }
 
 /* ============================ realloc_n_cpy () =========================== */
@@ -94,7 +94,8 @@ void realloc_n_ncat(buffer_t * dest, const char *src,
 							 nc);
     if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
-	dest->data = realloc(dest->data, sizeof(char) * dest->size);
+	dest->data = g_realloc(dest->data, sizeof(char) * dest->size);
     }
+    /* g_strlcat will not work because its nc is the size of dest */
     strncat(dest->data, src, nc);
 }

@@ -21,6 +21,7 @@
  */
 
 #include <config.h>
+#include <glib.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -198,21 +199,13 @@ static DOTCONF_CB(read_command)
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
-	if (!(COMMAND(0) = (char *) calloc(MAX_PAR + 1, sizeof(char))))
-		return "error allocating memory";
-	strncpy(COMMAND(0), cmd->data.list[0], MAX_PAR);
-	if (!(COMMAND(1) = (char *) calloc(MAX_PAR + 1, sizeof(char))))
-		return "error allocating memory";
-	strncpy(COMMAND(1), basename(cmd->data.list[0]), MAX_PAR);
+	COMMAND(0) = g_strdup(cmd->data.list[0]);
+	COMMAND(1) = g_strdup(g_basename(cmd->data.list[0]));
 	for (i = 1; i < cmd->arg_count; i++) {
 		if (i > MAX_PAR)
 			return
 			    "pam_mount: command line configured to be too long";
-		if (!
-		    (COMMAND(i + 1) =
-		     (char *) calloc(MAX_PAR + 1, sizeof(char))))
-			return "error allocating memory";
-		strncpy(COMMAND(i + 1), cmd->data.list[i], MAX_PAR + 1);
+		COMMAND(i + 1) = g_strdup(cmd->data.list[i]);
 	}
 	return NULL;
 }
@@ -545,8 +538,7 @@ static DOTCONF_CB(read_volume)
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
-	if (!(VOL = realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1))))
-		return "error allocating memory";
+	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
 	memset(&VOL[VOLCOUNT], 0x00, sizeof(vol_t));
 	VOL[VOLCOUNT].globalconf = *((int *) cmd->context);
 	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
@@ -673,7 +665,7 @@ void freeconfig(config_t config)
 	 */
 	for (i = 0; i < COMMAND_MAX; i++)
 		for (j = 0; config.command[j][i]; j++)
-			free(config.command[j][i]);
+			g_free(config.command[j][i]);
 }
 
 /* ============================ expand_home () ============================= */
@@ -686,10 +678,7 @@ static char *expand_home(char *path, size_t path_size, const char *user)
 	size_t seg_len;
 	struct passwd *p = getpwnam(user);
 	char *src;
-	if (!(src = strdup(path))) {
-		l0g("pam_mount: error allocating memory to expand home\n");
-		return NULL;
-	}
+	src = g_strdup(path);
 	if (p) {
 		/* - 1 because ~ is dropped from str */
 		if ((seg_len =
@@ -698,15 +687,15 @@ static char *expand_home(char *path, size_t path_size, const char *user)
 			strcat(path, src + 1);	/* skip leading '~' */
 		} else {
 			l0g("pam_mount: destination string to short\n");
-			free(src);
+			g_free(src);
 			return NULL;
 		}
 	} else {
 		l0g("pam_mount: could not look up account information for %s", user);
-		free(src);
+		g_free(src);
 		return NULL;
 	}
-	free(src);
+	g_free(src);
 	return path;
 }
 
@@ -726,10 +715,7 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 		l0g("pam_mount %s\n", "tried to expand a NULL");
 		return NULL;
 	}
-	if (!(src = strdup(str))) {
-		l0g("pam_mount %s\n", "ran out of memory");
-		return NULL;
-	};
+	src = g_strdup(str);
 	pos = strchr(src, '&');
 	if (pos) {
 		size_t seg_len;
@@ -742,20 +728,20 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 			    (dest + seg_len + strlen(user),
 			     dest_size - seg_len - strlen(user),
 			     src + seg_len + 1, user)) {
-				free(src);
+				g_free(src);
 				return NULL;
 			}
 		} else {
 			l0g("pam_mount %s\n",
 			    "destination string to short");
-			free(src);
+			g_free(src);
 			return NULL;
 		}
 	} else {
 		strncpy(dest, src, dest_size);
 		dest[dest_size - 1] = 0x00;
 	}
-	free(src);
+	g_free(src);
 	return (dest);
 }
 
@@ -808,12 +794,12 @@ int expandconfig(config_t * config)
 				    (tmp, sizeof(tmp), optlist_key(e),
 				     config->user))
 					return 0;
-				optlist_key(e) = strdup(tmp);
+				optlist_key(e) = g_strdup(tmp);
 				if (!expand_wildcard
 				    (tmp, sizeof(tmp), optlist_val(e),
 				     config->user))
 					return 0;
-				optlist_val(e) = strdup(tmp);
+				optlist_val(e) = g_strdup(tmp);
 			}
 			if (!expand_wildcard(config->volume[i].
 					     fs_key_path,

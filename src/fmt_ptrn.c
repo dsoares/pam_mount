@@ -356,7 +356,7 @@ static void _handle_fmt_str(fmt_ptrn_t * x, char **p)
 static int _fill_it(fmt_ptrn_t * x, const char *p)
 {
     char *pattern, *orig_ptr;
-    pattern = orig_ptr = strdup((char *) p);
+    pattern = orig_ptr = g_strdup((char *) p);
     while (*pattern != 0x00) {
 	if (*pattern == '%' && *(pattern + 1) == '%') {
 	    /* Handle %%(...), which should be filled as %(...). */
@@ -370,7 +370,7 @@ static int _fill_it(fmt_ptrn_t * x, const char *p)
 	    realloc_n_ncat(&x->filled_buf, pattern++, 1);
 	}
     }
-    free(orig_ptr);
+    g_free(orig_ptr);
     return 1;
 }
 
@@ -456,7 +456,7 @@ char *fmt_ptrn_gets(char *buf, size_t size, fmt_ptrn_t * x)
 	    return NULL;
 	_fill_it(x, buf);
     }
-    strncpy(buf, x->filled_buf.data, size - 1);
+    g_strlcpy(buf, x->filled_buf.data, size);
     buf[size - 1] = 0x00;
     buffer_eat(x->filled_buf, strlen(buf));
     return buf;

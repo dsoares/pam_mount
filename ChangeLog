@@ -1,3 +1,21 @@
+10 February 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Now installs /lib/security/pam_mount_auth.so and
+	/lib/security/pam_mount_session.so links for authconfig.
+
+03 February 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Gdm now prompts for username before password again when using
+	pam_mount.
+
+29 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Added maintainer-clean-local targets.
+
+28 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Began migrating malloc/free/etc. to g_malloc/g_free/etc.
+
 26 January 2004 W. Michael Petullo <mike@flyn.org>
 
 	* Fixed bug that caused crash when no options specified for SMB

@@ -3,11 +3,11 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.13
+Version: 0.9.14
 Release: %rel
 License: LGPL
 Group: System Environment/Base
-Source: %name-%{PACKAGE_VERSION}.tar.gz
+Source: http://www.flyn.org/projects/%name/%name-%{PACKAGE_VERSION}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Distribution: Flyn Linux
 URL: http://www.flyn.org
@@ -77,6 +77,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 /%{_lib}/security/pam_mount.so
+/%{_lib}/security/pam_mount_auth.so
+/%{_lib}/security/pam_mount_session.so
 %{_bindir}/mkehd
 %{_bindir}/autoehd
 %{_bindir}/passwdehd
@@ -89,6 +91,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Feb 10 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.14-0.fdr.1
+   - Updated to pam_mount 0.9.14.
+
+   - Added pam_mount_auth.so and pam_mount_session.so to package.
+
 * Sat Jan 25 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.13-0.fdr.1
    - Updated to pam_mount 0.9.13.
 

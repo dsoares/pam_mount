@@ -31,6 +31,10 @@ EXTRA_DIST = control
 
 if FLYN
 # For local development use only.
+maintainer-clean-local:
+	rm -f control
+	rm -rf $(PACKAGE)
+
 all: control
 
 endif

@@ -20,9 +20,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <errno.h>
 #include <config.h>
+#include <glib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
@@ -99,6 +100,12 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	assert(pamh);
 
 	parse_pam_args(argc, argv);
+	/* needed because gdm does not prompt for username as login does: */
+	if ((ret = pam_get_user(pamh, &config.user, NULL)) != PAM_SUCCESS) {
+		l0g("pam_mount: %s\n", "could not get user");
+		goto _return;
+	}
+	w4rn("pam_mount: user is %s\n", config.user);
 	if (args.auth_type != GET_PASS) {	/* get password from PAM system */
 		char *ptr = NULL;
 		if ((ret = pam_get_item(pamh, PAM_AUTHTOK, (const void **) &ptr)) != PAM_SUCCESS || !ptr) {
@@ -227,7 +234,7 @@ int modify_pm_count(const char *user, long amount)
 			goto return_error;
 		}
 	}
-	snprintf(filename, PATH_MAX + 1, "/var/run/pam_mount/%s", user);
+	g_snprintf(filename, PATH_MAX + 1, "/var/run/pam_mount/%s", user);
       top:
 	tries++;
 	if (stat(filename, &st) == -1) {
@@ -359,7 +366,7 @@ int modify_pm_count(const char *user, long amount)
 				     filename);
 			}
 		}
-		snprintf(buf, st.st_size + 2, "%ld", val);
+		g_snprintf(buf, st.st_size + 2, "%ld", val);
 		if (write(fd, buf, strlen(buf)) == -1) {
 			w4rn("pam_mount: write error on %s\n", filename);
 			err = -1;
@@ -395,11 +402,6 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	/* Needed for KDM.  FIXME: Bug in KDM? */
 	if (chdir("/"))
 		l0g("pam_mount %s\n", "could not chdir");
-	if ((ret = pam_get_user(pamh, &config.user, NULL)) != PAM_SUCCESS) {
-		l0g("pam_mount: %s\n", "could not get user");
-		goto _return;
-	}
-	w4rn("pam_mount: user is %s\n", config.user);
 	if (strlen(config.user) > MAX_PAR) {
 		l0g("pam_mount: username %s is too long\n", config.user);
 		ret = PAM_SERVICE_ERR;
