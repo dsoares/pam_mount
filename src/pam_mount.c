@@ -408,7 +408,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 			  (const void **) &system_authtok)) != PAM_SUCCESS)
 	{
 		l0g("pam_mount: %s\n",
-		    "error trying to retrieve authtok from session code");
+		    "error trying to retrieve authtok from auth code");
 		goto _return;
 	}
 	initconfig(&config);

@@ -38,10 +38,11 @@ extern int debug;
  * SIDE AFFECTS: format + args are logged and displayed */
 void l0g(const char *format, ...)
 {
-	assert(format);
-
 	/* Used to log issues that cause pam_mount to fail. */
 	va_list args;
+
+	assert(format);
+
 	va_start(args, format);
 	vfprintf(stderr, format, args);
 	va_end(args);
@@ -80,9 +81,10 @@ void w4rn(const char *format, ...)
  *         is normal and exists */
 int exists(const char *file)
 {
+	struct stat filestat;
+
 	assert(file);
 
-	struct stat filestat;
 	if (stat(file, &filestat)) {
 		return 0;
 	}
@@ -161,15 +163,15 @@ converse(pam_handle_t * pamh, int nargs,
 int read_password(pam_handle_t * pamh, char *prompt1, char **pass)
 {
 	int retval;
+	struct pam_message msg;
+	const struct pam_message *pmsg = &msg;
+	struct pam_response *resp = NULL;
 
 	assert(pamh);
 	assert(prompt1);
 	assert(pass);
 
 	w4rn("pam_mount: %s\n", "enter read_password");
-	struct pam_message msg;
-	const struct pam_message *pmsg = &msg;
-	struct pam_response *resp = NULL;
 	*pass = NULL;
 	msg.msg_style = PAM_PROMPT_ECHO_OFF;
 	msg.msg = prompt1;

@@ -1,13 +1,22 @@
 = For 1.0 =====================================================================
 
+o Fix building deb in Makefile.am: make conditional?
+
+o .spec must be re-generated for each version.
+
+o ????? return to using user owned /var/run/pam_mount/test -- document
+in code that this is a good idea to allow an option to ssh users besides
+turning of priv. sep code.  Also, it renders the benefits of /etc/fstab
+use.  BUT CAN SSH CREATE /var/run/ ENTRIES WHEN PRIV SEP ENABLED?
+
+o fix detecting of previously mounted volumes that used --bind.
+
+o test new "no --bind with remote mount" code.  (and ensure --bind is
+used for local mounts)
+
 o ensure I have enough loop devices for regression tests.
 
 o Test/scrub glib code in optlist.c, etc.
-
-o Re-submit to Savannah.
-
-o put pam_mount into GNU savannah?  set up CVS/mailing list?  add link
-to html?
 
 o Should -N go in pam_mount.conf like it is now?  Shall I put this in
 conf/pam_mount.conf?  How does hashing/not hashing affect scripts?
@@ -25,9 +34,13 @@ o replace PRE, POST and FN VAL conditions with asserts in code where applicable
 
 o ensure NULL-termination is guarenteed everytime strlen is used.
 
-o fix login blocking umount problem (now keeps /home/mike open as CWD).
-
-o fix gdm blocking umount problem (gconfd-2).
+o fix gconfd-2 blocking umount problem (gconfd-2).
+		ALSO:
+		bonobo-ac	/home/test (bonobo-activation-server)
+		gnome-set	/home/test (gnome-settings-daemon)
+		xscreensa	/home/test (xscreensaver -nosplash)
+		mapping-d	/home/test (mapping-daemon)
+		esd
 
 o If losetup does not regain -k option, modify scripts.
 
@@ -61,6 +74,11 @@ flexible too.  No smbmount, ncpmount, lclmount-specific code will
 be required in smbmount.c.  Use libfmt_ptrn if on system, otherwise use
 local copy (SEE CONFIGURE.IN and SRC/MAKEFILE.AM COMMENTS).  BUT FIRST
 I NEED TO MAKE NEW USE GLIB.
+
+o fork a (one, don't fork again if its already running) daemon that
+continues to try and unmount volumes after a user logs out.  pam_mount
+would pass the daemon volumes to unmount and cancel things if the user
+logs back in.  HOW WOULD ALL OF THIS BE AUTHENTICATED?
 
 o Break into multiple (root priveleged and user priv.) processes? 
 	- See /* This code needs root priv. */

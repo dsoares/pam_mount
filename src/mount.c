@@ -43,6 +43,8 @@
 #ifndef EVP_MAX_BLOCK_LENGTH
 #define EVP_MAX_BLOCK_LENGTH 32	/* some older openssl versions need this */
 #endif
+#else
+#define EVP_MAX_BLOCK_LENGTH 0  /* FIXME: this is ugly, but needed */
 #endif				/* HAVE_LIBCRYPTO */
 #include <pam_mount.h>
 #include <libgen.h>
@@ -235,8 +237,9 @@ void log_argv(char *const argv[])
  * SIDE AFFECTS: cstdin; cstdout; cstderr; errors are logged
  * OUTPUT: if error -1 else PID of child process
  */
-int procopen(const char *const path, char *const argv[], const int do_setuid,
-	     int *const cstdin, int *const cstdout, int *const cstderr)
+int procopen(const char *const path, char *const argv[],
+	     const int do_setuid, int *const cstdin, int *const cstdout,
+	     int *const cstderr)
 {
 	int _stdin[2], _stdout[2], _stderr[2];
 	pid_t pid = -1;
@@ -336,7 +339,8 @@ void log_output(int fd)
 	char buf[BUFSIZ + 1];
 	/* FIXME: check fdopen's retval */
 	if ((fp = fdopen(fd, "r")) == NULL) {
-		w4rn("pam_mount: error opening file: %s\n", strerror(errno));
+		w4rn("pam_mount: error opening file: %s\n",
+		     strerror(errno));
 		return;
 	}
 	while (fgets(buf, BUFSIZ + 1, fp))
@@ -609,13 +613,14 @@ do_unmount(struct config_t *config, const int vol,
 		add_to_argv(_argv, &_argc, config->command[_argc][UMOUNT]);
 	/* Need to unmount mount point not volume to support SMB mounts, etc. */
 	add_to_argv(_argv, &_argc, config->volume[vol].mountpoint);
-	if ((pid = procopen(_argv[0], &_argv[1], 1, NULL, NULL, NULL)) == -1)
+	if ((pid =
+	     procopen(_argv[0], &_argv[1], 1, NULL, NULL, NULL)) == -1)
 		return 0;
 	waitpid(pid, &child_exit, 0);
 	if (mkmntpoint && config->volume[vol].created_mntpt) {
 		if (rmdir(config->volume[vol].mountpoint) == -1)	/* non-fatal */
 			w4rn("pam_mount: could not remove %s\n",
-			    config->volume[vol].mountpoint);
+			     config->volume[vol].mountpoint);
 	}
 	/* pass on through the result from the umount process */
 	return (!WEXITSTATUS(child_exit));
@@ -635,8 +640,10 @@ do_losetup(struct config_t *config, const int vol,
 	pid_t pid;
 	int child_exit, fds[2], _argc = 0, cstdin = -1;
 	char *_argv[MAX_PAR + 1];
-	char *cipher = optlist_value(config->volume[vol].options, "encryption");
-	char *keybits = optlist_value(config->volume[vol].options, "keybits");
+	char *cipher =
+	    optlist_value(config->volume[vol].options, "encryption");
+	char *keybits =
+	    optlist_value(config->volume[vol].options, "keybits");
 	assert(password);
 	assert(0 <= password_len
 	       && password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
@@ -660,11 +667,16 @@ do_losetup(struct config_t *config, const int vol,
 	}
 	add_to_argv(_argv, &_argc, config->fsckloop);
 	add_to_argv(_argv, &_argc, config->volume[vol].volume);
-	if ((pid =
-	     procopen(_argv[0], &_argv[1], 0, &cstdin, NULL, NULL)) == -1)
-		return 0;
-	write(cstdin, password, password_len);
-	CLOSE(cstdin);
+	if (cipher) {
+		if ((pid =
+		     procopen(_argv[0], &_argv[1], 0, &cstdin, NULL, NULL)) == -1)
+			return 0;
+		write(cstdin, password, password_len);
+		CLOSE(cstdin);
+	} else {
+		if ((pid = procopen(_argv[0], &_argv[1], 0, NULL, NULL, NULL)) == -1)
+			return 0;
+	}
 	w4rn("pam_mount: %s\n", "waiting for losetup");
 	waitpid(pid, &child_exit, 0);
 	/* pass on through the result */
@@ -690,7 +702,8 @@ int do_unlosetup(struct config_t *config)
 		add_to_argv(_argv, &_argc,
 			    config->command[_argc][UNLOSETUP]);
 	add_to_argv(_argv, &_argc, config->fsckloop);
-	if ((pid = procopen(_argv[0], &_argv[1], 0, NULL, NULL, NULL)) == -1)
+	if ((pid =
+	     procopen(_argv[0], &_argv[1], 0, NULL, NULL, NULL)) == -1)
 		return 0;
 	w4rn("pam_mount: %s\n", "waiting for losetup delete");
 	waitpid(pid, &child_exit, 0);
@@ -729,12 +742,12 @@ check_filesystem(struct config_t *config, const int vol,
 		fsck_target = config->fsckloop;
 	} else
 		w4rn("pam_mount: volume not a loopback (options: %s)\n",
-		     optlist_to_str(options,
-				    config->volume[vol].options));
+		     optlist_to_str(options, config->volume[vol].options));
 	while (config->command[_argc][FSCK])
 		add_to_argv(_argv, &_argc, config->command[_argc][FSCK]);
 	add_to_argv(_argv, &_argc, config->fsckloop);
-	if ((pid = procopen(_argv[0], &_argv[1], 0, NULL, NULL, NULL)) == -1)
+	if ((pid =
+	     procopen(_argv[0], &_argv[1], 0, NULL, NULL, NULL)) == -1)
 		return 0;
 	w4rn("pam_mount: %s\n", "waiting for filesystem check");
 	waitpid(pid, &child_exit, 0);
@@ -774,7 +787,8 @@ do_mount(struct config_t *config, const int vol, const char *password,
 
 	assert(password);
 
-	if (mount_again = already_mounted(config, vol, prev_mntpt))
+	/* FIXME: This is a little ugly, especially check for != LCLMOUNT */
+	if ((mount_again = already_mounted(config, vol, prev_mntpt)))
 		if (mount_again == -1) {
 			l0g("pam_mount: could not determine if %s is already mounted, failing\n", config->volume[vol].volume);
 			return 0;
@@ -783,8 +797,11 @@ do_mount(struct config_t *config, const int vol, const char *password,
 			(prev_mntpt, config->volume[vol].mountpoint)) {
 			w4rn("pam_mount: %s already seems to be mounted at %s, skipping\n", config->volume[vol].volume, prev_mntpt);
 			return 1;
-		} else
+		} else {
 			w4rn("pam_mount: %s already mounted elsewhere at %s\n", config->volume[vol].volume, prev_mntpt);
+			if (config->volume[vol].type != LCLMOUNT)
+				mount_again = 0;
+		}
 	if (!exists(config->volume[vol].mountpoint))
 		if (mkmntpoint) {
 			if (!mkmountpoint

@@ -1,3 +1,37 @@
+31 October 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added mention of Jonathan Robinson's "Error reading password
+	from file descriptor 0: empty password" problem to the FAQ.
+
+29 October 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Updated FAQ to contain contents of README_*.
+
+28 October 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added BuildRequires: glib2-devel to RPM specifications (thanks
+	Rudi Chiarito).
+
+	* Use %config(noreplace) /etc/security/pam_mount.conf in RPM
+	specification (thanks thanks Rudi Chiarito).
+
+	* Do not use --bind when mounting remote filesystems.
+
+26 October 2003 W. Michael Petullo <mike@flyn.org>
+
+	* RPM specification not simply uses %{_mandir} (thanks Rudi Chiarito).
+
+24 October 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Started an FAQ.
+
+	* Various compile clean ups, thanks to Ben Story and Donald Bindner.
+
+20 October 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Should now mount special SMB share "homes" correctly (Thanks
+	Gustavo Homem).
+
 07 October 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Ensured all source files had a proper copyright notice.

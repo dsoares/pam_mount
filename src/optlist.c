@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <pam_mount.h>
 #include <assert.h>
+#include <string.h>
 
 /* ============================ _parse_string_opt () ======================= */
 /* INPUT: str, string to parse
@@ -147,10 +148,12 @@ int optlist_exists(optlist_t * optlist, const char *str)
  */
 char *optlist_value(optlist_t * optlist, const char *str)
 {
+	GList *ptr;
+
 	assert(optlist);
 	assert(str);
 
-	GList *ptr = g_list_find_custom(optlist, str, _compare);
+	ptr = g_list_find_custom(optlist, str, _compare);
 	return ptr ? ((pair_t *)ptr->data)->val : NULL;
 }
 

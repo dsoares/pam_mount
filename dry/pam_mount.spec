@@ -3,7 +3,7 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.6
+Version: 0.9.7
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
@@ -13,6 +13,7 @@ Packager: W. Michael Petullo <mike@flyn.org>
 Distribution: Flyn Linux
 URL: http://www.flyn.org
 Requires: pam
+BuildRequires: glib2-devel
 
 %description
 This module is aimed at environments with SMB (Samba or Windows NT) 
@@ -60,11 +61,11 @@ system is secure without carefully considering potential threats.
 
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%{prefix} --mandir=%{_mandir}
-make
+%configure
+make %{?_smp_mflags}
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT
+%makeinstall
 gzip -9 AUTHORS COPYING ChangeLog INSTALL NEWS README
 mkdir -p ${RPM_BUILD_ROOT}/etc/security
 cp config/pam_mount.conf ${RPM_BUILD_ROOT}/etc/security
@@ -78,15 +79,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %pre
 
-
-
 %post
 
 %preun
 
 %postun
-
-
 
 %files
 %defattr(-, root, root)
@@ -95,13 +92,10 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/bin/autoehd
 %{prefix}/bin/passwdehd
 %{prefix}/bin/mount_ehd
-%doc %{_mandir}/man8/pam_mount.8
+%doc %{_mandir}
+%config(noreplace) /etc/security/pam_mount.conf
 
 
 %doc	AUTHORS.gz COPYING.gz ChangeLog.gz INSTALL.gz NEWS.gz README.gz
-
-
-%config
-/etc/security/pam_mount.conf
 
 
