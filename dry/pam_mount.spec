@@ -1,11 +1,11 @@
-%define rel 1
+%define rel 0.fdr.1
 %define prefix /usr
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.7
+Version: 0.9.8
 Release: %rel
-Copyright: LGPL
+License: LGPL
 Group: System Environment/Base
 Source: %name-%{PACKAGE_VERSION}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
@@ -93,7 +93,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/bin/passwdehd
 %{prefix}/bin/mount_ehd
 %doc %{_mandir}
-%config(noreplace) /etc/security/pam_mount.conf
+%config(noreplace) %{_sysconfdir}/security/pam_mount.conf
 
 
 %doc	AUTHORS.gz COPYING.gz ChangeLog.gz INSTALL.gz NEWS.gz README.gz

@@ -1,5 +1,7 @@
 = For 1.0 =====================================================================
 
+o Get in fedora (http://www.fedora.us/wiki/PackageSubmissionQAPolicy).
+
 o Fix building deb in Makefile.am: make conditional?
 
 o .spec must be re-generated for each version.
