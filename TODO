@@ -1,5 +1,9 @@
 = For 1.0 =====================================================================
 
+o Fix fctk so that .spec's Source is http://...pam_mount-*.tar.gz.
+
+o gdm prompts for password then username.  Pam_unix prompts for username and stores it in PAM?
+
 o splint -I. -I.. -I../include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include +posixlib mount.c | less
 
 o ensure include/new/* and include/new are cvs rm'ed
@@ -21,6 +25,7 @@ fmt_ptrn lib?
 o regression tests:
 	options = '-', do not use fstab
 	options = '-', use fstab (mnt pt not defined either)
+	smb mount with options of '-'
 
 o Get in fedora (http://www.fedora.us/wiki/PackageSubmissionQAPolicy Fedora Bugzilla #1013).
 

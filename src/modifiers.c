@@ -174,8 +174,10 @@ int apply_before(buffer_t * dest, fmt_ptrn_t * x, char *arg)
 	dest->data = realloc(dest->data, sizeof(char) * dest->size);
     }
     /* Shift dest over to make room for arg. */
-    for (i = old_len - 1, j = new_len - 1; i > 0; i--, j--)
-	dest->data[j] = dest->data[i];
+    if (old_len > 0)
+    /* i is unsigned, so i = old_len - 1 makes no sense if old_len == 0 */
+        for (i = old_len - 1, j = new_len - 1; i > 0; i--, j--)
+	    dest->data[j] = dest->data[i];
     dest->data[src_len] = dest->data[0];
     dest->data[new_len] = 0x00;
     /* Copy arg into dest. */

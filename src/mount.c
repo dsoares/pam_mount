@@ -1031,7 +1031,10 @@ int mount_op(int (*mnt)
 	fmt_ptrn_update_kv(&vinfo, "VOLUME", config->volume[vol].volume);
 	fmt_ptrn_update_kv(&vinfo, "SERVER", config->volume[vol].server);
 	fmt_ptrn_update_kv(&vinfo, "USER", config->volume[vol].user);
-	fmt_ptrn_update_kv(&vinfo, "OPTIONS", optlist_to_str(options, config->volume[vol].options));
+	/* FIXME: should others remain undefined if == ""? */
+	optlist_to_str(options, config->volume[vol].options);
+	if (strlen(options))
+		fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
 
 	if (debug)
 		log_pm_input(config, vol);

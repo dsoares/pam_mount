@@ -1,3 +1,12 @@
+26 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed bug that caused crash when no options specified for SMB
+	mount (thanks Toshio).
+
+24 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* More RPM specification work.
+
 23 January 2004 W. Michael Petullo <mike@flyn.org>
 
 	* Worked on RPM specification (with help from some Fedora folks).

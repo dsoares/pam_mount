@@ -3,13 +3,12 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.12
+Version: 0.9.13
 Release: %rel
 License: LGPL
 Group: System Environment/Base
 Source: %name-%{PACKAGE_VERSION}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-Packager: W. Michael Petullo <mike@flyn.org>
 Distribution: Flyn Linux
 URL: http://www.flyn.org
 Requires: pam
@@ -62,6 +61,7 @@ system is secure without carefully considering potential threats.
 make %{?_smp_mflags}
 
 %install
+rm -rf $RPM_BUILD_ROOT
 %makeinstall
 gzip -9 AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ
 mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
@@ -74,14 +74,6 @@ rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.la
 rm -rf $RPM_BUILD_ROOT
 
 
-%pre
-
-%post
-
-%preun
-
-%postun
-
 %files
 %defattr(-, root, root)
 /%{_lib}/security/pam_mount.so
@@ -89,7 +81,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/autoehd
 %{_bindir}/passwdehd
 %{_bindir}/mount_ehd
-%{_mandir}/man8/pam_mount.8
+%{_mandir}/man8/*
 %config(noreplace) %{_sysconfdir}/security/pam_mount.conf
 
 
@@ -97,9 +89,14 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Fri Jan 23 2004 W. Michael Petullo <mike[@]flyn.org>
- - 0.9.11-0.fdr.1
-   - Updated to pam_mount 0.9.11.
+* Sat Jan 25 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.13-0.fdr.1
+   - Updated to pam_mount 0.9.13.
+
+* Sat Jan 24 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.12-0.fdr.2
+   - RPM specification work.
+
+* Fri Jan 23 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.12-0.fdr.1
+   - Updated to pam_mount 0.9.12.
 
 
 
