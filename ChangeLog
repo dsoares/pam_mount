@@ -1,3 +1,33 @@
+16 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Pam_mount not creates user's home directory if it doesn't exist.
+	Useful if the user is authenticated using some wazoo method and
+	does not really exist on the local machine.
+
+14 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up log function.
+
+	* Cleaned up misc.c.
+
+	* Added some return value checks and errmsgs in pam_mount.c.
+
+12 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* EHD scripts now detect technique 1, 2, or 3 from pam_mount.conf.
+
+	* Added mountehd script.
+
+07 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Added a README_DEBIAN file with some Debian-related notes.
+
+	* Pmhelper should now install suid.
+
+	* Documentation change .*_firstpass to .*_first_pass.
+
+	* Added mkehd script.
+	
 06 October 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Applied Pekka Aleksi Knuutila's patch:
@@ -6,6 +36,13 @@
 		3.  Environment instead of command line used to pass
 		    password to smbmount.
 	  Thanks, Pekka!
+
+	* (Following release 0.3.9) Added nfs to legal volume types.
+	Local actually has supported NFS, but allowing someone to specify
+	nfs may cut down on confusion.	Local has meant "use /bin/mount"
+	not "local filesystem."  Local may be a bad choice of words.
+
+	* Added passwdehd script.
 
 27 August 2002 W. Michael Petullo <mike@flyn.org>
 

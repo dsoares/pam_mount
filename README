@@ -104,8 +104,10 @@ htok
    Pam_mount  will  read  efsk from the local filesystem, perform
    fsk  = D_sk (efsk) and use fsk to mount the filesystem. If you
    change your system password, simply regenerate efsk using efsk
-   =  E_sk  (fsk).  More  information  about  this  technique  is
-   included in pam_mount.conf.
+   =  E_sk (fsk). If you want to mount this volume, use something
+   like  openssl  -d  -bf-ecb  -in  /home/user.key  |  mount  -p0
+   /home/user.  More information about this technique is included
+   in pam_mount.conf.
 
    The  /etc/pam_mount.conf  file  itself  has a lot of commented
    lines that explain what every parameter means.

@@ -1,0 +1,9 @@
+1.  Ensure that CLOSE_SESSIONS is set to yes in /etc/login.defs, otherwise
+your volume will not be unmounted upon logging out.
+
+2.  I had no luck when using the Debian mount binary to mount an encrypted
+loopback filesystem using the keybits option.  I had to build my own
+mount binary using the patch at kerneli.org.
+
+Bug reports have been submitted to the Debian project documenting
+these issues.

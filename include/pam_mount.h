@@ -1,10 +1,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
+#include <security/pam_modules.h>
 
 #define CONFIGFILE	"/etc/security/pam_mount.conf"
 
 #define MAX_PAR		127
-#include <stdio.h>
 
 #define SMBMOUNT	0
 #define NCPMOUNT	1
@@ -16,9 +17,6 @@
 
 #define DEBUG_DEFAULT	0
 #define GETPASS_DEFAULT	0
-
-#define FS_CIPHER_NONE 0
-#define FS_CIPHER_AES  1
 
 typedef struct pm_data {
 	int unmount;
@@ -40,12 +38,15 @@ typedef struct pm_data {
 int readconfig(const char *user, const char *password, 
 	       char *command[], int* volcount, pm_data **data);
 
-/* WARNING: exists is 3-state */
+/* WARNING: exists has a 3-state return value */
 int exists(const char *file);
 
 int owns(const char *user, const char *file);
 
 void log(const char *mask, const char *arg);
+
 void w4rn(const char *mask, const char *arg);
 
 void debugsleep(int sec);
+
+int read_password(pam_handle_t * pamh, const char *prompt1, char **pass);

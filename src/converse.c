@@ -1,7 +1,7 @@
 #include <config.h>
 #include <security/_pam_macros.h>
 #include <security/pam_modules.h>
-#include "pam_mount.h"
+#include <pam_mount.h>
 
 /* adapted from pam_unix/support.c */
 static int converse(pam_handle_t * pamh, int ctrl, int nargs,
@@ -11,7 +11,7 @@ static int converse(pam_handle_t * pamh, int ctrl, int nargs,
     int retval;
     struct pam_conv *conv;
 
-    w4rn("%s", "pam_mount: enter converse");
+    w4rn("pam_mount: %s\n", "enter converse");
 
     retval = pam_get_item(pamh, PAM_CONV, (const void **) &conv);
     if (retval == PAM_SUCCESS) {
@@ -19,10 +19,10 @@ static int converse(pam_handle_t * pamh, int ctrl, int nargs,
 	retval = conv->conv(nargs, (const struct pam_message **) message,
 			    response, conv->appdata_ptr);
 
-	w4rn("%s", "pam_mount: returned from app's conversation fn");
+	w4rn("pam_mount: %s\n", "returned from app's conversation fn");
     }
 
-    w4rn("%s", "pam_mount: leave converse");
+    w4rn("pam_mount: %s\n", "leave converse");
 
     return retval;		/* propagate error status */
 }
@@ -33,7 +33,7 @@ int read_password(pam_handle_t * pamh, const char *prompt1, char **pass)
     int retval;
     char *token;
 
-    w4rn("%s", "enter read_password");
+    w4rn("pam_mount: %s\n", "enter read_password");
 
     /*
      * make sure nothing inappropriate gets returned
@@ -73,6 +73,6 @@ int read_password(pam_handle_t * pamh, const char *prompt1, char **pass)
 
     *pass = token;
 
-    w4rn("%s", "pam_mount: leave read_password");
+    w4rn("pam_mount: %s\n", "leave read_password");
     return PAM_SUCCESS;
 }

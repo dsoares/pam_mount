@@ -11,7 +11,7 @@
 
 Summary: a PAM module that can mount remote volumes for a user session
 Name: pam_mount
-Version: 0.3.9
+Version: 0.4.0
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
@@ -100,6 +100,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 %{prefix}/bin/pmhelper
+%{prefix}/bin/mkehd
+%{prefix}/bin/passwdehd
 /lib/security/pam_mount.so
 %config(noreplace) /etc/security/pam_mount.conf
 

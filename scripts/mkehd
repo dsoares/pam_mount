@@ -1,0 +1,119 @@
+#!/bin/bash
+
+#   FILE: mkehd -- Create an encrypted home directory disk image.
+# AUTHOR: W. Michael Petullo <mike@flyn.org>
+#   DATE: 06 October 2002
+# 
+# Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
+# All rights reserved.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+CONF=/etc/security/pam_mount.conf
+CIPHER=aes
+FILENAME=ciphertext.img
+KEYBITS=256
+SIZE=20
+FSTYPE=ext2
+_USER=$USER
+
+USAGE="[OPTION]...
+
+  -h, -?       print this message
+  -c cipher    set the cipher used by in the filesystem  [ $CIPHER ]
+  -f filename  name of the disk image to generate        [ $FILENAME ]
+  -k keybits   set the number of bits in cipher key      [ $KEYBITS ]
+  -s size      size in MB of generated filesystem        [ $SIZE ]
+  -t fs type   type of filesystem to create              [ $FSTYPE ]
+  -u user      name of user to create ehd for            [ $_USER ]"
+
+while :;
+	do case "$1" in
+		-h | "-?" )	
+			echo -e usage: ${0##*/} "$USAGE" >&2
+			exit 1 ;;
+		-c )
+			CIPHER=$2
+			shift ;;
+		-f )
+			FILENAME=$2
+			shift ;;
+		-s )
+			SIZE=$2
+			shift ;;
+		-u )
+			_USER=$2
+			shift ;;
+		-?* )
+			echo "${0##*/}: unrecognised option: $1" >&2
+			exit 1 ;;
+		* )
+			break ;;
+	esac
+	shift
+done
+
+if [ ! -f $CONF ]; then
+	echo "${0##*/}: $CONF is missing"
+	exit 1
+fi
+
+REGEX="^volume $_USER"
+FSK_CIPHER=`grep "$REGEX" $CONF | awk '{ print $8 }'`
+KEYPATH=`grep "$REGEX" $CONF | awk '{ print $9 }'`
+
+if [ x${FSK_CIPHER} != x- ]; then
+	if [ -z "${CIPHER}" -o -z "${KEYPATH}" ]; then
+		echo "${0##*/}: \"fs key cipher\" or \"fs key path\" not defined in "
+		echo "$CONF for user $_USER"
+		echo
+		echo "You need to edit $CONF correctly for method three."
+		exit 1
+	fi
+
+	if [ -f $KEYPATH ]; then
+		echo "${0##*/}: $KEYPATH already exists: don't want to risk losing it"
+		exit 1
+	fi
+fi
+
+if [ -z $NEW_EFSK_PASSWORD ]; then
+	echo -n "(current) UNIX password: "
+	stty -echo > /dev/tty
+	read NEW_EFSK_PASSWORD < /dev/tty; echo
+	echo -n "Retype UNIX password: "
+	read VERIFY < /dev/tty; echo
+	if [ ${NEW_EFSK_PASSWORD} != ${VERIFY} ]; then
+		echo "Sorry, passwords do not match"
+		stty echo > /dev/tty
+		exit 1
+	fi
+	stty echo > /dev/tty
+fi
+
+export NEW_EFSK_PASSWORD
+
+if [ x${FSK_CIPHER} = x- ]; then
+	dd if=/dev/urandom of=$FILENAME bs=1M count=$SIZE
+	losetup -e $CIPHER /dev/loop1 $FILENAME
+	mkfs -t $FSTYPE /dev/loop1
+else
+	dd if=/dev/urandom of=$FILENAME bs=1M count=$SIZE
+	dd if=/dev/urandom bs=1c count=$(($KEYBITS / 8)) | openssl enc -$FSK_CIPER -pass env:NEW_EFSK_PASSWORD > $KEYPATH
+	openssl enc -d -$FSK_CIPHER -in $KEYPATH -pass env:NEW_EFSK_PASSWORD | losetup -e $CIPHER -k $KEYBITS -p0 /dev/loop1 $FILENAME
+	mkfs -t $FSTYPE /dev/loop1
+fi
+
+losetup -d /dev/loop1

@@ -27,7 +27,9 @@ endif
 
 AUTOMAKE_OPTIONS = gnu
 
-SUBDIRS = src include dry config
+EXTRA_DIST = README_DEBIAN
+
+SUBDIRS = src include dry config scripts
 
 if FLYN
 # For local development use only.

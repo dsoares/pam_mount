@@ -25,8 +25,8 @@ AC_INIT(src/pam_mount.c)
 AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
-MINOR_VERSION=3
-MICRO_VERSION=9
+MINOR_VERSION=4
+MICRO_VERSION=0
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -44,4 +44,4 @@ AM_CONDITIONAL(FLYN, test "$FLYN")
 
 AC_CHECK_LIB(ssl, EVP_CIPHER_CTX_init)
 
-AC_OUTPUT(Makefile config/Makefile dry/Makefile include/Makefile src/Makefile dry/pam_mount.spec.new)
+AC_OUTPUT(Makefile config/Makefile dry/Makefile include/Makefile src/Makefile scripts/Makefile dry/pam_mount.spec.new)

@@ -73,6 +73,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 %{prefix}/bin/pmhelper
+%{prefix}/bin/mkehd
+%{prefix}/bin/passwdehd
 /lib/security/pam_mount.so
 %config(noreplace) /etc/security/pam_mount.conf
 

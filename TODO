@@ -1,53 +1,64 @@
-o Sync EHD article, README, and pam_mount.conf comments to ensure they
-are all easily understandable.
+===============================================================================
 
-o Should be able to mount NFS shares.
+For 1.0:
 
-o On Debian, pam_mount complains: pam_mount: could not get password.
-This is probably related to getting rid of "auth required pam_mount.so"
-from /etc/pam.d/*.  I imagine there is a difference between RH and
-Debian's PAM dist.  Or difference in /etc/pam.d?
+o All w4rn calls before readconfig are always turned off.  Fix this.
 
-o Security audit.
+o Readconfig function (and maybe config format) needs to be redone.
 
-o Note: openssl 0.9.7 beta3 supports AES.
+o Make all optional code (openssl, openldap, etc) configured by autoconf.
 
-o Get rid of FIXMEs.
+o Fix GNOME so that Gconfd does not hang around after a user exits.
+This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
+unstable.
 
-o Make first login create file system image?  Or make a script.  Or *add
-to useradd*, or pam_mkhomedir.
-	- Also create messages like in /home/mike-nocrypt/README and
-	~mike/README (before crypt fs is mounted over ~mike).
+o Test mkehd a lot and recommend using it to simplify documentation.
 
-	- Add -e, --encrypted-homedir option?
+o Use comments to document pre, post, and FNVAL conditions and insure they
+are met (related to code scrub).
 
-o Modify passwd to update /home/mike.key.
-	- Add -p, --post-script option?
+o Security audit.  Scrub code for buffer overflows and other
+security-related bugs:
+converse.c
+pmhelper.c
+readconfig.c
+
+===============================================================================
+
+Past 1.0 (punted):
+
+o Get rid of FIXME and XXXs.
+
+o Ensure that NFS shares are working.  Document NFS use.  Get TCFS working.
+
+o Add the ability to create an encrypted loopback filesystem to useradd.
+This should also create a README file in, for example, /home/mike that
+explains setup.
+
+o Modify passwd to update /home/mike.key.  Add -p, --post-script option
+to run passwdehd?  (See passwdehd script)
 
 o Get pam_mount in standard and Red Hat pam dist.
 
 o Get supported by Red Hat.
 	- Need upstream linux-utils/kernel to support encr.
 
-o Make home directory images scalable in size (resize.*fs?)
+o Make home directory images scalable in size (resize.*fs?).
+
+o From Roman Sliva <roman.sliva@vsb.cz>: pam_mount doesn't mount ncp
+filesystems of Novell servers using NDS - full context username must be
+provided to ncpmount -U option (not just short unix name).  I solve this
+by writing wrapper script for ncpmount, which gets full context username
+using ldapsearch. I think a possibility of cooperation directly with
+pam_ldap might be a great solution.
+
+	- For NDS, use username to look up full context using LDAP?
+		. email pam_ldap folks about sharing:
+			1.  /etc/ldap.conf.
+			2.  _get_user_info (gets userdn -- used by 
+			    ldap_simple_bind).
+
+= Personal ====================================================================
 
 o Figure out better way to handle ~/.gnome/photo and move
 /home/mike-nocrypt/.gnome back into ~.
-
-One from Roman Sliva <roman.sliva@vsb.cz>
-
-- Novell mounting
-pam_mount doesn't mount ncp filesystems of Novell servers using NDS -
-full context username must be provided to ncpmount -U option (not just
-short unix name).  I solve this by writing wrapper script for ncpmount,
-which gets full context username using ldapsearch. I think a possibility
-of cooperation directly with pam_ldap might be a great solution.
-
-From pam_patch/TODO:
-
-allowing mount options -- bad idea: e.g. suid	
-	allow/deny:
-		currently using strcmp, but what about uid=XX type options?
-		
-have mode of not waiting for mount to finish
-automatically include required options in allow

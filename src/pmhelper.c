@@ -9,7 +9,7 @@
 #ifdef HAVE_LIBSSL
 #include <openssl/evp.h>
 #endif				/* HAVE_LIBSSL */
-#include "pam_mount.h"
+#include <pam_mount.h>
 
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -32,10 +32,10 @@ int read_salt(BIO * fp, unsigned char *salt)
     char magic[8];
     if ((BIO_read(fp, magic, sizeof magic) != sizeof magic)
 	|| (BIO_read(fp, salt, PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
-	log("pmhelper: %s", "error reading from ecrypted filesystem key");
+	log("pmhelper: %s\n", "error reading from ecrypted filesystem key");
 	return 0;
     } else if (memcmp(magic, "Salted__", sizeof "Salted__" - 1)) {
-	log("pmhelper: %s",
+	log("pmhelper: %s\n",
 	    "magic string Salted__ not in filesystem key file");
 	return 0;
     }
@@ -59,16 +59,16 @@ int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher,
 
     OpenSSL_add_all_ciphers();
     if (!(cipher = EVP_get_cipherbyname(fs_key_cipher))) {
-	log("pmhelper: error getting cipher \"%s\"", fs_key_cipher);
+	log("pmhelper: error getting cipher \"%s\"\n", fs_key_cipher);
 	return 0;
     }
 
     if (!(fs_key_fp = BIO_new(BIO_s_file()))) {
-	log("pmhelper: %s", "error creating new BIO");;
+	log("pmhelper: %s\n", "error creating new BIO");;
 	return 0;
     }
     if (BIO_read_filename(fs_key_fp, fs_key_path) <= 0) {
-	log("pmhelper: error opening %s", fs_key_path);
+	log("pmhelper: error opening %s\n", fs_key_path);
 	return 0;
     }
     if (!read_salt(fs_key_fp, salt))
@@ -76,27 +76,27 @@ int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher,
     if (!EVP_BytesToKey
 	(cipher, EVP_md5(), salt, password, strlen(password), 1,
 	 hashed_key, iv)) {
-	log("pmhelper: %s", "failed to hash system password");
+	log("pmhelper: %s\n", "failed to hash system password");
 	return 0;
     }
     if (BIO_read(fs_key_fp, ct_fs_key, BUFSIZ) <= 0) {
-	log("pmhelper: failed to read encrypted filesystem key from %s",
+	log("pmhelper: failed to read encrypted filesystem key from %s\n",
 	    fs_key_path);
 	return 0;
     }
 
     EVP_CIPHER_CTX_init(&ctx);
     if (!EVP_DecryptInit(&ctx, cipher, hashed_key, iv)) {
-	log("pmhelper: %s", "failed to initialize decryption code");
+	log("pmhelper: %s\n", "failed to initialize decryption code");
 	return 0;
     }
     if (!EVP_DecryptUpdate
 	(&ctx, pt_fs_key, &outlen, ct_fs_key, strlen(ct_fs_key))) {
-	log("pmhelper: %s", "failed to decrypt key");
+	log("pmhelper: %s\n", "failed to decrypt key");
 	return 0;
     }
     if (!EVP_DecryptFinal(&ctx, pt_fs_key + outlen, &tmplen)) {
-	log("pmhelper: %s", "failed to finish decrypting key");
+	log("pmhelper: %s\n", "failed to finish decrypting key");
 	return 0;
     }
     /* w4rn("pmhelper: decrypted filesystem key is \"%s\"\n", pt_fs_key); */
@@ -105,7 +105,7 @@ int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher,
     EVP_cleanup();
     return 1;
 #else
-    log("pmhelper: %s",
+    log("pmhelper: %s\n",
 	"encrypted filesystem key not supported: no openssl");
     return 0;
 #endif				/* HAVE_LIBSSL */
@@ -116,7 +116,7 @@ char *get_fstab_mountpoint(char *volume)
     FILE *fstab;
     struct mntent *fstab_record;
     if (!(fstab = fopen("/etc/fstab", "r"))) {
-	log("%s", "pmhelper: could not determine mount point");
+	log("pmhelper: %s\n", "could not determine mount point");
 	exit(EXIT_FAILURE);
     }
     fstab_record = getmntent(fstab);
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
     int child_exit;
     int i;
 
-    w4rn("%s", "pmhelper: I am executing");
+    w4rn("%s\n", "pmhelper: I am executing");
 
     bzero(&data, sizeof(data));
 
@@ -160,22 +160,22 @@ int main(int argc, char **argv)
 
     debug = data.debug;
 
-    w4rn("%s", "pmhelper: received");
-    w4rn("%s", "pmhelper: --------");
-    w4rn("pmhelper: %s", data.server);
-    w4rn("pmhelper: %s", data.user);
-    /* w4rn("pmhelper: %s", data.password); */
-    w4rn("pmhelper: %s", data.volume);
-    w4rn("pmhelper: %s", data.mountpoint);
-    w4rn("pmhelper: %s", data.fs_key_cipher);
-    w4rn("pmhelper: %s", data.fs_key_path);
-    w4rn("pmhelper: %s", data.command);
-    w4rn("%s", "pmhelper: --------");
+    w4rn("pmhelper: %s\n", "received");
+    w4rn("pmhelper: %s\n", "--------");
+    w4rn("pmhelper: %s\n", data.server);
+    w4rn("pmhelper: %s\n", data.user);
+    /* w4rn("pmhelper: %s\n", data.password); */
+    w4rn("pmhelper: %s\n", data.volume);
+    w4rn("pmhelper: %s\n", data.mountpoint);
+    w4rn("pmhelper: %s\n", data.fs_key_cipher);
+    w4rn("pmhelper: %s\n", data.fs_key_path);
+    w4rn("pmhelper: %s\n", data.command);
+    w4rn("pmhelper: %s\n", "--------");
 
     sleep(1);
 
     if (data.unmount) {
-	w4rn("%s", "pmhelper: unmounting");
+	w4rn("pmhelper: %s\n", "unmounting");
 	unmount_volume();
 	return 0;
     }
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
     } else if (data.type == SMBMOUNT) {
 	parsecommand(data.command, "smbmount", &parg);
 	asprintf(parg++, "//%s/%s", data.server, data.volume);
-	w4rn("pmhelper: asprintf %s", *(parg - 1));
+	w4rn("pmhelper: asprintf %s\n", *(parg - 1));
 	*(parg++) = data.mountpoint;
 	*(parg++) = "-o";
     /*
@@ -230,19 +230,19 @@ int main(int argc, char **argv)
 	/* XXX should check that we actually need to send a password
 	   before creating the pipe */
 	if (pipe(fds) != 0) {
-	    log("%s", "pmhelper: could not make pipe");
+	    log("pmhelper: %s\n", "could not make pipe");
 	    return 0;
 	}
     } else {
-	log("%s", "pmhelper: data.type is unknown");
+	log("pmhelper: %s\n", "data.type is unknown");
 	return 0;
     }
     *(parg++) = NULL;
 
-    w4rn("%s", "pmhelper: about to fork");
+    w4rn("pmhelper: %s\n", "about to fork");
     child = fork();
     if (child == -1) {
-	log("%s", "pmhelper: failed to fork");
+	log("pmhelper: %s\n", "failed to fork");
 	return 0;
     }
 
@@ -262,15 +262,15 @@ int main(int argc, char **argv)
     }
 
 	for (i = 0; cmdarg[i]; i++) {
-	    w4rn("pmhelper: arg is: %s", cmdarg[i]);
+	    w4rn("pmhelper: arg is: %s\n", cmdarg[i]);
 	}
 
 	if (setuid(0) == -1)
-	    w4rn("%s", "pmhelper: could not set uid to 0");
+	    w4rn("pmhelper: %s\n", "could not set uid to 0");
 	execv(cmdarg[0], &cmdarg[1]);
 
 	/* should not reach next instruction */
-	log("%s", "pmhelper: failed to execv mount command");
+	log("pmhelper: %s\n", "failed to execv mount command");
 	return 0;
     }
 
@@ -287,7 +287,7 @@ int main(int argc, char **argv)
     /* Clean password so virtual memory does not retain it */
     bzero(&(data.password), sizeof(data.password));
 
-    w4rn("%s", "pmhelper: waiting for homedir mount\n");
+    w4rn("pmhelper: %s\n", "waiting for homedir mount\n");
     waitpid(child, &child_exit, 0);
 
     /* Unmounting is PAM module responsability */
@@ -317,10 +317,10 @@ void run_lsof(void)
 {
     int pid, pipefds[2];
     if (pipe(pipefds) < 0) {
-	log("%s", "pmhelper: failed to create pipe for lsof");
+	log("pmhelper: %s\n", "failed to create pipe for lsof");
     } else {
 	if ((pid = fork()) < 0) {
-	    log("%s", "pmhelper: fork failed for lsof");
+	    log("pmhelper: %s\n", "fork failed for lsof");
 	} else {
 	    if (pid == 0) {
 		close(1);
@@ -332,19 +332,19 @@ void run_lsof(void)
 		      mountpoint : get_fstab_mountpoint(data.volume),
 		      NULL);
 		/* should not reach next instruction */
-		w4rn("pmhelper: failed to execl %s", data.lsof);
+		w4rn("pmhelper: failed to execl %s\n", data.lsof);
 	    } else {
 		FILE *fp;
 		char buf[BUFSIZ + 1];
 		close(pipefds[1]);
 		fp = fdopen(pipefds[0], "r");
-		w4rn("pmhelper: lsof output (should be empty)...",
+		w4rn("pmhelper: lsof output (should be empty)...\n",
 		     strerror(errno));
 		sleep(1);	/* FIXME: need to find a better way to wait for child 
 				 * to catch up. 
 				 */
 		while (fgets(buf, BUFSIZ, fp) != NULL)
-		    w4rn("pmhelper: %s", buf);
+		    w4rn("pmhelper: %s\n", buf);
 		close(pipefds[0]);
 	    }
 	}
@@ -366,11 +366,11 @@ void unmount_volume()
     cmdarg[3] = NULL;
 
     for (i = 0; cmdarg[i]; i++) {
-	w4rn("pmhelper: arg is: %s", cmdarg[i]);
+	w4rn("pmhelper: arg is: %s\n", cmdarg[i]);
     }
 
     if (setuid(0) == -1)
-	w4rn("%s", "pmhelper: could not set uid to 0");
+	w4rn("pmhelper: %s\n", "could not set uid to 0");
 
     if (debug)
 	/* Often, a process still exists with ~ as its pwd after logging out.  
@@ -380,7 +380,7 @@ void unmount_volume()
 
     execv(cmdarg[0], &cmdarg[1]);
     /* should not reach next instruction */
-    log("%s", "pmhelper: failed to execv umount command");
+    log("pmhelper: %s\n", "failed to execv umount command");
     _exit(1);
 }
 
@@ -389,15 +389,15 @@ void parsecommand(const char *command, const char *name, char ***pparg)
     char *sprov = strdup(command);
     char *argument;
 
-    w4rn("%s", "pmhelper: entering parsecommand");
+    w4rn("pmhelper: %s\n", "entering parsecommand");
 
     argument = strtok(sprov, "\t\n ");
     while (argument) {
-	w4rn("pmhelper: adding token %s", argument);
+	w4rn("pmhelper: adding token %s\n", argument);
 	**pparg = strdup(argument);
 	(*pparg)++;
 	if (name) {
-	    w4rn("pmhelper: adding token %s", name);
+	    w4rn("pmhelper: adding token %s\n", name);
 	    **pparg = strdup(name);
 	    (*pparg)++;
 	    name = NULL;
@@ -405,7 +405,7 @@ void parsecommand(const char *command, const char *name, char ***pparg)
 	argument = strtok(NULL, "\t\n ");
     }
 
-    w4rn("%s", "pmhelper: leaving parsecommand");
+    w4rn("pmhelper: %s\n", "leaving parsecommand");
 
     free(sprov);
 }
