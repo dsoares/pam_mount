@@ -10,9 +10,8 @@
 %define prefix /usr
 
 Summary: a PAM module that can mount remote volumes for a user session
-
 Name: pam_mount
-Version: 0.3.8
+Version: 0.3.9
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base

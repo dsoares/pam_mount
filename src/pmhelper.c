@@ -130,6 +130,7 @@ int main(int argc, char **argv)
     int total, n;
     char *cmdarg[20];
     char **parg;
+    char envtmp[255];
     int child;
     int fds[2];
     int child_exit;
@@ -191,7 +192,6 @@ int main(int argc, char **argv)
     parg = cmdarg;
     if (data.type == NCPMOUNT) {
 	parsecommand(data.command, "ncpmount", &parg);
-	/* FIXME: Change to support defining in fstab too. */
 	*(parg++) = "-S";
 	*(parg++) = data.server;
 	*(parg++) = "-U";
@@ -205,17 +205,21 @@ int main(int argc, char **argv)
 	parsecommand(data.command, "smbmount", &parg);
 	asprintf(parg++, "//%s/%s", data.server, data.volume);
 	w4rn("pmhelper: asprintf %s", *(parg - 1));
-	/* FIXME: Change to support defining in fstab too. */
 	*(parg++) = data.mountpoint;
 	*(parg++) = "-o";
+    /*
 	asprintf(parg++, "username=%s%%%s%s%s",
 		 data.user, data.password,
+		 data.options[0] ? "," : "", data.options);
+         */
+	asprintf(parg++, "username=%s%s%s",
+		 data.user,
 		 data.options[0] ? "," : "", data.options);
     } else if (data.type == LCLMOUNT) {
 	parsecommand(data.command, "mount", &parg);
 	*(parg++) = data.volume;
 
-	if (data.mountpoint[0]) /* If this is used, fstab will not be used. */
+	if (data.mountpoint[0])	/* If this is used, fstab will not be used. */
 	    *(parg++) = data.mountpoint;
 
 	if (data.options[0]) {
@@ -230,7 +234,7 @@ int main(int argc, char **argv)
 	    return 0;
 	}
     } else {
-	log("%s", "pmhelper: data.type is unkonwn");
+	log("%s", "pmhelper: data.type is unknown");
 	return 0;
     }
     *(parg++) = NULL;
@@ -252,7 +256,10 @@ int main(int argc, char **argv)
 	       for this mount */
 	    close(fds[1]);
 	    dup2(fds[0], STDIN_FILENO);
-	}
+	} else if (data.type == SMBMOUNT) {
+        snprintf(envtmp, 255, "PASSWD=%s", data.password);
+        putenv(envtmp);
+    }
 
 	for (i = 0; cmdarg[i]; i++) {
 	    w4rn("pmhelper: arg is: %s", cmdarg[i]);
@@ -320,7 +327,10 @@ void run_lsof(void)
 		dup(pipefds[1]);
 		close(pipefds[1]);
 		close(pipefds[0]);
-		execl(data.lsof, "lsof", data.mountpoint[0] ? data.mountpoint : get_fstab_mountpoint (data.volume), NULL);
+		execl(data.lsof, "lsof",
+		      data.mountpoint[0] ? data.
+		      mountpoint : get_fstab_mountpoint(data.volume),
+		      NULL);
 		/* should not reach next instruction */
 		w4rn("pmhelper: failed to execl %s", data.lsof);
 	    } else {
@@ -328,7 +338,8 @@ void run_lsof(void)
 		char buf[BUFSIZ + 1];
 		close(pipefds[1]);
 		fp = fdopen(pipefds[0], "r");
-		w4rn("pmhelper: lsof output (should be empty)...", strerror(errno));
+		w4rn("pmhelper: lsof output (should be empty)...",
+		     strerror(errno));
 		sleep(1);	/* FIXME: need to find a better way to wait for child 
 				 * to catch up. 
 				 */
@@ -349,7 +360,9 @@ void unmount_volume()
     cmdarg[0] = data.ucommand;
     cmdarg[1] = "umount";
     /* Need to unmount mount point not volume to support SMB mounts, etc. */
-    cmdarg[2] = data.mountpoint[0] ? data.mountpoint : get_fstab_mountpoint(data.volume);
+    cmdarg[2] =
+	data.mountpoint[0] ? data.mountpoint : get_fstab_mountpoint(data.
+								    volume);
     cmdarg[3] = NULL;
 
     for (i = 0; cmdarg[i]; i++) {

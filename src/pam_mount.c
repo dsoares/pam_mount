@@ -29,21 +29,21 @@ int invoke_child(pm_data * data, char *command[]);
 
 int read_password(pam_handle_t * pamh, const char *prompt1, char **pass);
 
-/*
-
-int pam_start(const char *service_name, const char *username,
-	  const struct pam_conv *conv, pam_handle_t **pamh_p)
+PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags,
+                                           int argc, const char **argv)
 {
-	if (strcmp(service_name, "login")) {
-		printf("\nThis module is intended for 'login'\n\n");
-		return PAM_SESSION_ERR;
-	}
-	return PAM_SUCCESS;
+        return PAM_SUCCESS;
 }
 
-*/
+PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
+                                    int argc, const char **argv)
+{
+    int ret = pam_sm_authenticate(pamh, flags, argc, argv);
+    return PAM_SUCCESS;
+}
 
-PAM_EXTERN int pam_sm_open_session(pam_handle_t * pamh, int flags,
+
+PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 				   int argc, const char **argv)
 {
     char *password;
@@ -52,15 +52,15 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t * pamh, int flags,
     int get_pass = GETPASS_DEFAULT;
     int i;
     debug = DEBUG_DEFAULT;
+    w4rn("%s", "pam_mount: beginning");
     for (i = 0; i < argc; i++) {
 	if (!strcmp("use_first_pass", argv[i])) {
 	    get_pass = 0;
 	} else if (!strcmp("try_first_pass", argv[i])) {
 	    get_pass = 1;
 	}
-	w4rn("pam_mount: pam_sm_authenticate args: %s", argv[i]);
+	w4rn("pam_mount: pam_sm_open_session args: %s", argv[i]);
     }
-    w4rn("%s", "pam_mount: beginning");
     for (x = 0; x < COMMAND_MAX; ++x) {
 	command[x] = NULL;
     }
@@ -154,6 +154,10 @@ int invoke_child(pm_data * data, char *command[])
 		"pam_mount: BTW our real and effective user ID are %d and %d.\n",
 		getuid(), geteuid());
     }
+
+    /* if our CWD is in the home directory, it might not get umounted */
+    /* Needed for KDM. */
+    chdir("/");
 
     child = fork();
 

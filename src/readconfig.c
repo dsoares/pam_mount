@@ -365,16 +365,16 @@ void readvolume(const char *user, const char *password, int *volcount,
 	    struct passwd *p;
 	    p = getpwnam(user);
 	    if (p != NULL) {
-	        automount = malloc(strlen(p->pw_dir) + 5);
+		automount = malloc(strlen(p->pw_dir) + 5);
 		if (automount != NULL) {
 		    strcpy(automount, p->pw_dir);
 		    strcat(automount, mountpoint + 1);
-                }	
+		}
 	    } else {
-	        log("pam_mount: failed to get %s's mount point", user);
+		log("pam_mount: failed to get %s's mount point", user);
 	    }
-        } else
-	    automount = expand_wildcard (mountpoint, user);
+	} else
+	    automount = expand_wildcard(mountpoint, user);
 	if (automount) {
 	    mountpoint = automount;
 	    w4rn("pam_mount: automount: %s", automount);
@@ -390,7 +390,7 @@ void readvolume(const char *user, const char *password, int *volcount,
     }
 
     if (strcmp(mountpoint, "-") == 0) {
-        mountpoint = "";
+	mountpoint = "";
     }
     if (strcmp(options, "-") == 0) {
 	options = "";

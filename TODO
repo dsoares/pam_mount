@@ -1,3 +1,13 @@
+o Sync EHD article, README, and pam_mount.conf comments to ensure they
+are all easily understandable.
+
+o Should be able to mount NFS shares.
+
+o On Debian, pam_mount complains: pam_mount: could not get password.
+This is probably related to getting rid of "auth required pam_mount.so"
+from /etc/pam.d/*.  I imagine there is a difference between RH and
+Debian's PAM dist.  Or difference in /etc/pam.d?
+
 o Security audit.
 
 o Note: openssl 0.9.7 beta3 supports AES.
@@ -9,22 +19,22 @@ to useradd*, or pam_mkhomedir.
 	- Also create messages like in /home/mike-nocrypt/README and
 	~mike/README (before crypt fs is mounted over ~mike).
 
-o Get this to work with sshd.
-	- Works now, but .ssh is not available until pam_mount executes,
-	so a password prompt comes up.	Need a password to mount home
-	anyway.
+	- Add -e, --encrypted-homedir option?
+
+o Modify passwd to update /home/mike.key.
+	- Add -p, --post-script option?
 
 o Get pam_mount in standard and Red Hat pam dist.
 
 o Get supported by Red Hat.
-	- Need upstream linux-utils/PAM to support encr.
+	- Need upstream linux-utils/kernel to support encr.
 
 o Make home directory images scalable in size (resize.*fs?)
 
 o Figure out better way to handle ~/.gnome/photo and move
 /home/mike-nocrypt/.gnome back into ~.
 
-Three from Roman Sliva <roman.sliva@vsb.cz>
+One from Roman Sliva <roman.sliva@vsb.cz>
 
 - Novell mounting
 pam_mount doesn't mount ncp filesystems of Novell servers using NDS -
@@ -39,7 +49,5 @@ allowing mount options -- bad idea: e.g. suid
 	allow/deny:
 		currently using strcmp, but what about uid=XX type options?
 		
-honor -pX rather than just p0
-
 have mode of not waiting for mount to finish
 automatically include required options in allow

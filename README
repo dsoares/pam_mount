@@ -67,9 +67,12 @@ htok
     session   required  /lib/security/pam_pwdb.so
     session   optional  /lib/security/pam_console.so
 +++ session   required  /lib/security/pam_mount.so use_firstpass
++++ auth      required  /lib/security/pam_mount.so use_firstpass
 
-   THIS IS A CHANGE TO THE WAY PAM_MOUNT <= 0.3.4 WAS CONFIGURED!
-   There is no longer a pam_mount auth entry.
+   THIS IS A CHANGE TO THE WAY PAM_MOUNT <= 0.3.8 WAS CONFIGURED!
+   A  pam_mount  auth entry is needed once again because Debian's
+   PAM  does  not  allow  session-related functions to retreive a
+   user's password.
 
    If  you  want  to support having different passwords for login
    and  mounting,  replace use_firstpass with try_firstpass. This

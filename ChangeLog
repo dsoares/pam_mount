@@ -1,3 +1,16 @@
+06 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Applied Pekka Aleksi Knuutila's patch:
+		1.  Now fixed on Debian again.
+		2.  Now does a chdir("/"), fixed umount in some cases.  KDM?
+		3.  Environment instead of command line used to pass
+		    password to smbmount.
+	  Thanks, Pekka!
+
+27 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed a typo in pam_mount.conf.
+
 14 August 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Pmhelper now unmounts the mount point, not the volume.  If the

@@ -73,9 +73,3 @@ int owns(const char *user, const char *file)
     }
     return 0;
 }
-
-void debugsleep(int sec)
-{
-    if (debug)
-	sleep(sec);
-}
