@@ -11,7 +11,7 @@
 
 Summary: a PAM module that can mount remote volumes for a user session
 Name: pam_mount
-Version: 0.5.2
+Version: 0.5.3
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
@@ -26,32 +26,38 @@ Requires: pam
 # ============================= description ====================================
 %description
 
-     _________________________________________________________
+     _________________________________________________________________
 
    Table of Contents
 
-   This  module  is  aimed  at  environments  with  SMB (Samba or
-   Windows  NT)  or  NCP  (Netware or Mars-NWE) servers that Unix
-   users  wish  to access transparently. It facilitates access to
-   private  volumes of these types well. The module also supports
-   mounting    home    directories   using   loopback   encrypted
-   filesystems.
+   This module is aimed at environments with SMB (Samba or Windows NT) or
+   NCP (Netware or Mars-NWE) servers that Unix users wish to access
+   transparently. It facilitates access to private volumes of these types
+   well. The module also supports mounting home directories using
+   [1]loopback encrypted filesystems.
 
      * Every user can access his own volumes
      * The user needs to type the password just once (at login)
      * The mouting process is transparent to the users
-     * There  is  no  need  to  keep  the  login passwords in any
-       additional file
-     * The  volumes  are  unmount upon logout, so it saves system
-       resources,  avoiding  the  need  of  listing  every  every
-       possibly  useful  remote  volume  in  /etc/fstab  or in an
-       automount/supermount  config  file. This is also necessary
-       for securing encrypted filesystems.
+     * There is no need to keep the login passwords in any additional
+       file
+     * The volumes are unmount upon logout, so it saves system resources,
+       avoiding the need of listing every every possibly useful remote
+       volume in /etc/fstab or in an automount/supermount config file.
+       This is also necessary for securing encrypted filesystems.
 
-   Pam_mount  "understands"  SMB,  NCP,  and  encrypted  loopback
-   volumes,  but this can be extended very easily. If someone has
-   a particular need for a different filesystem, feel free to ask
-   me to include it and / or send me patches.
+   Pam_mount "understands" SMB, NCP, and encrypted loopback volumes, but
+   this can be extended very easily. If someone has a particular need for
+   a different filesystem, feel free to ask me to include it and / or
+   send me patches.
+
+References
+
+   Visible links
+   1. http://www.tldp.org/HOWTO/Loopback-Encrypted-Filesystem-HOWTO.html
+
+   Hidden links:
+   2. file://localhost/tmp/xmlto.SoKFJK/overview_wrapper.proc#id5359292
 
 
 # ============================= changelog ======================================
@@ -70,8 +76,6 @@ make
 
 # ============================= install ========================================
 %install
-mkdir -p $RPM_BUILD_ROOT/usr/bin
-
 # NOTE: The following trick only works with a modified header-vars.am.
 # Change the line ``DESTDIR ='' in this file to ``DESTDIR =
 # ${ENV_DESTDIR}.''
@@ -99,8 +103,9 @@ rm -rf $RPM_BUILD_ROOT
 # ============================= files ==========================================
 %files
 %defattr(-, root, root)
-%{prefix}/bin/pmhelper
+%{prefix}/sbin/pmhelper
 %{prefix}/bin/mkehd
+%{prefix}/bin/mountehd
 %{prefix}/bin/passwdehd
 /lib/security/pam_mount.so
 %config(noreplace) /etc/security/pam_mount.conf

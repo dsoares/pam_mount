@@ -43,8 +43,6 @@ make
 
 # ============================= install ========================================
 %install
-mkdir -p $RPM_BUILD_ROOT/usr/bin
-
 # NOTE: The following trick only works with a modified header-vars.am.
 # Change the line ``DESTDIR ='' in this file to ``DESTDIR =
 # ${ENV_DESTDIR}.''
@@ -72,8 +70,9 @@ rm -rf $RPM_BUILD_ROOT
 # ============================= files ==========================================
 %files
 %defattr(-, root, root)
-%{prefix}/bin/pmhelper
+%{prefix}/sbin/pmhelper
 %{prefix}/bin/mkehd
+%{prefix}/bin/mountehd
 %{prefix}/bin/passwdehd
 /lib/security/pam_mount.so
 %config(noreplace) /etc/security/pam_mount.conf

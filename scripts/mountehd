@@ -1,0 +1,67 @@
+#!/bin/bash
+
+#   FILE: mountehd -- Mount a user's efsk.
+# AUTHOR: W. Michael Petullo <mike@flyn.org>
+#   DATE: 06 October 2002
+# 
+# Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
+# All rights reserved.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+CONF=/etc/security/pam_mount.conf
+
+USAGE="[USER] [OPTION]...
+
+  -h, -?   print this message"
+
+while :;
+	do case "$1" in
+		-h | "-?" )	
+			echo -e usage: ${0##*/} "$USAGE" >&2
+			exit 1 ;;
+		-?* )
+			echo "${0##*/}: unrecognised option: $1" >&2
+			exit 1 ;;
+		* )
+			break ;;
+	esac
+	shift
+done
+
+if [ ! -z $1 ]; then
+	USER=$1
+fi
+
+if [ ! -f $CONF ]; then
+	echo "${0##*/}: $CONF is missing"
+	exit 1
+fi
+
+REGEX="^volume $USER"
+CIPHER=`grep "$REGEX" $CONF | awk '{ print $8 }'`
+KEYPATH=`grep "$REGEX" $CONF | awk '{ print $9 }'`
+VOLUME=`grep "$REGEX" $CONF | awk '{ print $5 }'`
+
+if [ -z "$VOLUME" ]; then
+	echo "${0##*/}: could not find configuration for $USER in pam_mount.conf" >&2
+	exit 1
+fi
+
+if [ x${CIPHER} = x- ]; then
+	mount $VOLUME
+else
+	openssl enc -d -$CIPHER -in $KEYPATH | mount -p0 $VOLUME
+fi

@@ -112,7 +112,7 @@ int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password,
 	 * MAX_PAR - EVP_MAX_IV_LENGTH + 2 (see below).  this causes 
 	 * EVP_DecryptUpdate to fail.  strlen(ct_fs_key) is 40 and works.  
 	 * 39 and 41 fail.  ???
-	/* Fn. will decrypt no more that inl (last param) + block size - 1 
+	 /* Fn. will decrypt no more that inl (last param) + block size - 1 
 	 * bytes: k[MP + 1] = (MP - MAX + 2) + MAX - 1 */
 	log("pmhelper: %s\n", "failed to decrypt key");
 	return 0;
@@ -122,7 +122,7 @@ int decrypted_key(char *pt_fs_key, int pt_fs_key_len, char *password,
 	log("pmhelper: %s\n", "failed to finish decrypting key");
 	return 0;
     }
-    memset (&ctx, 0x00, sizeof(EVP_CIPHER_CTX));
+    memset(&ctx, 0x00, sizeof(EVP_CIPHER_CTX));
     /* w4rn("pmhelper: decrypted filesystem key is \"%s\"\n", pt_fs_key); */
     BIO_free(fs_key_fp);
     return 1;
@@ -149,13 +149,14 @@ int get_fstab_mountpoint(char *volume, char *mountpoint)
     fstab_record = getmntent(fstab);
     while (fstab_record && strcmp(fstab_record->mnt_fsname, volume))
 	fstab_record = getmntent(fstab);
-    if (! fstab_record) {
+    if (!fstab_record) {
 	log("pmhelper: could not determine mount point for %s\n", volume);
-        return 0;
+	return 0;
     }
     if (strlen(fstab_record->mnt_dir) > BUFSIZ) {
-	log("pmhelper: mnt point listed in /etc/fstab for %s too long", volume);
-        return 0;
+	log("pmhelper: mnt point listed in /etc/fstab for %s too long",
+	    volume);
+	return 0;
     }
     strcpy(mountpoint, fstab_record->mnt_dir);
     return 1;
@@ -189,7 +190,7 @@ void run_lsof(void)
 		w4rn("pmhelper: lsof output (should be empty)...\n",
 		     strerror(errno));
 		sleep(1);	/* FIXME: need to find a better way to 
-		                 * wait for child to catch up. */
+				 * wait for child to catch up. */
 		while (fgets(buf, BUFSIZ, fp) != NULL)
 		    w4rn("pmhelper: %s\n", buf);
 		close(pipefds[0]);
@@ -251,7 +252,7 @@ int mkmountpoint(data_t data)
     return 1;
 }
 
-/* ============================ already_mounted () ========================= */ 
+/* ============================ already_mounted () ========================= */
 /* PRE:    volume points to a valid string != NULL
  *         mountpoint points to a valid string != NULL 
  *           (will be looked up in /etc/fstab if == "")
@@ -263,13 +264,13 @@ int already_mounted(char *volume, char *mountpoint)
     struct mntent *mtab_record;
     char line[BUFSIZ + 1];
     if (!(mtab = fopen("/etc/mtab", "r"))) {
-        log("pmhelper: %s\n", "could not open /etc/mtab");
+	log("pmhelper: %s\n", "could not open /etc/mtab");
 	exit(EXIT_FAILURE);
     }
     mtab_record = getmntent(mtab);
     while (mtab_record && strcmp(mtab_record->mnt_fsname, volume))
 	mtab_record = getmntent(mtab);
-    return mtab_record ? ! strcmp(mtab_record->mnt_dir, mountpoint) : 0;
+    return mtab_record ? !strcmp(mtab_record->mnt_dir, mountpoint) : 0;
 }
 
 /* ============================ main () ==================================== */
@@ -278,7 +279,7 @@ int already_mounted(char *volume, char *mountpoint)
 int main(int argc, char **argv)
 {
     int total = 0, n;
-    char *_argv[MAX_PAR+1];
+    char *_argv[MAX_PAR + 1];
     int _argc;
     int child;
     int fds[2];
@@ -306,24 +307,27 @@ int main(int argc, char **argv)
 	log("pmhelper: %s\n", "failed to receive all mount data");
 	exit(EXIT_FAILURE);
     }
-    if (! strlen(data.mountpoint)) {
-        if (! get_fstab_mountpoint(data.volume, data.mountpoint)) {
+    if (!strlen(data.mountpoint)) {
+	if (!get_fstab_mountpoint(data.volume, data.mountpoint)) {
 	    exit(EXIT_FAILURE);
 	}
 	mntpt_from_fstab = 1;
     }
-    for(_argc = 0; strlen(data.argv[_argc]); _argc++) {
-        if (_argc >= MAX_PAR + 1) {
+    for (_argc = 0; strlen(data.argv[_argc]); _argc++) {
+	if (_argc >= MAX_PAR + 1) {
 	    log("pmhelper: %s\n", "mount command line too long");
 	    exit(EXIT_FAILURE);
-        }
+	}
 	_argv[_argc] = data.argv[_argc];
     }
 
     w4rn("pmhelper: %s\n", "received");
     w4rn("pmhelper: %s\n", "--------");
     /* w4rn("pmhelper: %s\n", data.password); */
-    w4rn("pmhelper: %s\n", data.globalconf ? "(defined by globalconf)" : "(defined by luserconf)");
+    w4rn("pmhelper: %s\n",
+	 data.
+	 globalconf ? "(defined by globalconf)" :
+	 "(defined by luserconf)");
     w4rn("pmhelper: user:          %s\n", data.user);
     w4rn("pmhelper: server:        %s\n", data.server);
     w4rn("pmhelper: volume:        %s\n", data.volume);
@@ -332,8 +336,8 @@ int main(int argc, char **argv)
     w4rn("pmhelper: fs_key_cipher: %s\n", data.fs_key_cipher);
     w4rn("pmhelper: fs_key_path:   %s\n", data.fs_key_path);
     w4rn("pmhelper: %s", "argv:          ");
-    for(i = 0; strlen (data.argv[i]); i++)
-        w4rn("%s ", data.argv[i]);
+    for (i = 0; strlen(data.argv[i]); i++)
+	w4rn("%s ", data.argv[i]);
     w4rn("%s", "\n");
     w4rn("pmhelper: %s\n", "--------");
 
@@ -347,11 +351,13 @@ int main(int argc, char **argv)
     }
 
     if (already_mounted(data.volume, data.mountpoint)) {
-        log("pmhelper: %s already seems to be mounted, skipping", data.volume);
-	exit(EXIT_SUCCESS); /* success so try_first_pass does not try again */
+	log("pmhelper: %s already seems to be mounted, skipping",
+	    data.volume);
+	exit(EXIT_SUCCESS);	/* success so try_first_pass does not try again */
     }
 
-    w4rn("pmhelper: %s\n", "checking for encrypted filesystem key configuration");
+    w4rn("pmhelper: %s\n",
+	 "checking for encrypted filesystem key configuration");
 
     /* FIXME: Should this be rmdir'ed when one logs out? How? */
     if (getenv("PAM_MOUNT_MKMOUNTPOINT") && !exists(data.mountpoint))
@@ -374,7 +380,7 @@ int main(int argc, char **argv)
 
     /* FIXME: overflow possibility on _argv (users can define commands) */
     if (data.type == NCPMOUNT) {
-        w4rn("pmhelper: %s\n", "mount type is NCPMOUNT");
+	w4rn("pmhelper: %s\n", "mount type is NCPMOUNT");
 	_argv[_argc++] = "-S";
 	_argv[_argc++] = data.server;
 	_argv[_argc++] = "-U";
@@ -383,7 +389,7 @@ int main(int argc, char **argv)
 	_argv[_argc++] = data.volume;
 	_argv[_argc++] = data.mountpoint;
     } else if (data.type == SMBMOUNT) {
-        w4rn("pmhelper: %s\n", "mount type is SMBMOUNT");
+	w4rn("pmhelper: %s\n", "mount type is SMBMOUNT");
 	asprintf(&_argv[_argc++], "//%s/%s", data.server, data.volume);
 	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
 	_argv[_argc++] = data.mountpoint;
@@ -394,10 +400,10 @@ int main(int argc, char **argv)
 		 data.user, data.options[0] ? "," : "", data.options);
 	w4rn("pmhelper: added %s\n", _argv[_argc - 1]);
     } else if (data.type == LCLMOUNT) {
-        w4rn("pmhelper: %s\n", "mount type is LCLMOUNT");
+	w4rn("pmhelper: %s\n", "mount type is LCLMOUNT");
 	_argv[_argc++] = data.volume;
 
-	if (! mntpt_from_fstab)
+	if (!mntpt_from_fstab)
 	    _argv[_argc++] = data.mountpoint;
 	if (data.options[0]) {
 	    _argv[_argc++] = "-o";
@@ -413,6 +419,11 @@ int main(int argc, char **argv)
     if (pipe(fds) != 0) {
 	log("pmhelper: %s\n", "could not make pipe");
 	exit(EXIT_FAILURE);
+    }
+    /* send password down pipe to mount process */
+    if (data.type == SMBMOUNT) {
+	/* smbmount reads password from /dev/tty; no good for pipe */
+	setenv("PASSWD", data.password, 1);
     }
 
     w4rn("pmhelper: %s\n", "about to fork");
@@ -439,11 +450,11 @@ int main(int argc, char **argv)
 	log("pmhelper: %s\n", "failed to execv mount command");
 	exit(EXIT_FAILURE);
     }
-
-    /* send password down pipe to mount process */
-    write(fds[1], data.password, strlen(data.password) + 1);
-    close(fds[0]);
-    close(fds[1]);
+    if (data.type != SMBMOUNT) {
+	write(fds[1], data.password, strlen(data.password) + 1);
+	close(fds[0]);
+	close(fds[1]);
+    }
 
     _pam_overwrite(data.password);
 
@@ -451,7 +462,7 @@ int main(int argc, char **argv)
     waitpid(child, &child_exit, 0);
 
     /* pass on through the result from the mount process */
-    exit (WEXITSTATUS(child_exit));
+    exit(WEXITSTATUS(child_exit));
 }
 
 /* ============================ config_signals () ========================== */

@@ -2,8 +2,6 @@
 
 For 1.0:
 
-o Make sure tarball installs into correct directory (see an example).
-
 o Free alloced memory.  Test returned value from malloc/calloc.
 
 o Test config reading fn, especially luserconfs.  Test required, allowed,

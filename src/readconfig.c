@@ -51,16 +51,18 @@ static const configoption_t legal_config[] = {
 };
 
 /* ============================ log_error () =============================== */
-/* NOTE: callback helper function for handling errors */
+/* NOTE: callback helper function for handling errors
+ *       frees msg after logging it! */
 FUNC_ERRORHANDLER(log_error)
 {
     log("pam_mount: %s\n", msg);
+    free((char *) msg);
 }
 
 /* ============================ read_options () ============================ */
 /* NOTE: callback helper function for reading options_require, options_allow,
  *       and options_deny.  options must be initialized to 
- *       [ 0x00, ..., 0x00 ] (see initconfig) */
+ *       [ 0x00, ..., 0x00 ] (see initconfig) opt_str may be NULL */
 char *read_options(char *options[], char *opt_str)
 {
     int count = 0;
@@ -212,7 +214,7 @@ int luserconf_volume_record_sane(char *volume[], config_t * config,
 /* PRE:    volume is an array containing 8 fields from pam_mount.conf
  *         config points to a valid config_t structure
  *         errmsg points to an char array of length >= BUFSIZ + 1
- * FN VAL: if error a pointed to a malloced string error message else NULL */
+ * FN VAL: if error a pointer to a malloced string error message else NULL */
 int volume_record_sane(char *volume[], config_t * config, char *errmsg)
 {
     w4rn("pam_mount: %s\n", "checking sanity of volume record");
@@ -558,6 +560,26 @@ void initconfig(config_t * config)
     memset(config->options_require, 0x00, MAX_PAR + 1);
     memset(config->options_allow, 0x00, MAX_PAR + 1);
     memset(config->options_deny, 0x00, MAX_PAR + 1);
+}
+
+/* ============================ freeconfig () ============================== */ 
+/* PRE:  config is a valid, initialized config_t structure
+ * POST: all dynamically allocated memory in config is freed */
+void freeconfig(config_t config)
+{
+    int i = 0, j = 0;
+    while(config.options_require[i])
+        free(config.options_require[i++]);
+    i = 0;
+    while(config.options_allow[i])
+        free(config.options_allow[i++]);
+    i = 0;
+    while(config.options_deny[i])
+        free(config.options_deny[i++]);
+    i = 0;
+    for (i = 0; i < COMMAND_MAX; i++)
+        while(config.command[j][i])
+	    free(config.command[j++][i]);
 }
 
 /* ============================ expand_home () ============================= */

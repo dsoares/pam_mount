@@ -232,7 +232,7 @@ PAM_EXTERN
 	    return PAM_SUCCESS;
 	}
     }
-
+    freeconfig(config);
     return PAM_SUCCESS;
 }
 
