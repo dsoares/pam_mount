@@ -57,7 +57,7 @@ static const configoption_t legal_config[] = {
 FUNC_ERRORHANDLER(log_error)
 {
     log("pam_mount: %s\n", msg);
-    free((char *) msg);
+    /* free((char *) msg); FIXME: broken? (some users report symptoms) */
 }
 
 /* ============================ read_options () ============================ */
@@ -270,7 +270,10 @@ DOTCONF_CB(read_volume)
 	     (cmd->data.list[0], ((config_t *) cmd->option->info)->user)
 	     && strcmp(cmd->data.list[0], "*"))
 	/* user may use other usernames to mount volumes using luserconf */
-	return "pam_mount: ignoring volume record";
+	return "pam_mount: ignoring volume record (not for me)";
+    else if (! strcmp(cmd->data.list[0], "*") && ! strcmp(config.user, "root"))
+	/* FIXME: should use uid == 0, not "root" */
+        return "pam_mount: volume wildcard ignored for root"; 
     for (i = 0; i < cmd->arg_count; i++)
 	if (strlen(cmd->data.list[i]) > MAX_PAR)
 	    return "pam_mount: command too long";

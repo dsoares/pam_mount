@@ -1,6 +1,7 @@
 = For 1.0 =====================================================================
 
-o Only last PAM close session should actually unmount anything.
+o Wildcards should not do anything for root.  In fact, maybe root should
+be skipped all together.
 
 o Ensure mounting a volume as root does not prohibit user from changing
 permissions on it.  Ensure users can unmount pam_mounted volumes

@@ -1,3 +1,9 @@
+18 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Wildcard volume definitions are now ignored when root logs in.
+
+	* Fixed off-by-one bug in new session counting code.
+
 17 November 2002 W. Michael Petullo <mike@flyn.org>
 
 	* pam_mount now tracks multiple logins, only unmounting anything

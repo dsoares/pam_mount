@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <config.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -20,6 +21,34 @@
 int debug;
 config_t config;
 
+/* ============================ number_safe () ============================= */
+int number_safe(char *n)
+/* PRE:    n points to a valid string != NULL
+ * FN VAL: if error 0 else 1, errors are logged 
+ * NOTE:   this is needed because users own /var/run/pam_mount/<user> and
+ *         they could try something sneaky */
+{
+    char *ptr = n;
+    if (!*n || *n == '\n') {
+	log("pam_mount: %s\n", "count string has no length");
+	return 0;
+    }
+    do {
+        /* "123\n" okay, "1a23" bad, "1\n23" bad, "123" okay */
+	if (!(isdigit(*ptr))) {
+	    log("pam_mount: %s\n", "count contains non-digits");
+	    return 0;
+	}
+	ptr++;
+    }
+    while (!(*ptr == '\n' && !*(ptr + 1)) && *ptr);
+    if (strlen(n) > (sizeof(int) * 8)) {
+	log("pam_mount: %s\n", "count string too long (number too big)");
+	return 0;
+    }
+    return 1;
+}
+
 /* ============================ modify_pm_count () ========================= */
 /* PRE:    user points to a valid string != NULL
  * POST:   amount is added to /var/run/pam_mount/<user>'s value; if value == 0,
@@ -37,44 +66,69 @@ int modify_pm_count(const char *user, int amount)
     struct passwd *passwd_ent;
     if (!(passwd_ent = getpwnam(user))) {
 	w4rn("pam_mount: could not resolve uid for %s\n", user);
-	return -1;
+	err = -1;
+	goto return_error;
     }
     if (stat("/var/run/pam_mount", &st) == -1) {
 	w4rn("pam_mount: %s\n", "creating /var/run/pam_mount");
 	if (mkdir("/var/run/pam_mount", 0000) == -1) {
 	    w4rn("pam_mount: %s\n",
 		 "unable to create /var/run/pam_mount\n");
-	    return -1;
+	    err = -1;
+	    goto return_error;
 	}
 	if (chown("/var/run/pam_mount", 0, 0) == -1) {
 	    w4rn("pam_mount: unable to chown %s\n", "/var/run/pam_mount");
-	    return -1;
+	    err = -1;
+	    goto return_error;
 	}
 	/* 0755: su creates file group owned by user and the releases 
 	 * root perms.  User needs to be able to access file on logout. */
 	/* FIXME: user can modify /var/.../<user> at will; security problem? */
 	if (chmod("/var/run/pam_mount", 0755) == -1) {
 	    w4rn("pam_mount: unable to chmod %s\n", "/var/run/pam_mount");
-	    return -1;
+	    err = -1;
+	    goto return_error;
 	}
     }
     snprintf(filename, PATH_MAX + 1, "/var/run/pam_mount/%s", user);
   top:
     tries++;
-    if (stat(filename, &st)) {
-	fd = open(filename, O_RDWR | O_CREAT, 0000);
+    if (stat(filename, &st) == -1) {
+	if ((fd = open(filename, O_RDWR | O_CREAT, 0000)) == -1) {
+	    w4rn("pam_mount: unable to open %s\n", filename);
+	    err = -1;
+	    goto return_error;
+	}
 	/* su creates file group owned by user and the releases 
 	 * root perms.  User needs to be able to access file on logout. */
 	if (fchown(fd, passwd_ent->pw_uid, passwd_ent->pw_uid) == -1) {
 	    w4rn("pam_mount: unable to chown %s\n", filename);
-	    return -1;
+	    err = -1;
+	    goto return_error;
 	}
 	if (fchmod(fd, 0600) == -1) {
 	    w4rn("pam_mount: unable to chmod %s\n", filename);
-	    return -1;
+	    err = -1;
+	    goto return_error;
+	}
+	if (write(fd, "0", 1) == -1) {
+	    w4rn("pam_mount: write error on %s\n", filename);
+	    err = -1;
+	    goto return_error;
+	}
+	if (lseek(fd, SEEK_SET, 0) == -1) {
+	    w4rn("pam_mount: seek error in %s\n", filename);
+	    err = -1;
+	    goto return_error;
 	}
     } else
 	fd = open(filename, O_RDWR);
+    if (stat(filename, &st) == -1) {
+	w4rn("pam_mount: unable to stat %s\n", filename);
+	err = -1;
+	goto return_error;
+    }
     if (fd < 0) {
 	w4rn("pam_mount: could not open count file %s\n", filename);
 	perror("foo");
@@ -123,7 +177,11 @@ int modify_pm_count(const char *user, int amount)
 	}
     }
 
-    buf = malloc(st.st_size + 2);	/* size will never grow by more than one */
+    if (!(buf = malloc(st.st_size + 2))) {	/* size will never grow by more than one */
+	w4rn("pam_mount: %s\n", "malloc failed");
+	err = -1;
+	goto return_error;
+    }
     if (st.st_size) {
 	if (read(fd, buf, st.st_size) == -1) {
 	    w4rn("pam_mount: read error on %s\n", filename);
@@ -136,6 +194,11 @@ int modify_pm_count(const char *user, int amount)
 	    goto return_error;
 	}
 	buf[st.st_size] = '\0';
+	if (!number_safe(buf)) {
+	    log("pam_mount: %s\n", "session count is corrupt");
+	    err = -1;
+	    goto return_error;
+	}
 	val = atoi(buf);
     } else {
 	val = 0;
