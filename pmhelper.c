@@ -1,15 +1,14 @@
-/* This program is intended to be run as suid root */
-
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+#include <pwd.h>
 #include "pam_mount.h"
 
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 struct pm_data data;
 void sigchld(int arg);
@@ -86,7 +85,10 @@ int main(int argc, char **argv)
 		w4rn("asprintf %s\n", *(parg-1));
 		*(parg++) = data.mountpoint;
 		*(parg++) = "-o";
-		asprintf(parg++, "username=%s%%%s", data.user, data.password);
+		asprintf(parg++, "username=%s%%%s%s%s",
+			 data.user, data.password, 
+			 data.options[0] ? "," : "",
+			 data.options);
 	} else {
 		w4rn("%s", "oops... data.type is unkonwn !!");
 		return 0;
@@ -116,6 +118,9 @@ int main(int argc, char **argv)
 
 	/* Clean password so virtual memory does not retain it */
 	bzero(&(data.password), sizeof(data.password));
+
+	w4rn ("%s", "Waiting for homedir mount\n");
+	waitpid (child, NULL, 0);
 
 	/* Unmounting is PAM module responsability */
 	return 0;

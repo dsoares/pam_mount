@@ -3,3 +3,12 @@
 2000-xx-xx	0.1	Several modifications in /etc/pam_mount.conf format
 
 2000-11-14	0.2	pmhelper no longer stays in memory during the user session
+
+2000-11-15      0.3pre  applied patch that enables template volumes (see CREDITS)
+
+2000-11-29      0.3.1.  applied patch that waits mount to be completed if the 
+			mount point happens to be the user's home dir (see CREDITS)
+
+2001-12-17	0.2.3   Removed broken test in pmhelper.c to see if monting
+			directory is $HOME - now it will always wait for mount()
+			to complete. If this poses problems, please notify.

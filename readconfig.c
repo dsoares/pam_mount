@@ -9,8 +9,10 @@ extern int debug;
 const char *delim = "\t\n ";
 
 void readvolume(const char *user, const char *password, int *volcount, 
-		pm_data **data, char *command[], char *argument);
+		pm_data **data, char *command[], char *argument,
+		int luserconf);
 void readcommand(char *command[], char *argument, int v);
+char *expand_wildcard(const char *value, const char *user);
 
 int readconfig(const char *user, const char *password, char *command[], 
 	       int *volcount, pm_data **data)
@@ -93,7 +95,7 @@ int readconfig(const char *user, const char *password, char *command[],
 
 		if (strcmp(parameter, "volume") == 0) {
 			readvolume(user, password, volcount, data, command,
-			           argument);
+			           argument, 0);
 			continue;
 		}
 	}
@@ -124,7 +126,7 @@ int readconfig(const char *user, const char *password, char *command[],
 
 		if (strcmp(parameter, "volume") == 0) {
 			readvolume(user, password, volcount, data, command,
-			           argument);
+			           argument, 1);
 			continue;
 		}
 	}
@@ -135,7 +137,8 @@ int readconfig(const char *user, const char *password, char *command[],
 
 
 void readvolume(const char *user, const char *password, int *volcount, 
-		pm_data **data, char *command[], char *argument)
+		pm_data **data, char *command[], char *argument,
+		int luserconf)
 {
 	char *type;
 	int ntype;
@@ -143,12 +146,17 @@ void readvolume(const char *user, const char *password, int *volcount,
 	char *server;
 	char *volume;
 	char *mountpoint;
+	char *options;
+	char *automount = NULL;
+	char *autovolume = NULL;
+	char *autooptions = NULL;
 
 	fuser = argument;
 	type = strtok(NULL, "\t\n ");
 	server = strtok(NULL, "\t\n ");
 	volume = strtok(NULL, "\t\n ");
 	mountpoint = strtok(NULL, "\t\n ");
+	options = strtok(NULL, "\t\n ");
 
 	w4rn("Fuser: %s", fuser);
 	w4rn("User: %s", user);
@@ -156,13 +164,40 @@ void readvolume(const char *user, const char *password, int *volcount,
 	w4rn("Server: %s", server);
 	w4rn("Volume: %s", volume);
 	w4rn("Mountpoint: %s", mountpoint);
+	w4rn("Options: %s", options);
 
-	if (strcmp(fuser, user) != 0) {
+	if (strcmp(fuser, "*") == 0) {
+		if (luserconf) {
+			/* local user config file cannot have wildcards */
+			return;
+		}
+		autovolume = expand_wildcard (volume, user);
+		if (autovolume) {
+			volume = autovolume;
+			w4rn("Volume: %s", autovolume);
+		}
+		automount = expand_wildcard (mountpoint, user);
+		if (automount) {
+			mountpoint = automount;
+			w4rn("Automount: %s", automount);
+		}
+		autooptions = expand_wildcard (options, user);
+		if (autooptions) {
+			options = autooptions;
+			w4rn("Autooptions: %s", autooptions);
+		}
+	} else if (strcmp(fuser, user) != 0) {
 		w4rn("%s", "Not me");
 		return;
 	}
 
-	if (!fuser || !server || !volume || !mountpoint || ! type) {
+	if (! options) {
+		options = "";
+	} else if (strcmp(options, "-") == 0) {
+		options = "";
+	}
+
+	if (!fuser || !server || !volume || !mountpoint || !type) {
 		w4rn("%s", "Missing parameters");
 		return;
 	}
@@ -174,6 +209,11 @@ void readvolume(const char *user, const char *password, int *volcount,
 
 	if (strlen(volume) > MAX_PAR) {
 		w4rn("%s", "Volume parameter too long");
+		return;
+	}
+
+	if (strlen(options) > MAX_PAR) {
+		w4rn("%s", "Options parameter too long");
 		return;
 	}
 
@@ -193,7 +233,12 @@ void readvolume(const char *user, const char *password, int *volcount,
 		return;
 	}
 
-	if (! owns(user, mountpoint)) {
+	if (exists(mountpoint) != 1) {
+		w4rn("%s", "Mountpoint does not exist");
+		return;
+	}
+
+	if (! automount && ! owns(user, mountpoint)) {
 		w4rn("%s", "User does not own the mountpoint");
 		return;
 	}
@@ -219,6 +264,7 @@ void readvolume(const char *user, const char *password, int *volcount,
 	strcpy((*data)[*volcount].server, server);
 	strcpy((*data)[*volcount].volume, volume);
 	strcpy((*data)[*volcount].mountpoint, mountpoint);
+	strcpy((*data)[*volcount].options, options);
 	(*data)[*volcount].debug = debug;
 	strcpy((*data)[*volcount].command, command[ntype]);
 	strcpy((*data)[*volcount].ucommand, command[UMOUNT]);
@@ -227,6 +273,13 @@ void readvolume(const char *user, const char *password, int *volcount,
 	w4rn("%s", "Added one\n");
 
 	(*volcount)++;
+
+	if (autovolume) {
+		free(autovolume);
+	}
+	if (automount) {
+		free(automount);
+	}
 }
 
 void readcommand(char *command[], char *argument, int v)
@@ -246,4 +299,35 @@ void readcommand(char *command[], char *argument, int v)
 
 	command[v][FILENAME_MAX] = '\0';
 	w4rn("Complete command is %s.", command[v]);
+}
+
+/* Replaces first occurence of & with user.  Returns NULL if no work
+   was necessary, or a new copy otherwise. */
+
+char *expand_wildcard(const char *value, const char *user)
+{
+	char *result = NULL;
+	char *pos;
+
+	w4rn ("expand_wildcard for %s", value);
+
+	if (value == NULL) {
+		return NULL;
+	}
+	pos = strchr (value, '&');
+	if (pos) {
+		char *next;
+
+		result = malloc (strlen (value) + strlen (user));
+		strcpy (result, value);
+		strcpy (result + (pos - value), user);
+		strcat (result, pos + 1);
+		next = expand_wildcard (result, user);
+		if (next) {
+			free (result);
+			result = next;
+		}
+	}
+
+	return (result);
 }

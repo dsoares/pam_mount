@@ -1,4 +1,4 @@
-BUGS for pam_mount 0.2
+BUGS for pam_mount >= 0.2
 
 You must include two entries in the /etc/pam.d/login config file, as the
 following example shows:

@@ -1,3 +1,15 @@
 This program is Copyright (C) 2000 Conectiva SA
                                    Elvis Pfützenreuter <epx@conectiva.com>
 
+2000/11/15: Kjetil Torgrim Homme <kjetilho@ifi.uio.no> sent a patch to 
+            allow "template" or "wildcard" volumes. This bumped the version
+            from 0.2 to 0.3.
+
+2000/11/28: Kjetil Torgrim Homme <kjetilho@ifi.uio.no> sent another patch
+	    so module waits for mount(8) to exit if the mount point happens
+	    to be the user's $HOME
+
+2001/12/17: Daniel Fairs <d.fairs@cogtest.com> tested a possible solution
+	    for the no-wait-for-mount situation. There is anothed
+	    seemingly French guy that actually pointed the problem and
+	    suggested a solution, I need to find his name to print it here.

@@ -21,6 +21,23 @@ void w4rn(const char *mask, const char *arg)
 	}
 }
 
+/* WARNING: exists() return a 3-state result */
+
+int exists(const char *file)
+{
+	struct stat filestat;
+
+	if (stat(file, &filestat)) {
+		w4rn("File %s could not be stat'ed", file);
+		return 0;	
+	}
+	if (S_ISLNK(filestat.st_mode)) {
+		w4rn("File %s is a symlink, strange...", file);
+		return -1;
+	}
+	return 1;
+}
+
 int owns(const char *user, const char *file)
 {
 	struct stat filestat;

@@ -22,6 +22,7 @@ typedef struct pm_data {
 	char user[MAX_PAR+1];
 	char password[MAX_PAR+1];
 	char volume[MAX_PAR+1];
+	char options[MAX_PAR+1];
 	char mountpoint[FILENAME_MAX+1];
 	char command[FILENAME_MAX+1];
 	char ucommand[FILENAME_MAX+1];
@@ -29,6 +30,9 @@ typedef struct pm_data {
 
 int readconfig(const char *user, const char *password, 
 	       char *command[], int* volcount, pm_data **data);
+
+/* WARNING: exists is 3-state */
+int exists(const char *file);
 
 int owns(const char *user, const char *file);
 
