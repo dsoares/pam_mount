@@ -62,7 +62,7 @@ extern "C" {
 
 /* ============================ fmt_ptrn_parse_err () ====================== */
 /* Returns true if a parse error has occured while processing. */
-    int fmt_ptrn_parse_err(const fmt_ptrn_t *x);
+    gboolean fmt_ptrn_parse_err(const fmt_ptrn_t *x);
 
 /* ============================ fmt_ptrn_parse_strerror () ================= */
 /* Dequeues and returns a parse error. */
@@ -79,6 +79,9 @@ extern "C" {
 /* ============================ fmt_ptrn_strerror () ======================= */
 /* Returns the last non-parse error. */
     const char *fmt_ptrn_strerror(const fmt_ptrn_t *x);
+
+/* ============================ fmt_ptrn_t_valid () ======================== */
+    gboolean fmt_ptrn_t_valid(const fmt_ptrn_t *x);
 
 #ifdef __cplusplus
 }

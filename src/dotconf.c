@@ -796,7 +796,6 @@ void dotconf_cleanup(configfile_t * configfile)
 {
 	if (configfile->stream)
 		fclose(configfile->stream);
-
 	if (configfile->filename)
 		free(configfile->filename);
 
@@ -856,7 +855,6 @@ int dotconf_handle_wild_card(command_t * cmd, char wild_card, char *path,
 /* ------ internal utility function that frees allocated memory from dotcont_find_wild_card -- */
 void dotconf_wild_card_cleanup(char *path, char *pre)
 {
-
 	if (path != NULL) {
 		free(path);
 	}
@@ -864,7 +862,6 @@ void dotconf_wild_card_cleanup(char *path, char *pre)
 	if (pre != NULL) {
 		free(pre);
 	}
-
 }
 
 /* ------ internal utility function to check for wild cards in file path -- */

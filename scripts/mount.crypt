@@ -1,0 +1,155 @@
+#!/bin/bash
+
+#   FILE: mount.crypt -- mount a dm-crypt encrypted volume
+# AUTHOR: W. Michael Petullo <mike@flyn.org>
+#   DATE: 18 April 2004
+# 
+# Copyright (C) 2004 W. Michael Petullo <mike@flyn.org>
+# All rights reserved.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+LOSETUP=/sbin/losetup
+
+OPTIONS=""
+
+USAGE="[-o options] dev dir
+
+  -o path  set the mount options  [ $OUT ]"
+
+_losetup() {
+	DEVICE=$1
+	LOOPDEV=0
+	while [ $LOOPDEV -le 15 ]; do
+		if $LOSETUP /dev/loop${LOOPDEV} $DEVICE 2> /dev/null; then
+			echo /dev/loop${LOOPDEV}
+			return 0
+		fi
+		LOOPDEV=$(($LOOPDEV + 1))
+	done
+	echo "${0##*/}: error setting up loop device for $DEVICE" >&2
+	exit 1
+}
+
+while :;
+	do case "$1" in
+		-h | "-?" )	
+			echo -e usage: ${0##*/} "$USAGE" >&2
+			exit 1 ;;
+		-o )
+			OPTIONS=$2
+			shift ;;
+		-?* )
+			echo "${0##*/}: unrecognised option: $1" >&2
+			exit 1 ;;
+		* )
+			break ;;
+	esac
+	shift
+done
+
+if [ -z $1 ]; then
+	echo "${0##*/}: device to mount not specified" >&2
+fi
+
+if [ ! -f $1 ] && [ ! -b $1 ]; then
+        echo "${0##*/}: $1 is not a block device or file" >&2
+	exit 1
+fi
+
+if [ ! -d $2 ]; then
+        echo "${0##*/}: $2 is not a directory" >&2
+	exit 1
+fi
+
+CIPHER=""
+HASH=""
+LOOP=false
+MOUNTOPTIONS=""
+IFS=","
+for opt in $OPTIONS; do
+	KEY=`echo $opt | awk -F = '{ print $1 }'`
+	VAL=`echo $opt | awk -F = '{ print $2 }'`
+	case $KEY in
+		# FIXME: use cipher instead of encryption to avoid conflicting
+		# with mount's built-in (cryptoloop) encryption argument.
+		cipher )
+			CIPHER="$VAL"
+			;;
+		hash )
+			HASH="$VAL"
+			;;
+		loop )
+			LOOP=true
+			;;
+		* )
+			if [ -z "$MOUNTOPTIONS" ]; then
+				MOUNTOPTIONS="$opt"
+			else
+				IFS=""
+				MOUNTOPTIONS="$MOUNTOPTIONS,$opt"
+			fi
+			;;
+	esac
+done
+
+# FIXME: blind replacement of / with _ may be a bad idea.
+if [ x"${LOOP}" = xtrue ]; then
+	DEVICE=`_losetup $1`
+	DMDEVICE=`echo $DEVICE | sed 's/\//_/g'`
+else
+	DEVICE=$1
+	DMDEVICE=`echo $DEVICE | sed 's/\//_/g'`
+fi
+
+CIPHEROPT=""
+if [ ! -z "$CIPHER" ]; then
+	CIPHEROPT="-c $CIPHER"
+fi
+
+HASHOPT=""
+if [ ! -z "$HASH" ]; then
+	HASHOPT="-h $HASH"
+fi
+
+cryptsetup $CIPHEROPT $HASHOPT create $DMDEVICE $DEVICE
+if [ $? != 0 ]; then
+	echo "${0##*/}: error creating $DMDEVICE" >&2
+	[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
+	exit 1
+fi
+
+if [ ! -z "$MOUNTOPTIONS" ]; then
+	OPTIONSOPT="-o $MOUNTOPTIONS"
+fi
+
+if [ -z "$MOUNTOPTIONS" ]; then
+	# $2 might not exist as mount can try to read it from /etc/fstab
+	mount /dev/mapper/$DMDEVICE $2
+	if [ $? != 0 ]; then
+		echo "${0##*/}: error mounting $DMDEVICE" >&2
+		cryptsetup remove $DMDEVICE
+		[ x"$LOOP" = xtrue ] && $LOSETUP-d $DEVICE
+		exit 1
+	fi
+else
+	mount -o $MOUNTOPTIONS /dev/mapper/$DMDEVICE $2
+	if [ $? != 0 ]; then
+		echo "${0##*/}: error mounting $DMDEVICE" >&2
+		cryptsetup remove $DMDEVICE
+		[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
+		exit 1
+	fi
+fi

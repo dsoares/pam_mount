@@ -39,14 +39,17 @@ typedef struct buffer_t {
 /* ============================ buffer_init () ============================= */
 buffer_t buffer_init(void);
 
-/* ============================ _buffer_destroy () ========================= */
+/* ============================ buffer_clear () ============================ */
+void buffer_clear(buffer_t *buf);
+
+/* ============================ buffer_destroy () ========================== */
 void buffer_destroy(buffer_t b);
 
 /* ============================ buffer_eat () ============================== */
 void buffer_eat(buffer_t buf, size_t n);
 
 /* ============================ buffer_len () ============================== */
-size_t buffer_len(buffer_t buf);
+size_t buffer_len(buffer_t *buf);
 
 /* ============================ realloc_n_cat () =========================== */
 void realloc_n_cat(buffer_t * dest, const char *src);
@@ -57,5 +60,8 @@ void realloc_n_cpy(buffer_t * dest, const char *src);
 /* ============================ realloc_n_ncat () ========================= */
 void realloc_n_ncat(buffer_t * dest, const char *src,
 			    const size_t nc);
+
+/* ============================ buffer_t_valid () ========================= */
+gboolean buffer_t_valid(const buffer_t *b);
 
 #endif /* _BUFFER_H */

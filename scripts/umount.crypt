@@ -1,0 +1,62 @@
+#!/bin/bash
+
+#   FILE: umount.crypt -- unmount a dm-crypt encrypted volume
+# AUTHOR: W. Michael Petullo <mike@flyn.org>
+#   DATE: 18 April 2004
+# 
+# Copyright (C) 2004 W. Michael Petullo <mike@flyn.org>
+# All rights reserved.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+LOSETUP=/sbin/losetup
+
+OPTIONS=""
+
+USAGE="dir"
+
+if [ -z $1 ]; then
+	echo "${0##*/}: directory to unmount not specified" >&2
+fi
+
+if [ ! -d $1 ]; then
+        echo "${0##*/}: $1 is not a directory" >&2
+	exit 1
+fi
+
+DMDEVICE=`mount | grep $1 | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`
+
+# FIXME: blind replacement of _ with / is a bad idea; can't have _ in real path
+REALDEVICE=`echo $DMDEVICE | sed 's/_/\//g'`
+
+umount $1
+if [ $? != 0 ]; then
+	echo "${0##*/}: error umounting $1" >&2
+	exit 1
+fi
+
+cryptsetup remove $DMDEVICE
+if [ $? != 0 ]; then
+	echo "${0##*/}: error removing $DMDEVICE" >&2
+	exit 1
+fi
+
+if echo $REALDEVICE | grep ^/dev/loop > /dev/null; then
+	$LOSETUP -d $REALDEVICE
+	if [ $? != 0 ]; then
+		echo "${0##*/}: error removing $REALDEVICE" >&2
+		exit 1
+	fi
+fi

@@ -1,5 +1,16 @@
 =======================================================================
 
+Q.  I want to ask for help.  What information should I provide?
+
+A.  You need to provide us the following:
+
+o Your complete pam_mount.conf.
+o A full log of a failed session with debugging on in pam_mount.conf.
+o The version of pam_mount that you are using.
+o /etc/pam.d/* as relevant.
+
+=======================================================================
+
 Q.  Is there a pam_mount mailing list?  CVS?
 
 A.  Yes.  See http://savannah.gnu.org/projects/pam-mount/.
@@ -84,17 +95,17 @@ smbmount /bin/mount -t smbfs_no_nptl
 
 Q.  Why does pam_mount not work right with OpenSSH?
 
-A.  As of version 3.3, sshd has a feature called privelege seperation
+A.  As of version 3.3, sshd has a feature called privilege separation
 that is incompatible with PAM modules needing root privileges.
 In addition, OpenSSH does not use PAM by default.  Read the OpenSSH
-documentation on privilege seperation because messing with it may have
+documentation on privilege separation because messing with it may have
 security implications.
 
 In order to cause sshd to use PAM, add the following to sshd_config:
 
 PAMAuthenticationViaKbdInt yes
 
-If you wish to use sshd with pam_mount either turn of privelege seperation
+If you wish to use sshd with pam_mount either turn of privelege separation
 in /etc/ssh/sshd_config (UsePrivilegeSeparation no) or ensure that
 pam_mount can operate without root privileges.  Specifying volumes using
 /etc/fstab and allowing users to mount and unmount them using the user
@@ -146,3 +157,39 @@ why pam_mount must be used as an auth module (in addition to a session
 module) on all systems.
 
 =======================================================================
+
+Q.  I want to use an NCP share as my home directory by X does not seem
+to like this.  Why?
+
+A.  The X authentication utility xauth uses file system facilities not
+supported by the Linux ncpfs driver.  In order to work around this, try
+adding something like the following to your shell's configuration file:
+
+export XAUTHORITY=/tmp/.Xauthority
+export ICEAUTHORITY=/tmp/.ICEauthority
+
+If you use gdm then you may want to modify gdm.conf's UserAuthDir instead
+of setting XAUTHORITY.
+
+If you also wish to allow OpenSSH to tunnel X out of the same computer,
+then ensure /etc/ssh/sshd_config is configured with PermitUserEnvironment
+enabled and add the following to ~/.ssh/environment:
+
+XAUTHORITY=/tmp/.Xauthority
+
+=======================================================================
+
+Q.  Can I use pam_mount on an SELinux-enabled system?
+
+A.  I would not recommend it right now on a production system.  However,
+until pam_mount nicely integrates, you can take a look at the included
+pam_mount_macros.te.
+
+Any filesystem that is mounted on $HOME must have the context of its
+root directory set to user_home_dir_t.
+
+If you wish to mount user-owned loopback filesystem images then these
+images must have their file context set to user_home_t.
+
+Because it changes the context of processes like login and su, pam_selinux
+must be invoked after pam_mount.

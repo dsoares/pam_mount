@@ -2,15 +2,15 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.16
+Version: 0.9.18
 Release: %rel
 License: LGPL
 Group: System Environment/Base
 Source: http://www.flyn.org/projects/%name/%name-%{PACKAGE_VERSION}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: http://www.flyn.org
-Requires: pam
-BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel
+Requires: policy-sources pam
+BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel policy policy-sources checkpolicy policycoreutils
 
 %description
 This module is aimed at environments with SMB (Samba or Windows NT) 
@@ -61,8 +61,11 @@ make %{?_smp_mflags}
 %install
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
-mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
+mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/macros
+mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/file_contexts/misc
 install --owner=root --group=root --mode=0644 config/pam_mount.conf ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
+install --owner=root --group=root --mode=0644 config/pam_mount_macros.te ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/macros
+install --owner=root --group=root --mode=0644 config/pam_mount.fc ${RPM_BUILD_ROOT}/%{_sysconfdir}/security/selinux/src/policy/file_contexts/misc
 rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.a
 rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.la
 
@@ -76,18 +79,35 @@ rm -rf $RPM_BUILD_ROOT
 /%{_lib}/security/pam_mount.so
 /%{_lib}/security/pam_mount_auth.so
 /%{_lib}/security/pam_mount_session.so
+%{_sbindir}/pmvarrun
 %{_bindir}/mkehd
 %{_bindir}/autoehd
 %{_bindir}/passwdehd
 %{_bindir}/mount_ehd
+%{_bindir}/mount.crypt
+%{_bindir}/umount.crypt
 %{_mandir}/man8/*
 %config(noreplace) %{_sysconfdir}/security/pam_mount.conf
+%policy %{_sysconfdir}/security/selinux/src/policy/macros/pam_mount_macros.te
+%policy %{_sysconfdir}/security/selinux/src/policy/file_contexts/misc/pam_mount.fc
 
 
 %doc	AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ
 
 
 %changelog
+* Sun Apr 25 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.18-0.fdr.1
+   - Updated to pam_mount 0.9.18.
+
+   - Added mount.crypt and umount/crypt.
+
+   - Added pmvarrun.
+
+* Wed Apr 21 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.17-0.fdr.1
+   - Updated to pam_mount 0.9.17.
+
+   - Added pam_mount_macros.te.
+
 * Tue Mar 23 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.16-0.fdr.1
    - Updated to pam_mount 0.9.16.
 

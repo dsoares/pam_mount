@@ -35,6 +35,9 @@ extern char **environ;
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* ============================ homedir () ================================== */
+	char *homedir(char *homedir);
+
 /* ============================ print_dir () ================================ */
     void print_dir(DIR * dp);
 

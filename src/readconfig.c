@@ -21,6 +21,7 @@
  */
 
 #include <config.h>
+#include <assert.h>
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
@@ -44,30 +45,32 @@ typedef enum fstab_field_t {
 } fstab_field_t;
 
 extern config_t config;
-extern debug;
+extern gboolean debug;
 
-pm_command_t command[] = {
-	{SMBMOUNT, "smb", "smbmount"},
-	{SMBMOUNT, "smbfs", "smbmount"},
-	{CIFSMOUNT, "cifs", "cifsmount"},
-	{NCPMOUNT, "ncp", "ncpmount"},
-	{NCPMOUNT, "ncpfs", "ncpmount"},
-	{NFSMOUNT, "nfs", "nfsmount"},	/* Don't use LCLMOUNT to avoid fsck */
-	{LCLMOUNT, "local", "lclmount"},
-/* FIXME: PMHELPER no longer needed */
-	{PMHELPER, NULL, "pmhelper"},
-	{UMOUNT, NULL, "umount"},
-	{LSOF, NULL, "lsof"},
-	{MNTAGAIN, NULL, "mntagain"},
+/* defaults are included here but these are overridden by pam_mount.conf */
+static pm_command_t command[] = {
+	{SMBMOUNT, "smb", "smbmount", {"/bin/mount", "-t", "smbfs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
+	{SMBMOUNT, "smbfs", "smbmount", {"/bin/mount", "-t", "smbfs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
+	{CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
+	{NCPMOUNT, "ncp", "ncpmount", {"/bin/mount", "-t", "ncpfs", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+	{NCPMOUNT, "ncpfs", "ncpmount", {"/bin/mount", "-t", "ncpfs", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+	{NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o \" OPTIONS)", NULL}},	/* Don't use LCLMOUNT to avoid fsck */
+	{LCLMOUNT, "local", "lclmount", {"/bin/mount", "-p0", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o \" OPTIONS)", NULL}},
+	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
+	{CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{UMOUNT, NULL, "umount", {"/bin/umount", "%(MNTPT)", NULL}},
+	{LSOF, NULL, "lsof", {"/usr/sbin/lsof", "%(MNTPT)", NULL}},
+	{MNTAGAIN, NULL, "mntagain", {"/bin/mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
 	/*
 	 * Leave mntcheck available on GNU/Linux so I can ship one config file
 	 * example
 	 */
-	{MNTCHECK, NULL, "mntcheck"},
-	{FSCK, NULL, "fsck"},
-	{LOSETUP, NULL, "losetup"},
-	{UNLOSETUP, NULL, "unlosetup"},
-	{-1, NULL, NULL}
+	{MNTCHECK, NULL, "mntcheck", {"/bin/mount", NULL}},
+	{FSCK, NULL, "fsck", {"/sbin/fsck", "-p", "%(FSCKLOOP)", NULL}},
+	{LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e \" CIPHER)", "%(before=\"-k \" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
+	{UNLOSETUP, NULL, "unlosetup", {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
+	{PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
+	{-1, NULL, NULL, NULL}
 };
 
 static DOTCONF_CB(read_int_param);
@@ -86,13 +89,13 @@ static const configoption_t legal_config[] = {
 	 CTX_ALL},
 	{"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
 	{"fsckloop", ARG_STR, read_fsckloop, &config, CTX_ALL},
-/* FIXME: PMHELPER no longer needed */
-	{"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
 	{"smbmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"cifsmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"ncpmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"umount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"lclmount", ARG_LIST, read_command, &config, CTX_ALL},
+	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
+	{"cryptmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"nfsmount", ARG_LIST, read_command, &config, CTX_ALL},
 	{"lsof", ARG_LIST, read_command, &config, CTX_ALL},
 	{"mntagain", ARG_LIST, read_command, &config, CTX_ALL},
@@ -100,6 +103,7 @@ static const configoption_t legal_config[] = {
 	{"fsck", ARG_LIST, read_command, &config, CTX_ALL},
 	{"losetup", ARG_LIST, read_command, &config, CTX_ALL},
 	{"unlosetup", ARG_LIST, read_command, &config, CTX_ALL},
+	{"pmvarrun", ARG_LIST, read_command, &config, CTX_ALL},
 	{"options_require", ARG_STR, read_options_require, &config,
 	 CTX_ALL},
 	{"options_allow", ARG_STR, read_options_allow, &config, CTX_ALL},
@@ -130,6 +134,11 @@ static FUNC_ERRORHANDLER(log_error)
 /* NOTE: callback function for reading required options */
 static DOTCONF_CB(read_options_require)
 {
+	assert(cmd != NULL);
+	assert(cmd->data.str != NULL);
+	assert(cmd->option != NULL);
+	assert(cmd->option->info != NULL);
+
 	if (!*((int *) cmd->context))
 		return "tried to set options_require from user config";
 	w4rn("pam_mount: %s\n", "reading options_require...");
@@ -143,6 +152,11 @@ static DOTCONF_CB(read_options_require)
 /* NOTE: callback function for reading required options */
 static DOTCONF_CB(read_options_allow)
 {
+	assert(cmd != NULL);
+	assert(cmd->data.str != NULL);
+	assert(cmd->option != NULL);
+	assert(cmd->option->info != NULL);
+
 	if (!*((int *) cmd->context))
 		return "tried to set options_allow from user config";
 	w4rn("pam_mount: %s\n", "reading options_allow...");
@@ -156,6 +170,11 @@ static DOTCONF_CB(read_options_allow)
 /* NOTE: callback function for reading required options */
 static DOTCONF_CB(read_options_deny)
 {
+	assert(cmd != NULL);
+	assert(cmd->data.str != NULL);
+	assert(cmd->option != NULL);
+	assert(cmd->option->info != NULL);
+
 	if (!*((int *) cmd->context))
 		return "tried to set options_deny from user config";
 	w4rn("pam_mount: %s\n", "reading options_deny...");
@@ -166,15 +185,23 @@ static DOTCONF_CB(read_options_deny)
 }
 
 /* ============================ get_command_index () ======================= */
-/* PRE:    command is assigned an initialized pm_command_t array
- *         name points to a valid string != NULL
- * FN VAL: if name in command then cooresponding type, else -1 */
+/* INPUT:  command, a pm_command_t array full of commands
+ *         name, the name of the command that is being looked for
+ * OUTPUT: the index into the pm_command_t cooresponding to name
+ */
 static command_type_t
 get_command_index(const pm_command_t command[], const char *name)
 {
 	int i;
+
+	/* FIXME: need to assert(command[i])? */
+	for (i = 0; command[i].type != -1; i++) {
+		assert(command[i].command_name != NULL);
+	}
+	assert(name);
+
 	for (i = 0; command[i].type != -1; i++)
-		if (!strcmp(command[i].command_name, name))
+		if (strcmp(command[i].command_name, name) == 0)
 			return command[i].type;
 	return -1;
 }
@@ -190,6 +217,20 @@ static DOTCONF_CB(read_command)
 #define COMMAND(n) ((config_t *) cmd->option->info)->command[(n)][command_index]
 	int i;
 	command_type_t command_index;
+
+	assert(cmd);
+	assert(cmd->name);
+	assert(cmd->context);
+	assert(cmd->data.list);
+	assert(cmd->option);
+	assert(cmd->option->info);
+	assert(((config_t *) cmd->option->info)->command);
+	for (i = 0; i < cmd->arg_count; i++) {
+		/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
+		assert(cmd->data.list[i]);
+	}
+	/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
+
 	if (!*((int *) cmd->context))
 		return "tried to set command from user config";
 	if ((command_index = get_command_index(command, cmd->name)) == -1)
@@ -211,24 +252,28 @@ static DOTCONF_CB(read_command)
 }
 
 /* ============================ _option_in_list () ========================= */
-/* PRE:    haystack points to a valid optlist_t
- *         needle points to a valid optlist_element_t
- * FN VAL: 1 if haystak[needle] exists, else 0
+/* INPUT:  haystack, an optlist_t to search
+ *         needle, a key to look for
+ * OUTPUT: 1 if haystack[needle] exists, else 0
  */
 static int _option_in_list(optlist_t * haystack, const char *needle)
 {
+	assert(needle);
+
 	/* FIXME: this fn. is not needed, just call the following directly: */
 	return optlist_exists(haystack, needle);
 }
 
 /* ============================ options_allow_ok () ======================== */
-/* PRE:    allowed points to a valid optlist of allowed options
- *         options points to a valid optlist representing a list of options 
- *         requested
- * FN VAL: if options acceptable by allowed 1 else 0 with error logged */
+/* INPUT:  allowed, an optlist of allowed options
+ *         options, a list of options
+ * OUTPUT: if options acceptable 1 else 0
+ * SIDE AFFECTS: error logged 
+ */
 static options_allow_ok(optlist_t * allowed, optlist_t * options)
 {
 	optlist_t *e;
+
 	if (optlist_exists(allowed, "*") || !optlist_len(options))
 		return 1;
 	for (e = options; e; e = optlist_next(e))
@@ -241,10 +286,11 @@ static options_allow_ok(optlist_t * allowed, optlist_t * options)
 }
 
 /* ============================ options_required_ok () ===================== */
-/* PRE:    required points to a valid optlist of required options
- *         options points to a valid optlist representing a list of options 
- *         requested
- * FN VAL: if options acceptable by required 1 else 0 with error logged */
+/* INPUT:  required, an optlist of required options
+ *         options, a list of options
+ * OUTPUT: if options acceptable 1 else 0
+ * SIDE AFFECTS: error logged
+ */
 static options_required_ok(optlist_t * required, optlist_t * options)
 {
 	optlist_t *e;
@@ -258,10 +304,11 @@ static options_required_ok(optlist_t * required, optlist_t * options)
 }
 
 /* ============================ options_deny_ok () ========================= */
-/* PRE:    denied points to a valid optlist of denied options
- *         options points to a valid optlist representing a list of options 
- *         requested
- * FN VAL: if options acceptable by denied 1 else 0 with error logged */
+/* INPUT:  denied, an optlist of denied options
+ *         options, a list of options
+ * OUTPUT: if options acceptable 1 else 0
+ * SIDE AFFECTS: error logged
+ */
 static options_deny_ok(optlist_t * denied, optlist_t * options)
 {
 	optlist_t *e;
@@ -283,15 +330,24 @@ static options_deny_ok(optlist_t * denied, optlist_t * options)
 }
 
 /* ============================ _options_ok () ============================= */
+/* INPUT:  config, the configuration to use as a basis for checking
+ *         volume, a volume to check
+ * OUTPUT: if volume checks okay 1, else 0
+ * SIDE AFFECTS: error logged
+ */
 static int _options_ok(config_t * config, vol_t * volume)
 {
+
+	assert(config);
+	assert(volume);
+
 	if (optlist_len(config->options_allow)
 	    && optlist_len(config->options_deny)) {
 		l0g("pam_mount: %s\n",
 		    "possible conflicting option settings (use allow OR deny)");
 		return 0;
 	}
-	if (!volume->use_fstab)
+	if (volume->use_fstab == FALSE)
 		if (!options_required_ok
 		    (config->options_require, volume->options))
 			return 0;
@@ -315,60 +371,92 @@ static int _options_ok(config_t * config, vol_t * volume)
 
 /* ============================ luserconf_volume_record_sane () ============ */
 /* PRE:    config points to a valid config_t structure
- * FN VAL: if error a string error message else NULL */
+		vol...
+*/
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-static char *luserconf_volume_record_sane(config_t * config)
+gboolean luserconf_volume_record_sane(config_t * config, int vol)
 {
-	if (!strcmp(config->volume[config->volcount].user, "*"))
-		return "wildcard used in user-defined volume";
-	else if (config->volume[config->volcount].type == LCLMOUNT
-		 && !owns(config->user,
-			  config->volume[config->volcount].volume))
-		return
-		    "user-defined volume, volume not owned by user";
+	/* FIXME: assertions not done */
+	assert(config != NULL);
+	assert(config->volume != NULL);
+
+	if (config->volume[vol].used_wildcard == TRUE) {
+		l0g("pam_mount: wildcard used in user-defined volume\n");
+		return FALSE;
+	}
+	if (config->volume[vol].type == LCLMOUNT
+	    && owns(config->user, config->volume[vol].volume) == FALSE) {
+		l0g("pam_mount: user-defined volume, volume not owned by user\n");
+		return FALSE;
+	}
+	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
+	if (config->volume[vol].type == CRYPTMOUNT
+	    && owns(config->user, config->volume[vol].volume) == FALSE) {
+		l0g("pam_mount: user-defined volume, volume not owned by user\n");
+		return FALSE;
+	}
 	/*
 	 * If it does not already exist then its okay, pam_mount will mkdir
 	 * it (if configured to do so)
 	 */
-	else if (config->volume[config->volcount].type == LCLMOUNT
-		 && exists(config->volume[config->volcount].mountpoint)
-		 && !owns(config->user,
-			  config->volume[config->volcount].mountpoint))
-		return
-		    "user-defined volume, mountpoint not owned by user";
-	else if (!_options_ok(config, &config->volume[config->volcount]))
-		return "illegal option specified by user";
-	return NULL;
+	if (config->volume[vol].type == LCLMOUNT
+	    && exists(config->volume[vol].mountpoint)
+	    && owns(config->user, config->volume[vol].mountpoint) == FALSE) {
+		l0g("pam_mount: user-defined volume, mountpoint not owned by user\n");
+		return FALSE;
+	}
+	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
+	if (config->volume[vol].type == CRYPTMOUNT
+	    && exists(config->volume[vol].mountpoint)
+	    && owns(config->user, config->volume[vol].mountpoint) == FALSE) {
+		l0g("pam_mount: user-defined volume, mountpoint not owned by user\n");
+		return FALSE;
+	}
+	if (!_options_ok(config, &config->volume[vol])) {
+		l0g("pam_mount: illegal option specified by user\n");
+		return FALSE;
+	}
+	return TRUE;
 }
 
 /* ============================ volume_record_sane () ====================== */
 /* PRE:    config points to a valid config_t structure
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-static char *volume_record_sane(config_t * config)
+gboolean volume_record_sane(config_t * config, int vol)
 {
 	w4rn("pam_mount: %s\n", "checking sanity of volume record");
-	if (!config->command[0][config->volume[config->volcount].type])
-		return
-		    "mount command not defined for this type";
-	else if ((config->volume[config->volcount].type == SMBMOUNT
-		  || config->volume[config->volcount].type == NCPMOUNT
-		  || config->volume[config->volcount].type == CIFSMOUNT
-		  || config->volume[config->volcount].type == NFSMOUNT)
-		 && !strlen(config->volume[config->volcount].server))
-		return
-		    "remote mount type specified without server";
-	else if (!config->command[0][UMOUNT])
-		return "umount command not defined";
-	else if (strlen(config->volume[config->volcount].fs_key_cipher)
-		 && !strlen(config->volume[config->volcount].fs_key_path))
-		return
-		    "fs_key_cipher defined without fs_key_path";
-	else if (!strlen(config->volume[config->volcount].fs_key_cipher)
-		 && strlen(config->volume[config->volcount].fs_key_path))
-		return
-		    "fs_key_path defined without fs_key_cipher";
-	return NULL;
+	if (!config->command[0][config->volume[vol].type]) {
+		l0g("mount command not defined for this type\n");
+		return FALSE;
+	}
+	if ((config->volume[vol].type == SMBMOUNT
+	     || config->volume[vol].type == NCPMOUNT
+	     || config->volume[vol].type == CIFSMOUNT
+	     || config->volume[vol].type == NFSMOUNT)
+	    && !strlen(config->volume[vol].server)) {
+		l0g("remote mount type specified without server\n");
+		return FALSE;
+	}
+	if (config->volume[vol].type == NCPMOUNT && ! optlist_exists(config->volume[vol].options, "user")) {
+		l0g("NCP volume definition missing user option\n");
+		return FALSE;
+	}
+	if (!config->command[0][UMOUNT]) {
+		l0g("umount command not defined\n");
+		return FALSE;
+	}
+	if (strlen(config->volume[vol].fs_key_cipher)
+	    && !strlen(config->volume[vol].fs_key_path)) {
+		l0g("fs_key_cipher defined without fs_key_path\n");
+		return FALSE;
+	}
+	if (!strlen(config->volume[vol].fs_key_cipher)
+	    && strlen(config->volume[vol].fs_key_path)) {
+		l0g("fs_key_path defined without fs_key_cipher\n");
+		return FALSE;
+	}
+	return TRUE;
 }
 
 /* ============================ read_luserconf () ========================== */
@@ -378,8 +466,7 @@ static DOTCONF_CB(read_luserconf)
 	char *home_dir;
 	struct passwd *passwd_ent;
 	if (!*((int *) cmd->context))
-		return
-		    "tried to set luserconf from user config";
+		return "tried to set luserconf from user config";
 	passwd_ent = getpwnam(((config_t *) cmd->option->info)->user);
 	if (!passwd_ent) {
 		home_dir = "~";
@@ -426,7 +513,7 @@ static DOTCONF_CB(read_int_param)
 static DOTCONF_CB(read_debug)
 {
 	/* debug is handled as a special case so global debug can be set ASAP */
-	debug = cmd->data.value;
+	debug = (cmd->data.value != 0);
 	return read_int_param(cmd, ctx);
 }
 
@@ -540,7 +627,7 @@ static DOTCONF_CB(read_volume)
 			return "command too long";
 	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
 	memset(&VOL[VOLCOUNT], 0x00, sizeof(vol_t));
-	VOL[VOLCOUNT].globalconf = *((int *) cmd->context);
+	VOL[VOLCOUNT].globalconf = *((int *) cmd->context) ? TRUE : FALSE;
 	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
 	VOL[VOLCOUNT].type = -1;
 	for (i = 0; command[i].type != -1; i++)
@@ -560,9 +647,8 @@ static DOTCONF_CB(read_volume)
 		if (!fstab_value
 		    (VOL[VOLCOUNT].volume, FSTAB_MNTPT,
 		     VOL[VOLCOUNT].mountpoint, PATH_MAX + 1))
-			return
-			    "could not determine mount point";
-		VOL[VOLCOUNT].use_fstab = 1;
+			return "could not determine mount point";
+		VOL[VOLCOUNT].use_fstab = TRUE;
 	} else
 		strncpy(VOL[VOLCOUNT].mountpoint, cmd->data.list[4],
 			MAX_PAR);
@@ -572,14 +658,13 @@ static DOTCONF_CB(read_volume)
 		 * or field is '-' and this means no options */
 		if (VOL[VOLCOUNT].use_fstab) {
 			char options[MAX_PAR + 1];
-			if (! fstab_value
+			if (!fstab_value
 			    (VOL[VOLCOUNT].volume, FSTAB_OPTS, options,
 			     MAX_PAR + 1))
 				return "could not determine options";
 			if (!str_to_optlist
 			    (&VOL[VOLCOUNT].options, options))
-				return
-				    "error parsing mount options";
+				return "error parsing mount options";
 		} else
 			VOL[VOLCOUNT].options = NULL;
 	} else
@@ -595,15 +680,8 @@ static DOTCONF_CB(read_volume)
 	else
 		strncpy(VOL[VOLCOUNT].fs_key_path, cmd->data.list[7],
 			MAX_PAR);
+	VOL[VOLCOUNT].used_wildcard = FALSE; /* expandconfig() sets this */
 	/* FIXME: these should l0g an error and return NULL so other volumes can continue */
-	if ((errmsg =
-	     volume_record_sane(((config_t *) cmd->option->info))))
-		return errmsg;
-	if (!VOL[VOLCOUNT].globalconf
-	    && (errmsg =
-		luserconf_volume_record_sane((config_t *) cmd->option->
-					     info)))
-		return errmsg;
 	VOLCOUNT++;
 	return NULL;
 #undef VOL
@@ -613,7 +691,7 @@ static DOTCONF_CB(read_volume)
 /* ============================ readconfig () ============================== */
 /* PRE:    user is a valid string != NULL
  *         file is the path of config file to read
- *         globalconf == 1 if file is a global config, else 0
+ *         globalconf == TRUE if file is a global config, else FALSE
  *         config points to a valid config_t structure
  * POST:   command is an array containing configured mount command lines
  *         config points to a config_t structure containing configuration read
@@ -640,13 +718,23 @@ readconfig(const char *user, char *file, int globalconf, config_t * config)
  * POST: config is initialized (ie: config.volcount == 0) */
 int initconfig(config_t * config)
 {
-	int i;
+	int i, j;
+	config->user = NULL;
 	config->volcount = 0;
 	config->debug = DEBUG_DEFAULT;
 	config->mkmountpoint = MKMOUNTPOINT_DEFAULT;
 	strcpy(config->fsckloop, FSCKLOOP_DEFAULT);
-	for (i = 0; i < COMMAND_MAX; i++)
-		config->command[0][i] = 0x00;
+
+	/* set commands to defaults */
+	for (i = 0; command[i].type != -1; i++) {
+		config->command[0][command[i].type] = g_strdup(command[i].def[0]);
+		config->command[1][command[i].type] = g_strdup(g_basename(command[i].def[0]));
+		for (j = 1; command[i].def[j]; j++) {
+			config->command[j + 1][command[i].type] = g_strdup(command[i].def[j]);
+		}
+		config->command[j + 1][command[i].type] = 0x00;
+	}
+	/* FIXME: post condition assert all commands not NULL and NULL terminated */
 	return 1;
 }
 
@@ -663,6 +751,8 @@ void freeconfig(config_t config)
 	   for (i = 0; i < config.volcount; i++)
 	   optlist_free(&config.volume[i].options); FIXME: May be NULL!!
 	 */
+	if (config.user != NULL)
+		g_free(config.user);
 	for (i = 0; i < COMMAND_MAX; i++)
 		for (j = 0; config.command[j][i]; j++)
 			g_free(config.command[j][i]);
@@ -775,6 +865,7 @@ int expandconfig(config_t * config)
 				return 0;
 		if (!strcmp(config->volume[i].user, "*")) {
 			optlist_t *e;
+			config->volume[i].used_wildcard = TRUE;
 			strcpy(config->volume[i].user, config->user);
 			if (!expand_wildcard
 			    (config->volume[i].volume,

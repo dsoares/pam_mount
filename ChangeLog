@@ -1,3 +1,68 @@
+14 May 2004 W. Michael Petullo <mike@flyn.org>
+
+	* SELinux work.
+
+12 May 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Moved code that modifies /var/run/pam_mount to its own
+	executable so that SELinux policy does not conflict with gdm.
+
+	* Pam_mount now has command defaults that are overriden by
+	pam_mount.conf.
+
+07 May 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Worked on pam_mount_macros.te.
+
+25 April 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Added mount.crypt and umount.crypt.
+
+21 April 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Added some SELinux policy macros -- these need work.
+
+14 April 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Got rid of broken pipe bomb caused by trying to write a password
+	to a mount process that already exited.
+
+08 April 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Now uses user option properly in the case of NCP mounts.
+	The user option is now required for NCP mounts.
+
+	* Checks for existing NCP mounts properly.
+
+07 April 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed bad behavior caused by Red Hat's su setting the process'
+	fsuid to the uid.
+
+	* Wildcards (*) may no longer be used in ~/.pam_mount.conf (again).
+
+	* Fixed reading user from PAM system.
+
+17 March 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Added FAQ entry about NCP share mounted as $HOME and X.
+
+13 March 2004 W. Michael Petullo <mike@flyn.org>
+
+	* options_allow nosuid,nodev in default pam_mount.conf.
+
+11 March 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed a big, bad memory allocation bug.
+
+	* Finally compiles after adding lots or assertions.
+
+	* Loopback images can now be nested.
+
+	* Fixed core dump that occured when pam_mount was run as a
+	session module without first being run as an auth module.
+	Now logs a warning and returns an error.
+
 10 March 2004 W. Michael Petullo <mike@flyn.org>
 
 	* Added zlib-devel to RPM specification BuildRequires.
@@ -9,6 +74,9 @@
 
 	* Now installs /lib/security/pam_mount_auth.so and
 	/lib/security/pam_mount_session.so links for authconfig.
+
+	* made some changes to default cifsmount definition (thanks
+	Rudi Chiarito).
 
 03 February 2004 W. Michael Petullo <mike@flyn.org>
 
@@ -101,7 +169,7 @@
 	Rudi Chiarito).
 
 	* Use %config(noreplace) /etc/security/pam_mount.conf in RPM
-	specification (thanks thanks Rudi Chiarito).
+	specification (thanks Rudi Chiarito).
 
 	* Do not use --bind when mounting remote filesystems.
 

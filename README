@@ -162,8 +162,3 @@ enable the debug variable and check the lsof variable in
 pam_mount.conf. This causes pam_mount to run lsof upon logging out 
 and write lsof's output to the system's logs.
 
-Because of the way pam_mount transmits passwords to ncpmount, if you 
-with to mount NCP filesystems then you will need ncpfs >= 
-2.2.0.19.10. This package is available at 
-http://platan.vc.cvut.cz/ftp/private/ncpfs/ncpfs-2.2.0.19.10.tar.gz .
-

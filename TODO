@@ -1,14 +1,97 @@
-= For 1.0 =====================================================================
+= For Next Fedora Release =====================================================
 
-o core dump if pam_mount run as session module w/o auth.
+o email cryptsetup guy (see email) about new release.
 
-o remove include/new from CVS
+o why does su fail with broken pipe after X times of executing it?
+	- pam_xauth??? (currently commented out -- have I seen this problem in a while?)
+
+o release announcement:
+This release focuses on:
+
+1.  Bug fixes (see pam_mount's ChangeLog).
+
+2.  Initial support for the newish dm_crypt encrypted filesystem facility
+(see the new mount.crypt/umount.crypt scripts and pam_mount.conf's crypt
+filesystem type keyword).
+
+3.  Provides the start of an SELinux policy.  This, in turn, has three
+major issues:
+
+	a) The policy may be too permissive.
+
+	b) A standard for RPM-specific policy installation has not yet
+	been documented (ie: %post scripts that process the policy,
+	set contexts on installed files, etc.).  I hope to force this
+	issue during the QA process of this project.
+
+	c) Does not work with pam_selinux, see
+	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=121650.
+
+%if %{?WITH_SELINUX:0}%{!?WITH_SELINUX:1}
+%define WITH_SELINUX 1
+%endif
+Summary: The GNU core utilities: a set of tools commonly used in shell scripts
+Name:    coreutils
+Version: 5.2.1
+Release: 6
+License: GPL
+Group:   System Environment/Base
+Url:     ftp://alpha.gnu.org/gnu/coreutils/
+%if %{WITH_SELINUX}
+BuildRequires: libselinux-devel
+%endif
+
+o scrub pam_mount.conf
+
+o add shfs support
+
+o get working with SELinux.
+	- ensure su - test mounts AND unmounts all volumes (see RH Bug)
+
+o see RELEASE_CHECKLIST
+
+o finish .*_valid invariants.
+
+o finish using struct invariants throghout code.
+
+o write class invariant function for assertions
+
+o int to gboolean and 1/0 to TRUE/FALSE
 
 o Migrate to glib functions.
 
+o replace PRE, POST and FN VAL conditions with asserts in code where applicable
+	- Document fns with INPUT, SIDE AFFECTS and OUTPUT
+	- assert that side affects happen if OUTPUT is not an error code
+	- only one return statement per function so assertions may be made
+
+	- readconfig.c (started -- see last INPUT)
+	- pam_mount.c
+	- mount.c
+	- pmvarrun.c
+
+= For 1.0 =====================================================================
+
+- Description is a bit longish - certainly not showstopper but it might be
+better to give a brief description there and perhaps refer to some README in the
+docs dir
+
+o help test new mount/cryptsetup patch.
+	- does not umount right
+	- configure needs to -lselinux with -lcryptsetup
+	- need to update selinux policy
+
+o how can I determine target user name when root su's to another user
+or when I ssh using public key?
+
+o pam_mount should chdir("/") right before unmounting, not earlier
+(for Brandon).
+
+o remove include/new from CVS
+
 o splint -I. -I.. -I../include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include +posixlib mount.c | less
 
-o ensure include/new/* and include/new are cvs rm'ed
+o ensure include/new/* and include/new are cvs rm'ed (should be)
 
 o scrub code on Savannah after break in?
 	The following files were committed after system restore (and should not need scrubbing):
@@ -21,15 +104,20 @@ o scrub code on Savannah after break in?
 
 o need progress feedback from fsck, especially for gdm.
 
+o once mount supports cryptsetup natively remove hacks from (search for "some day"):
+	misc.c
+	pam_mount.h
+	mount.c
+	readconfig.c
+	pam_mount_macros.te
+	MY INSTALLED pam_mount.conf
+
 o replace vol_t fields with one fmt_ptrn and add value_query fn to
 fmt_ptrn lib?
 
 o regression tests:
 	options = '-', do not use fstab
 	options = '-', use fstab (mnt pt not defined either)
-	smb mount with options of '-'
-
-o Get in fedora (http://www.fedora.us/wiki/PackageSubmissionQAPolicy Fedora Bugzilla #1013).
 
 o ????? return to using user owned /var/run/pam_mount/test -- document
 in code that this is a good idea to allow an option to ssh users besides
@@ -47,15 +135,6 @@ o Should -N go in pam_mount.conf like it is now?  Shall I put this in
 conf/pam_mount.conf?  How does hashing/not hashing affect scripts?
 
 o ensure const's are used (see esp. hash argument to hash_authtok).
-
-o replace PRE, POST and FN VAL conditions with asserts in code where applicable
-	- Document fns with INPUT, SIDE AFFECTS and OUTPUT
-	- assert that side affects happen if OUTPUT is not an error code
-	- only one return statement per function so assertions may be made
-
-	- pam_mount.c
-	- mount.c
-	- readconfig.c
 
 o ensure NULL-termination is guarenteed everytime strlen is used.
 
@@ -97,6 +176,11 @@ o fork a (one, don't fork again if its already running) daemon that
 continues to try and unmount volumes after a user logs out.  pam_mount
 would pass the daemon volumes to unmount and cancel things if the user
 logs back in.  HOW WOULD ALL OF THIS BE AUTHENTICATED?
+
+o use libgcrypt instead of openssl?
+
+o share configuration reading and sanity checks with authconfig using
+a shared library.
 
 o Break into multiple (root priveleged and user priv.) processes? 
 	- See /* This code needs root priv. */

@@ -29,10 +29,10 @@
 typedef GList optlist_t;
 
 /* ============================ str_to_optlist () ========================== */
-int str_to_optlist(optlist_t ** optlist, const char *str);
+gboolean str_to_optlist(optlist_t ** optlist, const char *str);
 
 /* ============================ optlist_exists () ========================== */
-int optlist_exists(optlist_t * optlist, const char *str);
+gboolean optlist_exists(optlist_t * optlist, const char *str);
 
 /* ============================ optlist_value () =========================== */
 const char * optlist_value(optlist_t * optlist, const char *str);

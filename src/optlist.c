@@ -20,7 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <glib.h>
 #include <optlist.h>
 #include <stdlib.h>
 #include <pam_mount.h>
@@ -113,7 +112,7 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
  * SIDE AFFECTS: str has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
-int str_to_optlist(optlist_t ** optlist, const char *str)
+gboolean str_to_optlist(optlist_t ** optlist, const char *str)
 {
 	int ret = 1;
 	char *ptr;
@@ -163,7 +162,7 @@ static int _compare(gconstpointer x, gconstpointer y)
 /* INPUT: optlist and str
  * OUTPUT: if optlist[str] exists 1 else 0
  */
-int optlist_exists(optlist_t * optlist, const char *str)
+gboolean optlist_exists(optlist_t * optlist, const char *str)
 {
 	assert(str);
 

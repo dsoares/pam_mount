@@ -24,4 +24,3 @@
 #define KEY_LEN 80
 #define PARSE_ERR_LEN BUFSIZ
 #define STACK_MAX_ITEMS 10
-#define INIT_BUF_SIZE 80
