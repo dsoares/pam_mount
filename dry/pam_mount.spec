@@ -1,15 +1,13 @@
 %define rel 0.fdr.1
-%define prefix /usr
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.15
+Version: 0.9.16
 Release: %rel
 License: LGPL
 Group: System Environment/Base
 Source: http://www.flyn.org/projects/%name/%name-%{PACKAGE_VERSION}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-root
-Distribution: Flyn Linux
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: http://www.flyn.org
 Requires: pam
 BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel
@@ -63,9 +61,8 @@ make %{?_smp_mflags}
 %install
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
-gzip -9 AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ
 mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
-cp config/pam_mount.conf ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
+install --owner=root --group=root --mode=0644 config/pam_mount.conf ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
 rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.a
 rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.la
 
@@ -87,10 +84,23 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{_sysconfdir}/security/pam_mount.conf
 
 
-%doc	AUTHORS.gz COPYING.gz ChangeLog.gz INSTALL.gz NEWS.gz README.gz FAQ.gz
+%doc	AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ
 
 
 %changelog
+* Tue Mar 23 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.16-0.fdr.1
+   - Updated to pam_mount 0.9.16.
+
+   - Ensure pam_mount.conf etc. has safe permissions (install vs. cp).
+
+   - Don't compress documentation files.
+
+   - Don't set distribution in .spec.
+
+   - Remove uneeded prefix definition.
+
+   - Fix buildroot.
+
 * Wed Mar 10 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.15-0.fdr.1
    - Updated to pam_mount 0.9.15.
 
