@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #   FILE: passwdehd -- Changes a user's efsk.
 # AUTHOR: W. Michael Petullo <mike@flyn.org>

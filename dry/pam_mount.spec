@@ -3,7 +3,7 @@
 
 Summary: a PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.5.11
+Version: 0.5.12
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
@@ -19,13 +19,15 @@ This module is aimed at environments with SMB (Samba or Windows NT)
 or NCP (Netware or Mars-NWE) servers that Unix users wish to access 
 transparently. It facilitates access to private volumes of these types 
 well. The module also supports mounting home directories using 
-loopback encrypted filesystems.
+loopback encrypted filesystems. The module was originally written for 
+use on the Linux operating system but has since been modified to 
+work on several flavors of BSD.
 
  o Every user can access his own volumes
 
  o The user needs to type the password just once (at login)
 
- o The mouting process is transparent to the users
+ o The mounting process is transparent to the users
 
  o There is no need to keep the login passwords in any additional file
 

@@ -22,20 +22,11 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-sbin_PROGRAMS = pmhelper
-pmhelper_SOURCES = pmhelper.c misc.c
-pmhelper_LDFLAGS = @LIBCRYPT@ @LIBCRYPTO@
-
 moduledir = /lib/security
 module_LTLIBRARIES = pam_mount.la
-# miscso.c link is to fix complaint of misc.o being used both with libtool
-# and without (miscso.c should be a symlink to misc.c)
-pam_mount_la_SOURCES = converse.c miscso.c pam_mount.c readconfig.c dotconf.c
-pam_mount_la_LDFLAGS = -module -avoid-version
+pam_mount_la_SOURCES = converse.c misc.c pam_mount.c readconfig.c dotconf.c mount.c
+pam_mount_la_LDFLAGS = -module -avoid-version @LIBCRYPTO@
 
 INCLUDES = -I$(srcdir)/../include
 
 AM_CFLAGS = -g -Werror
-
-install-exec-hook:
-	chmod 4755 $(DESTDIR)$(sbindir)/pmhelper

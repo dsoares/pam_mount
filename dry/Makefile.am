@@ -36,6 +36,9 @@ README: pam_mount.xml
 pam_mount.html: pam_mount.xml
 	xsltproc -o pam_mount.html /usr/local/share/fctk/webpage.xslt pam_mount.xml
 
+pam_mount_summary.html: pam_mount.xml
+	xsltproc -o pam_mount_summary.html /usr/local/share/fctk/html_summary.xslt pam_mount.xml
+
 pam_mount.spec: pam_mount.xml
 	xsltproc -o pam_mount.spec --stringparam version $(VERSION) /usr/local/share/fctk/spec.xslt pam_mount.xml
 
@@ -43,7 +46,7 @@ control: pam_mount.xml
 	xsltproc -o control /usr/local/share/fctk/control.xslt pam_mount.xml
 
 # ============================= all =========================================== 
-all: $(PACKAGE).spec README pam_mount.html pam_mount.spec control
+all: $(PACKAGE).spec README pam_mount.html pam_mount_summary.html pam_mount.spec control
 	cp README ..
 	cp control ../debian
 

@@ -1,6 +1,42 @@
+4 April 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Tested Linux build.
+
+	* Changed references to SSL in mount.c to CRYPTO.  May need to
+	change back?  Needs testing.
+
+3 April 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Renamed mountehd to autoehd.
+
+28 March 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Minor documentation work.
+
+        * Fixed bug that caused local mount to fail when no options
+        were specified in pam_mount.conf volume definition.
+
+26 March 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Continued to clean up after getting rid of pmhelper change.
+
+24 March 2003 W. Michael Petullo <mike@flyn.org>
+	
+        * Pmhelper code is now integrated into pam_mount.so instead
+        of being a separate, suid executable.  This fixes a major
+        locally exploitable security bug.
+
+10 March 2003 W. Michael Petullo <mike@flyn.org>
+
+        * Pam_mount now unmounts volumes in the opposite order that
+        it mounts them in order to facilitate nested mounts (Thanks
+        to Thorsten Wiegel).
+
 5 March 2003 W. Michael Petullo <mike@flyn.org>
 
-	* Added support for CIFS (Thanks to Daniel Zeiss).
+        * Added support for CIFS (Thanks to Daniel Zeiss).  Right
+        now the CIF mount technique can leak passwords to other
+        users.
 
 28 February 2003 W. Michael Petullo <mike@flyn.org>
 

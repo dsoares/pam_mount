@@ -8,13 +8,15 @@ This module is aimed at environments with SMB (Samba or Windows NT)
 or NCP (Netware or Mars-NWE) servers that Unix users wish to access 
 transparently. It facilitates access to private volumes of these types 
 well. The module also supports mounting home directories using 
-loopback encrypted filesystems.
+loopback encrypted filesystems. The module was originally written for 
+use on the Linux operating system but has since been modified to 
+work on several flavors of BSD.
 
  o Every user can access his own volumes
 
  o The user needs to type the password just once (at login)
 
- o The mouting process is transparent to the users
+ o The mounting process is transparent to the users
 
  o There is no need to keep the login passwords in any additional file
 
@@ -41,8 +43,14 @@ this program.
 	
 = NASTY DETAILS ===============================================================
 	
-You must include two entries in /etc/pam.d/SERVICE config files, as 
-the following example shows:
+The primary configuration file for the pam_mount module is 
+pam_mount.conf. On most platforms this file is read from 
+/etc/security/pam_mount.conf. On OpenBSD pam_mount reads its 
+configuration file from /etc/pam_mount.conf. Pam_mount.conf contains many 
+comments documenting its use.
+
+In addition, you must include two entries in the system's applicable 
+/etc/pam.d/SERVICE config files, as the following example shows:
 
 
     #%PAM-1.0
@@ -95,11 +103,9 @@ encrypted home directories. If you have an entry for a user using
 encrypted home directories in pam_mount.conf, mkehd will create 
 necessary filesystem images and possibly encrypted filesystem keys.
 
-Pam_mount's main configuration file, pam_mount.conf, has a lot of 
-commented lines that explain what every parameter means. Individual 
-users may define additional volumes to mount in ~/.pam_mount.conf. The 
-volume keyword is the only valid keyword in these per-user 
-configuration files.
+Individual users may define additional volumes to mount in 
+~/.pam_mount.conf. The volume keyword is the only valid keyword in 
+these per-user configuration files.
 
 In general, you will leave all the first (general) parameters as 
 provided by default. You only have to provide the user/volume list 
@@ -124,7 +130,8 @@ enable the debug variable and check the lsof variable in
 pam_mount.conf. This causes pam_mount to run lsof upon logging out 
 and write lsof's output to the system's logs.
 
-Because of the way pmhelper transmits passwords to ncpmount, if you 
+Because of the way pam_mount transmits passwords to ncpmount, if you 
 with to mount NCP filesystems then you will need ncpfs >= 
-2.2.0.19.10. This package is available at http://platan.vc.cvut.cz/ftp/private/ncpfs/ncpfs-2.2.0.19.10.tar.gz.
+2.2.0.19.10. This package is available at 
+http://platan.vc.cvut.cz/ftp/private/ncpfs/ncpfs-2.2.0.19.10.tar.gz .
 

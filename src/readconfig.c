@@ -18,6 +18,7 @@ pm_command_t command[] = {
     {NCPMOUNT, "ncpfs", "ncpmount"},
     {LCLMOUNT, "local", "lclmount"},
     {LCLMOUNT, "nfs", "lclmount"},
+/* FIXME: PMHELPER no longer needed */
     {PMHELPER, NULL, "pmhelper"},
     {UMOUNT, NULL, "umount"},
     {LSOF, NULL, "lsof"},
@@ -41,12 +42,12 @@ static const configoption_t legal_config[] = {
     {"mkmountpoint", ARG_INT, read_int_param, &config.mkmountpoint,
      CTX_ALL},
     {"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
+/* FIXME: PMHELPER no longer needed */
     {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
     {"smbmount", ARG_LIST, read_command, &config, CTX_ALL},
     {"cifsmount", ARG_LIST, read_command, &config, CTX_ALL},
     {"ncpmount", ARG_LIST, read_command, &config, CTX_ALL},
     {"umount", ARG_LIST, read_command, &config, CTX_ALL},
-    {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
     {"lclmount", ARG_LIST, read_command, &config, CTX_ALL},
     {"lsof", ARG_LIST, read_command, &config, CTX_ALL},
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
@@ -339,7 +340,7 @@ DOTCONF_CB(read_volume)
 /* PRE:    opt points to an option != NULL
  *         str points to list of options (ie: "opt1,opt2,...") != NULL
  * FN VAL: if opt appears in str then 1 else 0 */
-int option_in_string(char *opt, char *str)
+int option_in_string(const char *opt, const char *str)
 {
     char *ptr;
     w4rn("pam_mount: %s passed to option_in_string()\n", str);
@@ -359,15 +360,15 @@ int option_in_string(char *opt, char *str)
 /* PRE:    conf points to an array of allowed options (first item may be 
  *           NULL if no options sepcified)
  *         options points to a string representing a list of options requested
- *           for a volume or ""
+ *           for a volume or NULL
  * FN VAL: if options acceptable by conf 1 else 0 with error logged */
-options_allow_ok(char *conf[], char *options)
+options_allow_ok(char *conf[], const char *options)
 {
     int i, ok;
     char *ptr;
-    w4rn("pam_mount: checking %s\n", options);
-    if (strcmp(options, "*"))
+    if (!strcmp(conf[0], "*") || ! options)
 	return 1;
+    w4rn("pam_mount: checking %s\n", options);
     while (ptr = strchr(options, ',')) {
 	ok = 0;
 	w4rn("pam_mount: checking %s\n", options);
@@ -398,7 +399,7 @@ options_allow_ok(char *conf[], char *options)
  *         options points to a string representing a list of options requested
  *           for a volume or ""
  * FN VAL: if options acceptable by conf 1 else 0 with error logged */
-options_required_ok(char *conf[], char *options)
+options_required_ok(char *conf[], const char *options)
 {
     int i;
     for (i = 0; conf[i]; i++) {
@@ -416,7 +417,7 @@ options_required_ok(char *conf[], char *options)
  *         options points to a string representing a list of options requested
  *           for a volume or ""
  * FN VAL: if options acceptable by conf 1 else 0 with error logged */
-options_deny_ok(char *conf[], char *options)
+options_deny_ok(char *conf[], const char *options)
 {
     int i;
     if (!conf[0]) {
@@ -561,7 +562,7 @@ char *expand_home(char *path, const char *user)
 /* PRE:    str points to the string to expand (must contain at least one &)
  *         user is the username to expand to
  * FN VAL: str with any &s expanded into user or NULL on error */
-char *expand_wildcard(char *str, const char *user)
+char *expand_wildcard(const char *str, const char *user)
 {
     char *result = NULL;
     char *pos;
@@ -611,8 +612,7 @@ void expandconfig(config_t * config)
 		strncpy(config->data[i].volume, tmp, MAX_PAR + 1);
 		free(tmp);
 	    }
-	    tmp =
-		expand_wildcard(config->data[i].mountpoint, config->user);
+	    tmp = expand_wildcard(config->data[i].mountpoint, config->user);
 	    if (tmp) {
 		strncpy(config->data[i].mountpoint, tmp, FILENAME_MAX + 1);
 		free(tmp);

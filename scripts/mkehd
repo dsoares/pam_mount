@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #   FILE: mkehd -- Create an encrypted home directory disk image.
 # AUTHOR: W. Michael Petullo <mike@flyn.org>

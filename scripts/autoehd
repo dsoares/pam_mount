@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-#   FILE: mountehd -- Mount a user's efsk.
+#   FILE: autoehd -- Mount the EHD of a user that is defined in pam_mount.conf.
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
 #   DATE: 06 October 2002
 # 

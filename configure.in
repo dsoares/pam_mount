@@ -26,7 +26,7 @@ AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
 MINOR_VERSION=5
-MICRO_VERSION=12
+MICRO_VERSION=13
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -44,8 +44,6 @@ AM_CONDITIONAL(FLYN, test "$FLYN")
 
 AC_CHECK_LIB(crypto, EVP_CIPHER_CTX_init, LIBCRYPTO=-lcrypto, AC_MSG_WARN(crypto library missing: will not build cryptographic code))
 AC_SUBST(LIBCRYPTO)
-AC_CHECK_LIB(crypt, crypt, LIBCRYPT=-lcrypt)
-AC_SUBST(LIBCRYPT)
 AC_CHECK_HEADER(security/pam_modules.h,,AC_MSG_ERROR(You are missing security/pam_modules.h))
 
 AC_OUTPUT(Makefile config/Makefile dry/Makefile debian/Makefile include/Makefile src/Makefile scripts/Makefile)

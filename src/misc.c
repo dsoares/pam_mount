@@ -9,7 +9,7 @@
 extern int debug;
 
 /* ============================ _log () ==================================== */ 
-void _log(int priority, const char *mask, const char *arg)
+static void _log(int priority, const char *mask, const char *arg)
 {
     fprintf(stderr, mask, arg);
     syslog(priority, mask, arg);

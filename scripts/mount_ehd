@@ -1,0 +1,42 @@
+#!/bin/sh
+
+#   FILE: mount_ehd - Mount an encrypted loopback directory on *BSD.
+# AUTHOR: W. Michael Petullo <mike@flyn.org>
+#   DATE: 28 March 2003
+# 
+# Copyright (C) 2003 W. Michael Petullo <mike@flyn.org>
+# All rights reserved.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Pam_mount executes local mount command with the following arguments:
+# 1.  options specified in lclmount definition in pam_mount.conf
+# 2.  -o some,options (as specified in volume definition in pam_mount.conf)
+# 3.  name of volume
+# 4.  name of mount point
+#
+# In order for this script to work correctly, number one should not
+# be configured.  Number two should be set so that -o svnd? is passed
+# (will be passed as $1 and $2.  This should result in $3 being the
+# volume and $4 being the mount point.
+
+ARCH=`uname`
+
+if [ x${ARCH} = xOpenBSD ]; then
+	echo /usr/sbin/vnconfig -k $2 $3
+	/usr/sbin/vnconfig -k $2 $3
+	echo /sbin/mount /dev/${2}c $4
+	/sbin/mount /dev/${2}c $4
+fi

@@ -21,6 +21,6 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-bin_SCRIPTS = mkehd mountehd passwdehd
+bin_SCRIPTS = mkehd autoehd passwdehd mount_ehd
 
-EXTRA_DIST = mkehd mountehd passwdehd
+EXTRA_DIST = mkehd autoehd passwdehd mount_ehd

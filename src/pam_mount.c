@@ -19,21 +19,22 @@
 
 int             debug;
 config_t        config;
+static char	system_password[MAX_PAR + 1];
 
 /* ============================ pam_sm_authenticate () ===================== */
-/*
- * PRE:    this function is called by PAM POST:   user's directories are
- * mounted if pam_mount.conf says they should be or an error is logged FN
- * VAL: PAM error code on error or PAM_SUCCESS
- * NOTE:   this is here because many PAM implementations don't allow 
+/* PRE:    this function is called by PAM
+ * POST:   system_password is set to the user's system password.  
+ *         Pam_pm_open_session does the rest.
+ * FN VAL: PAM error code on error or PAM_SUCCESS
+ * NOTE:   this is here because many PAM implementations don't allow
  *         pam_sm_open_session access to user's system password.
  */
-PAM_EXTERN int 
+PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		    int argc, const char **argv)
 {
 	int             ret;
-	char		*tmp_pass;
+	char 		*tmp_pass;
 	if ((ret =
 	     pam_get_item(pamh, PAM_AUTHTOK, (const void **) &tmp_pass))) {
 		log("pam_mount: %s\n", "could not get password");
@@ -41,28 +42,29 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	}
 	if (!tmp_pass) {
 		w4rn("pam_mount: %s\n", "account seems to have no password");
-		*config.system_password = 0x00;
+		*system_password = 0x00;
 		return PAM_SUCCESS;
 	} else {
-		/* w4rn("pam_mount: password=%s\n", config.system_password); */
 		if (strlen(tmp_pass) > MAX_PAR) {
 			log("pam_mount: %s\n", "password too long");
 			return PAM_SUCCESS;
 		}
-		/* Following is needed because PAM clears memory holding 
-		 * password before pam_sm_open_session. */
-		strncpy(config.system_password, tmp_pass, MAX_PAR);
+		/*
+		 * Following is needed because PAM clears memory holding
+		 * password before pam_sm_open_session.
+		 */
+		strncpy(system_password, tmp_pass, MAX_PAR);
 		return PAM_SUCCESS;
 	}
 }
 
 /* ============================ number_safe () ============================= */
-int 
+int
 number_safe(char *n)
-/*
- * PRE:    dosn't assume anything about n!  FN VAL: if error 0 else 1,
- * errors are logged NOTE:   this is needed because users own
- * /var/run/pam_mount/<user> and they could try something sneaky
+/* PRE:    dosn't assume anything about n
+ * FN VAL: if error 0 else 1, errors are logged 
+ * NOTE:   this is needed because users own /var/run/pam_mount/<user> 
+ *         and they could try something sneaky
  */
 {
 	char           *ptr = n;
@@ -91,14 +93,15 @@ number_safe(char *n)
 }
 
 /* ============================ modify_pm_count () ========================= */
-/*
- * PRE:    user points to a valid string != NULL POST:   amount is added to
- * /var/run/pam_mount/<user>'s value; if value == 0, then file is removed. FN
- * VAL: new value else -1 on error, errors are logged NOTE:   code is
- * modified version of pam_console.c's use_count FIXME:  should this be
- * replaced with utmp (man utmp) usage?  Is utmp portable?
+/* PRE:    user points to a valid string != NULL 
+ * POST:   amount is added to /var/run/pam_mount/<user>'s value
+ *         if value == 0, then file is removed. 
+ * FN VAL: new value else -1 on error, errors are logged 
+ * NOTE:   code is modified version of pam_console.c's use_count 
+ * FIXME:  should this be replaced with utmp (man utmp) usage?  
+ *         Is utmp portable?
  */
-int 
+int
 modify_pm_count(const char *user, int amount)
 {
 	char            filename[PATH_MAX + 1];
@@ -280,94 +283,50 @@ return_error:
 	return err;
 }
 
-/* ============================ invoke_child () ============================ */
-/*
- * PRE:    config is a valid config_t structure data points to a valid data_t
- * structure (for nth volume) && config.command[PMHELPER] is the pmhelper
- * command POST:   pmhelper has been executed, received data over pipe, and
- * terminated FN VAL: the exit code returned by pmhelper
+/* ============================ pass_type () =============================== */
+/* PRE:    argv is valid
+ *         argc >= 1
+ * FN VAL: 1 if try_first_pass, else 0
  */
-int 
-invoke_child(config_t config, data_t * data)
+int pass_type(int argc, const char **argv)
 {
-	int             pipefd[2], count = 0, n = -1, child = -1, child_exit = 0;
-	if (pipe(pipefd) == -1) {
-		log("pam_mount: %s\n", "could not create pipe pair");
-		return 0;
-	}
-	if (config.debug) {
-		setenv("PAM_MOUNT_DEBUG", "true", 1);
-		fprintf(stderr,
-		   "pam_mount: real and effective user ID are %d and %d.\n",
-			getuid(), geteuid());
-	}
-	if (config.mkmountpoint)
-		setenv("PAM_MOUNT_MKMOUNTPOINT", "true", 1);
-	/* if our CWD is in the home directory, it might not get umounted */
-	/* Needed for KDM.  FIXME: Bug in KDM? */
-	if (chdir("/"))
-		w4rn("pam_mount %s\n", "could not chdir");
-	if ((child = fork()) == -1) {
-		log("pam_mount: %s\n", "could not fork for helper child");
-		return 0;
-	}
-	if (child == 0) {
-		/* Child */
-		close(pipefd[1]);
-		if (dup2(pipefd[0], 0) == -1) {
-			log("pam_mount: %s\n", "CHILD could not dup stdin");
-			_exit(1);
-		}
-		execv(config.command[0][PMHELPER], &config.command[1][PMHELPER]);
-		log("pam_mount: CHILD failed to exec %s (check pam_mount.conf?)\n", config.command[0][PMHELPER]);
-		close(pipefd[0]);
-		_exit(1);
-	}
-	/* Parent */
-	w4rn("pam_mount: %s\n", "sending data to pmhelper");
-	close(pipefd[0]);
-	while (count < sizeof(data_t)) {
-		w4rn("pam_mount: %s\n", "inside write loop");
-		n = write(pipefd[1],
-			  ((char *) data) + count, sizeof(data_t) - count);
-		if (n < 0) {
-			log("pam-mount: %s\n", "could not write data to child");
-			perror("huh");
-			close(pipefd[1]);
-			kill(child, SIGKILL);
+	int i;
+	for (i = 0; i < argc; i++) {
+		w4rn("pam_mount: pam_sm_open_session args: %s\n", argv[i]);
+		if (!strcmp("use_first_pass", argv[i]))
 			return 0;
-		}
-		count += n;
+		else if (!strcmp("try_first_pass", argv[i]))
+			return 1;
+		else if (argc > 1)
+			w4rn("pam_mount: %s\n", "bad pam_mount option");
 	}
-	w4rn("pam_mount: %s\n", "waiting for pmhelper to exit");
-	close(pipefd[1]);
-	waitpid(child, &child_exit, 0);
-	/*
-	 * if child was successful, it will return 0. hence return 1 to
-	 * caller to indicate success.
-	 */
-	return !WEXITSTATUS(child_exit);
+	return GETPASS_DEFAULT;
 }
 
 /* ============================ pam_sm_open_session () ===================== */
-/* NOTE: placeholder function so PAM does not get mad */
-PAM_EXTERN int 
+/* PRE:    this function is called by PAM
+ * POST:   user's directories are mounted if pam_mount.conf says they should 
+ *         be or an error is logged
+ * FN VAL: PAM error code on error or PAM_SUCCESS
+ * NOTE:   This process's EUID should be set to zero and its UID should be 
+ *         set to the user's UID.  This ensures mount command will perform 
+ *         sanity checking on the mounts the user wishes to perform, as 
+ *         configured in ~/.pam_mount.conf.
+ */
+PAM_EXTERN int
 pam_sm_open_session(pam_handle_t * pamh, int flags,
 		    int argc, const char **argv)
 {
 	int             vol;
 	int             ret;
-	int             get_pass = GETPASS_DEFAULT;
+	int             get_pass;
 	int             i;
 	w4rn("pam_mount: %s\n", "beginning");
-	for (i = 0; i < argc; i++) {
-		if (!strcmp("use_first_pass", argv[i])) {
-			get_pass = 0;
-		} else if (!strcmp("try_first_pass", argv[i])) {
-			get_pass = 1;
-		}
-		w4rn("pam_mount: pam_sm_open_session args: %s\n", argv[i]);
-	}
+	/* if our CWD is in the home directory, it might not get umounted */
+	/* Needed for KDM.  FIXME: Bug in KDM? */
+	if (chdir("/"))
+		w4rn("pam_mount %s\n", "could not chdir");
+	get_pass = pass_type(argc, argv);
 	if ((ret = pam_get_user(pamh, &config.user, NULL)) != PAM_SUCCESS) {
 		log("pam_mount: %s\n", "could not get user");
 		return ret;
@@ -393,34 +352,24 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		w4rn("pam_mount: %s\n", "no volumes to mount");
 	}
 	expandconfig(&config);
-	signal(SIGPIPE, SIG_IGN);
+	if (config.debug)
+		fprintf(stderr,
+		   "pam_mount: real and effective user ID are %d and %d.\n",
+			getuid(), geteuid());
 	for (vol = 0; vol < config.volcount; vol++) {
-		w4rn("pam_mount: %s\n", "executing pmhelper");
-		strncpy(config.data[vol].lsof, config.command[0][LSOF], FILENAME_MAX);
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-		strncpy(config.data[vol].mntcheck, config.command[0][MNTCHECK], FILENAME_MAX);
-#endif
-		config.data[vol].argc = 0;
-		for (i = 0; config.command[i][config.data[vol].type]; i++) {
-			strncpy(config.data[vol].argv[i],
-				config.command[i][config.data[vol].type], FILENAME_MAX);
-			config.data[vol].argc++;
-		}
-		*config.data[vol].argv[i] = 0x00;
+		w4rn("pam_mount: %s\n", "about to perform mount operations");
 		/* system_password is "" if account has no password */
-		strncpy(config.data[vol].password, config.system_password, MAX_PAR);
-		if (invoke_child(config, config.data + vol) != 1) {
-			w4rn("pam_mount: %s\n", "FATHER helper process failed using use_pass");
+		if (!mount_op(do_mount, &config, vol, system_password, config.mkmountpoint)) {
+			w4rn("pam_mount: %s\n", "mount process failed using use_pass");
 			if (get_pass) {
 				char           *passread;
 				/* get the password */
 				if (read_password(pamh, "mount password:", &passread) ==
 				    PAM_SUCCESS) {
 					/* try with the password read */
-					strncpy(config.data[vol].password, passread, MAX_PAR);
-					if (invoke_child(config, config.data + vol) != 1) {
+					if (!mount_op(do_mount, &config, vol, passread, config.mkmountpoint)) {
 						log("pam_mount: %s\n",
-						    "FATHER helper process failed using get_pass");
+						    "mount process failed using get_pass");
 						return PAM_SUCCESS;
 					}
 				} else {
@@ -429,19 +378,17 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 					return PAM_SUCCESS;
 				}
 			}
-		/* Paranoia? */
-		memset(config.data[vol].password, 0x00, MAX_PAR + 1);
 		}
 	}
 	/* Paranoia? */
-	memset(config.system_password, 0x00, MAX_PAR + 1);
+	memset(system_password, 0x00, MAX_PAR + 1);
 	modify_pm_count(config.user, 1);
 	return PAM_SUCCESS;
 }
 
 /* ============================ pam_sm_chauthtok () ======================== */
 /* NOTE: placeholder function so PAM does not get mad */
-PAM_EXTERN int 
+PAM_EXTERN int
 pam_sm_chauthtok(pam_handle_t * pamh, int flags,
 		 int argc, const char **argv)
 {
@@ -449,33 +396,33 @@ pam_sm_chauthtok(pam_handle_t * pamh, int flags,
 }
 
 /* ============================ pam_sm_close_session () ==================== */
-/*
- * PRE:    this function is called by PAM POST:   user's directories are
- * unmounted if pam_mount.conf says they should be or an error is logged FN
- * VAL: PAM error code on error or PAM_SUCCESS
+/* PRE:    this function is called by PAM
+ * POST:   user's directories are unmounted if pam_mount.conf says they 
+ *         should be or an error is logged 
+ * FN VAL: PAM error code on error or PAM_SUCCESS
  */
 PAM_EXTERN
-int 
+int
 pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 		     const char **argv)
 {
 	int             vol;
 
 	w4rn("pam_mount: %s\n", "received order to close things");
+	if (config.debug)
+		fprintf(stderr,
+		   "pam_mount: real and effective user ID are %d and %d.\n",
+			getuid(), geteuid());
 	if (config.volcount <= 0) {
 		w4rn("pam_mount: %s\n", "volcount is zero");
 	}
-	signal(SIGPIPE, SIG_IGN);
-
 	if (modify_pm_count(config.user, -1) <= 0)
-		for (vol = 0; vol < config.volcount; vol++) {
+		/* Unmount in reverse order to facilitate nested mounting. */
+		for (vol = config.volcount - 1; vol >= 0; vol--) {
 			w4rn("pam_mount: %s\n",
-			     "FATHER calling child proc to unmount");
-			config.data[vol].unmount = 1;
-			strncpy(config.data[vol].ucommand, config.command[0][UMOUNT], FILENAME_MAX);
-			if (invoke_child(config, config.data + vol) != 1) {
-				log("pam_mount:%s\n",
-				    "FATHER could not start helper process to umount");
+			     "going to unmount");
+			if (!mount_op(do_unmount, &config, vol, NULL, config.mkmountpoint)) {
+				log("pam_mount:%s\n", "could not umount");
 				return PAM_SUCCESS;
 			}
 	} else
@@ -488,7 +435,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 /* ============================ pam_sm_setcred () ========================== */
 /* NOTE: placeholder function so PAM does not get mad */
 PAM_EXTERN
-int 
+int
 pam_sm_setcred(pam_handle_t * pamh, int flags, int argc,
 	       const char **argv)
 {
