@@ -14,7 +14,6 @@ Makefile.in
 /depcomp
 /install-sh
 /libtool
-/ltconfig
 /ltmain.sh
 /missing
 /mkinstalldirs
