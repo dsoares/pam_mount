@@ -1,20 +1,10 @@
 = For 1.0 =====================================================================
 
-o Inspect new use_first_pass-related code.  Test a lot with new test account.
+o Don't quit after one mount fails?
 
-o Document use with pam_ldap and pam_winbind (see /etc/pam.d/su).
-Release new version on Freshmeat.
+o Make pam_mount.c and mount.c completely binary passwd safe.
 
-o Does try_first_pass work?
-
-o Stop logging password in pam_mount.c and mount.c when done fixing LDAP!
-
-o Move all mike's config to /etc/pam_mount.conf and use test account
-for regression testing.  Add lot's of regression tests to test account.
-
-o Test and check for security and readability: new fsck code and log_argv.
-
-o Get winbind working!
+o Does auth code still work with null password?
 
 o Automate debian/changelog because it determines the version of deb package.
 
@@ -41,12 +31,21 @@ o Can't tell if EHD is already mounted on OpenBSD because mount says:
 o Make EHD on OpenBSD and Linux as similar as possible document EHD
 on OpenBSD.
 
-o openpam su is broken.  memcpy causes "su mike" to try and execute
-"mike".  Also, gives up root privelages before forking, resulting
-in pam's close_session code being run with weak privelages. (submitted
-patch)
+o Test new openpam to ensure OpenBSD patches are integrated.
 
 = Past 1.0 (punted) ===========================================================
+
+o How to have two people log in, access the same encrypted loopback
+filesystem at the same time safely?
+	- Only mount it once in a shared location?  How to handle
+	/var/run/pam_mount?
+	- Make loopback mounting multiple-mount safe?
+	- See mount's --bind?
+
+o Deamon to unmount volume after all processes finally exit after a user logs
+out?  What if a user uses nohup?
+
+o Change & config syntax to allow groups to be used.
 
 o Remove pmhelper code completely from readconfig.c.
 
@@ -59,11 +58,7 @@ local copy.
 o Get smbmount and ncpmount to support mount-like -p0 option to simplify
 pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
 
-o Fix Debian:
-	Mounting encrypted loopback volumes with keybits option broken
-		in unstable (bug 163639)
-	CLOSE_SESSION set to no in /etc/login.defs (bug 163635)
-	login drops root privileges before closing PAM session (bug ????)
+o Fix Debian: see README_DEBIAN.
 
 o Get rid of FIXMEs.
 
@@ -96,6 +91,10 @@ pam_ldap might be a great solution.
 			1.  /etc/ldap.conf.
 			2.  _get_user_info (gets userdn -- used by 
 			    ldap_simple_bind).
+	- SENT EMAIL TO PAM_LDAP MAINT. ABOUT EXPORTING LDAP INFO. USING
+	PAM_SET_DATA.  WILL ALSO NEED TO IMPLEMNT A HACK TO ALLOW THIS
+	INFO TO BE REFERENCED IN VOLUME DEFINITIONS UNTIL NICE, NEW
+	VOLUME DEF. CODE IS IMPLEENTED.
 
 = Personal ====================================================================
 

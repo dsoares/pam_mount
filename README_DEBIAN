@@ -1,13 +1,16 @@
 1.  Ensure that CLOSE_SESSIONS is set to yes in /etc/login.defs, otherwise
-your volume will not be unmounted upon logging out.
+your volume will not be unmounted upon logging out.  Debian bug #163635,
+maintainer is Karl Ramm <kcr@debian.org>.
 
 2.  I had no luck when using the Debian mount binary to mount an encrypted
 loopback filesystem using the keybits option.  I had to build my own
-mount binary using the patch at kerneli.org.
+mount binary using the patch at kerneli.org.  Debian bug #163639,
+maintainer is LaMont Jones <lamont@debian.org>.
 
 3.  Debian's PAM distribution does not allow session modules to retrieve
 a user's password from the PAM subsystem.  This is why pam_mount must be
 used as an auth module (in addition to a session module) on all systems.
 
-Bug reports have been submitted to the Debian project documenting
-these issues.
+4.  Debain's login binary releases root privileges to early, resulting
+in failed unmounts.  Debian bug #195048, maintainer is Karl Ramm
+<kcr@debian.org>.

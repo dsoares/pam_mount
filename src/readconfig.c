@@ -289,7 +289,7 @@ DOTCONF_CB(read_luserconf)
 		home_dir = passwd_ent->pw_dir;
 	}
 	if (strlen(home_dir) + strlen("/") + strlen(cmd->data.str) >
-	    FILENAME_MAX)
+	    PATH_MAX)
 		return "pam_mount: expanded luserconf path too long";
 	strcpy(((config_t *) cmd->option->info)->luserconf, home_dir);
 	strcat(((config_t *) cmd->option->info)->luserconf, "/");
@@ -656,7 +656,7 @@ expandconfig(config_t * config)
 		char           *tmp;
 		if (*config->volume[i].mountpoint == '~') {
 			if ((tmp = expand_home(config->volume[i].mountpoint, config->user))) {
-				strncpy(config->volume[i].mountpoint, tmp, FILENAME_MAX + 1);
+				strncpy(config->volume[i].mountpoint, tmp, PATH_MAX + 1);
 				free(tmp);
 			} else 
 				return 0;
@@ -670,7 +670,7 @@ expandconfig(config_t * config)
 			} else
 				return 0;
 			if ((tmp = expand_wildcard(config->volume[i].mountpoint, config->user))) {
-				strncpy(config->volume[i].mountpoint, tmp, FILENAME_MAX + 1);
+				strncpy(config->volume[i].mountpoint, tmp, PATH_MAX + 1);
 				free(tmp);
 			} else
 				return 0;
@@ -680,7 +680,7 @@ expandconfig(config_t * config)
 			} else
 				return 0;
 			if ((tmp = expand_wildcard(config->volume[i].fs_key_path, config->user))) {
-				strncpy(config->volume[i].fs_key_path, tmp, FILENAME_MAX + 1);
+				strncpy(config->volume[i].fs_key_path, tmp, PATH_MAX + 1);
 				free(tmp);
 			} else
 				return 0;

@@ -53,17 +53,16 @@ In addition, you must include two entries in the system's applicable
 /etc/pam.d/SERVICE config files, as the following example shows:
 
 
-    #%PAM-1.0
-    auth      required  /lib/security/pam_securetty.so
-    auth      required  /lib/security/pam_pwdb.so shadow nullok
-    auth      required  /lib/security/pam_nologin.so
-    account   required  /lib/security/pam_pwdb.so
-    password  required  /lib/security/pam_cracklib.so
-    password  required  /lib/security/pam_pwdb.so shadow nullok use_authtok
-    session   required  /lib/security/pam_pwdb.so
-    session   optional  /lib/security/pam_console.so
-+++ session   optional  /lib/security/pam_mount.so use_first_pass
-+++ auth      optional  /lib/security/pam_mount.so use_first_pass
+    auth     required  pam_securetty.so
+    auth     required  pam_pwdb.so shadow nullok
+    auth     required  pam_nologin.so
++++ auth     optional  pam_mount.so use_first_pass
+    account  required  pam_pwdb.so
+    password required  pam_cracklib.so
+    password required  pam_pwdb.so shadow nullok use_authtok
+    session  required  pam_pwdb.so
+    session  optional  pam_console.so
++++ session  optional  pam_mount.so
 
 
 If you use pam_ldap, pam_winbind, or any other authentication services 
@@ -72,10 +71,11 @@ configuration on the following:
 
 
 ...
-auth       required   /lib/security/pam_mount.so
-auth       sufficient /lib/security/pam_ldap.so		use_first_pass
-account    sufficient /lib/security/pam_ldap.so		use_first_pass
-auth       required   /lib/security/pam_unix.so		use_first_pass
+account sufficient  pam_ldap.so	
+auth    required    pam_mount.so
+auth    sufficient  pam_ldap.so use_first_pass
+auth    required    pam_unix.so use_first_pass
+session optional    pam_mount.so
 ...
 
 
@@ -115,8 +115,8 @@ Pam_mount will read efsk from the local filesystem, perform fsk =
 D_sk (efsk) and use fsk to mount the filesystem. If you change your 
 system password, simply regenerate efsk using efsk = E_sk (fsk). If 
 you want to mount this volume by hand, use something like openssl 
--d -bf-ecb -in /home/user.key | mount -p0 /home/user. More information 
-about this technique is included in pam_mount.conf.
+enc -d -aes-256-ecb -in /home/user.key | mount -p0 /home/user. More 
+information about this technique is included in pam_mount.conf.
 
 A script named mkehd is provided with pam_mount to help create 
 encrypted home directories. If you have an entry for a user using 

@@ -1,3 +1,46 @@
+7 July 2003 W. Michael Petullo <mike@flyn.org>
+	
+	* Fixed bug in mount.c's efsk code.
+
+5 July 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed documentation about mounting by hand using when OpenSSL.
+
+20 June 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added beginning of a manpage.
+
+11 June 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Will now recursively create complete mount point path.
+
+	* Changed some variables' sizes from FILENAME_MAX to PATH_MAX.
+
+	* Reimplemented try_first_pass.
+
+11 June 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up mount.c a little.
+
+10 June 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up pam_mount.c and misc.c a little.
+
+6 June 2003 W. Michael Petullo <mike@flyn.org>
+	
+	* Pam_sm_authenticate now returns PAM_AUTH_ERR when password is
+	longer than MAX_PAR.  Returned PAM_SERVICE_ERR before.
+
+	* Now use pam_[sg]et_data() to get password between auth portion
+	and session portion of pam_mount.  Used a global variable before.
+
+5 June 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up documentation on /etc/pam.d/<service> configurations
+	a little.
+
+	* Minor maintenance on pam_mount.c.
+
 4 June 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Fixed use_first_pass behavior and figured out how to configure

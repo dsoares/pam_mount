@@ -19,11 +19,46 @@
 
 int debug;
 config_t config;
-static char system_password[MAX_PAR + 1];
+pam_args_t args;
+
+/* ============================ parse_pam_args () ========================== */
+/* PRE:    argv is valid
+ *         argc >= 1
+ * POST:   args contains the arguments to pam_mount
+ */
+void
+parse_pam_args (int argc, const char **argv)
+{
+  int i;
+  /* first, set default values */
+  args.auth_type = GET_PASS;
+  for (i = 0; i < argc; i++)
+    {
+      w4rn ("pam_mount: pam_sm_open_session args: %s\n", argv[i]);
+      if (!strcmp ("use_first_pass", argv[i]))
+	args.auth_type = USE_FIRST_PASS;
+      else if (!strcmp ("try_first_pass", argv[i]))
+	args.auth_type = TRY_FIRST_PASS;
+      else
+	w4rn ("pam_mount: %s\n", "bad pam_mount option");
+    }
+}
+
+/* ============================ clean_system_authtok () ==================== */
+/* POST: if data points to a valid sting, then it is zeroized */
+void
+clean_system_authtok (pam_handle_t * pamh, void *data, int errcode)
+{
+  if (data)
+    {
+      memset (data, 0x00, strlen (data));	/* FIXME: not binary password safe */
+      free (data);
+    }
+}
 
 /* ============================ pam_sm_authenticate () ===================== */
 /* PRE:    this function is called by PAM
- * POST:   system_password is set to the user's system password.  
+ * POST:   user's system password is added to PAM's global module data
  *         Pam_pm_open_session does the rest.
  * FN VAL: PAM error code on error or PAM_SUCCESS
  * NOTE:   this is here because many PAM implementations don't allow
@@ -34,51 +69,53 @@ pam_sm_authenticate (pam_handle_t * pamh, int flags,
 		     int argc, const char **argv)
 {
   int ret;
-  int get_pass;
-  char *tmp_pass;
-  get_pass = pass_type (argc, argv);
-  if (get_pass)
+  char *authtok = NULL;
+  parse_pam_args (argc, argv);
+  if (args.auth_type == USE_FIRST_PASS || args.auth_type == TRY_FIRST_PASS)
+    {
+      char *ptr;
+      if ((ret =
+	   pam_get_item (pamh, PAM_AUTHTOK,
+			 (const void **) &ptr)) != PAM_SUCCESS || !ptr) /* FIXME: what if passwd is ""? */
+	{
+	  l0g ("pam_mount: %s\n", "could not get password from PAM system");
+	  if (args.auth_type == USE_FIRST_PASS)
+	    return ret;
+	}
+      else
+	authtok = strdup (ptr);	/* FIXME: what if password is ""?  see also below */
+    }
+  if (args.auth_type == GET_PASS
+      || (!authtok && args.auth_type == TRY_FIRST_PASS))
     {
       /* get the password */
-      if ((ret =
-	   read_password (pamh, "password:", &tmp_pass)) != PAM_SUCCESS)
+      if ((ret = read_password (pamh, "password:", &authtok)) != PAM_SUCCESS)
 	{
 	  l0g ("pam_mount: %s\n", "error trying to read password");
 	  return ret;
 	}
-      if ((ret = pam_set_item (pamh, PAM_AUTHTOK, tmp_pass)) != PAM_SUCCESS)
+      if ((ret = pam_set_item (pamh, PAM_AUTHTOK, authtok)) != PAM_SUCCESS)
 	{
 	  l0g ("pam_mount: %s\n", "error trying to export password");
 	  return ret;
 	}
     }
-  else if ((ret =
-	    pam_get_item (pamh, PAM_AUTHTOK,
-			  (const void **) &tmp_pass)) != PAM_SUCCESS)
+  if (!authtok)			/* FIXME: see above */
+    l0g ("pam_mount: %s\n", "account seems to have no password");
+  if (strlen (authtok) > MAX_PAR)
     {
-      l0g ("pam_mount: %s\n", "could not get password from PAM system");
+      l0g ("pam_mount: %s\n", "password too long");
+      return PAM_AUTH_ERR;
+    }
+  if ((ret =
+       pam_set_data (pamh, "pam_mount_system_authtok", authtok,
+		     clean_system_authtok)) != PAM_SUCCESS)
+    {
+      l0g ("pam_mount: %s\n",
+	   "error trying to save authtok for session code");
       return ret;
     }
-  if (!tmp_pass)
-    {
-      w4rn ("pam_mount: %s\n", "account seems to have no password");
-      *system_password = 0x00;
-      return PAM_SUCCESS;
-    }
-  else
-    {
-      if (strlen (tmp_pass) > MAX_PAR)
-	{
-	  l0g ("pam_mount: %s\n", "password too long");
-	  return PAM_SERVICE_ERR;
-	}
-      /*
-       * Following is needed because PAM clears memory holding
-       * password before pam_sm_open_session.
-       */
-      strncpy (system_password, tmp_pass, MAX_PAR);
-      return PAM_SUCCESS;
-    }
+  return PAM_SUCCESS;
 }
 
 /* ============================ str_to_long () ============================= */
@@ -90,29 +127,20 @@ str_to_long (char *n)
  *         and they could try something sneaky
  */
 {
-  char *ptr = n;
+  long val;
+  char *endptr = NULL;
   if (!n)
     {
       l0g ("pam_mount: %s\n", "count string is NULL");
       return LONG_MAX;
     }
-  if (!*n || *n == '\n')
+  val = strtol (n, &endptr, 10);
+  if (*endptr)
     {
-      l0g ("pam_mount: %s\n", "count string has no length");
+      l0g ("pam_mount: count string is not valid\n");
       return LONG_MAX;
     }
-  do
-    {
-      /* "123\n" okay, "1a23" bad, "1\n23" bad, "123" okay */
-      if (!(isdigit (*ptr)))
-	{
-	  l0g ("pam_mount: %s\n", "count contains non-digits");
-	  return LONG_MAX;
-	}
-      ptr++;
-    }
-  while (!(*ptr == '\n' && !*(ptr + 1)) && *ptr);
-  return strtol (n, NULL, 10);
+  return val;
 }
 
 /* ============================ modify_pm_count () ========================= */
@@ -336,35 +364,11 @@ return_error:
   return err;
 }
 
-/* ============================ pass_type () =============================== */
-/* PRE:    argv is valid
- *         argc >= 1
- * FN VAL: 1 if use_first_pass, else 0
- */
-int
-pass_type (int argc, const char **argv)
-{
-  int i;
-  for (i = 0; i < argc; i++)
-    {
-      w4rn ("pam_mount: pam_sm_open_session args: %s\n", argv[i]);
-      if (!strcmp ("use_first_pass", argv[i]))
-	return 0;
-      else if (argc > 1)
-	w4rn ("pam_mount: %s\n", "bad pam_mount option");
-    }
-  return GETPASS_DEFAULT;
-}
-
 /* ============================ pam_sm_open_session () ===================== */
 /* PRE:    this function is called by PAM
  * POST:   user's directories are mounted if pam_mount.conf says they should 
  *         be or an error is logged
  * FN VAL: PAM error code on error or PAM_SUCCESS
- * NOTE:   This process's EUID should be set to zero and its UID should be 
- *         set to the user's UID.  This ensures mount command will perform 
- *         sanity checking on the mounts the user wishes to perform, as 
- *         configured in ~/.pam_mount.conf.
  */
 PAM_EXTERN int
 pam_sm_open_session (pam_handle_t * pamh, int flags,
@@ -372,11 +376,11 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
 {
   int vol;
   int ret;
-  w4rn ("pam_mount: %s\n", "beginning");
+  char *system_authtok;
   /* if our CWD is in the home directory, it might not get umounted */
   /* Needed for KDM.  FIXME: Bug in KDM? */
   if (chdir ("/"))
-    w4rn ("pam_mount %s\n", "could not chdir");
+    l0g ("pam_mount %s\n", "could not chdir");
   if ((ret = pam_get_user (pamh, &config.user, NULL)) != PAM_SUCCESS)
     {
       l0g ("pam_mount: %s\n", "could not get user");
@@ -388,8 +392,15 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
       l0g ("pam_mount: username %s is too long\n", config.user);
       return PAM_SERVICE_ERR;
     }
+  if ((ret =
+       pam_get_data (pamh, "pam_mount_system_authtok",
+		     (const void **) &system_authtok)) != PAM_SUCCESS)
+    {
+      l0g ("pam_mount: %s\n",
+	   "error trying to retrieve authtok from session code");
+      return ret;
+    }
   initconfig (&config);
-  w4rn ("pam_mount: %s\n", "going to readconfig global");
   if (!readconfig (config.user, CONFIGFILE, 1, &config))
     return PAM_SERVICE_ERR;
   w4rn ("pam_mount: %s\n", "back from global readconfig");
@@ -420,13 +431,12 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
   for (vol = 0; vol < config.volcount; vol++)
     {
       w4rn ("pam_mount: %s\n", "about to perform mount operations");
-      /* system_password is "" if account has no password */
       if (!mount_op
-	  (do_mount, &config, vol, system_password, config.mkmountpoint))
-	l0g ("pam_mount: %s\n", "mount process failed");
+	  (do_mount, &config, vol, system_authtok, config.mkmountpoint))
+	l0g ("pam_mount: mount of %s failed\n", config.volume[vol].volume);
     }
   /* Paranoia? */
-  memset (system_password, 0x00, MAX_PAR + 1);
+  clean_system_authtok (pamh, system_authtok, 0);
   modify_pm_count (config.user, 1);
   return PAM_SUCCESS;
 }
@@ -454,9 +464,7 @@ pam_sm_close_session (pam_handle_t * pamh, int flags, int argc,
   w4rn ("pam_mount: real and effective user ID are %d and %d.\n",
 	getuid (), geteuid ());
   if (config.volcount <= 0)
-    {
-      w4rn ("pam_mount: %s\n", "volcount is zero");
-    }
+    w4rn ("pam_mount: %s\n", "volcount is zero");
   if (modify_pm_count (config.user, -1) <= 0)
     /* Unmount in reverse order to facilitate nested mounting. */
     for (vol = config.volcount - 1; vol >= 0; vol--)
