@@ -1,3 +1,27 @@
+03 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Lsof now works when logging out of consoles.
+
+02 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Reduced the output of lsof to only files related to ~.
+
+01 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Made /usr/sbin/lsof configurable in /etc/security/pam_mount.
+
+30 July 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Changed syslog priorities.
+
+	* Now logs output of /usr/sbin/lsof when debugging is on.
+
+30 July 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Ran indent on source files.
+
+	* Got rid of pmhelper.c.orig and pmhelper.c.rej.
+
 30 June 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Fixed error that prevented encrypted volumes from working when

@@ -14,7 +14,7 @@ pam_mount.so: pam_mount.c pam_mount.h misc.o readconfig.o converse.o
 	$(CC) $(CFLAGS) $(SHARED) -o pam_mount.so pam_mount.c misc.o readconfig.o converse.o
 
 pmhelper: pmhelper.c pam_mount.h misc.o
-	$(CC) $(CFLAGS) -o pmhelper pmhelper.c misc.o
+	$(CC) $(CFLAGS) -g -o pmhelper pmhelper.c misc.o
 
 misc.o: misc.c pam_mount.h
 	$(CC) $(CFLAGS) -c misc.c

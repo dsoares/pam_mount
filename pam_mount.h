@@ -11,7 +11,8 @@
 #define UMOUNT		2
 #define PMHELPER	3
 #define LCLMOUNT	4
-#define COMMAND_MAX	LCLMOUNT+1
+#define LSOF		5
+#define COMMAND_MAX	LSOF+1
 
 #define DEBUG_DEFAULT	0
 #define GETPASS_DEFAULT	0
@@ -28,6 +29,7 @@ typedef struct pm_data {
 	char mountpoint[FILENAME_MAX+1];
 	char command[FILENAME_MAX+1];
 	char ucommand[FILENAME_MAX+1];
+	char lsof[FILENAME_MAX+1];
 } pm_data;
 
 int readconfig(const char *user, const char *password, 
