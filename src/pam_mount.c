@@ -402,6 +402,10 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	/* Needed for KDM.  FIXME: Bug in KDM? */
 	if (chdir("/"))
 		l0g("pam_mount %s\n", "could not chdir");
+	if (config.user == NULL) {
+                l0g("pam_mount: username not read: pam_mount not conf. for auth?\n");
+                goto _return;
+        }
 	if (strlen(config.user) > MAX_PAR) {
 		l0g("pam_mount: username %s is too long\n", config.user);
 		ret = PAM_SERVICE_ERR;
@@ -495,6 +499,12 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 	     getuid(), geteuid());
 	if (config.volcount <= 0)
 		w4rn("pam_mount: %s\n", "volcount is zero");
+	if (config.user == NULL) {
+                l0g("pam_mount: username not read: pam_mount not conf. for auth?\n");
+                /* do NOT return PAM_SERVICE_ERR or root will not be able
+                 * to su to other users */
+                goto _return;
+        }
 /* This code needs root priv. */
 	if (modify_pm_count(config.user, -1) <= 0)
 		/* Unmount in reverse order to facilitate nested mounting. */
@@ -510,6 +520,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 /* end root priv. */
 	freeconfig(config);
 	w4rn("pam_mount: pam_mount execution complete\n");
+_return:
 	return ret;
 }
 

@@ -3,7 +3,7 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.14
+Version: 0.9.15
 Release: %rel
 License: LGPL
 Group: System Environment/Base
@@ -12,7 +12,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-root
 Distribution: Flyn Linux
 URL: http://www.flyn.org
 Requires: pam
-BuildRequires: glib2-devel pam-devel openssl-devel
+BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel
 
 %description
 This module is aimed at environments with SMB (Samba or Windows NT) 
@@ -91,6 +91,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Mar 10 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.15-0.fdr.1
+   - Updated to pam_mount 0.9.15.
+
+   - Added zlib-devel to BuildRequires.
+
 * Tue Feb 10 2004 W. Michael Petullo <mike[@]flyn.org> - 0.9.14-0.fdr.1
    - Updated to pam_mount 0.9.14.
 

@@ -1,3 +1,10 @@
+10 March 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Added zlib-devel to RPM specification BuildRequires.
+
+	* No longer segfaults when run as session module before auth
+	module.
+
 10 February 2004 W. Michael Petullo <mike@flyn.org>
 
 	* Now installs /lib/security/pam_mount_auth.so and
