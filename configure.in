@@ -1,0 +1,47 @@
+#   FILE: configure.in -- 
+# AUTHOR: W. Michael Petullo <mike@flyn.org>
+#   DATE: 03 August 2002
+# 
+# Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
+# All rights reserved.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+
+AC_INIT(src/pam_mount.c)
+
+AM_CONFIG_HEADER(config.h)
+
+MAJOR_VERSION=0
+MINOR_VERSION=3
+MICRO_VERSION=6
+AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
+
+VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
+
+AC_SUBST(MAJOR_VERSION)
+AC_SUBST(MINOR_VERSION)
+AC_SUBST(MICRO_VERSION)
+AC_SUBST(VER_INFO)
+
+AC_PROG_CC
+AC_PROG_INSTALL
+AM_PROG_LIBTOOL
+
+AM_CONDITIONAL(FLYN, test "$FLYN")
+
+AC_CHECK_LIB(ssl, EVP_CIPHER_CTX_init)
+
+AC_OUTPUT(Makefile config/Makefile dry/Makefile include/Makefile src/Makefile dry/pam_mount.spec.new)

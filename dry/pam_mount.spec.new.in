@@ -1,0 +1,83 @@
+#   FILE: pam_mount.spec.new.in -
+# AUTHOR: W. Michael Petullo (mike@flyn.org)
+#   DATE: 03 August 2002
+# 
+# Copyright (C) 2002 W. Michael Petullo (mike@flyn.org)
+# All rights reserved.
+
+
+%define rel 1
+%define prefix /usr
+
+Summary: %(file "one_liner_wrapper.txt")
+Name: @PACKAGE@
+Version: @VERSION@
+Release: %rel
+Copyright: LGPL
+Group: System Environment/Base
+Source: %name-%{PACKAGE_VERSION}.tar.gz
+BuildRoot: /home/mike/development/live
+Packager: W. Michael Petullo <mike@flyn.org>
+Vendor: Flyn Computing
+Distribution: Flyn Linux
+URL: http://www.flyn.org
+Requires: pam
+
+# ============================= description ====================================
+%description
+%(file "overview_pam_mount.txt")
+
+# ============================= changelog ======================================
+%changelog
+
+# ============================= prep ===========================================
+%prep
+
+# ============================= setup ==========================================
+%setup
+
+# ============================= build ==========================================
+%build
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=/usr
+make
+
+# ============================= install ========================================
+%install
+mkdir -p $RPM_BUILD_ROOT/usr/bin
+
+# NOTE: The following trick only works with a modified header-vars.am.
+# Change the line ``DESTDIR ='' in this file to ``DESTDIR =
+# ${ENV_DESTDIR}.''
+export ENV_DESTDIR=$RPM_BUILD_ROOT
+make install
+
+gzip -9 AUTHORS COPYING ChangeLog INSTALL NEWS README
+
+# ============================= clean ==========================================
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+# ============================= pre ============================================
+%pre
+
+# ============================= post ===========================================
+%post
+
+# ============================= preun ==========================================
+%preun
+
+# ============================= postun =========================================
+%postun
+
+# ============================= files ==========================================
+%files
+%defattr(-, root, root)
+%{prefix}/bin/pmhelper
+/lib/security/pam_mount.so
+%config(noreplace) /etc/security/pam_mount.conf
+
+# ============================= doc ============================================
+%doc AUTHORS.gz COPYING.gz ChangeLog.gz INSTALL.gz NEWS.gz README.gz
+
+# ============================= config =========================================
+%config

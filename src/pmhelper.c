@@ -1,3 +1,4 @@
+#include <config.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
@@ -5,6 +6,9 @@
 #include <string.h>
 #include <pwd.h>
 #include <mntent.h>
+#ifdef HAVE_LIBSSL
+#include <openssl/evp.h>
+#endif /* HAVE_LIBSSL */
 #include "pam_mount.h"
 
 #include <sys/types.h>
@@ -21,6 +25,70 @@ void unmount_volume();
 
 int debug;
 
+#ifdef HAVE_LIBSSL
+int read_salt(BIO *fp, unsigned char *salt)
+{
+    char magic[8];
+    if ((BIO_read(fp, magic, sizeof magic) != sizeof magic)
+	|| (BIO_read(fp, salt, PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
+        log("pmhelper: %s", "error reading from ecrypted filesystem key");
+	return 0;
+    } else if (memcmp(magic, "Salted__", sizeof "Salted__" - 1)) {
+        log("pmhelper: %s", "magic string Salted__ not in filesystem key file");
+	return 0;
+    }
+    return 1;
+}
+#endif /* HAVE_LIBSSL */
+
+int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher, char *fs_key_path)
+{
+#ifdef HAVE_LIBSSL
+    int outlen, tmplen;
+    unsigned char ct_fs_key[BUFSIZ + 1];	/* encrypted filesystem key. */
+    unsigned char hashed_key[24];	/* The one used to encrypt filesystem 
+                                         * key --hash(system_key). */
+    BIO *fs_key_fp;
+    unsigned char salt[PKCS5_SALT_LEN];
+    unsigned char iv[MD5_DIGEST_LENGTH];
+    const EVP_CIPHER *cipher;
+    EVP_CIPHER_CTX ctx;
+
+    if (! (cipher = EVP_bf_ecb())) {
+    /* FIXME: bf-ecb does not work: if (! (cipher = EVP_get_digestbyname(fs_key_cipher))) { */
+        log("pmhelper: error getting cipher \"%s\"", fs_key_cipher);
+	return 0;
+    }
+
+    fs_key_fp = BIO_new(BIO_s_file());
+    if (BIO_read_filename(fs_key_fp, fs_key_path) <= 0) {
+        log("pmhelper: error opening %s", fs_key_path);
+	return 0;
+    }
+    if (!read_salt(fs_key_fp, salt))
+        return 0;
+    EVP_BytesToKey(cipher, EVP_md5(), salt, password, strlen(password), 1, hashed_key, iv);
+    BIO_read(fs_key_fp, ct_fs_key, BUFSIZ);
+    EVP_CIPHER_CTX_init(&ctx);
+    EVP_DecryptInit(&ctx, cipher, hashed_key, iv);
+    if (!EVP_DecryptUpdate(&ctx, pt_fs_key, &outlen, ct_fs_key, strlen(ct_fs_key))) {
+	log("pmhelper: %s", "failed to decrypt key");
+        return 0;
+    }
+    if (!EVP_DecryptFinal(&ctx, pt_fs_key + outlen, &tmplen)) {
+	log("pmhelper: %s", "failed to finish decrypting key");
+        return 0;
+    }
+    outlen += tmplen;
+    EVP_CIPHER_CTX_cleanup(&ctx);
+    w4rn("pmhelper: decrypted filesystem key is \"%s\"\n", pt_fs_key);
+    BIO_free(fs_key_fp); 
+    return 1;
+#else
+    log ("pmhelper: %s", "encrypted filesystem key not supported: no openssl");
+    return 0;
+#endif /* HAVE_LIBSSL */
+}
 
 int main(int argc, char **argv)
 {
@@ -32,6 +100,8 @@ int main(int argc, char **argv)
     int child_exit;
     int i;
 
+    w4rn("%s", "pmhelper: I am executing");
+
     bzero(&data, sizeof(data));
 
     config_signals();
@@ -42,13 +112,13 @@ int main(int argc, char **argv)
 	n = read(0, ((char *) &data) + total, sizeof(data) - total);
 	if (n <= 0) {
 	    fprintf(stderr,
-		    "\npam_mount failed to receive mount data 1\n\n");
+		    "\npmhelper: failed to receive mount data 1\n\n");
 	    return 0;
 	}
 	total += n;
     }
     if (total != sizeof(data)) {
-	fprintf(stderr, "\npam_mount failed to receive mount data 2\n\n");
+	fprintf(stderr, "\npmhelper: failed to receive mount data 2\n\n");
 	return 0;
     }
 
@@ -61,6 +131,8 @@ int main(int argc, char **argv)
     /* w4rn("pmhelper: %s", data.password); */
     w4rn("pmhelper: %s", data.volume);
     w4rn("pmhelper: %s", data.mountpoint);
+    w4rn("pmhelper: %s", data.fs_key_cipher);
+    w4rn("pmhelper: %s", data.fs_key_path);
     w4rn("pmhelper: %s", data.command);
     w4rn("%s", "pmhelper: --------");
 
@@ -70,6 +142,14 @@ int main(int argc, char **argv)
 	w4rn("%s", "pmhelper: unmounting");
 	unmount_volume();
 	return 0;
+    }
+
+    if (strlen(data.fs_key_cipher)) {
+	/* data.fs_key_path contains real filesystem key. */
+	char k[BUFSIZ + 1];
+	if (! decrypted_key(k, data.password, data.fs_key_cipher, data.fs_key_path))
+	    return 0;
+	strncpy(data.password, k, MAX_PAR + 1);
     }
 
     parg = cmdarg;

@@ -1,3 +1,17 @@
+10 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Added support for encrypted filesystem keys.
+
+	* Pam_mount.spec now uses %config(noreplace) in install
+	configuration.
+
+03 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* (Following Release 0.3.5) began using FCTK.
+
+	* Began to work on supporting filesystems that have a different
+	password than the user's login password.
+
 03 August 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Lsof now works when logging out of consoles.

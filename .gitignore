@@ -1,4 +1,20 @@
+.deps
+.libs
+*.la
+*.lo
 *.o
-*.so
+Makefile
+Makefile.in
 
-/pmhelper
+/INSTALL
+/aclocal.m4
+/autom4te.cache
+/config.*
+/configure
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+/mkinstalldirs
+/stamp-h1

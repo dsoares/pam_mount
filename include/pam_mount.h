@@ -17,10 +17,15 @@
 #define DEBUG_DEFAULT	0
 #define GETPASS_DEFAULT	0
 
+#define FS_CIPHER_NONE 0
+#define FS_CIPHER_AES  1
+
 typedef struct pm_data {
 	int unmount;
 	int debug;
 	int type;
+	char fs_key_cipher[MAX_PAR+1];
+	char fs_key_path[FILENAME_MAX+1];
 	char server[MAX_PAR+1];
 	char user[MAX_PAR+1];
 	char password[MAX_PAR+1];

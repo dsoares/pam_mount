@@ -1,3 +1,9 @@
+o Make sure pmhelper checks the return value of all openssl fns.
+
+o Fix EVP_get_cipherbyname.  Seems to expect "enc" not "bf-ecb."
+
+o Note: openssl 0.9.7 beta3 supports AES.
+
 o Get rid of FIXMEs.
 
 o Make first login create file system image?  Or make a script.  Or *add

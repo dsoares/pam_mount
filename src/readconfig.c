@@ -1,3 +1,4 @@
+#include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
@@ -325,6 +326,8 @@ void readvolume(const char *user, const char *password, int *volcount,
     char *volume;
     char *mountpoint;
     char *options;
+    char *fs_key_cipher;
+    char *fs_key_path;
     char *automount = NULL;
     char *autovolume = NULL;
     char *autooptions = NULL;
@@ -335,6 +338,8 @@ void readvolume(const char *user, const char *password, int *volcount,
     volume = strtok(NULL, "\t\n ");
     mountpoint = strtok(NULL, "\t\n ");
     options = strtok(NULL, "\t\n ");
+    fs_key_cipher = strtok(NULL, "\t\n ");
+    fs_key_path = strtok(NULL, "\t\n ");
 
     w4rn("pam_mount: fuser: %s", fuser);
     w4rn("pam_mount: user: %s", user);
@@ -343,6 +348,8 @@ void readvolume(const char *user, const char *password, int *volcount,
     w4rn("pam_mount: volume: %s", volume);
     w4rn("pam_mount: mountpoint: %s", mountpoint);
     w4rn("pam_mount: options: %s", options);
+    w4rn("pam_mount: fs_key_cipher: %s", fs_key_cipher);
+    w4rn("pam_mount: fs_key_path: %s", fs_key_path);
 
     if (strcmp(fuser, "*") == 0) {
 	if (luserconf) {
@@ -369,13 +376,19 @@ void readvolume(const char *user, const char *password, int *volcount,
 	return;
     }
 
-    if (!options) {
-	options = "";
-    } else if (strcmp(options, "-") == 0) {
+    if (strcmp(mountpoint, "-") == 0) {
+	mountpoint = "";
+    }
+    if (strcmp(options, "-") == 0) {
 	options = "";
     }
-    if (!mountpoint)
-	mountpoint = "";
+    if (strcmp(fs_key_cipher, "-") == 0) {
+	fs_key_cipher = "";
+    }
+    if (strcmp(fs_key_path, "-") == 0) {
+	fs_key_path = "";
+    }
+    w4rn("pam_mount: fs_key_path: %s", fs_key_path);
 
     /* if we have options, and this is the user config file,
        check the options against the allow/deny filter from
@@ -411,6 +424,16 @@ void readvolume(const char *user, const char *password, int *volcount,
 
     if (strlen(options) > MAX_PAR) {
 	log("%s", "pam_mount: options parameter too long");
+	return;
+    }
+
+    if (strlen(fs_key_cipher) > MAX_PAR) {
+	log("%s", "pam_mount: fs_key_cipher parameter too long");
+	return;
+    }
+
+    if (strlen(fs_key_path) > FILENAME_MAX) {
+	log("%s", "pam_mount: fs_key_path parameter too long");
 	return;
     }
 
@@ -472,6 +495,8 @@ void readvolume(const char *user, const char *password, int *volcount,
     strcpy((*data)[*volcount].volume, volume);
     strcpy((*data)[*volcount].mountpoint, mountpoint);
     strcpy((*data)[*volcount].options, options);
+    strcpy((*data)[*volcount].fs_key_cipher, fs_key_cipher);
+    strcpy((*data)[*volcount].fs_key_path, fs_key_path);
     (*data)[*volcount].debug = debug;
     strcpy((*data)[*volcount].command, command[ntype]);
     strcpy((*data)[*volcount].ucommand, command[UMOUNT]);

@@ -1,3 +1,4 @@
+#include <config.h>
 #include <security/_pam_macros.h>
 #include <security/pam_modules.h>
 #include "pam_mount.h"
