@@ -10,6 +10,7 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <security/_pam_macros.h>
 #ifdef HAVE_LIBSSL
 #include <openssl/evp.h>
@@ -258,22 +259,34 @@ int mkmountpoint(data_t data)
  *           (will be looked up in /etc/fstab if == "")
  * FN VAL: 1 is volume is mounted at mountpoint else 0 
  *           FIXME: calls exit() on error */
-int already_mounted(char *volume, char *mountpoint)
+int already_mounted(int type, char *volume, char *server, char *mountpoint)
 {
     FILE *mtab;
     struct mntent *mtab_record;
     char line[BUFSIZ + 1];
+    char match[PATH_MAX + 1];
     if (!(mtab = fopen("/etc/mtab", "r"))) {
 	log("pmhelper: %s\n", "could not open /etc/mtab");
 	exit(EXIT_FAILURE);
     }
+    if (type == SMBMOUNT) {
+	strcpy(match, "//");
+	strncat(match, server, PATH_MAX - strlen(match));	/* FIXME: ensure server is not NULL w/ SMBMONT?  What about terminating NULL? */
+	strncat(match, "/", PATH_MAX - strlen(match));
+	strncat(match, volume, PATH_MAX - strlen(match));
+    } else if (type == NCPMOUNT) {
+	/* FIXME */
+    } else {
+	strncpy(match, volume, PATH_MAX);
+    }
     mtab_record = getmntent(mtab);
-    while (mtab_record && strcmp(mtab_record->mnt_fsname, volume))
+    w4rn("pmhelper: checking to see if %s is already mounted\n", match);
+    while (mtab_record && strcmp(mtab_record->mnt_fsname, match))
 	mtab_record = getmntent(mtab);
     return mtab_record ? !strcmp(mtab_record->mnt_dir, mountpoint) : 0;
 }
 
-/* ============================ add_to_argv () ============================= */ 
+/* ============================ add_to_argv () ============================= */
 /* PRE:  argv points to an array of MAX_PAR + 1 char *s (incl. term. 0x00)
  *       argc points to the current number of entries in argv
  *       arg points to a valid string != NULL
@@ -284,7 +297,7 @@ int already_mounted(char *volume, char *mountpoint)
 void add_to_argv(char *argv[], int *argc, char *arg)
 {
     if (*argc == MAX_PAR) {
-        log("pmhelper: %s\n", "too many arguments to mount command");
+	log("pmhelper: %s\n", "too many arguments to mount command");
 	exit(EXIT_FAILURE);
     }
     argv[(*argc)++] = arg;
@@ -332,7 +345,7 @@ int main(int argc, char **argv)
 	mntpt_from_fstab = 1;
     }
     while (strlen(data.argv[_argc]))
-	add_to_argv(_argv, &_argc,  data.argv[_argc]);
+	add_to_argv(_argv, &_argc, data.argv[_argc]);
     w4rn("pmhelper: %s\n", "received");
     w4rn("pmhelper: %s\n", "--------");
     /* w4rn("pmhelper: %s\n", data.password); */
@@ -362,7 +375,7 @@ int main(int argc, char **argv)
 	    exit(EXIT_FAILURE);
     }
 
-    if (already_mounted(data.volume, data.mountpoint)) {
+    if (already_mounted(data.type, data.volume, data.server, data.mountpoint)) {
 	log("pmhelper: %s already seems to be mounted, skipping\n",
 	    data.volume);
 	exit(EXIT_SUCCESS);	/* success so try_first_pass does not try again */
@@ -400,7 +413,7 @@ int main(int argc, char **argv)
 	add_to_argv(_argv, &_argc, data.volume);
 	add_to_argv(_argv, &_argc, data.mountpoint);
     } else if (data.type == SMBMOUNT) {
-	char *tmp; /* FIXME: never freed */
+	char *tmp;		/* FIXME: never freed */
 	w4rn("pmhelper: %s\n", "mount type is SMBMOUNT");
 	asprintf(&tmp, "//%s/%s", data.server, data.volume);
 	add_to_argv(_argv, &_argc, tmp);
@@ -459,7 +472,7 @@ int main(int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
     if (!(data.type == SMBMOUNT || data.type == NCPMOUNT)) {
-        /* SMBMOUNT and NCPMOUNT use env. var. PASSWD code above */
+	/* SMBMOUNT and NCPMOUNT use env. var. PASSWD code above */
 	write(fds[1], data.password, strlen(data.password) + 1);
 	close(fds[0]);
 	close(fds[1]);

@@ -1,3 +1,9 @@
+13 November 2002 W. Michael Petullo <mike@flyn.org>
+
+	* When checking if a volume is already mounted, pmhelper now
+	constructs correct string for SMBMOUNT type.  NCPMOUNT still
+	needs to be fixed.
+
 10 November 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Pmhelper now uses env. var. PASSWD to give ncpmount a password.
