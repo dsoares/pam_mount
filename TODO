@@ -1,33 +1,21 @@
 = For Next Fedora Release =====================================================
 
-o NO MORE SIGCHLD!
+o see RELEASE_CHECKLIST
+
+= For 1.0 =====================================================================
+
+o test account hangs when logging into GNOME.
+
+o /home/test will not unmount.
+
+o get test account working with patched mount and remove "crypt" type support.
+	- see FIXME: ugly hack...
+	- ensure "check for existing mount works with patched mount
+
+o passwdehd needs work.
 
 o make a test system that takes XML and creates  pam_mount.conf, images,
 efsk's, mnt points and check script.
-
-o email cryptsetup guy (see email) about new release.
-
-o release announcement:
-This release focuses on:
-
-1.  Bug fixes (see pam_mount's ChangeLog).
-
-2.  Initial support for the newish dm_crypt encrypted filesystem facility
-(see the new mount.crypt/umount.crypt scripts and pam_mount.conf's crypt
-filesystem type keyword).
-
-3.  Provides the start of an SELinux policy.  This, in turn, has three
-major issues:
-
-	a) The policy may be too permissive.
-
-	b) A standard for RPM-specific policy installation has not yet
-	been documented (ie: %post scripts that process the policy,
-	set contexts on installed files, etc.).  I hope to force this
-	issue during the QA process of this project.
-
-	c) Does not work with pam_selinux, see
-	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=121650.
 
 %if %{?WITH_SELINUX:0}%{!?WITH_SELINUX:1}
 %define WITH_SELINUX 1
@@ -46,11 +34,6 @@ BuildRequires: libselinux-devel
 o scrub pam_mount.conf
 
 o add shfs support
-
-o get working with SELinux.
-	- ensure su - test mounts AND unmounts all volumes (see RH Bug)
-
-o see RELEASE_CHECKLIST
 
 o finish .*_valid invariants.
 
@@ -71,8 +54,6 @@ o replace PRE, POST and FN VAL conditions with asserts in code where applicable
 	- pam_mount.c
 	- mount.c
 	- pmvarrun.c
-
-= For 1.0 =====================================================================
 
 - Description is a bit longish - certainly not showstopper but it might be
 better to give a brief description there and perhaps refer to some README in the

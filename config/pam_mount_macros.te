@@ -18,7 +18,7 @@ allow $2_t user_home_t:file { getattr read };
 allow $2_t user_home_t:dir { search getattr };
 allow $2_t user_home_dir_t:dir { search getattr };
 
-# for lsof, etc: (causes assertion to fail):
+# for lsof, etc: VIOLATES ASSERTION
 # can_exec($2_t, sbin_t)
 
 allow $2_t default_t:file { getattr read };
@@ -27,7 +27,7 @@ allow $2_t default_t:file { getattr read };
 role $1_r types mount_t;
 domain_auto_trans($2_t, mount_exec_t, mount_t)
 
-# allow the proper execution of losetup:
+# allow the proper execution of losetup and fsck:
 role $1_r types fsadm_t;
 domain_auto_trans($2_t, fsadm_exec_t, fsadm_t)
 ')
@@ -49,6 +49,9 @@ allow pam_mount_t var_run_t:file { create getattr setattr read write lock unlink
 allow pam_mount_t pam_mount_t:unix_dgram_socket { create connect write };
 allow pam_mount_t pam_mount_t:capability { chown fsetid };
 
+# allow fsck to remove /etc/blkid.tab.old VIOLATES ASSETION
+# allow fsadm_t etc_t:file { unlink };
+
 # allow users to mount volumes within and as their home directory:
 allow mount_t user_home_t:dir { mounton getattr };
 allow mount_t user_home_dir_t:dir { getattr mounton };
@@ -56,45 +59,42 @@ allow mount_t user_home_dir_t:dir { getattr mounton };
 # allow users to losetup in home directory:
 allow fsadm_t user_home_t:dir { search };
 allow fsadm_t user_home_t:file { read write };
-# so that losetup may read password from stdin: ???
+
+# so that losetup may read password from stdin:
 allow fsadm_t user_devpts_t:chr_file { read write };
 
 # allow users to mount images in their home directory:
 allow mount_t user_home_t:file { getattr read write };
 
-# FIXME: from here down is an ugly hack to support umount.crypt script.  
-# I hope that util-linux will have native dm_crypt support some day
-allow mount_t selinux_config_t:file { read getattr };
-allow mount_t mount_t:capability { setuid setgid mknod };
-allow mount_t mount_exec_t:file { execute_no_trans };
-allow mount_t shell_exec_t:file { execute read };
-allow mount_t devtty_t:chr_file { read write };
-allow mount_t user_tty_device_t:chr_file { read write };
-allow mount_t devpts_t:dir { search };
-allow mount_t user_home_t:dir { getattr };
-allow mount_t mount_t:fifo_file { getattr read write };
-allow mount_t mount_t:dir { search };
-allow mount_t mount_t:file { getattr read };
-allow mount_t bin_t:file { getattr execute execute_no_trans read };
-
-# for awk->gawk symlink (used in umount.crypt)
-allow mount_t bin_t:lnk_file { read };
-allow mount_t mount_t:fifo_file { ioctl };
-
+# ============================= Should be move to elsewhere once util-linux ===
+# ============================= is patched: ===================================
+# allow reading of /proc/mounts link
 allow mount_t proc_t:lnk_file { read };
 
 # manipulate /dev/mapper/control:
 allow mount_t lvm_control_t:chr_file { read write ioctl };
-# allow mount_t device_t:chr_file { read write ioctl };
+allow mount_t device_t:chr_file { read write ioctl };
 
 # create a device within /dev/mapper:
 allow mount_t device_t:dir { write add_name remove_name };
 allow mount_t device_t:blk_file { create unlink getattr read };
 
-allow mount_t policy_config_t:file { getattr read };
+# allow mount to read password from parent process:
+allow mount_t user_devpts_t:chr_file { read write getattr };
+
+# allow mount to create /dev/mapper device
+allow mount_t mount_t:capability { mknod };
+
+# allow mount to look up and set proper context of new /dev/mapper device:
+allow mount_t file_context_t:file { read getattr };
 allow mount_t security_t:dir { search };
 allow mount_t security_t:file { read write };
 allow mount_t security_t:security { check_context };
 allow mount_t device_t:blk_file { relabelfrom };
-# FIXME: this seems to not work:
 allow mount_t fixed_disk_device_t:blk_file { relabelto unlink };
+
+# not sure yet why these are needed:
+allow mount_t selinux_config_t:file { read getattr };
+allow mount_t mount_t:dir { search };
+allow mount_t mount_t:file { getattr read };
+# ============================================================================= 

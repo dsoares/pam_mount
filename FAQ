@@ -193,5 +193,11 @@ Encrypted filesystems keys should generally have the context of user_home_t.
 If you wish to mount user-owned loopback filesystem images then these
 images must have their file context set to user_home_t.
 
-Because it changes the context of processes like login and su, pam_selinux
-must be invoked after pam_mount.
+Because it changes the context of child processes of things like login
+and su, pam_selinux must be invoked after pam_mount on login.  Because
+this affect on contexts must be reversed before pam_mount, pam_selinux
+must be invoked before pam_mount on logout:
+
+session    required     /lib/security/$ISA/pam_selinux.so close
+session    required     /lib/security/$ISA/pam_mount.so
+session    required     /lib/security/$ISA/pam_selinux.so open multiple

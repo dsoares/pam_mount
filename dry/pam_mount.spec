@@ -2,7 +2,7 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.19
+Version: 0.9.20
 Release: %rel
 License: LGPL
 Group: System Environment/Base

@@ -1,3 +1,14 @@
+21 July 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Now ignore SIGPIPE when writing .  This fixes problem with
+	mount process dying before password is written.
+
+	* properly wait for child processes even when write to pipe fails.
+
+13 July 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Fixes for behavior when mounting CIFS (thanks Scott Barker).
+
 02 July 2004 W. Michael Petullo <mike@flyn.org>
 
 	* Fix usage of GError.

@@ -66,7 +66,7 @@ static pm_command_t command[] = {
 	 * example
 	 */
 	{MNTCHECK, NULL, "mntcheck", {"/bin/mount", NULL}},
-	{FSCK, NULL, "fsck", {"/sbin/fsck", "-p", "%(FSCKLOOP)", NULL}},
+	{FSCK, NULL, "fsck", {"/sbin/fsck", "-p", "%(FSCKTARGET)", NULL}},
 	{LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e \" CIPHER)", "%(before=\"-k \" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
 	{UNLOSETUP, NULL, "unlosetup", {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
 	{PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
