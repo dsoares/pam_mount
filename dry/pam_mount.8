@@ -16,13 +16,18 @@ but has since been modified to work on several flavors of BSD.
 
 
  o Every user can access his own volumes
+
  o The user needs to type the password just once (at login)
+
  o The mounting process is transparent to the users
+
  o There is no need to keep the login passwords in any additional file
+
  o The volumes are unmounted upon logout, so it saves system resources, 
  avoiding the need of listing every every possibly useful remote 
  volume in /etc/fstab or in an automount/supermount config file. This 
  is also necessary for securing encrypted filesystems.
+
 .PP
 
 Pam_mount "understands" SMB, NCP, and any type of filesystem that can
@@ -84,13 +89,13 @@ session optional    pam_mount.so
 This allows the following:
 
 
- o Pam_mount will prompt for a password and export it to the PAM system.
+ 1. Pam_mount will prompt for a password and export it to the PAM system.
 
- o Pam_ldap will use the password from the PAM system to try and 
+ 2. Pam_ldap will use the password from the PAM system to try and 
  authenticate the user. If this succedes, the user will be 
  authenticated. If it fails, pam_unix will try to authenticate.
 
- o Pam_unix will try to authenticate the user if pam_ldap fails. If 
+ 3. Pam_unix will try to authenticate the user if pam_ldap fails. If 
  pam_unix fails, then the authentication will be refused.
 
 .PP
@@ -193,4 +198,6 @@ http://platan.vc.cvut.cz/ftp/private/ncpfs/ncpfs-2.2.0.19.10.tar.gz
 .
 
 
+.SH AUTHORS
+.PP
 W. Michael Petullo <mike@flyn.org>

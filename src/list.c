@@ -11,29 +11,31 @@
 /* ============================ list_init () =============================== */
 void list_init(list_t * list, void (*destroy) (void *data))
 {
-    list->size = 0;
-    list->destroy = destroy;
-    list->head = NULL;
-    list->tail = NULL;
+	list->size = 0;
+	list->destroy = destroy;
+	list->head = NULL;
+	list->tail = NULL;
 }
 
 /* ============================ list_destroy () ============================ */
 void list_destroy(list_t * list)
 {
-    void *data;
-    while (list_size(list) > 0) {
-	if (list_rem_next(list, NULL, (void **) &data) == 0
-	    && list->destroy != NULL)
-	    list->destroy(data);
-    }
-    memset(list, 0, sizeof(list_t));
+	void *data;
+	while (list_size(list) > 0) {
+		if (list_rem_next(list, NULL, (void **) &data) == 0
+		    && list->destroy != NULL)
+			list->destroy(data);
+	}
+	memset(list, 0, sizeof(list_t));
 }
 
-/* ============================ list_ins_next () =========================== */ 
-int list_ins_next (list_t *list, list_element_t *element, const void *data)
+/* ============================ list_ins_next () =========================== */
+int list_ins_next(list_t * list, list_element_t * element,
+		  const void *data)
 {
 	list_element_t *new_element;
-	if ((new_element = (list_element_t *) malloc (sizeof (list_element_t))) == NULL)
+	if ((new_element =
+	     (list_element_t *) malloc(sizeof(list_element_t))) == NULL)
 		return -1;
 	new_element->data = (void *) data;
 	if (element == NULL) {
@@ -51,8 +53,8 @@ int list_ins_next (list_t *list, list_element_t *element, const void *data)
 	return 0;
 }
 
-/* ============================ list_rem_next () =========================== */ 
-int list_rem_next (list_t *list, list_element_t *element, void **data)
+/* ============================ list_rem_next () =========================== */
+int list_rem_next(list_t * list, list_element_t * element, void **data)
 {
 	list_element_t *old_element;
 	if (list_size(list) == 0)

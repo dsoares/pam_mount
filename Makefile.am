@@ -27,7 +27,7 @@ endif
 
 AUTOMAKE_OPTIONS = gnu
 
-EXTRA_DIST = README_DEBIAN README_SSHD autogen.sh
+EXTRA_DIST = README_DEBIAN README_REDHAT README_SSHD autogen.sh
 
 SUBDIRS = src include config scripts dry debian 
 

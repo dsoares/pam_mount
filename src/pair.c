@@ -26,21 +26,22 @@
 
 /* ========================== pair_init () ================================== */
 void pair_init(pair_t * pair, void *key, void *val,
-	       void (*destroy_k) (void *key), void (*destroy_v) (void *val))
+	       void (*destroy_k) (void *key),
+	       void (*destroy_v) (void *val))
 {
-    pair->key = key;
-    pair->val = val;
-    pair->destroy_k = destroy_k;
-    pair->destroy_v = destroy_v;
+	pair->key = key;
+	pair->val = val;
+	pair->destroy_k = destroy_k;
+	pair->destroy_v = destroy_v;
 }
 
 /* ========================== pair_destroy () =============================== */
-void pair_destroy(void * pair)
+void pair_destroy(void *pair)
 {
-    if (((pair_t *)pair)->destroy_k)
-	((pair_t *)pair)->destroy_k(((pair_t *)pair)->key);
-    if (((pair_t *)pair)->destroy_v)
-	((pair_t *)pair)->destroy_v(((pair_t *)pair)->val);
-    memset(pair, 0, sizeof(pair_t));
-    free(pair);
+	if (((pair_t *) pair)->destroy_k)
+		((pair_t *) pair)->destroy_k(((pair_t *) pair)->key);
+	if (((pair_t *) pair)->destroy_v)
+		((pair_t *) pair)->destroy_v(((pair_t *) pair)->val);
+	memset(pair, 0, sizeof(pair_t));
+	free(pair);
 }

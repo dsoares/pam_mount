@@ -27,18 +27,19 @@
 extern "C" {
 #endif
 /* ========================== pair_t ======================================== */ typedef struct pair_t {
-	void *key;
-	void *val;
-	void (*destroy_k) (void *k);
-	void (*destroy_v) (void *v);
-    } pair_t;
+		void *key;
+		void *val;
+		void (*destroy_k) (void *k);
+		void (*destroy_v) (void *v);
+	} pair_t;
 
 /* ========================== pair_init () ================================== */
-    void pair_init(pair_t * pair, void *key, void *val,
-		   void (*destroy_k) (void *key), void (*destroy_v) (void *val));
+	void pair_init(pair_t * pair, void *key, void *val,
+		       void (*destroy_k) (void *key),
+		       void (*destroy_v) (void *val));
 
 /* ========================== pair_destroy () =============================== */
-    void pair_destroy(void * pair);
+	void pair_destroy(void *pair);
 
 #ifdef __cplusplus
 }

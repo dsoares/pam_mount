@@ -49,7 +49,7 @@ static int _parse_opt(const char *str, size_t len, optlist_t * optlist)
 	if (len > MAX_PAR || len <= 0)
 		return 0;
 	pair = (pair_t *) malloc(sizeof(pair_t));
-	key = malloc(sizeof(char) * len);
+	key = malloc(sizeof(char) * len + 1);
 	val = malloc(1);
 	if (!pair || !key || !val)
 		return 0;
@@ -90,7 +90,7 @@ int str_to_optlist(optlist_t * optlist, const char *str)
  *         str points to a valid string
  * FN VAL: if optlist[str] exists 1 else 0
  */
-int optlist_exists(const optlist_t *optlist, const char *str)
+int optlist_exists(const optlist_t * optlist, const char *str)
 {
 	optlist_element_t *ptr = optlist_head(optlist);
 	do {
@@ -105,7 +105,7 @@ int optlist_exists(const optlist_t *optlist, const char *str)
  *         str points to a valid string
  * FN VAL: optlist[str] ("" if no value) else NULL
  */
-char *optlist_value(const optlist_t *optlist, const char *str)
+char *optlist_value(const optlist_t * optlist, const char *str)
 {
 	optlist_element_t *ptr = optlist_head(optlist);
 	do {
@@ -121,7 +121,7 @@ char *optlist_value(const optlist_t *optlist, const char *str)
  *         optlist points a valid optlist_t
  * FN VAL: string encapsulating optlist
  */
-char *optlist_to_str(char *str, const optlist_t *optlist)
+char *optlist_to_str(char *str, const optlist_t * optlist)
 {
 	optlist_element_t *ptr = optlist_head(optlist);
 	*str = 0x00;

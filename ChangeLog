@@ -1,3 +1,13 @@
+4 September 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Some changes to the project's RPM specification.
+
+	* Fixed expand_home (thanks Peter Astrand).
+
+	* Fixed two off-by-one errors (thanks Peter Astrand).
+
+	* errors (thanks Peter Astrand).
+
 15 August 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Finished migrating mount.c to execv.

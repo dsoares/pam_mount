@@ -17,6 +17,9 @@
 #include <limits.h>
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/evp.h>
+#ifndef EVP_MAX_BLOCK_LENGTH
+#define EVP_MAX_BLOCK_LENGTH 32	/* some older openssl versions need this */
+#endif
 #endif				/* HAVE_LIBCRYPTO */
 #include <pam_mount.h>
 #include <libgen.h>
@@ -171,7 +174,7 @@ static void run_lsof(const struct config_t *config, const int vol)
 {
 	int fds[2];
 	pid_t pid;
-	if (! config->command[0][LSOF])
+	if (!config->command[0][LSOF])
 		l0g("pam_mount: lsof not defined in pam_mount.conf\n");
 	PIPE(fds);
 	if ((pid = fork()) < 0) {
@@ -187,7 +190,8 @@ static void run_lsof(const struct config_t *config, const int vol)
 			while (config->command[_argc][LSOF])
 				add_to_argv(_argv, &_argc,
 					    config->command[_argc][LSOF]);
-			add_to_argv(_argv, &_argc, config->volume[vol].mountpoint);
+			add_to_argv(_argv, &_argc,
+				    config->volume[vol].mountpoint);
 			execv(_argv[0], &_argv[1]);
 			l0g("pam_mount: error running %s: %s\n",
 			    config->command[0][LSOF], strerror(errno));
@@ -340,7 +344,7 @@ static int already_mounted(struct config_t *config, const int vol,
 	 * FIXME: I'm not overly fond of using mount, but BSD has no
 	 * /etc/mtab?
 	 */
-	if (! config->command[0][MNTCHECK]) {
+	if (!config->command[0][MNTCHECK]) {
 		l0g("pam_mount: mntcheck not defined in pam_mount.conf\n");
 		return -1;
 	}
@@ -358,7 +362,8 @@ static int already_mounted(struct config_t *config, const int vol,
 			CLOSE(fds[0]);
 			while (config->command[_argc][MNTCHECK])
 				add_to_argv(_argv, &_argc,
-					    config->command[_argc][MNTCHECK]);
+					    config->
+					    command[_argc][MNTCHECK]);
 			execv(_argv[0], &_argv[1]);
 			l0g("pam_mount: error running %s: %s\n",
 			    config->command[0][MNTCHECK], strerror(errno));
@@ -541,7 +546,7 @@ do_unmount(struct config_t *config, const int vol, const char *password,
 {
 	int child_exit;
 	pid_t pid = -1;
-	if (! config->command[0][UMOUNT]) {
+	if (!config->command[0][UMOUNT]) {
 		l0g("pam_mount: umount not defined in pam_mount.conf\n");
 		return 0;
 	}
@@ -559,7 +564,8 @@ do_unmount(struct config_t *config, const int vol, const char *password,
 		int _argc = 0;
 		char *_argv[MAX_PAR + 1];
 		while (config->command[_argc][UMOUNT])
-			add_to_argv(_argv, &_argc, config->command[_argc][UMOUNT]);
+			add_to_argv(_argv, &_argc,
+				    config->command[_argc][UMOUNT]);
 		/* Need to unmount mount point not volume to support SMB mounts, etc. */
 		add_to_argv(_argv, &_argc, config->volume[vol].mountpoint);
 		exec_unmount_volume(_argv);
@@ -594,7 +600,7 @@ do_losetup(struct config_t *config, const int vol,
 	    optlist_value(&config->volume[vol].options, "encryption");
 	char *keybits =
 	    optlist_value(&config->volume[vol].options, "keybits");
-	if (! config->command[0][LOSETUP]) {
+	if (!config->command[0][LOSETUP]) {
 		l0g("pam_mount: losetup not defined in pam_mount.conf\n");
 		return 0;
 	}
@@ -652,7 +658,7 @@ int do_unlosetup(struct config_t *config)
 {
 	pid_t pid;
 	int child_exit;
-	if (! config->command[0][UNLOSETUP]) {
+	if (!config->command[0][UNLOSETUP]) {
 		l0g("pam_mount: unlosetup not defined in pam_mount.conf\n");
 		return 0;
 	}
@@ -697,7 +703,7 @@ check_filesystem(struct config_t *config, const int vol,
 	int child_exit;
 	char *fsck_target =
 	    config->volume[vol].volume, options[MAX_PAR + 1];
-	if (! config->command[0][FSCK]) {
+	if (!config->command[0][FSCK]) {
 		l0g("pam_mount: fsck not defined in pam_mount.conf\n");
 		return 0;
 	}
@@ -733,7 +739,8 @@ check_filesystem(struct config_t *config, const int vol,
 			return 0;
 	/* pass on through the result -- okay if 0 (no errors) 
 	 * or 1 (errors corrected) */
-	return (WEXITSTATUS(child_exit) == 0 || WEXITSTATUS(child_exit) == 1);
+	return (WEXITSTATUS(child_exit) == 0
+		|| WEXITSTATUS(child_exit) == 1);
 #else
 	l0g("pam_mount: %s\n",
 	    "checking filesystem not implemented on arch.");
@@ -783,7 +790,7 @@ do_mount(struct config_t *config, const int vol, const char *password,
 			return 0;
 		}
 	if (mount_again) {
-		if (! config->command[0][MNTAGAIN]) {
+		if (!config->command[0][MNTAGAIN]) {
 			l0g("pam_mount: mntagain not defined in pam_mount.conf\n");
 			return 0;
 		}
@@ -795,14 +802,16 @@ do_mount(struct config_t *config, const int vol, const char *password,
 			/* This is the child */
 			while (config->command[_argc][MNTAGAIN])
 				add_to_argv(_argv, &_argc,
-					    config->command[_argc][MNTAGAIN]);
+					    config->
+					    command[_argc][MNTAGAIN]);
 			add_to_argv(_argv, &_argc, prev_mntpt);
-			add_to_argv(_argv, &_argc, config->volume[vol].mountpoint);
+			add_to_argv(_argv, &_argc,
+				    config->volume[vol].mountpoint);
 			exec_mount_volume_again(_argv);
 			exit(EXIT_FAILURE);
 		}
 	} else {
-		if (! config->command[0][config->volume[vol].type]) {
+		if (!config->command[0][config->volume[vol].type]) {
 			l0g("pam_mount: proper mount command not defined in pam_mount.conf\n");
 			return 0;
 		}

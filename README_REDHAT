@@ -1,0 +1,25 @@
+Peter Astrand says:
+
+RedHat uses a patched version of OpenSSH, which always starts off
+with calling PAM with bogus auth info. The idea is that successful
+logins should take the same amount of time as unsuccessful logins. See
+https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=101157. The problem
+is that pam_mount catches the first (empty) password, and not the real
+one. Thus, the mount fails.
+                                                                                
+I've found a solution to this problem: I've rearranged my system-auth
+file like this:
+
+auth  optional    /lib/security/pam_mount.so
+auth  required    /lib/security/pam_env.so
+auth  sufficient  /lib/security/pam_unix.so likeauth nullok use_first_pass
+auth  required    /lib/security/pam_deny.so
+
+Also, The smbmount program is unstable on RedHat 9: It hangs most of
+the time.  This is due to NPTL. The solution is to add a mount wrapper
+called mount.smbfs_no_nptl, and change pam_mount.conf to:
+                                                                                
+smbmount /bin/mount -t smbfs_no_nptl
+
+See https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=103200 for
+details. 

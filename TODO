@@ -1,5 +1,35 @@
 = For 1.0 =====================================================================
 
+There might be additional off-by-one errors. For example, Valgrind says:
+
+==9995== Source and destination overlap in strncpy(0x416965c0, 0x41696580,
+128)
+==9995==    at 0x400227E2: strncpy (mac_replace_strmem.c:95)
+==9995==    by 0x41A00F2F: read_command (readconfig.c:181)
+==9995==    by 0x41A02C1D: dotconf_invoke_command (dotconf.c:366)
+==9995==    by 0x41A0353B: dotconf_handle_command (dotconf.c:656)
+Maybe you should consider switching to the BSD strlcpy and strlcat
+(http://www.dwheeler.com/secure-programs/Secure-Programs-HOWTO/library-c.html#ST+RLCPY).
+
+o I think the exec() handling is very ugly. Currently, it is done by:
+execv(_argv[0], &_argv[1]);
+This is not how things are done, normally. I would do:
+execv(_argv[0], argv)
+One problem with the current approach is that the log_argv output is very
+confusing:
+pam_mount: command: /bin/mount mount -t smbfs ...
+
+o pam_mount does not catch & report the output of the mount commands. This
+makes debugging much harder.
+
+o Fix RPM spec file (see emails)?
+
+o fix login blocking umount problem.
+
+o fix gdm blocking umount problem.
+
+o Don't run fsck.ext2 on an ext3!
+
 o Mention cryptoswap/tmp in documentation for ehd.
 
 o Need to encrypt /tmp, etc. like swap?

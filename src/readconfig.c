@@ -397,11 +397,11 @@ static DOTCONF_CB(read_luserconf)
 static DOTCONF_CB(read_fsckloop)
 {
 	if (!*((int *) cmd->context))
-		return
-		    "pam_mount: tried to set fsckloop from user config";
+		return "pam_mount: tried to set fsckloop from user config";
 	if (strlen(cmd->data.str) > PATH_MAX)
 		return "pam_mount: fsckloop path too long";
-	strncpy(((config_t *) cmd->option->info)->fsckloop, cmd->data.str, PATH_MAX);
+	strncpy(((config_t *) cmd->option->info)->fsckloop, cmd->data.str,
+		PATH_MAX);
 	((config_t *) cmd->option->info)->fsckloop[PATH_MAX] = 0x00;
 	return NULL;
 }
@@ -633,7 +633,7 @@ int initconfig(config_t * config)
 	config->volcount = 0;
 	config->debug = DEBUG_DEFAULT;
 	config->mkmountpoint = MKMOUNTPOINT_DEFAULT;
-	strcpy (config->fsckloop, FSCKLOOP_DEFAULT);
+	strcpy(config->fsckloop, FSCKLOOP_DEFAULT);
 	for (i = 0; i < COMMAND_MAX; i++)
 		config->command[0][i] = 0x00;
 	return 1;
@@ -664,26 +664,34 @@ static char *expand_home(char *path, size_t path_size, const char *user)
 {
 	size_t seg_len;
 	struct passwd *p = getpwnam(user);
+	char *src;
+	if (! (src = strdup (path))) {
+		l0g("pam_mount: error allocating memory to expand home\n");
+		return NULL;
+	}
 	if (p) {
 		/* - 1 because ~ is dropped from str */
-		if ((seg_len = strlen(p->pw_dir) + strlen(path) - 1) < path_size) {
+		if ((seg_len =
+		     strlen(p->pw_dir) + strlen(src) - 1) < path_size) {
 			strcpy(path, p->pw_dir);
-			strcat(path, path + 1);
+			strcat(path, src + 1); /* skip leading '~' */
 		} else {
-			l0g("pam_mount %s\n",
-			    "destination string to short");
+			l0g("pam_mount: destination string to short\n");
+			free (src);
 			return NULL;
 		}
 	} else {
 		l0g("pam_mount: could not look up account information for %s", user);
+		free (src);
 		return NULL;
 	}
+	free (src);
 	return path;
 }
 
 /* ============================ expand_wildcard () ========================= */
 /* PRE:    dest points to a valid string
- *         dest_len = sizeof(dest)
+ *         dest_size = sizeof(dest)
  *         str points to the string to expand (must contain at least one &)
  *         user is the username to expand to
  * FN VAL: str with any &s expanded into user or NULL on error */
@@ -697,7 +705,7 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 		l0g("pam_mount %s\n", "tried to expand a NULL");
 		return NULL;
 	}
-	if (!(src = strdup (str))) {
+	if (!(src = strdup(str))) {
 		l0g("pam_mount %s\n", "ran out of memory");
 		return NULL;
 	};
@@ -710,21 +718,23 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 			strcpy(dest, src);
 			strcpy(dest + seg_len, user);
 			if (!expand_wildcard
-			    (dest + seg_len + strlen(user), dest_size - seg_len - strlen(user), src + seg_len + 1, user)) {
-				free (src);
+			    (dest + seg_len + strlen(user),
+			     dest_size - seg_len - strlen(user),
+			     src + seg_len + 1, user)) {
+				free(src);
 				return NULL;
 			}
 		} else {
 			l0g("pam_mount %s\n",
 			    "destination string to short");
-			free (src);
+			free(src);
 			return NULL;
 		}
 	} else {
 		strncpy(dest, src, dest_size);
-		dest[dest_size] = 0x00;
+		dest[dest_size - 1] = 0x00;
 	}
-	free (src);
+	free(src);
 	return (dest);
 }
 
@@ -738,9 +748,22 @@ int expandconfig(config_t * config)
 	for (i = 0; i < config->volcount; i++) {
 		char tmp[MAX_PAR + 1];
 		if (*config->volume[i].mountpoint == '~')
-			if (!  expand_home(config->volume[i].
-					 mountpoint, sizeof(config->volume[i].
-                                         mountpoint), config->user))
+			if (!expand_home(config->volume[i].
+					 mountpoint,
+					 sizeof(config->volume[i].
+						mountpoint), config->user))
+				return 0;
+		if (*config->volume[i].volume == '~')
+			if (!expand_home(config->volume[i].
+					 volume,
+					 sizeof(config->volume[i].
+						volume), config->user))
+				return 0;
+		if (*config->volume[i].fs_key_path == '~')
+			if (!expand_home(config->volume[i].
+					 fs_key_path,
+					 sizeof(config->volume[i].
+						fs_key_path), config->user))
 				return 0;
 		if (!strcmp(config->volume[i].user, "*")) {
 			optlist_element_t *e;
@@ -759,12 +782,14 @@ int expandconfig(config_t * config)
 				return 0;
 			for (e = optlist_head(&config->volume[i].options);
 			     e; e = optlist_next(e)) {
-				if (! expand_wildcard(tmp, sizeof(tmp), optlist_key(e),
-						     config->user))
+				if (!expand_wildcard
+				    (tmp, sizeof(tmp), optlist_key(e),
+				     config->user))
 					return 0;
 				optlist_key(e) = strdup(tmp);
-				if (! expand_wildcard(tmp, sizeof(tmp), optlist_val(e),
-						     config->user))
+				if (!expand_wildcard
+				    (tmp, sizeof(tmp), optlist_val(e),
+				     config->user))
 					return 0;
 				optlist_val(e) = strdup(tmp);
 			}
