@@ -1,14 +1,8 @@
 = For 1.0 =====================================================================
 
-o /etc/fctk/config.mk's false does not cause make to stop.
+o Automate debian/changelog because it determines the version of deb package.
 
 o See Debain patch that fixes security flaw (?).
-
-o Finish rpm spec (see fctk TODO)
-
-o Why does pam_mount not work with ssh?
-	Because of privelege separation?  Supposively this breaks pam
-	code that needs to be root.
 
 o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
 	I HAVE REPORTS THAT IT WORKS NOW

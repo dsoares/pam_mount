@@ -607,6 +607,7 @@ expand_wildcard(const char *str, const char *user)
 	char           *pos;
 	w4rn("pam_mount: expand_wildcard for %s\n", str);
 	if (str == NULL) {
+		l0g("pam_mount %s\n", "tried to expand a NULL");
 		return NULL;
 	}
 	pos = strchr(str, '&');
@@ -623,9 +624,12 @@ expand_wildcard(const char *str, const char *user)
 				free(result);
 				result = next;
 			}
-		} else
+		} else {
 			l0g("pam_mount %s\n", "error allocating memory");
-	}
+			return NULL;
+		}
+	} else
+		result = strdup (str);
 	return (result);
 }
 
@@ -643,11 +647,12 @@ expandconfig(config_t * config)
 			if ((tmp = expand_home(config->volume[i].mountpoint, config->user))) {
 				strncpy(config->volume[i].mountpoint, tmp, FILENAME_MAX + 1);
 				free(tmp);
-			} else
+			} else 
 				return 0;
 		}
 		if (!strcmp(config->volume[i].user, "*")) {
 			strcpy(config->volume[i].user, config->user);
+
 			if ((tmp = expand_wildcard(config->volume[i].volume, config->user))) {
 				strncpy(config->volume[i].volume, tmp, MAX_PAR + 1);
 				free(tmp);
@@ -660,6 +665,11 @@ expandconfig(config_t * config)
 				return 0;
 			if ((tmp = expand_wildcard(config->volume[i].options, config->user))) {
 				strncpy(config->volume[i].options, tmp, MAX_PAR + 1);
+				free(tmp);
+			} else
+				return 0;
+			if ((tmp = expand_wildcard(config->volume[i].fs_key_path, config->user))) {
+				strncpy(config->volume[i].fs_key_path, tmp, FILENAME_MAX + 1);
 				free(tmp);
 			} else
 				return 0;

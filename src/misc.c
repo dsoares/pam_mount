@@ -127,6 +127,7 @@ converse(pam_handle_t * pamh, int nargs,
  *         fn used to implement try_first_pass when "fist pass" failed */
 int 
 read_password(pam_handle_t * pamh, char *prompt1, char **pass)
+/* FIXME: take a close look at this logic for correctness */
 {
 	int             retval;
 	char           *token;

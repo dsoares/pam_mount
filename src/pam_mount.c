@@ -51,7 +51,7 @@ pam_sm_authenticate (pam_handle_t * pamh, int flags,
       if (strlen (tmp_pass) > MAX_PAR)
 	{
 	  l0g ("pam_mount: %s\n", "password too long");
-	  return PAM_SUCCESS;
+	  return PAM_SERVICE_ERR;
 	}
       /*
        * Following is needed because PAM clears memory holding
@@ -169,7 +169,7 @@ top:
        * su creates file group owned by user and the releases root
        * perms.  User needs to be able to access file on logout.
        */
-      if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_uid) == -1)
+      if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
 	{
 	  w4rn ("pam_mount: unable to chown %s\n", filename);
 	  err = -1;
@@ -310,7 +310,8 @@ top:
     }
   err = val;
 return_error:
-  CLOSE (fd);
+  if (fd > 0)
+    CLOSE (fd);
   if (buf)
     free (buf);
   return err;
@@ -370,18 +371,18 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
   if (strlen (config.user) > MAX_PAR)
     {
       l0g ("pam_mount: username %s is too long\n", config.user);
-      return PAM_SUCCESS;
+      return PAM_SERVICE_ERR;
     }
   initconfig (&config);
   w4rn ("pam_mount: %s\n", "going to readconfig global");
   if (!readconfig (config.user, CONFIGFILE, 1, &config))
-    return PAM_SUCCESS;
+    return PAM_SERVICE_ERR;
   w4rn ("pam_mount: %s\n", "back from global readconfig");
   if (exists (config.luserconf) && owns (config.user, config.luserconf))
     {
       w4rn ("pam_mount: %s\n", "going to readconfig user");
       if (!readconfig (config.user, config.luserconf, 0, &config))
-	return PAM_SUCCESS;
+	return PAM_SERVICE_ERR;
       w4rn ("pam_mount: %s\n", "back from user readconfig");
     }
   else
@@ -394,7 +395,7 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
   if (!expandconfig (&config))
     {
       l0g ("pam_mount: %s\n", "error expanding configuration");
-      return PAM_SUCCESS;
+      return PAM_SERVICE_ERR;
     }
   w4rn ("pam_mount: real and effective user ID are %d and %d.\n",
 	getuid (), geteuid ());
@@ -419,13 +420,13 @@ pam_sm_open_session (pam_handle_t * pamh, int flags,
 		    {
 		      l0g ("pam_mount: %s\n",
 			   "mount process failed using get_pass");
-		      return PAM_SUCCESS;
+		      return PAM_SERVICE_ERR;
 		    }
 		}
 	      else
 		{
 		  l0g ("pam_mount: %s\n", "error trying to read password");
-		  return PAM_SUCCESS;
+		  return PAM_SERVICE_ERR;
 		}
 	    }
 	}
@@ -472,7 +473,7 @@ pam_sm_close_session (pam_handle_t * pamh, int flags, int argc,
 	  {
 	    l0g ("pam_mount:%s\n", "could not umount");
 	    freeconfig (config);
-	    return PAM_SUCCESS;
+	    return PAM_SERVICE_ERR;
 	  }
       }
   else

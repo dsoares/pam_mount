@@ -3,7 +3,7 @@
 
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.0
+Version: 0.9.1
 Release: %rel
 Copyright: LGPL
 Group: System Environment/Base
@@ -53,7 +53,7 @@ include it and send me patches.
 
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=${RPM_BUILD_ROOT}%{prefix}
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=$RPM_BUILD_ROOT%{prefix}
 make
 
 %install
@@ -64,6 +64,7 @@ make install
 mkdir -p ${RPM_BUILD_ROOT}/etc/security
 cp config/pam_mount.conf ${RPM_BUILD_ROOT}/etc/security
 gzip -9 AUTHORS COPYING ChangeLog INSTALL NEWS README
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -94,13 +95,8 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/bin/mount_ehd
 
 
-%doc
-# %{prefix}/share/docs/AUTHORS.gz 
-# %{prefix}/share/docs/COPYING.gz
-# %{prefix}/share/docs/ChangeLog.gz
-# %{prefix}/share/docs/INSTALL.gz
-# %{prefix}/share/docs/NEWS.gz
-# %{prefix}/share/docs/README.gz
+%doc	AUTHORS.gz COPYING.gz ChangeLog.gz INSTALL.gz NEWS.gz README.gz
+
 
 %config
 /etc/security/pam_mount.conf

@@ -1,0 +1,17 @@
+As of version 3.3, sshd has a feature called privelege seperation that
+is incompatible with PAM modules needing root privileges.
+
+If you wish to use sshd with pam_mount either turn of privelege seperation
+in /etc/ssh/sshd_config (UsePrivilegeSeparation no) or ensure that
+pam_mount can operate without root privileges.  Specifying volumes using
+/etc/fstab and allowing users to mount and unmount them using the user
+option may help pam_mount to perform without root privileges:
+
+# /etc/security/pam_mount.conf:
+volume user local - /home/user.img - - - -
+
+# /etc/fstab:
+/home/user4.img /home/user4 ext2 user,loop,encryption=aes,keybits=256,noauto 0 0
+
+Please let me know if you have a better idea allowing pam_mount to work
+with privilege separation.

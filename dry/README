@@ -1,8 +1,8 @@
 Copyright (C) 2003 W. Michael Petullo <mike@flyn.org>
 
-pam_mount is a PAM module that can mount volumes for a user session
+pam_mount is A PAM module that can mount volumes for a user session
 
-= OVERVIEW ====================================================================
+= OVERVIEW =================================================================
 	
 This module is aimed at environments with SMB (Samba or Windows NT) 
 or NCP (Netware or Mars-NWE) servers that Unix users wish to access 
@@ -30,7 +30,7 @@ be mounted using the standard mount command. If someone has a
 particular need for a different filesystem, feel free to ask me to 
 include it and send me patches.
 
-= BUILDING ====================================================================
+= BUILDING =================================================================
 
 To build, cross your fingers and try...
 
@@ -41,7 +41,7 @@ To build, cross your fingers and try...
 Read the ``INSTALL'' file for generic detailed information on installing
 this program.
 	
-= NASTY DETAILS ===============================================================
+= NASTY DETAILS ============================================================
 	
 The primary configuration file for the pam_mount module is 
 pam_mount.conf. On most platforms this file is read from 
@@ -62,8 +62,8 @@ In addition, you must include two entries in the system's applicable
     password  required  /lib/security/pam_pwdb.so shadow nullok use_authtok
     session   required  /lib/security/pam_pwdb.so
     session   optional  /lib/security/pam_console.so
-+++ session   required  /lib/security/pam_mount.so use_first_pass
-+++ auth      required  /lib/security/pam_mount.so use_first_pass
++++ session   optional  /lib/security/pam_mount.so use_first_pass
++++ auth      optional  /lib/security/pam_mount.so use_first_pass
 
 
 If you want to support having different passwords for login and 

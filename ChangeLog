@@ -1,3 +1,30 @@
+28 May 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed bug in expandconfig that cause & expansion to fail when
+	all fields did not contain a &.
+
+27 May 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Pam_mount no longer tries to close /var/run/pam_mount/<user>
+	after opening fails.  This was causing sessions to fail as CLOSE
+	calls exit(EXIT_FAILURE) when close() fails.  Ssh sessions on hosts
+	that use privilege separation would fail completely instead of just
+	failing to mount volumes.
+
+	* Added README_SSHD.
+
+	* /var/run/pam_mount/<user> is now created group owned by the user's
+	primary group.
+	
+26 May 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added expansion of fs_key_path (thanks Edgar Holleis).
+
+	* Added a check for malloc returning NULL in readconfig.c.
+
+	* Pam_mount now returns PAM_SERVICE_ERR on error.  Should
+	be listed as optional in service config. files.
+
 24 May 2003 W. Michael Petullo <mike@flyn.org>
 	
 	* Changed log() to l0g() to avoid conflict with -lm on some
