@@ -1,13 +1,11 @@
-o Make sure pmhelper checks the return value of all openssl fns.
-
-o Fix EVP_get_cipherbyname.  Seems to expect "enc" not "bf-ecb."
+o Security audit.
 
 o Note: openssl 0.9.7 beta3 supports AES.
 
 o Get rid of FIXMEs.
 
 o Make first login create file system image?  Or make a script.  Or *add
-to useradd*.
+to useradd*, or pam_mkhomedir.
 	- Also create messages like in /home/mike-nocrypt/README and
 	~mike/README (before crypt fs is mounted over ~mike).
 
@@ -18,20 +16,15 @@ o Get this to work with sshd.
 
 o Get pam_mount in standard and Red Hat pam dist.
 
-o Get supported by Red Hat (see src.rpm I downloaded).
+o Get supported by Red Hat.
 	- Need upstream linux-utils/PAM to support encr.
 
-o Make home directory images scalable in size (resizexfs?)
+o Make home directory images scalable in size (resize.*fs?)
 
 o Figure out better way to handle ~/.gnome/photo and move
 /home/mike-nocrypt/.gnome back into ~.
 
 Three from Roman Sliva <roman.sliva@vsb.cz>
-
-- wildcard
-Config's wildcard *,& for user name is fine, but I found out wildcard
-for user's homedir useful. We have thousands of user and we have not flat
-"/home/&" Expansion based on getpwnam(user)->pw_dir works fine.
 
 - Novell mounting
 pam_mount doesn't mount ncp filesystems of Novell servers using NDS -

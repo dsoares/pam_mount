@@ -1,4 +1,19 @@
+11 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Got rid of some compiler warnings.
+
+	* Added some more error checking to openssl code.
+
+	* In pam_mount.conf, if user is *, ~ will be expanded to user's
+	home.
+
 10 August 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Worked on documentation for encrypted filesystem keys.
+
+	* (Following release 0.3.6) started using EVP_get_cipherbyname()
+	-- should be real close to supporting all openssl-supported
+	ciphers.
 
 	* Added support for encrypted filesystem keys.
 

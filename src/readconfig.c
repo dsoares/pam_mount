@@ -361,7 +361,20 @@ void readvolume(const char *user, const char *password, int *volcount,
 	    volume = autovolume;
 	    w4rn("pam_mount: volume: %s", autovolume);
 	}
-	automount = expand_wildcard(mountpoint, user);
+	if (*mountpoint == '~') {
+	    struct passwd *p;
+	    p = getpwnam(user);
+	    if (p != NULL) {
+	        automount = malloc(strlen(p->pw_dir) + 5);
+		if (automount != NULL) {
+		    strcpy(automount, p->pw_dir);
+		    strcat(automount, mountpoint + 1);
+                }	
+	    } else {
+	        log("pam_mount: failed to get %s's mount point", user);
+	    }
+        } else
+	    automount = expand_wildcard (mountpoint, user);
 	if (automount) {
 	    mountpoint = automount;
 	    w4rn("pam_mount: automount: %s", automount);
@@ -454,15 +467,15 @@ void readvolume(const char *user, const char *password, int *volcount,
 	return;
     }
 
-    /* FIXME: mountpoint may be undefined: if (exists(mountpoint) != 1) {
+    if (! mountpoint || exists(mountpoint) != 1) {
        w4rn("%s", "Mountpoint does not exist");
        return;
-       } */
+       }
 
-    /* FIXME: mountpoint may be undefined: if (! automount && ! owns(user, mountpoint)) {
+    if (! mountpoint || (! automount && ! owns(user, mountpoint))) {
        w4rn("%s", "User does not own the mountpoint");
        return;
-       } */
+       }
 
     /* for local mounts, require that either
        - it's from the global config file
@@ -681,7 +694,7 @@ int filter_options(const char *options)
 	break;
     default:
 	/* shouldn't happen */
-	w4rn("pam_mount: BUG at line %d?", __LINE__);
+	w4rn("pam_mount: %s", "BUG");
 	retval = 0;
 	break;
     }

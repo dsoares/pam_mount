@@ -8,7 +8,7 @@
 #include <mntent.h>
 #ifdef HAVE_LIBSSL
 #include <openssl/evp.h>
-#endif /* HAVE_LIBSSL */
+#endif				/* HAVE_LIBSSL */
 #include "pam_mount.h"
 
 #include <sys/types.h>
@@ -26,68 +26,89 @@ void unmount_volume();
 int debug;
 
 #ifdef HAVE_LIBSSL
-int read_salt(BIO *fp, unsigned char *salt)
+int read_salt(BIO * fp, unsigned char *salt)
+/* sizeof salt must be == PKCS5_SALT_LEN and fp point to an open file */
 {
     char magic[8];
     if ((BIO_read(fp, magic, sizeof magic) != sizeof magic)
 	|| (BIO_read(fp, salt, PKCS5_SALT_LEN) != PKCS5_SALT_LEN)) {
-        log("pmhelper: %s", "error reading from ecrypted filesystem key");
+	log("pmhelper: %s", "error reading from ecrypted filesystem key");
 	return 0;
     } else if (memcmp(magic, "Salted__", sizeof "Salted__" - 1)) {
-        log("pmhelper: %s", "magic string Salted__ not in filesystem key file");
+	log("pmhelper: %s",
+	    "magic string Salted__ not in filesystem key file");
 	return 0;
     }
     return 1;
 }
-#endif /* HAVE_LIBSSL */
+#endif				/* HAVE_LIBSSL */
 
-int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher, char *fs_key_path)
+int decrypted_key(char *pt_fs_key, char *password, char *fs_key_cipher,
+		  char *fs_key_path)
 {
 #ifdef HAVE_LIBSSL
     int outlen, tmplen;
     unsigned char ct_fs_key[BUFSIZ + 1];	/* encrypted filesystem key. */
     unsigned char hashed_key[24];	/* The one used to encrypt filesystem 
-                                         * key --hash(system_key). */
+					 * key -- hash(system_key). */
     BIO *fs_key_fp;
     unsigned char salt[PKCS5_SALT_LEN];
     unsigned char iv[MD5_DIGEST_LENGTH];
     const EVP_CIPHER *cipher;
     EVP_CIPHER_CTX ctx;
 
-    if (! (cipher = EVP_bf_ecb())) {
-    /* FIXME: bf-ecb does not work: if (! (cipher = EVP_get_digestbyname(fs_key_cipher))) { */
-        log("pmhelper: error getting cipher \"%s\"", fs_key_cipher);
+    OpenSSL_add_all_ciphers();
+    if (!(cipher = EVP_get_cipherbyname(fs_key_cipher))) {
+	log("pmhelper: error getting cipher \"%s\"", fs_key_cipher);
 	return 0;
     }
 
-    fs_key_fp = BIO_new(BIO_s_file());
+    if (!(fs_key_fp = BIO_new(BIO_s_file()))) {
+	log("pmhelper: %s", "error creating new BIO");;
+	return 0;
+    }
     if (BIO_read_filename(fs_key_fp, fs_key_path) <= 0) {
-        log("pmhelper: error opening %s", fs_key_path);
+	log("pmhelper: error opening %s", fs_key_path);
 	return 0;
     }
     if (!read_salt(fs_key_fp, salt))
-        return 0;
-    EVP_BytesToKey(cipher, EVP_md5(), salt, password, strlen(password), 1, hashed_key, iv);
-    BIO_read(fs_key_fp, ct_fs_key, BUFSIZ);
+	return 0;
+    if (!EVP_BytesToKey
+	(cipher, EVP_md5(), salt, password, strlen(password), 1,
+	 hashed_key, iv)) {
+	log("pmhelper: %s", "failed to hash system password");
+	return 0;
+    }
+    if (BIO_read(fs_key_fp, ct_fs_key, BUFSIZ) <= 0) {
+	log("pmhelper: failed to read encrypted filesystem key from %s",
+	    fs_key_path);
+	return 0;
+    }
+
     EVP_CIPHER_CTX_init(&ctx);
-    EVP_DecryptInit(&ctx, cipher, hashed_key, iv);
-    if (!EVP_DecryptUpdate(&ctx, pt_fs_key, &outlen, ct_fs_key, strlen(ct_fs_key))) {
+    if (!EVP_DecryptInit(&ctx, cipher, hashed_key, iv)) {
+	log("pmhelper: %s", "failed to initialize decryption code");
+	return 0;
+    }
+    if (!EVP_DecryptUpdate
+	(&ctx, pt_fs_key, &outlen, ct_fs_key, strlen(ct_fs_key))) {
 	log("pmhelper: %s", "failed to decrypt key");
-        return 0;
+	return 0;
     }
     if (!EVP_DecryptFinal(&ctx, pt_fs_key + outlen, &tmplen)) {
 	log("pmhelper: %s", "failed to finish decrypting key");
-        return 0;
+	return 0;
     }
-    outlen += tmplen;
+    /* w4rn("pmhelper: decrypted filesystem key is \"%s\"\n", pt_fs_key); */
     EVP_CIPHER_CTX_cleanup(&ctx);
-    w4rn("pmhelper: decrypted filesystem key is \"%s\"\n", pt_fs_key);
-    BIO_free(fs_key_fp); 
+    BIO_free(fs_key_fp);
+    EVP_cleanup();
     return 1;
 #else
-    log ("pmhelper: %s", "encrypted filesystem key not supported: no openssl");
+    log("pmhelper: %s",
+	"encrypted filesystem key not supported: no openssl");
     return 0;
-#endif /* HAVE_LIBSSL */
+#endif				/* HAVE_LIBSSL */
 }
 
 int main(int argc, char **argv)
@@ -147,7 +168,8 @@ int main(int argc, char **argv)
     if (strlen(data.fs_key_cipher)) {
 	/* data.fs_key_path contains real filesystem key. */
 	char k[BUFSIZ + 1];
-	if (! decrypted_key(k, data.password, data.fs_key_cipher, data.fs_key_path))
+	if (!decrypted_key
+	    (k, data.password, data.fs_key_cipher, data.fs_key_path))
 	    return 0;
 	strncpy(data.password, k, MAX_PAR + 1);
     }
@@ -244,7 +266,6 @@ int main(int argc, char **argv)
 
     w4rn("%s", "pmhelper: waiting for homedir mount\n");
     waitpid(child, &child_exit, 0);
-    w4rn("pmhelper: mount returning %d\n", WEXITSTATUS(child_exit));
 
     /* Unmounting is PAM module responsability */
 

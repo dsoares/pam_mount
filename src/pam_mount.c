@@ -52,7 +52,6 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t * pamh, int flags,
     int get_pass = GETPASS_DEFAULT;
     int i;
     debug = DEBUG_DEFAULT;
-    w4rn("pam_mount: pam_sm_autenticate with %d args", argc);
     for (i = 0; i < argc; i++) {
 	if (!strcmp("use_first_pass", argv[i])) {
 	    get_pass = 0;
