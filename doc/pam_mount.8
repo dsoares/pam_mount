@@ -5,7 +5,7 @@ pam_mount - A PAM module that can mount volumes for a user session
 .SH OVERVIEW
 .PP
 This module is aimed at environments with SMB (Samba or Windows NT) or NCP
-(Netware or Mars-NWE) servers that Unix users wish to access transparently. It
+(Netware or Mars\-NWE) servers that Unix users wish to access transparently. It
 facilitates access to private volumes of these types well. The module also
 supports mounting home directories using  loopback encrypted filesystems. The
 module was originally written for use on the GNU/Linux operating system but has
@@ -123,8 +123,8 @@ encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on the local files
 pam_mount will read efsk from the local filesystem, perform fsk = D_sk (efsk)
 and use fsk to mount the filesystem. If you change your system password, simply
 regenerate efsk using efsk = E_sk (fsk). If you want to mount this volume by
-hand, use something like `openssl enc -d -aes-256-ecb -in /home/user.key |
-mount -p0 /home/user`. More information about this technique is included in
+hand, use something like `openssl enc \-d \-aes\-256\-ecb \-in /home/user.key |
+mount \-p0 /home/user`. More information about this technique is included in
 pam_mount.conf.xml.
 .PP
 A script named mkehd is provided with pam_mount to help create encrypted home
@@ -134,10 +134,10 @@ possibly encrypted filesystem keys.
 .PP
 Individual users may define additional volumes to mount if allowed by
 pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume keyword is the
-only valid keyword in these per-user configuration files. If the luserconf
-parameter is set in pam_mount.conf.xml, allowing user-defined volume, then
+only valid keyword in these per\-user configuration files. If the luserconf
+parameter is set in pam_mount.conf.xml, allowing user\-defined volume, then
 users may mount and unmount any volume they own at any mount point they own. On
-some filesystem configurations this may be a security flaw so user-defined
+some filesystem configurations this may be a security flaw so user\-defined
 volumes are not allowed by the example pam_mount.conf.xml distributed with
 pam_mount.
 .PP
