@@ -1,8 +1,15 @@
+17 October 2002 W. Michael Petullo <mike@flyn.org>
+
+	* Now chowns homedir to owner if pam_mount has to create it.
+	Make sure nsswitch is configured if using, for example, winbindd.
+
 16 October 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Pam_mount not creates user's home directory if it doesn't exist.
 	Useful if the user is authenticated using some wazoo method and
 	does not really exist on the local machine.
+
+	* (Following release 0.4.0) fixed some buffer sizes in pmhelper.c.
 
 14 October 2002 W. Michael Petullo <mike@flyn.org>
 

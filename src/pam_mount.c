@@ -152,16 +152,20 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	    if (get_pass) {
 		char *passread;
 		/* get the password */
-		read_password(pamh, "mount password:", &passread);
-		/* try with the password read */
-		strcpy((data)[x].password, passread);
-		if (invoke_child(data + x, command) != 1) {
-		    log("pam_mount: %s\n",
-			"FATHER helper process failed using get_pass");
-		    return PAM_SERVICE_ERR;
+		if (read_password(pamh, "mount password:", &passread) == PAM_SUCCESS) {
+		    /* try with the password read */
+		    strcpy((data)[x].password, passread);
+		    if (invoke_child(data + x, command) != 1) {
+		        log("pam_mount: %s\n",
+		    	"FATHER helper process failed using get_pass");
+		        return PAM_SERVICE_ERR;
+		    }
+		    _pam_overwrite(passread);
+		    _pam_drop(passread);
+		} else {
+		    log("pam_mount: %s\n", "error trying to read password");
+                    return PAM_SERVICE_ERR;
 		}
-		_pam_overwrite(passread);
-		_pam_drop(passread);
 	    }
 	    return PAM_SUCCESS;
 	}

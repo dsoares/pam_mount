@@ -70,6 +70,7 @@ int readvolume(const char *user, const char *password, int *volcount,
     w4rn("pam_mount: options: %s\n", options);
     w4rn("pam_mount: fs_key_cipher: %s\n", fs_key_cipher);
     w4rn("pam_mount: fs_key_path: %s\n", fs_key_path);
+
     if (strcmp(fuser, "*") == 0) {
 	if (luserconf) {
 	    /* local user config file cannot have wildcards */
@@ -101,9 +102,15 @@ int readvolume(const char *user, const char *password, int *volcount,
 	}
 	/* FIXME: Should this be rmdir'ed when one logs out? */
 	if (mkhome && !exists(automount)) {
-	    w4rn("pam_mount: creating mount %s\n", automount);
-	    if (mkdir(automount, 0700) != 0)
-	        log("pam_mount: tried to create %s but failed\n", automount);
+            struct passwd *passwd_ent;
+	    if ((passwd_ent = getpwnam(user))) {
+	        w4rn("pam_mount: creating mount %s\n", automount);
+	        if (mkdir(automount, 0700) != 0)
+	            log("pam_mount: tried to create %s but failed\n", automount);
+	        if (chown (automount, passwd_ent->pw_uid, passwd_ent->pw_gid) != 0)
+		    log("pam_mount: could not chown homedir to %s\n", passwd_ent->pw_uid);
+	    } else
+	        log("pam_mount: could not determine uid from %s to make homedir\n", user);
 	}
 	autooptions = expand_wildcard(options, user);
 	if (autooptions) {
@@ -199,7 +206,7 @@ int readvolume(const char *user, const char *password, int *volcount,
     }
     *data = realloc(*data, sizeof(pm_data) * (*volcount + 1));
     /* data is a pointer to a flat pm_data array */
-    bzero(&((*data)[*volcount]), sizeof(pm_data));
+    memset(&((*data)[*volcount]), 0x00, sizeof(pm_data));
     (*data)[*volcount].type = ntype;
     strcpy((*data)[*volcount].user, user);
     strcpy((*data)[*volcount].password, password);

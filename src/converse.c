@@ -5,7 +5,7 @@
 
 /* adapted from pam_unix/support.c */
 static int converse(pam_handle_t * pamh, int ctrl, int nargs,
-		    struct pam_message **message,
+		    const struct pam_message **message,
 		    struct pam_response **response)
 {
     int retval;
@@ -16,8 +16,7 @@ static int converse(pam_handle_t * pamh, int ctrl, int nargs,
     retval = pam_get_item(pamh, PAM_CONV, (const void **) &conv);
     if (retval == PAM_SUCCESS) {
 
-	retval = conv->conv(nargs, (const struct pam_message **) message,
-			    response, conv->appdata_ptr);
+	retval = conv->conv(nargs, message, response, conv->appdata_ptr);
 
 	w4rn("pam_mount: %s\n", "returned from app's conversation fn");
     }

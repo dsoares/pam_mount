@@ -19,8 +19,7 @@ are met (related to code scrub).
 
 o Security audit.  Scrub code for buffer overflows and other
 security-related bugs:
-converse.c
-pmhelper.c
+pmhelper.c: See FIXME to learn where code cleanup stopped.
 readconfig.c
 
 ===============================================================================

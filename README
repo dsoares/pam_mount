@@ -66,8 +66,8 @@ NASTY DETAILS
 htok
     session   required  /lib/security/pam_pwdb.so
     session   optional  /lib/security/pam_console.so
-+++ session   required  /lib/security/pam_mount.so use_firstpass
-+++ auth      required  /lib/security/pam_mount.so use_firstpass
++++ session   required  /lib/security/pam_mount.so use_first_pass
++++ auth      required  /lib/security/pam_mount.so use_first_pass
 
    THIS IS A CHANGE TO THE WAY PAM_MOUNT <= 0.3.8 WAS CONFIGURED!
    A  pam_mount  auth entry is needed once again because Debian's
@@ -75,7 +75,7 @@ htok
    user's password.
 
    If  you  want  to support having different passwords for login
-   and  mounting,  replace use_firstpass with try_firstpass. This
+   and mounting, replace use_first_pass with try_first_pass. This
    depends on proper support of the PAM conversation mechanism by
    the PAM applications.
 
@@ -104,10 +104,10 @@ htok
    Pam_mount  will  read  efsk from the local filesystem, perform
    fsk  = D_sk (efsk) and use fsk to mount the filesystem. If you
    change your system password, simply regenerate efsk using efsk
-   =  E_sk (fsk). If you want to mount this volume, use something
-   like  openssl  -d  -bf-ecb  -in  /home/user.key  |  mount  -p0
-   /home/user.  More information about this technique is included
-   in pam_mount.conf.
+   =  E_sk  (fsk).  If you want to mount this volume by hand, use
+   something  like  openssl -d -bf-ecb -in /home/user.key | mount
+   -p0  /home/user.  More  information  about  this  technique is
+   included in pam_mount.conf.
 
    The  /etc/pam_mount.conf  file  itself  has a lot of commented
    lines that explain what every parameter means.
