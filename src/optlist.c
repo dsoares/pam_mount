@@ -1,20 +1,46 @@
+/*   FILE: optlist.c
+ * AUTHOR: W. Michael Petullo <mike@flyn.org>
+ *   DATE: 2003
+ *
+ * Copyright (C) 2003 W. Michael Petullo <mike@flyn.org>
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as 
+ * published by the Free Software Foundation; either version 2.1 of the 
+ * License
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include <optlist.h>
 #include <stdlib.h>
-#include <optlist.h>
 #include <pam_mount.h>
+#include <assert.h>
 
 /* ============================ _parse_string_opt () ======================= */
-/* PRE:    str points to a valid string
- *         len <= strlen(str), should be length up to first ',' or 0x00
- *         optlist points to a valid optlist_t
- * POST:   str[0 - len] has been parsed and placed in optlist
- * FN VAL: if error 0 else 1
+/* INPUT: str, string to parse
+ *        len, should be length up to first ',' or 0x00
+ * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
+ * OUTPUT: if error 0 else 1
  */
 static int _parse_string_opt(const char *str, size_t len,
-			     optlist_t * optlist)
+			     optlist_t ** optlist)
 {
 	pair_t *pair;
-	char *delim = strchr(str, '='), *key, *val;
+	char *delim , *key, *val;
+
+	assert(str);
+	assert(len >= 0 && len <= strlen(str));
+
+	delim = strchr(str, '=');
 	if (!delim)
 		return 0;
 	if (len > MAX_PAR || len <= 0)
@@ -23,7 +49,7 @@ static int _parse_string_opt(const char *str, size_t len,
 		return 0;
 	pair = (pair_t *) malloc(sizeof(pair_t));
 	key = (char *) malloc(sizeof(char) * (delim - str) + 1);
-	val = (char *) malloc(sizeof(char) * len - (delim - str));	/* '=' is +1 */
+	val = (char *) malloc(sizeof(char) * len - (delim - str)); /* '=' is +1 */
 	if (!pair || !key || !val)
 		return 0;
 	strncpy(key, str, delim - str);
@@ -31,22 +57,25 @@ static int _parse_string_opt(const char *str, size_t len,
 	strncpy(val, delim + 1, len - (delim - str) - 1);
 	val[len - (delim - str) - 1] = 0x00;
 	pair_init(pair, key, val, free, free);
-	list_ins_next(optlist, optlist->tail, pair);
+	*optlist = g_list_append(*optlist, pair);
 	return 1;
 }
 
 /* ============================ _parse_opt () ============================== */
-/* PRE:    str points to a valid string
- *         len <= strlen(str), should be length up to first ',' or 0x00
- *         optlist points to a valid optlist_t
- * POST:   str[0 - len] has been parsed and placed in optlist
- * FN VAL: if error 0 else 1
+/* INPUT: str, string to parse
+ *        len, should be length up to first ',' or 0x00
+ * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
+ * OUTPUT: if error 0 else 1
  */
-static int _parse_opt(const char *str, size_t len, optlist_t * optlist)
+static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 {
 	pair_t *pair;
 	char *key, *val;
-	if (len > MAX_PAR || len <= 0)
+
+	assert(str);
+	assert(len >= 0 && len <= strlen(str));
+
+	if (len > MAX_PAR)
 		return 0;
 	pair = (pair_t *) malloc(sizeof(pair_t));
 	key = malloc(sizeof(char) * len + 1);
@@ -57,20 +86,22 @@ static int _parse_opt(const char *str, size_t len, optlist_t * optlist)
 	key[len] = 0x00;
 	*val = 0x00;
 	pair_init(pair, key, val, free, free);
-	list_ins_next(optlist, optlist->tail, pair);
+	*optlist = g_list_append(*optlist, pair);
 	return 1;
 }
 
 /* ============================ str_to_optlist () ========================== */
-/* PRE:    optlist is a valid optlist_t
- *         str points to a valid string
- * POST:   optlist points to an optlist_t initialized to contain str
- * FN VAL: if error 0 else 1
+/* INPUT: str, string to parse
+ * SIDE AFFECTS: str has been parsed and placed in optlist
+ * OUTPUT: if error 0 else 1
  */
-int str_to_optlist(optlist_t * optlist, const char *str)
+int str_to_optlist(optlist_t ** optlist, const char *str)
 {
-	list_init(optlist, pair_destroy);
 	char *ptr;
+
+	assert(str);
+
+	*optlist = NULL;
 	if (!strlen(str))
 		return 1;
 	while (ptr = strchr(str, ',')) {
@@ -85,45 +116,56 @@ int str_to_optlist(optlist_t * optlist, const char *str)
 	return 1;
 }
 
-/* ============================ optlist_exists () ========================== */
-/* PRE:    optlist points to a valid optlist_t
- *         str points to a valid string
- * FN VAL: if optlist[str] exists 1 else 0
+/* ============================ _compare () ================================ */ 
+/* INPUT: x and y
+ * OUTPUT: if x->key is the same string as y then 0, else non-0
  */
-int optlist_exists(const optlist_t * optlist, const char *str)
+static int _compare(gconstpointer x, gconstpointer y)
 {
-	optlist_element_t *ptr = optlist_head(optlist);
-	do {
-		if (!strcmp(((pair_t *) ptr->data)->key, str))
-			return 1;
-	} while (ptr = optlist_next(ptr));
-	return 0;
+	assert(x);
+	assert(((pair_t *)x)->key);
+	assert(y);
+
+	return strcmp(((pair_t *)x)->key, y);
+}
+
+/* ============================ optlist_exists () ========================== */
+/* INPUT: optlist and str
+ * OUTPUT: if optlist[str] exists 1 else 0
+ */
+int optlist_exists(optlist_t * optlist, const char *str)
+{
+	assert(optlist);
+	assert(str);
+
+	return g_list_find_custom(optlist, str, _compare) ? 1 : 0;
 }
 
 /* ============================ optlist_value () =========================== */
-/* PRE:    optlist points to a valid optlist_t
- *         str points to a valid string
- * FN VAL: optlist[str] ("" if no value) else NULL
+/* INPUT: optlist and str
+ * OUTPUT: optlist[str] ("" if no value) else NULL
  */
-char *optlist_value(const optlist_t * optlist, const char *str)
+char *optlist_value(optlist_t * optlist, const char *str)
 {
-	optlist_element_t *ptr = optlist_head(optlist);
-	do {
-		if (!strcmp(((pair_t *) ptr->data)->key, str))
-			return ((pair_t *) ptr->data)->val;
-	} while (ptr = optlist_next(ptr));
-	return NULL;
+	assert(optlist);
+	assert(str);
+
+	GList *ptr = g_list_find_custom(optlist, str, _compare);
+	return ptr ? ((pair_t *)ptr->data)->val : NULL;
 }
 
 /* ============================ optlist_to_str () ========================== */
-/* PRE:    str points to a valid string != NULL
- *         sizeof str >= MAX_PAR + 1
- *         optlist points a valid optlist_t
- * FN VAL: string encapsulating optlist
+/* INPUT: str and optlist
+ *        sizeof str >= MAX_PAR + 1
+ * OUTPUT: string encapsulating optlist
  */
 char *optlist_to_str(char *str, const optlist_t * optlist)
 {
-	optlist_element_t *ptr = optlist_head(optlist);
+	const optlist_t *ptr = optlist;
+
+	assert(str);
+	assert(optlist);
+
 	*str = 0x00;
 	do {
 		strncat(str, ((pair_t *) ptr->data)->key,
@@ -133,7 +175,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 			strncat(str, ((pair_t *) ptr->data)->val,
 				MAX_PAR - strlen(str));
 		}
-		if (ptr = optlist_next(ptr))
+		if (ptr = g_list_next(ptr))
 			strncat(str, ",", MAX_PAR - strlen(str));
 	} while (ptr);
 	str[MAX_PAR] = 0x00;

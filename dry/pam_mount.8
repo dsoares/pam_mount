@@ -11,7 +11,7 @@ transparently.  It facilitates access to private volumes of these
 types well.  The module also supports mounting home directories
 using 
 loopback encrypted filesystems.  The
-module was originally written for use on the Linux operating system
+module was originally written for use on the GNU/Linux operating system
 but has since been modified to work on several flavors of BSD.
 
 
@@ -34,6 +34,17 @@ Pam_mount "understands" SMB, NCP, and any type of filesystem that can
 be mounted using the standard mount command.  If someone has a particular
 need for a different filesystem, feel free to ask me to include it and
 send me patches.
+
+
+.PP
+
+If you intend to use pam_mount to protect volumes on your computer using
+an encrypted filesystem system, please know that there are many other
+issues you need to consider in order to protect your data.  For example,
+you probably want to disable or encrypt your swap partition (the
+
+cryptoswap can help you do this).  Don't
+assume a system is secure without carefully considering potential threats.
 
 
 .SH NASTY DETAILS

@@ -51,7 +51,7 @@ pam_mount.8: pam_mount.xml
 	xsltproc -o pam_mount.8 /usr/share/fctk/manpage.xslt pam_mount.xml
 
 # ============================= all =========================================== 
-all: $(PACKAGE).spec README pam_mount.html pam_mount_summary.html pam_mount.spec control
+all: $(PACKAGE).spec README pam_mount.html pam_mount_summary.html control
 	cp README ..
 	cp control ../debian
 

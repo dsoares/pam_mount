@@ -1,3 +1,25 @@
+/*   FILE: pam_mount.h
+ * AUTHOR: Elvis Pf?tzenreuter <epx@conectiva.com>
+ *   DATE: 2000
+ *
+ * Copyright (C) 2000 Elvis Pf?tzenreuter <epx@conectiva.com>
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of the
+ * License
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #ifndef _PAM_MOUNT_H
 #define _PAM_MOUNT_H
 
@@ -23,12 +45,6 @@ extern "C" {
 
 #define CLOSE(a) if (close(a)==-1) { \
     l0g("pam_mount: could not close fd: %s\n", strerror(errno)); \
-    l0g("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
-    exit(EXIT_FAILURE); \
-}
-
-#define PIPE(a) if (pipe(a)==-1) { \
-    l0g("pam_mount: could open pipe: %s\n", strerror(errno)); \
     l0g("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
     exit(EXIT_FAILURE); \
 }
@@ -85,7 +101,7 @@ extern "C" {
 					 * single volume config
 					 * record; can be "*" */
 		char volume[MAX_PAR + 1];	/* FIXME: PATH_MAX */
-		optlist_t options;
+		optlist_t* options;
 		char mountpoint[PATH_MAX + 1];
 		int use_fstab;
 	} vol_t;
@@ -98,9 +114,9 @@ extern "C" {
 		char luserconf[PATH_MAX + 1];
 		char fsckloop[PATH_MAX + 1];
 		char *command[MAX_PAR + 1][COMMAND_MAX];
-		optlist_t options_require;
-		optlist_t options_allow;
-		optlist_t options_deny;
+		optlist_t* options_require;
+		optlist_t* options_allow;
+		optlist_t* options_deny;
 		vol_t *volume;
 	} config_t;
 

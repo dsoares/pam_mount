@@ -11,11 +11,11 @@ Recommends: libssl0.9.6
 Description: A PAM module that can mount volumes for a user session
 	 This module is aimed at environments with SMB (Samba or Windows NT) 
  or NCP (Netware or Mars-NWE) servers that Unix users wish to access 
- transparently. It facilitates access to private volumes of these types 
- well. The module also supports mounting home directories using 
+ transparently. It facilitates access to private volumes of these 
+ types well. The module also supports mounting home directories using 
  loopback encrypted filesystems. The module was originally written for 
- use on the Linux operating system but has since been modified to 
- work on several flavors of BSD.
+ use on the GNU/Linux operating system but has since been modified 
+ to work on several flavors of BSD.
  o Every user can access his own volumes
  o The user needs to type the password just once (at login)
  o The mounting process is transparent to the users
@@ -24,7 +24,13 @@ Description: A PAM module that can mount volumes for a user session
  avoiding the need of listing every every possibly useful remote 
  volume in /etc/fstab or in an automount/supermount config file. This 
  is also necessary for securing encrypted filesystems.
-	 Pam_mount "understands" SMB, NCP, and any type of filesystem that can 
- be mounted using the standard mount command. If someone has a 
+	 Pam_mount "understands" SMB, NCP, and any type of filesystem that 
+ can be mounted using the standard mount command. If someone has a 
  particular need for a different filesystem, feel free to ask me to 
  include it and send me patches.
+	 If you intend to use pam_mount to protect volumes on your computer 
+ using an encrypted filesystem system, please know that there are 
+ many other issues you need to consider in order to protect your 
+ data. For example, you probably want to disable or encrypt your 
+ swap partition (the cryptoswap can help you do this). Don't assume 
+ a system is secure without carefully considering potential threats.

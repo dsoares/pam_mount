@@ -1,3 +1,25 @@
+07 October 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Ensured all source files had a proper copyright notice.
+
+	* Started using glib instead of code from a book published
+	by O'Reilly.
+
+20 September 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added include/new/Makefile.am.
+
+18 September 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added mention of cryptoswap to pam_mount.xml.
+
+	* Now re-use more pipe/fork/exec code, reducing mount.c's source
+	size by about thurty lines.
+
+14 September 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Cleaned up the read_command a bit.
+
 4 September 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Some changes to the project's RPM specification.
@@ -60,7 +82,7 @@
 	* Warning about volumes "not for me" no longer logged when
 	debugging is turned off.
 
-	* Now mounts same volume multiple times correctly on Linux.
+	* Now mounts same volume multiple times correctly on GNU/Linux.
 
 12 July 2003 W. Michael Petullo <mike@flyn.org>
 	
@@ -189,7 +211,7 @@
 	* Now builds .deb.
 	
 	* Pam_mount.so is installed in $(prefix)/../lib/security instead
-	of /lib/security on Linux (mainly to facilitate building .debs).
+	of /lib/security on GNU/Linux (mainly to facilitate building .debs).
 
 5 May 2003 W. Michael Petullo <mike@flyn.org>
 
@@ -244,14 +266,14 @@
 
 15 April 2003 W. Michael Petullo <mike@flyn.org>
 
-        * pam_mount.so is now installed to /lib/security on Linux,
+        * pam_mount.so is now installed to /lib/security on GNU/Linux,
         /usr/lib on OpenBSD.
 
 	* Made exec failure message a bit more descriptive.
 
 4 April 2003 W. Michael Petullo <mike@flyn.org>
 
-	* Tested Linux build.
+	* Tested GNU/Linux build.
 
 	* Changed references to SSL in mount.c to CRYPTO.  May need to
 	change back?  Needs testing.
@@ -309,7 +331,7 @@
 
 17 February 2003 W. Michael Petullo <mike@flyn.org>
 
-	* Fixed cpp-related pmhelper.c build error on Linux.
+	* Fixed cpp-related pmhelper.c build error on GNU/Linux.
 
 15 February 2003 W. Michael Petullo <mike@flyn.org>
 

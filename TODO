@@ -1,42 +1,35 @@
 = For 1.0 =====================================================================
 
-There might be additional off-by-one errors. For example, Valgrind says:
+o ensure I have enough loop devices for regression tests.
 
-==9995== Source and destination overlap in strncpy(0x416965c0, 0x41696580,
-128)
-==9995==    at 0x400227E2: strncpy (mac_replace_strmem.c:95)
-==9995==    by 0x41A00F2F: read_command (readconfig.c:181)
-==9995==    by 0x41A02C1D: dotconf_invoke_command (dotconf.c:366)
-==9995==    by 0x41A0353B: dotconf_handle_command (dotconf.c:656)
-Maybe you should consider switching to the BSD strlcpy and strlcat
-(http://www.dwheeler.com/secure-programs/Secure-Programs-HOWTO/library-c.html#ST+RLCPY).
+o Test/scrub glib code in optlist.c, etc.
 
-o I think the exec() handling is very ugly. Currently, it is done by:
-execv(_argv[0], &_argv[1]);
-This is not how things are done, normally. I would do:
-execv(_argv[0], argv)
-One problem with the current approach is that the log_argv output is very
-confusing:
-pam_mount: command: /bin/mount mount -t smbfs ...
+o Re-submit to Savannah.
 
-o pam_mount does not catch & report the output of the mount commands. This
-makes debugging much harder.
+o put pam_mount into GNU savannah?  set up CVS/mailing list?  add link
+to html?
 
-o Fix RPM spec file (see emails)?
+o Should -N go in pam_mount.conf like it is now?  Shall I put this in
+conf/pam_mount.conf?  How does hashing/not hashing affect scripts?
 
-o fix login blocking umount problem.
+o why does fsck not run when login with gdm?
 
-o fix gdm blocking umount problem.
+o ensure const's are used (see esp. hash argument to hash_authtok).
 
-o Don't run fsck.ext2 on an ext3!
+o replace PRE, POST and FN VAL conditions with asserts in code where applicable
+	- Document fns with INPUT, SIDE AFFECTS and OUTPUT
+	- assert that side affects if OUTPUT is not an error code
+	- only one return statement per function so assertions may be made
+	- mount.c
+	- readconfig.c
 
-o Mention cryptoswap/tmp in documentation for ehd.
+o ensure NULL-termination is guarenteed everytime strlen is used.
 
-o Need to encrypt /tmp, etc. like swap?
+o fix login blocking umount problem (now keeps /home/mike open as CWD).
+
+o fix gdm blocking umount problem (gconfd-2).
 
 o If losetup does not regain -k option, modify scripts.
-
-o Check out pam_losetup.
 
 o Scrub code one last time and allow people to test for a few weeks.
 
@@ -66,7 +59,19 @@ o Use format like smbmount /usr/bin/smbmount %(user) ... in pam_mount.conf
 to simplify code in pmhelper.c.  This will make pam_mount much more
 flexible too.  No smbmount, ncpmount, lclmount-specific code will
 be required in smbmount.c.  Use libfmt_ptrn if on system, otherwise use
-local copy (SEE CONFIGURE.IN and SRC/MAKEFILE.AM COMMENTS).
+local copy (SEE CONFIGURE.IN and SRC/MAKEFILE.AM COMMENTS).  BUT FIRST
+I NEED TO MAKE NEW USE GLIB.
+
+o Break into multiple (root priveleged and user priv.) processes? 
+	- See /* This code needs root priv. */
+	- root "exec program" process (or user + "mount" POSIX capability? CAP_SYS_ADMIN (not very fine-grained)) use shared memory (see shmget) to pass argv to root process.
+	- root "logger" process (or user + "logging" POSIX capability?)
+	- root "update /var/run/pam_mount" process (or pseudouser/group that ownes /var/run/pam_mount?)
+	- all else run with user privs.
+  - OR -
+	- reduce features
+  - OR -
+	- split into multiple pam modules, pam_fsck, etc.
 
 o Get umount -l to release loop device when appropriate and possible?
 

@@ -9,7 +9,7 @@ or NCP (Netware or Mars-NWE) servers that Unix users wish to access
 transparently. It facilitates access to private volumes of these types 
 well. The module also supports mounting home directories using 
 loopback encrypted filesystems. The module was originally written for 
-use on the Linux operating system but has since been modified to 
+use on the GNU/Linux operating system but has since been modified to 
 work on several flavors of BSD.
 
  o Every user can access his own volumes
@@ -29,6 +29,13 @@ Pam_mount "understands" SMB, NCP, and any type of filesystem that can
 be mounted using the standard mount command. If someone has a 
 particular need for a different filesystem, feel free to ask me to 
 include it and send me patches.
+
+If you intend to use pam_mount to protect volumes on your computer 
+using an encrypted filesystem system, please know that there are many 
+other issues you need to consider in order to protect your data. 
+For example, you probably want to disable or encrypt your swap 
+partition (the cryptoswap can help you do this). Don't assume a 
+system is secure without carefully considering potential threats.
 
 = BUILDING =================================================================
 
@@ -95,21 +102,21 @@ then encrypt the password to the volume you wish mounted using your
 system password as the key and store it somewhere on your system's 
 local filesystem. Pam_mount supports transparently decrypting this 
 filesystem key, as long as the cipher used is supported by openssl. 
- 
+Given:
 
 sk
-	system key, the key or password used to log into the system
+    system key, the key or password used to log into the system
 
 fsk
-	filesystem key, the key that allows you to use the filesystem you 
-	wish pam_mount to mount for you
+    filesystem key, the key that allows you to use the filesystem 
+    you wish pam_mount to mount for you
 
 E and D
-	an openssl supported synchronous encryption/decryption algorithm
+    an openssl supported synchronous encryption/decryption algorithm
 
 efsk
-	encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on the 
-	local filesystem (ie: /home/user.key)
+    encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on 
+    the local filesystem (ie: /home/user.key)
 
 Pam_mount will read efsk from the local filesystem, perform fsk = 
 D_sk (efsk) and use fsk to mount the filesystem. If you change your 

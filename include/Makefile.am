@@ -22,4 +22,6 @@
 
 AUTOMAKE_OPTIONS = gnu
 
-EXTRA_DIST = pam_mount.h dotconf.h list.h pair.h optlist.h 
+EXTRA_DIST = pam_mount.h dotconf.h optlist.h 
+
+SUBDIRS = new

@@ -19,14 +19,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 AC_INIT(src/pam_mount.c)
 
 AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
 MINOR_VERSION=9
-MICRO_VERSION=5
+MICRO_VERSION=6
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -39,10 +38,11 @@ AC_SUBST(VER_INFO)
 AC_PROG_CC
 AC_PROG_INSTALL
 AM_PROG_LIBTOOL
+AM_PATH_GLIB_2_0(,,AC_MSG_ERROR(You are missing glib))
 
 AM_CONDITIONAL(FLYN, test "$FLYN")
 
-AC_CHECK_LIB(crypto, EVP_CIPHER_CTX_init)
+AC_CHECK_LIB(crypto, EVP_DecryptInit_ex) /* RH 8.0's OpenSSL does not have? */
 
 # Use -lfmt_ptrn if it exists else compile locally (see also src/Makefile.am).
 # ./include-fmt_ptrn should contain libfmt_ptrn's headers for use if
@@ -62,4 +62,4 @@ case "$host" in
 esac
 AC_SUBST(PAM_MODDIR)
 
-AC_OUTPUT(Makefile config/Makefile dry/Makefile debian/Makefile include/Makefile src/Makefile scripts/Makefile)
+AC_OUTPUT(Makefile config/Makefile dry/Makefile debian/Makefile include/Makefile include/new/Makefile src/Makefile scripts/Makefile)
