@@ -1,16 +1,5 @@
 o Get rid of FIXMEs.
 
-o Why is pam_mount not logging anything from lsof in certain cases:
-	log out		stay logged on		lsof logged?
-	=======		==============		============
-	console		su			no
-	su		console			yes
-	x11		su			yes
-	su		x11			yes
-	console		console			no
-
-o See email about gdm problem (ask user to debug with lsof using 0.3.4).
-
 o Make first login create file system image?  Or make a script.  Or *add
 to useradd*.
 	- Also create messages like in /home/mike-nocrypt/README and
@@ -33,14 +22,6 @@ o Figure out better way to handle ~/.gnome/photo and move
 
 Three from Roman Sliva <roman.sliva@vsb.cz>
 
-- module type
-I think PAM module type "auth" is not correct for the module's work, I
-prefer module type session. I use PAM stack like pam_ldap, pam_mkhomedir,
-pam_mount and I want to create user's home dir if it doesn't exist
-(session) and then mount some filesystem to some user's home subdirectory
-(session again, not auth).  Moving code from function pam_sm_authenticate
-to pam_sm_open_session looks to work fine.
-
 - wildcard
 Config's wildcard *,& for user name is fine, but I found out wildcard
 for user's homedir useful. We have thousands of user and we have not flat
@@ -53,11 +34,6 @@ short unix name).  I solve this by writing wrapper script for ncpmount,
 which gets full context username using ldapsearch. I think a possibility
 of cooperation directly with pam_ldap might be a great solution.
 
-================================================================================
-pam_mount EHD hack: http://www-2.cs.cmu.edu/~mukesh/hacks.html
-pam_mount: http://pam-mount.conectevil.com/
-================================================================================
-
 From pam_patch/TODO:
 
 allowing mount options -- bad idea: e.g. suid	
@@ -68,29 +44,3 @@ honor -pX rather than just p0
 
 have mode of not waiting for mount to finish
 automatically include required options in allow
-
-DONE
-----
-options_allow, options_deny, options_require
-~/.pam_mount.conf don't work
-	fstat: No such file or directory
-	File ~/.pam_mount.conf could not be stat'ed
-	use getpwnam to get home dir right
-
-permissions checking for local mounts
-	--> check for ownership on mount source
-		--> only if from user config
-
-verify that local mount security works
-
-security hole:
-	no, must specify _some_ mount source
-	can't get mount source which is
-		1. owned by user
-	and	2. acceptable to mount commnd as no-op
-
-[global config]
-volume user1 local - /dev/hda123 /home/user1 -
-
-[user config]
-volume user1 local - - /home/user1 remount,suid

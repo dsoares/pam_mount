@@ -33,19 +33,19 @@ me patches.
 You must include two entries in the /etc/pam.d/SERVICE config file, as the
 following example shows:
 
-#%PAM-1.0
-auth       required     /lib/security/pam_securetty.so
-auth       required     /lib/security/pam_pwdb.so shadow nullok
-auth       required     /lib/security/pam_nologin.so
->>> auth       required     /lib/security/pam_mount.so use_firstpass
-account    required     /lib/security/pam_pwdb.so
-password   required     /lib/security/pam_cracklib.so
-password   required     /lib/security/pam_pwdb.so shadow nullok use_authtok
-session    required     /lib/security/pam_pwdb.so
-session    optional     /lib/security/pam_console.so
->>> session    optional     /lib/security/pam_mount.so
+    #%PAM-1.0
+    auth      required  /lib/security/pam_securetty.so
+    auth      required  /lib/security/pam_pwdb.so shadow nullok
+    auth      required  /lib/security/pam_nologin.so
+    account   required  /lib/security/pam_pwdb.so
+    password  required  /lib/security/pam_cracklib.so
+    password  required  /lib/security/pam_pwdb.so shadow nullok use_authtok
+    session   required  /lib/security/pam_pwdb.so
+    session   optional  /lib/security/pam_console.so
++++ session   required  /lib/security/pam_mount.so use_firstpass
 
-(To see why we need two entries, see BUGS)
+THIS IS A CHANGE TO THE WAY PAM_MOUNT <= 0.3.4 WAS CONFIGURED!  There is
+no longer a pam_mount auth entry.
 
 If you want to support having different passwords for login and mounting,
 replace use_firstpass with try_firstpass. This depends on proper support
@@ -73,10 +73,14 @@ If you can mount the volumes by hand but it is not happening via pam_mount,
 you may want to enable the "debug" option in /etc/pam_mount.conf to see
 what is happening.
 
-- Verify if the user owns the mount point and has sufficient permissions over 
+Verify if the user owns the mount point and has sufficient permissions over 
 that. pam_mount will verify this and will refuse to mount the remote volume if 
 the user does not own that directory.
 
+If pam_mount is having trouble unmounting volumes upon logging out,
+enable the debug variable and check the lsof variable in pam_mount.conf.
+This causes pam_mount to run lsof upon logging out and write lsof's
+output to the system's logs.
 
 5. Blurb
 

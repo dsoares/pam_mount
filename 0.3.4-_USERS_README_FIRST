@@ -1,0 +1,17 @@
+A change to the wat pam_mount operates requires a change to a system's
+PAM configuration files.  Pam_mount no longer provides an auth service.
+Configuration files should now look like this:
+
+    #%PAM-1.0
+    auth      required  /lib/security/pam_securetty.so
+    auth      required	/lib/security/pam_pwdb.so shadow nullok
+    auth      required  /lib/security/pam_nologin.so
+    account   required	/lib/security/pam_pwdb.so
+    password  required  /lib/security/pam_cracklib.so
+    password  required	/lib/security/pam_pwdb.so shadow nullok use_authtok
+    session   required /lib/security/pam_pwdb.so
+    session   optional /lib/security/pam_console.so
++++ session   required /lib/security/pam_mount.so use_firstpass
+
+Failure to remove the auth pam_mount entry will result in the failure
+of all system logins.

@@ -42,106 +42,69 @@ int pam_start(const char *service_name, const char *username,
 
 */
 
-PAM_EXTERN int pam_sm_chauthtok(pam_handle_t * pamh, int flags,
-				int argc, const char **argv)
-{
-    int ret;
-    ret = pam_sm_authenticate(pamh, flags, argc, argv);
-    return PAM_SUCCESS;
-}
-
 PAM_EXTERN int pam_sm_open_session(pam_handle_t * pamh, int flags,
 				   int argc, const char **argv)
 {
-    return PAM_SUCCESS;
-}
-
-PAM_EXTERN
-    int pam_sm_authenticate(pam_handle_t * pamh, int flags, int argc,
-			    const char **argv)
-{
     char *password;
-
     int x;
     int ret;
     int get_pass = GETPASS_DEFAULT;
     int i;
-
     debug = DEBUG_DEFAULT;
-
     w4rn("pam_mount: pam_sm_autenticate with %d args", argc);
-
     for (i = 0; i < argc; i++) {
 	if (!strcmp("use_first_pass", argv[i])) {
 	    get_pass = 0;
 	} else if (!strcmp("try_first_pass", argv[i])) {
 	    get_pass = 1;
 	}
-
 	w4rn("pam_mount: pam_sm_authenticate args: %s", argv[i]);
     }
-
     w4rn("%s", "pam_mount: beginning");
-
     for (x = 0; x < COMMAND_MAX; ++x) {
 	command[x] = NULL;
     }
-
     if ((ret = pam_get_user(pamh, &user, NULL)) != PAM_SUCCESS)
 	return ret;
-
     pam_get_item(pamh, PAM_AUTHTOK, (const void **) &password);
     if (!password) {
 	log("%s", "pam_mount: could not get password");
 	return PAM_SUCCESS;
     }
-
     w4rn("pam_mount: user=%s", user);
     /* w4rn("Password=%s", password); */
-
     if (strlen(user) > MAX_PAR || strlen(password) > MAX_PAR) {
 	log("%s", "pam_mount: user or password too long");
 	return PAM_SUCCESS;
     }
-
     volcount = 0;
-
     w4rn("%s", "pam_mount: going to readconfig");
-
     if (!readconfig(user, password, command, &volcount, &data)) {
 	log("%s", "pam_mount: could not get mountable volumes for user");
 	return PAM_SUCCESS;
     }
-
     w4rn("%s", "pam_mount: back from readconfig");
     if (volcount <= 0) {
 	w4rn("%s", "pam_mount: no volumes to mount");
     }
-
     signal(SIGPIPE, SIG_IGN);
-
     for (x = 0; x < volcount; ++x) {
 	w4rn("%s", "pam_mount: FATHER calling child proc");
 	if (invoke_child(data + x, command) != 1) {
 	    w4rn("%s", "pam_mount: FATHER Could not start helper process");
-
 	    if (get_pass) {
 		char *passread;
-
 		/* get the password */
 		read_password(pamh, "mount password:", &passread);
-
 		/* try with the password read */
 		strcpy((data)[x].password, passread);
 		invoke_child(data + x, command);
 		_pam_overwrite(passread);
 		_pam_drop(passread);
 	    }
-
 	    return PAM_SUCCESS;
 	}
     }
-
     return PAM_SUCCESS;
 }
 

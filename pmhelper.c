@@ -189,19 +189,18 @@ void sigchld(int arg)
     config_signals();
 }
 
-char *get_mountpoint (char *volume)
+char *get_fstab_mountpoint(char *volume)
 {
-		FILE *fstab;
-		struct mntent *fstab_record;
-		if (!(fstab = fopen("/etc/fstab", "r"))) {
-		    log("%s", "pmhelper: could not determine mount point");
-		    exit(EXIT_FAILURE);
-		}
-		fstab_record = getmntent(fstab);
-		while (fstab_record
-		       && strcmp(fstab_record->mnt_fsname, volume))
-		    fstab_record = getmntent(fstab);
-		return fstab_record->mnt_dir;
+    FILE *fstab;
+    struct mntent *fstab_record;
+    if (!(fstab = fopen("/etc/fstab", "r"))) {
+	log("%s", "pmhelper: could not determine mount point");
+	exit(EXIT_FAILURE);
+    }
+    fstab_record = getmntent(fstab);
+    while (fstab_record && strcmp(fstab_record->mnt_fsname, volume))
+	fstab_record = getmntent(fstab);
+    return fstab_record->mnt_dir;
 }
 
 void run_lsof(void)
@@ -214,7 +213,9 @@ void run_lsof(void)
 	    log("%s", "pmhelper: fork failed for lsof");
 	} else {
 	    if (pid == 0) {
-	        char *mountpoint = get_mountpoint(data.volume);
+		char *mountpoint =
+		    data.mountpoint[0] ? data.
+		    mountpoint : get_fstab_mountpoint(data.volume);
 		w4rn("pmhelper: mount point is %s", mountpoint);
 		close(1);
 		dup(pipefds[1]);
@@ -233,9 +234,9 @@ void run_lsof(void)
 		close(pipefds[1]);
 		fp = fdopen(pipefds[0], "r");
 		w4rn("pmhelper: lsof output...", strerror(errno));
-		sleep(1); /* FIXME: need to find a better way to wait for child 
-		           * to catch up. 
-			   */
+		sleep(1);	/* FIXME: need to find a better way to wait for child 
+				 * to catch up. 
+				 */
 		while (fgets(buf, BUFSIZ, fp) != NULL)
 		    w4rn("pmhelper: %s", buf);
 		close(pipefds[0]);
@@ -263,9 +264,9 @@ void unmount_volume()
 	w4rn("%s", "pmhelper: could not set uid to 0");
 
     if (debug)
-        /* Often, a process still exists with ~ as its pwd after logging out.  
-         * Running lsof helps debug this.
-         */
+	/* Often, a process still exists with ~ as its pwd after logging out.  
+	 * Running lsof helps debug this.
+	 */
 	run_lsof();
 
     execv(cmdarg[0], &cmdarg[1]);

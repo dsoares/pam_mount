@@ -2,6 +2,12 @@
 
 	* Lsof now works when logging out of consoles.
 
+	* Changed module type to session only.	THIS REQUIRES CHANGES
+	TO PAM CONFIGURATION FILES (ie: /etc/pam.d/*).
+
+	* Pmhelper now understands the mount point may not be in
+	/etc/fstab.  In this case, the path is provided by pam_mount.so.
+
 02 August 2002 W. Michael Petullo <mike@flyn.org>
 
 	* Reduced the output of lsof to only files related to ~.
