@@ -34,8 +34,8 @@ SUBDIRS = src include include-fmt_ptrn config scripts dry debian
 if FLYN
 # For local development use only.
 # ============================= dist-hook ===================================== 
-# dist-hook:
-#	make dry
+dist-hook:
+	make dry
 
 # ============================= rpm ============================================
 rpm: dry dist
@@ -50,7 +50,7 @@ check: rpm
 	$(CHECK)
 
 # ============================= publish ========================================
-publish: dry/pam_mount.html rpm # deb
+publish: dry/pam_mount.html rpm deb
 	$(PUBLISH)
 
 endif

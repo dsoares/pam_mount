@@ -19,6 +19,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+if FLYN
+# For local development use only.
+include /etc/fctk/config.mk
+endif
 
 AUTOMAKE_OPTIONS = gnu
 
@@ -28,7 +32,7 @@ module_LTLIBRARIES = pam_mount.la
 # ../include-fmt_ptrn should contain libfmt_ptrn's headers for use if
 # -lfmt_ptrn does not exist.
 if SYSTEM_LIBFMT_PTRN
-pam_mount_la_SOURCES = misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c
+pam_mount_la_SOURCES = misc.c pam_mount.c readconfig.c dotconf.c mount.c optlist.c
 pam_mount_la_LDFLAGS = -module -avoid-version -lfmt_ptrn -ltemplate $(GLIB_LIBS)
 else
 pam_mount_la_SOURCES = misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c common.c buffer.c
@@ -38,3 +42,9 @@ endif
 INCLUDES = -I$(srcdir)/../include @LOCAL_FMT_PTRN_INCLUDES@
 
 AM_CFLAGS = -g -Werror $(GLIB_CFLAGS)
+
+if FLYN
+# For local development use only.
+lint:
+	$(LINT)
+endif

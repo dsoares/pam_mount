@@ -41,7 +41,7 @@ void l0g(const char *format, ...)
 	/* Used to log issues that cause pam_mount to fail. */
 	va_list args;
 
-	assert(format);
+	assert(format != NULL);
 
 	va_start(args, format);
 	vfprintf(stderr, format, args);
@@ -60,9 +60,9 @@ void l0g(const char *format, ...)
  *       pam_mount to fail. */
 void w4rn(const char *format, ...)
 {
-	assert(format);
+	assert(format != NULL);
 
-	if (debug) {
+	if (debug != 0) {
 		va_list args;
 		va_start(args, format);
 		vfprintf(stderr, format, args);
@@ -83,9 +83,9 @@ int exists(const char *file)
 {
 	struct stat filestat;
 
-	assert(file);
+	assert(file != NULL);
 
-	if (stat(file, &filestat)) {
+	if (stat(file, &filestat) != 0) {
 		return 0;
 	}
 	if (S_ISLNK(filestat.st_mode)) {
@@ -102,8 +102,8 @@ int owns(const char *user, const char *file)
 	struct stat filestat;
 	struct passwd *userinfo;
 
-	assert(user);
-	assert(file);
+	assert(user != NULL);
+	assert(file != NULL);
 
 	userinfo = getpwnam(user);
 	if (!userinfo) {
@@ -112,7 +112,7 @@ int owns(const char *user, const char *file)
 		return 0;
 	}
 
-	if (stat(file, &filestat)) {
+	if (stat(file, &filestat) != 0) {
 		w4rn("pam_mount: file %s could not be stat'ed\n", file);
 		return 0;
 	}
@@ -136,9 +136,9 @@ converse(pam_handle_t * pamh, int nargs,
 	int retval;
 	struct pam_conv *conv;
 	
-	assert(pamh);
+	assert(pamh != NULL);
 	assert(nargs >= 0);
-	assert(resp);
+	assert(resp != NULL);
 
 	*resp = NULL;
 	retval = pam_get_item(pamh, PAM_CONV, (const void **) &conv);
@@ -149,7 +149,7 @@ converse(pam_handle_t * pamh, int nargs,
 	if (! *resp)
 		retval = PAM_AUTH_ERR;
 
-	assert(retval != PAM_SUCCESS || (resp && *resp && (*resp)->resp));
+	assert(retval != PAM_SUCCESS || (resp != NULL && *resp != NULL && (*resp)->resp != NULL));
 
 	return retval;		/* propagate error status */
 }
@@ -167,9 +167,9 @@ int read_password(pam_handle_t * pamh, char *prompt1, char **pass)
 	const struct pam_message *pmsg = &msg;
 	struct pam_response *resp = NULL;
 
-	assert(pamh);
-	assert(prompt1);
-	assert(pass);
+	assert(pamh != NULL);
+	assert(prompt1 != NULL);
+	assert(pass != NULL);
 
 	w4rn("pam_mount: %s\n", "enter read_password");
 	*pass = NULL;
@@ -179,7 +179,7 @@ int read_password(pam_handle_t * pamh, char *prompt1, char **pass)
 	if (retval == PAM_SUCCESS)
 		*pass = strdup(resp->resp);
 
-	assert(retval != PAM_SUCCESS || (pass && *pass));
+	assert(retval != PAM_SUCCESS || (pass != NULL && *pass != NULL));
 
 	return retval;
 }

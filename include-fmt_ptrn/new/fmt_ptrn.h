@@ -50,11 +50,11 @@ extern "C" {
 
 /* ============================ fmt_ptrn_update_kv_p () ==================== */
 /* Add a key / value mapping for use in filling format patterns. */
-    void fmt_ptrn_update_kv_p(fmt_ptrn_t *x, pair_t *p);
+    void fmt_ptrn_update_kv_p(fmt_ptrn_t *x, const pair_t *p);
 
 /* ============================ fmt_ptrn_update_kv ()======================= */
 /* Add a key / value mapping for use in filling format patterns. */
-    void fmt_ptrn_update_kv(fmt_ptrn_t *x, char *key, char *val);
+    void fmt_ptrn_update_kv(fmt_ptrn_t *x, const char *key, const char *val);
 
 /* ============================ fmt_ptrn_filled () ========================= */
 /* Takes a string, p, and returns p with its format patterns filled. */

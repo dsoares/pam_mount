@@ -52,6 +52,8 @@ void parse_pam_args(int argc, const char **argv)
 	int i;
 
 	assert(argc >= 0);
+	for (i = 0; i < argc; i++)
+		assert(argv[i]);
 
 	/* first, set default values */
 	args.auth_type = GET_PASS;
@@ -238,7 +240,7 @@ int modify_pm_count(const char *user, long amount)
 		 * su creates file group owned by user and the releases root
 		 * perms.  User needs to be able to access file on logout.
 		 */
-/* FIXME: testing root owned /var/run/pam_mount/* -- requires that pam_mount
+/* FIXME: testing root owned /var/run/pam_mount/<user> -- requires that pam_mount
  *        has root privileges when clossing session.
       if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
 */

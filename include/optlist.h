@@ -35,7 +35,7 @@ int str_to_optlist(optlist_t ** optlist, const char *str);
 int optlist_exists(optlist_t * optlist, const char *str);
 
 /* ============================ optlist_value () =========================== */
-char *optlist_value(optlist_t * optlist, const char *str);
+const char * optlist_value(optlist_t * optlist, const char *str);
 
 /* ============================ optlist_to_str () ========================== */
 char *optlist_to_str(char *str, const optlist_t * optlist);

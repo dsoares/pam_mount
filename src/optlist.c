@@ -28,67 +28,91 @@
 
 /* ============================ _parse_string_opt () ======================= */
 /* INPUT: str, string to parse
- *        len, should be length up to first ',' or 0x00
+ *        len, should be length up to first ',' or terminating 0x00
  * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
 static int _parse_string_opt(const char *str, size_t len,
 			     optlist_t ** optlist)
 {
+	int ret = 1;
 	pair_t *pair;
-	char *delim , *key, *val;
+	char *delim, *key, *val;
 
 	assert(str);
-	assert(len >= 0 && len <= strlen(str));
+	/* a user could config "loop,,,foo=bar==..." */
+	if (len <= 0 || len > MAX_PAR) {
+		ret = 0;
+		goto _return;
+	}
+	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
+	assert(optlist);
 
 	delim = strchr(str, '=');
-	if (!delim)
-		return 0;
-	if (len > MAX_PAR || len <= 0)
-		return 0;
-	if (!delim || delim - str >= len)
-		return 0;
+	if (!delim || delim - str >= len) {
+		ret = 0;
+		goto _return;
+	}
 	pair = (pair_t *) malloc(sizeof(pair_t));
 	key = (char *) malloc(sizeof(char) * (delim - str) + 1);
-	val = (char *) malloc(sizeof(char) * len - (delim - str)); /* '=' is +1 */
-	if (!pair || !key || !val)
-		return 0;
+	val = (char *) malloc(sizeof(char) * len - (delim - str));	/* '=' is +1 */
+	if (!pair || !key || !val) {
+		ret = 0;
+		goto _return;
+	}
 	strncpy(key, str, delim - str);
 	key[delim - str] = 0x00;
 	strncpy(val, delim + 1, len - (delim - str) - 1);
 	val[len - (delim - str) - 1] = 0x00;
 	pair_init(pair, key, val, free, free);
 	*optlist = g_list_append(*optlist, pair);
-	return 1;
+      _return:
+
+	assert(!ret || (optlist_exists(*optlist, key)
+			&& !strcmp(optlist_value(*optlist, key), val)));
+
+	return ret;
 }
 
 /* ============================ _parse_opt () ============================== */
 /* INPUT: str, string to parse
- *        len, should be length up to first ',' or 0x00
+ *        len, should be length up to first ',' or terminating 0x00
  * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
 static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 {
+	int ret = 1;
 	pair_t *pair;
 	char *key, *val;
 
 	assert(str);
-	assert(len >= 0 && len <= strlen(str));
+	/* a user could config "loop,,,foo=bar==..." */
+	if (len <= 0 || len > MAX_PAR) {
+		ret = 0;
+		goto _return;
+	}
+	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
+	assert(optlist);
 
-	if (len > MAX_PAR)
-		return 0;
 	pair = (pair_t *) malloc(sizeof(pair_t));
 	key = malloc(sizeof(char) * len + 1);
 	val = malloc(1);
-	if (!pair || !key || !val)
-		return 0;
+	if (!pair || !key || !val) {
+		ret = 0;
+		goto _return;
+	}
 	strncpy(key, str, len);
 	key[len] = 0x00;
 	*val = 0x00;
 	pair_init(pair, key, val, free, free);
 	*optlist = g_list_append(*optlist, pair);
-	return 1;
+      _return:
+
+	assert(!ret || (optlist_exists(*optlist, key)
+			&& !strcmp(optlist_value(*optlist, key), val)));
+
+	return ret;
 }
 
 /* ============================ str_to_optlist () ========================== */
@@ -98,36 +122,48 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
  */
 int str_to_optlist(optlist_t ** optlist, const char *str)
 {
+	int ret = 1;
 	char *ptr;
 
+	assert(optlist);
 	assert(str);
 
 	*optlist = NULL;
-	if (!strlen(str))
-		return 1;
+	if (!strlen(str)) {
+		ret = 0;
+		goto _return;
+	}
 	while (ptr = strchr(str, ',')) {
 		if (!_parse_string_opt(str, ptr - str, optlist))
-			if (!_parse_opt(str, ptr - str, optlist))
-				return 0;
+			if (!_parse_opt(str, ptr - str, optlist)) {
+				ret = 0;
+				goto _return;
+			}
 		str = ptr + 1;
 	}
 	if (!_parse_string_opt(str, strlen(str), optlist))
-		if (!_parse_opt(str, strlen(str), optlist))
-			return 0;
-	return 1;
+		if (!_parse_opt(str, strlen(str), optlist)) {
+			ret = 0;
+			goto _return;
+		}
+      _return:
+
+	assert(!ret || ((!strlen(str) && !*optlist) || *optlist));
+
+	return ret;
 }
 
-/* ============================ _compare () ================================ */ 
+/* ============================ _compare () ================================ */
 /* INPUT: x and y
  * OUTPUT: if x->key is the same string as y then 0, else non-0
  */
 static int _compare(gconstpointer x, gconstpointer y)
 {
 	assert(x);
-	assert(((pair_t *)x)->key);
+	assert(((pair_t *) x)->key);
 	assert(y);
 
-	return strcmp(((pair_t *)x)->key, y);
+	return strcmp(((pair_t *) x)->key, y);
 }
 
 /* ============================ optlist_exists () ========================== */
@@ -147,7 +183,7 @@ int optlist_exists(optlist_t * optlist, const char *str)
 /* INPUT: optlist and str
  * OUTPUT: optlist[str] ("" if no value) else NULL
  */
-char *optlist_value(optlist_t * optlist, const char *str)
+const char *optlist_value(optlist_t * optlist, const char *str)
 {
 	GList *ptr;
 
@@ -156,7 +192,10 @@ char *optlist_value(optlist_t * optlist, const char *str)
 	if (!optlist)
 		return NULL;
 	ptr = g_list_find_custom(optlist, str, _compare);
-	return ptr ? ((pair_t *)ptr->data)->val : NULL;
+
+	assert(ptr || !optlist_exists(optlist, str));
+
+	return ptr ? ((pair_t *) ptr->data)->val : NULL;
 }
 
 /* ============================ optlist_to_str () ========================== */
@@ -171,19 +210,22 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 	assert(str);
 
 	*str = 0x00;
-	if (!optlist)
-		return str;
-	do {
-		strncat(str, ((pair_t *) ptr->data)->key,
-			MAX_PAR - strlen(str));
-		if (strlen(((pair_t *) ptr->data)->val)) {
-			strncat(str, "=", MAX_PAR - strlen(str));
-			strncat(str, ((pair_t *) ptr->data)->val,
+	if (optlist)
+		do {
+			strncat(str, ((pair_t *) ptr->data)->key,
 				MAX_PAR - strlen(str));
-		}
-		if (ptr = g_list_next(ptr))
-			strncat(str, ",", MAX_PAR - strlen(str));
-	} while (ptr);
+			if (strlen(((pair_t *) ptr->data)->val)) {
+				strncat(str, "=", MAX_PAR - strlen(str));
+				strncat(str,
+					((pair_t *) ptr->data)->
+					val, MAX_PAR - strlen(str));
+			}
+			if (ptr = g_list_next(ptr))
+				strncat(str, ",", MAX_PAR - strlen(str));
+		} while (ptr);
 	str[MAX_PAR] = 0x00;
+
+	assert((!optlist && !strlen(str)) || strlen(str));
+
 	return str;
 }

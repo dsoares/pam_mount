@@ -1,3 +1,20 @@
+04 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* RPM spec file is now rebuilt from XML on make rpm.
+
+	* Fixed a fopen return value check in mount.c.
+
+	* Many splint prompted changes.
+
+02 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* No longer use pam_mount's pair.c if compiling using libfmt_ptrn.
+
+01 January 2004 W. Michael Petullo <mike@flyn.org>
+
+	* Add some quotes and quote escapes to several mount command
+	examples in example pam_mount.conf.
+
 09 December 2003 W. Michael Petullo <mike@flyn.org>
 
 	* Now uses templates in command definitions.  THIS RENDERS OLD

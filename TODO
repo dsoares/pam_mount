@@ -1,13 +1,21 @@
 = For 1.0 =====================================================================
 
-o cvs add include-fmt_ptrn/new/*.h
+o splint -I. -I.. -I../include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include +posixlib mount.c | less
 
-o cvs add src/<all new sources>
+o see email (should be fixed)
 
-o cvs rm include/new/*
+o ensure include/new/* and include/new are cvs rm'ed
 
-o email as many pam_mount users as I can requesting that they test the
-CVS pam_mount and subscribe to pam_mount's mailing list.
+o scrub code on Savannah after break in?
+	The following files were committed after system restore (and should not need scrubbing):
+		buffer.c
+		common.c
+		modifiers.c
+		template.c
+		fmt_ptrn.c
+		<all include-fmt_ptrn except pair.h and Makefile.am>
+
+o need progress feedback from fsck, especially for gdm.
 
 o replace vol_t fields with one fmt_ptrn and add value_query fn to
 fmt_ptrn lib?
@@ -17,10 +25,6 @@ o regression tests:
 	options = '-', use fstab (mnt pt not defined either)
 
 o Get in fedora (http://www.fedora.us/wiki/PackageSubmissionQAPolicy Fedora Bugzilla #1013).
-
-o Fix building deb in Makefile.am: make conditional?
-
-o .spec must be re-generated for each version.
 
 o ????? return to using user owned /var/run/pam_mount/test -- document
 in code that this is a good idea to allow an option to ssh users besides
@@ -44,9 +48,6 @@ o replace PRE, POST and FN VAL conditions with asserts in code where applicable
 	- assert that side affects happen if OUTPUT is not an error code
 	- only one return statement per function so assertions may be made
 
-	- misc.c
-	- optlist.c
-	- pair.c
 	- pam_mount.c
 	- mount.c
 	- readconfig.c

@@ -115,16 +115,17 @@ static int _stack_contains(const stack_t s, const char *n)
 }
 
 /* ============================ fmt_ptrn_update_kv_p () ==================== */
-void fmt_ptrn_update_kv_p(fmt_ptrn_t * x, pair_t * p)
+void fmt_ptrn_update_kv_p(fmt_ptrn_t * x, const pair_t * p)
 {
     /* FIXME: this strdups here but other fn requires malloced strs! */
     g_tree_insert(x->fillers, strdup(p->key), strdup(p->val));
 }
 
 /* ============================ fmt_ptrn_update_kv () ====================== */
-void fmt_ptrn_update_kv(fmt_ptrn_t * x, char *key, char *val)
+void fmt_ptrn_update_kv(fmt_ptrn_t * x, const char *key, const char *val)
 {
-    g_tree_insert(x->fillers, key, val);
+    /* FIXME: getting rid of the const is silly, but I didn't write g_tree_insert */
+    g_tree_insert(x->fillers, (char *) key, (char *) val);
 }
 
 /* ============================ _matching_paren () ========================= */ 
