@@ -92,10 +92,10 @@ extern          "C" {
 	int             owns(const char *user, const char *file);
 
 /* ============================ log () ===================================== */
-	void            log(const char *mask, const char *arg);
+	void            log(const char *format, ...);
 
 /* ============================ w4rn () ==================================== */
-	void            w4rn(const char *mask, const char *arg);
+	void            w4rn(const char *format, ...);
 
 /* ============================ read_password () =========================== */
 	int             read_password(pam_handle_t * pamh, const char *prompt1,

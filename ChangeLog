@@ -1,3 +1,9 @@
+19 May 2003 W. Michael Petullo <mike@flyn.org>
+
+	* More patches from Bastien Kleineidam (thanks):
+		- logging fns now use vargs
+		- fixed memleak on unmount failure
+
 7 May 2003 W. Michael Petullo <mike@flyn.org>
 	
 	* Mkehd no longer uses an env. var. to transmit password to openssl.

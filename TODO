@@ -1,5 +1,7 @@
 = For 1.0 =====================================================================
 
+o See Debain patch that fixes security flaw.
+
 o Re-enable rpm in top-level makefile publish target.
 
 o Why does pam_mount not work with ssh?

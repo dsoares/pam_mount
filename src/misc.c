@@ -5,37 +5,43 @@
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdarg.h>
 #include <security/pam_modules.h>
 
 extern int debug;
 
-/* ============================ _log () ==================================== */ 
-static void _log(int priority, const char *mask, const char *arg)
-{
-    fprintf(stderr, mask, arg);
-    syslog(priority, mask, arg);
-}
-
 /* ============================ log () ===================================== */ 
-/* PRE:  mask points to a valid string != NULL
- *       arg points to a valid string != NULL
- * POST: mask + arg is logged and displayed */
-void log(const char *mask, const char *arg)
+/* PRE:  format points to a valid string != NULL
+ *       args point to valid strings != NULL
+ * POST: format + args are logged and displayed */
+void log(const char *format, ...)
 {
     /* Used to log issues that cause pam_mount to fail. */
-    _log(LOG_AUTHPRIV | LOG_ERR, mask, arg);
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    va_start(args, format);
+    vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
+    va_end(args);
 }
 
 /* ============================ w4rn () ==================================== */ 
-/* PRE:  mask points to a valid string != NULL
- *       arg points to a valid string != NULL
- * POST: mark + arg is logged and displayed iff debug == 0
+/* PRE:  format points to a valid string != NULL
+ *       args point to valid strings != NULL
+ * POST: format + args are logged and displayed iff debug == 1
  * NOTE: Used to log informational messages and issues that should not cause
  *       pam_mount to fail. */
-void w4rn(const char *mask, const char *arg)
+void w4rn(const char *format, ...)
 {
     if (debug) {
-	_log(LOG_USER | LOG_ERR, mask, arg);
+        va_list args;
+        va_start(args, format);
+        vfprintf(stderr, format, args);
+        va_end(args);
+        va_start(args, format);
+        vsyslog(LOG_USER | LOG_ERR, format, args);
+        va_end(args);
     }
 }
 
