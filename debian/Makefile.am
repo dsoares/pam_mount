@@ -1,6 +1,6 @@
 #   FILE: Makefile.am -- 
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
-#   DATE: 03 August 2002
+#   DATE: 23 December 2002 
 # 
 # Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
 # All rights reserved.
@@ -27,28 +27,10 @@ endif
 
 AUTOMAKE_OPTIONS = gnu
 
-EXTRA_DIST = README_DEBIAN autogen.sh
-
-SUBDIRS = src include config scripts dry debian 
+EXTRA_DIST = control
 
 if FLYN
 # For local development use only.
-# ============================= dist-hook ===================================== 
-# dist-hook:
-#	make dry
+all: control
 
-# ============================= rpm ============================================
-rpm: dry dist
-	$(BUILD_RPM)
-# ============================= =============================================== 
-deb: dry dist
-	$(BUILD_DEB)
-
-# ============================= check ==========================================
-check: rpm
-	$(CHECK)
-
-# ============================= publish ========================================
-publish: dry/pam_mount.html # rpm deb
-	$(PUBLISH)
 endif

@@ -14,7 +14,7 @@ extern "C" {
 #define CONFIGFILE	"/etc/pam_mount.conf"
 #else
 #define CONFIGFILE	"/etc/security/pam_mount.conf"
-#endif /* __OpenBSD */
+#endif /* __OpenBSD__ */
 
 #define MAX_PAR		127
 
@@ -24,11 +24,13 @@ extern "C" {
 
     typedef enum command_type_t {
 	SMBMOUNT,
+	CIFSMOUNT,
 	NCPMOUNT,
 	LCLMOUNT,
 	UMOUNT,
 	PMHELPER,
 	LSOF,
+	MNTCHECK,
 	COMMAND_MAX
     } command_type_t;
 
@@ -52,7 +54,10 @@ extern "C" {
 	char mountpoint[FILENAME_MAX + 1];
 	char ucommand[FILENAME_MAX + 1];
 	char lsof[FILENAME_MAX + 1];
-	char password[FILENAME_MAX + 1];
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+	char mntcheck[MAX_PAR + 1]; 
+#endif
+	char password[MAX_PAR + 1];
 	char argv[FILENAME_MAX + 1][MAX_PAR + 1];	/* for building mount command */
 	int argc;
     } data_t;
@@ -63,7 +68,7 @@ extern "C" {
 	int mkmountpoint;
 	int volcount;
 	char luserconf[FILENAME_MAX + 1];
-	char *system_password;
+	char system_password[MAX_PAR + 1];
 	char *command[MAX_PAR + 1][COMMAND_MAX];
 	char *options_require[MAX_PAR + 1];
 	char *options_allow[MAX_PAR + 1];

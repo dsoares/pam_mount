@@ -13,6 +13,7 @@ extern debug;
 pm_command_t command[] = {
     {SMBMOUNT, "smb", "smbmount"},
     {SMBMOUNT, "smbfs", "smbmount"},
+    {CIFSMOUNT, "cifs", "cifsmount"},
     {NCPMOUNT, "ncp", "ncpmount"},
     {NCPMOUNT, "ncpfs", "ncpmount"},
     {LCLMOUNT, "local", "lclmount"},
@@ -20,6 +21,9 @@ pm_command_t command[] = {
     {PMHELPER, NULL, "pmhelper"},
     {UMOUNT, NULL, "umount"},
     {LSOF, NULL, "lsof"},
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+    {MNTCHECK, NULL, "mntcheck"},
+#endif
     {-1, NULL, NULL}
 };
 
@@ -39,11 +43,15 @@ static const configoption_t legal_config[] = {
     {"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
     {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
     {"smbmount", ARG_LIST, read_command, &config, CTX_ALL},
+    {"cifsmount", ARG_LIST, read_command, &config, CTX_ALL},
     {"ncpmount", ARG_LIST, read_command, &config, CTX_ALL},
     {"umount", ARG_LIST, read_command, &config, CTX_ALL},
     {"pmhelper", ARG_LIST, read_command, &config, CTX_ALL},
     {"lclmount", ARG_LIST, read_command, &config, CTX_ALL},
     {"lsof", ARG_LIST, read_command, &config, CTX_ALL},
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
+    {"mntcheck", ARG_LIST, read_command, &config, CTX_ALL},
+#endif
     {"options_require", ARG_STR, read_options_require, &config, CTX_ALL},
     {"options_allow", ARG_STR, read_options_allow, &config, CTX_ALL},
     {"options_deny", ARG_STR, read_options_deny, &config, CTX_ALL},
@@ -143,6 +151,8 @@ DOTCONF_CB(read_command)
 {
     int i;
     command_type_t command_index;
+    if (!*((int *) cmd->context))
+	return "tried to set command from user config";
     if ((command_index = get_command_index(command, cmd->name)) == -1)
 	return "pam_mount: bad command in config";
     for (i = 0; i < cmd->arg_count; i++)
@@ -514,7 +524,6 @@ void initconfig(config_t * config)
 void freeconfig(config_t config)
 {
     int i = 0, j = 0;
-    free(config.system_password);
     while (config.options_require[i])
 	free(config.options_require[i++]);
     i = 0;

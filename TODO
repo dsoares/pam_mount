@@ -1,18 +1,9 @@
 = For 1.0 =====================================================================
 
-o Re-enable building dry in top-level makefile (don't forget dist-hook).
-
-o Fix mtab stuff.
-
-o Make CONFIGFILE in pam_mount.h get set to /etc/security/pam_mount.conf or /etc/pam_mount.conf.  Talk about this in README.
+o Re-enable rpm and deb in top-level makefile publish target.
 
 o Does configure's libcrypt check work?  What is with -lcrypto,
 -lcrypt, -lssl req.?
-
-ADD CODE FROM NEWER VERSION THAT WAS LOST IN SYSTEM CRASH (GET FROM FLYN.ORG?)!
-
-o Ensure error messages are obvious when pam_mount.conf has location
-of [u]mount misconfigured.
 
 o Why does pam_mount not work with ssh?
 

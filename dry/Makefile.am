@@ -19,7 +19,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 if FLYN
 # For local development use only.
 include /etc/fctk/config.mk
@@ -27,28 +26,25 @@ endif
 
 AUTOMAKE_OPTIONS = gnu
 
-EXTRA_DIST = README_DEBIAN autogen.sh
-
-SUBDIRS = src include config scripts dry debian 
+EXTRA_DIST = pam_mount.spec
 
 if FLYN
 # For local development use only.
-# ============================= dist-hook ===================================== 
-# dist-hook:
-#	make dry
+README: pam_mount.xml
+	xsltproc -o README /usr/local/share/fctk/README.xslt pam_mount.xml
 
-# ============================= rpm ============================================
-rpm: dry dist
-	$(BUILD_RPM)
-# ============================= =============================================== 
-deb: dry dist
-	$(BUILD_DEB)
+pam_mount.html: pam_mount.xml
+	xsltproc -o pam_mount.html /usr/local/share/fctk/webpage.xslt pam_mount.xml
 
-# ============================= check ==========================================
-check: rpm
-	$(CHECK)
+pam_mount.spec: pam_mount.xml
+	xsltproc -o pam_mount.spec --stringparam version $(VERSION) /usr/local/share/fctk/spec.xslt pam_mount.xml
 
-# ============================= publish ========================================
-publish: dry/pam_mount.html # rpm deb
-	$(PUBLISH)
+control: pam_mount.xml
+	xsltproc -o control /usr/local/share/fctk/control.xslt pam_mount.xml
+
+# ============================= all =========================================== 
+all: $(PACKAGE).spec README pam_mount.html pam_mount.spec control
+	cp README ..
+	cp control ../debian
+
 endif

@@ -1,3 +1,29 @@
+5 March 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Added support for CIFS (Thanks to Daniel Zeiss).
+
+28 February 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Began to build README, RPM spec, Debian control, etc using XSLT.
+
+	* Updated AUTHORS file.
+
+22 February 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Pmhelper can now check for existing mounts on Open and FreeBSD.
+
+	* Can no longer define commands in ~/.pam_mount.conf.
+
+21 February 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Moved code from pam_sm_auth... to pam_sm_open_session.
+
+	* Pam_mount.c and pmhelper.c now zeroize passwords after use.
+
+17 February 2003 W. Michael Petullo <mike@flyn.org>
+
+	* Fixed cpp-related pmhelper.c build error on Linux.
+
 15 February 2003 W. Michael Petullo <mike@flyn.org>
 
 	* OpenBD port not works, though not very well.
@@ -5,6 +31,8 @@
 	* Added BSD fstab.h-related code.
 
 	* invoke_child now fails if pmhelper exits with error code (!= 0).
+
+	* Fixed misuse of execv.
 
 11 February 2003 W. Michael Petullo <mike@flyn.org>
 

@@ -1,0 +1,35 @@
+Source: pam-mount
+Section: admin
+Priority: optional
+Maintainer: W. Michael Petullo <mike@flyn.org>
+Standards-Version: 1:3.3.3-2
+
+Package: pam-mount
+Architecture: any
+Depends: libpam0g
+Recommends: libssl0.9.6
+Description: a PAM module that can mount volumes for a user session
+ This module is aimed at environments with SMB (Samba or Windows NT) 
+ or NCP (Netware or Mars-NWE) servers that Unix users wish to access 
+ transparently. It facilitates access to private volumes of these types 
+ well. The module also supports mounting home directories using 
+ loopback encrypted filesystems.
+
+ o Every user can access his own volumes
+
+ o The user needs to type the password just once (at login)
+
+ o The mouting process is transparent to the users
+
+ o There is no need to keep the login passwords in any additional file
+
+ o The volumes are unmounted upon logout, so it saves system resources, 
+ avoiding the need of listing every every possibly useful remote 
+ volume in /etc/fstab or in an automount/supermount config file. This 
+ is also necessary for securing encrypted filesystems.
+
+ Pam_mount "understands" SMB, NCP, and any type of filesystem that can 
+ be mounted using the standard mount command. If someone has a 
+ particular need for a different filesystem, feel free to ask me to 
+ include it and send me patches.
+
