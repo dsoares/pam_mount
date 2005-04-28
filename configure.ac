@@ -25,7 +25,7 @@ AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
 MINOR_VERSION=9
-MICRO_VERSION=22
+MICRO_VERSION=23
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -61,6 +61,11 @@ AC_ARG_ENABLE(system-fmt_ptrn,
 AC_SUBST(LOCAL_FMT_PTRN_INCLUDES)
 
 AC_CHECK_HEADER(security/pam_modules.h,,AC_MSG_ERROR(You are missing security/pam_modules.h))
+
+AM_PATH_CHECK(,[have_check="yes"],
+  AC_MSG_WARN([Check not found; cannot run unit tests!])
+      [have_check="no"])
+          AM_CONDITIONAL(HAVE_CHECK, test x"$have_check" = "xyes")
 
 case "$host" in
   *-*-linux*)

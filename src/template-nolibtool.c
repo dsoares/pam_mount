@@ -21,9 +21,9 @@
  */
 
 #include <new/common.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
-#define __USE_GNU
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -222,7 +222,7 @@ int template_write_it_using_map(const char *filepath, const int force,
 		template_path);
 	return 0;
     }
-    fmt_ptrn_update_kv(&map, strdup("FILE"), strdup(basename(filepath)));
+    fmt_ptrn_update_kv(&map, strdup("FILE"), basename(strdup(filepath)));
     initialize_fillers(&map);
     if (strlen(mapping_file))
         initialize_fillers_from_file(&map, mapping_file);

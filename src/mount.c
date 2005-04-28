@@ -530,13 +530,13 @@ do_losetup(struct config_t *config, const unsigned int vol,
 	w4rn("pam_mount: umount errors (should be empty):\n");
 	log_output(cstderr);
 	CLOSE(cstderr);
-	w4rn("pam_mount: %s\n", "waiting for umount");
+	w4rn("pam_mount: %s\n", "waiting for losetup");
 	if (waitpid(pid, &child_exit, 0) == -1) {
 		l0g("pam_mount: error waiting for child\n");
 		ret = 0;
 		goto _return;
 	} else {
-		/* pass on through the result from the umount process */
+		/* pass on through the result from the losetup process */
 		ret = !WEXITSTATUS(child_exit);
 	}
       _return:
@@ -762,7 +762,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 			/* _password is an ASCII string in this case -- we'll treat its
 			 * MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the standard string 
 			 * MAX_PAR + 1 in this case */
-			strncpy(_password, password, MAX_PAR);
+			strncpy((char *) _password, password, MAX_PAR);
 			_password[MAX_PAR] = 0x00;
 			_password_len = strlen(password);
 		}

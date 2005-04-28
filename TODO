@@ -4,6 +4,12 @@ o see RELEASE_CHECKLIST
 
 = For 1.0 =====================================================================
 
+o gid symbol like uid's &?
+
+o unit tests
+
+o see emails
+
 o already_mounted() needs to handle /etc/mtab entries for dm-crypt volumes
 mounted with patched util-linux.
 

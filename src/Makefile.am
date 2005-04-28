@@ -29,6 +29,11 @@ AUTOMAKE_OPTIONS = gnu
 moduledir = @PAM_MODDIR@
 module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
+
+if FLYN
+noinst_PROGRAMS = check
+endif
+
 # Use -lfmt_ptrn if it exists else compile locally (see also configure.in).
 # ../include-fmt_ptrn should contain libfmt_ptrn's headers for use if
 # -lfmt_ptrn does not exist.
@@ -43,6 +48,13 @@ endif
 # FIXME: misc.c needs to be compiled both with and without libtool
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c
 pmvarrun_LDFLAGS = -lz $(GLIB_LIBS)
+
+if FLYN
+check_SOURCES = check.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c
+check_INCLUDES = @CHECK_CFLAGS@
+check_LDADD = @CHECK_LIBS@
+check_LDFLAGS = -lz $(GLIB_LIBS)
+endif
 
 INCLUDES = -I$(srcdir)/../include @LOCAL_FMT_PTRN_INCLUDES@
 

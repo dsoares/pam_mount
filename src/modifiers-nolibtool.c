@@ -24,6 +24,7 @@
 #include <new/common.h>
 #include <new/buffer.h>
 #include <new/template.h>
+#include <libgen.h>
 #include <ctype.h>
 #include <string.h>
 #include <glib.h>
@@ -272,9 +273,9 @@ int apply_template(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     while (fmt_ptrn_parse_err(&f))
 	/* Copy parse error messages into the main fmt_ptrn_t data structure. */
 	enqueue_parse_errmsg(x, fmt_ptrn_parse_strerror(&f));
+    /* Avoid freeing the stolen fillers: */
     /* FIXME: need to port to glib:
-    f.fillers.size = 0;		/* Avoid freeing the stolen fillers. */
-    /*
+    f.fillers.size = 0;		
     f.fillers.root = NULL;
     */
     fmt_ptrn_close(&f);

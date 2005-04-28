@@ -34,6 +34,10 @@
 #include <security/pam_modules.h>
 #include <pam_mount.h>
 
+#ifdef HAVE_SETFSUID
+#include <sys/fsuid.h>
+#endif
+
 extern int debug;
 
 /* ============================ l0g () ===================================== */
@@ -51,7 +55,7 @@ void l0g(const char *format, ...)
 	va_end(args);
 	va_start(args, format);
 /* This code needs root priv? */
-	vsyslog(LOG_USER | LOG_ERR, format, args);
+	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
 /* end root priv. */
 	va_end(args);
 }
@@ -72,7 +76,7 @@ void w4rn(const char *format, ...)
 		va_end(args);
 		va_start(args, format);
 /* This code needs root priv? */
-		vsyslog(LOG_USER | LOG_ERR, format, args);
+		vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
 /* end root priv. */
 		va_end(args);
 	}
@@ -80,8 +84,7 @@ void w4rn(const char *format, ...)
 
 /* ============================ exists () ================================== */
 /* INPUT: file, a file path
- * OUTPUT: 0 if file does not exist, -1 if file is a symlink, or 1 if file 
- *         is normal and exists */
+ * OUTPUT: 0 if file does not exist or 1 if file exists */
 int exists(const char *file)
 {
 	struct stat filestat;
@@ -90,9 +93,6 @@ int exists(const char *file)
 
 	if (stat(file, &filestat) != 0) {
 		return 0;
-	}
-	if (S_ISLNK(filestat.st_mode)) {
-		return -1;
 	}
 	return 1;
 }
@@ -150,8 +150,8 @@ long str_to_long(char *n)
 	return val;
 }
 
-/* ============================ string_valid () ============================ */
-static gboolean static_string_valid(const char *s, const int len)
+/* ============================ static_string_valid () ===================== */
+gboolean static_string_valid(const char *s, const int len)
 {
 	int i;
 	if (s == NULL)
@@ -231,7 +231,7 @@ gboolean config_t_valid(const config_t * c)
 }
 
 /* ============================ log_argv () ================================ */
-static void log_argv(char *const argv[])
+void log_argv(char *const argv[])
 /* PRE:  argv[0...n] point to valid strings != NULL
  *       argv[n + 1] is NULL
  * POST: argv[0...n] is logged in a nice manner
@@ -242,12 +242,13 @@ static void log_argv(char *const argv[])
 	char str[MAX_PAR + 1];
 	if (debug == FALSE)
 		return;
-	strncpy(str, argv[0], MAX_PAR - 1);	/* -1 for ' ' */
-	strcat(str, " ");
+	g_strlcpy(str, argv[0], MAX_PAR + 1);
+	g_strlcat(str, " ", MAX_PAR + 1);
 	str[MAX_PAR] = (char) 0x00;
 	for (i = 1; argv[i] != NULL && strlen(str) < MAX_PAR - 1; i++) {
-		strncat(str, argv[i], MAX_PAR - strlen(str) - 1);
-		strcat(str, " ");
+		g_strlcat(str, "[", MAX_PAR + 1);
+		g_strlcat(str, argv[i], MAX_PAR + 1);
+		g_strlcat(str, "] ", MAX_PAR + 1);
 		str[MAX_PAR] = (char) 0x00;
 		if (strlen(str) >= MAX_PAR)	/* Should never be greater */
 			break;
@@ -264,7 +265,7 @@ static void log_argv(char *const argv[])
 void add_to_argv(char *argv[], int *const argc, char *const arg,
 		 fmt_ptrn_t * vinfo)
 {
-	char *filled, *ptr;
+	char *filled, *space;
 
 	assert(argv != NULL);
 	/* need room for one more + terminating NULL for execv */
@@ -289,13 +290,14 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 	while (fmt_ptrn_parse_err(vinfo) != 0)
 		l0g("pam_mount: %s\n", fmt_ptrn_parse_strerror(vinfo));
 	/* FIXME: this is NOT robust enough (handles only single spaces) */
+	/* also, this breaks apart paths with spaces.
 	/* FIXME: this is silly, how can I avoid parsing this again after
 	 * dotfile did?
 	 */
-	while (filled && (ptr = strchr(filled, ' '))) {
-		*ptr = (char) 0x00;
-		argv[(*argc)++] = filled;
-		filled = ptr + 1;
+	while (filled && (space = strchr(filled, ' '))) {
+	                *space = (char) 0x00;
+			argv[(*argc)++] = filled;
+			filled = space + 1;
 	}
 	argv[(*argc)++] = filled;
 	argv[*argc] = NULL;

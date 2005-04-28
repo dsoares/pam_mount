@@ -41,8 +41,8 @@ fi
 
 DMDEVICE=`$MOUNT | grep $1 | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`
 
-# FIXME: blind replacement of _ with / is a bad idea; can't have _ in real path
-REALDEVICE=`echo $DMDEVICE | sed 's/_/\//g'`
+# ask cryptsetup about the underlying device
+REALDEVICE=`$CRYPTSETUP status $DMDEVICE | sed -n '/device/s/[ ]*device:[ ]*//p'`
 
 $UMOUNT "$1"
 if [ $? != 0 ]; then

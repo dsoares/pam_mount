@@ -1,3 +1,20 @@
+28 April 2005 W. Michael Petullo <mike@flyn.org>
+
+	* Fix compile with gcc 4 -- its pickier with signedness.
+
+	* Updated to dot.conf 1.0.13.
+
+17 April 2005 W. Michael Petullo <mike@flyn.org>
+
+	* Fix log of losetup: claimed it was performing umount.
+
+	* Allow umount.crypt to support devices with underscores (thanks
+	Sigurd Schneider).
+
+18 March 2005 W. Michael Petullo <mike@flyn.org>
+
+	* Started writting unit tests.
+
 08 February 2005 W. Michael Petullo <mike@flyn.org>
 
 	* Fix build on 64-bit x86 (thanks Rudi Chiarito).

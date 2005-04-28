@@ -23,6 +23,7 @@
 #include <config.h>
 #include <assert.h>
 #include <sys/types.h>
+#include <string.h>
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -79,7 +80,7 @@ static int hash_authtok(FILE * const fp, const EVP_CIPHER * const cipher,
 	}
 	md = EVP_md5();
 	if (EVP_BytesToKey
-	    (cipher, md, salt, authtok, strlen(authtok), 1,
+	    (cipher, md, salt, (unsigned char *) authtok, strlen(authtok), 1,
 	     hash, iv) <= 0) {
 		l0g("pam_mount: %s\n", "failed to hash system password");
 		return 0;
@@ -105,9 +106,10 @@ static int hash_authtok(FILE * const fp, const EVP_CIPHER * const cipher,
  *       pt_fs_key may contain trailing garbage; use pt_fs_key_len
  */
 int
-decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
+decrypted_key(unsigned char *const pt_fs_key, size_t * const pt_fs_key_len,
 	      const char *const fs_key_path,
-	      const char *const fs_key_cipher, const char *const authtok)
+	      const char *const fs_key_cipher,
+	      const char *const authtok)
 {
 /* FIXME: this function may need to be broken up and made more readable */
 #ifdef HAVE_LIBCRYPTO
@@ -136,7 +138,7 @@ decrypted_key(char *const pt_fs_key, size_t * const pt_fs_key_len,
 		ret = 0;
 		goto _return_no_close;
 	}
-	if (!(cipher = EVP_get_cipherbyname(fs_key_cipher))) {
+	if (!(cipher = EVP_get_cipherbyname((const char *) fs_key_cipher))) {
 		l0g("pam_mount: error getting cipher \"%s\"\n",
 		    fs_key_cipher);
 		ret = 0;
