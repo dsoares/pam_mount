@@ -716,7 +716,6 @@ do_mount(struct config_t *config, const unsigned int vol,
 			l0g("pam_mount: mntagain not defined in pam_mount.conf\n");
 			return 0;
 		}
-#if defined(__linux__)
 		/* FIXME: NEW */
 		fmt_ptrn_update_kv(vinfo, "PREVMNTPT", prev_mntpt);
 		for (i = 0; config->command[i][MNTAGAIN]; i++)
@@ -731,12 +730,6 @@ do_mount(struct config_t *config, const unsigned int vol,
 			g_error_free(err);
 			return 0;
 		}
-#else
-		/* FIXME */
-		l0g("pam_mount: %s\n",
-		    "multiple mounts of same volume not implemented on arch.");
-		return 0;
-#endif
 	} else {
 		GError *err = NULL;
 		if (!config->command[0][config->volume[vol].type]) {

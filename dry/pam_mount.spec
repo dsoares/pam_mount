@@ -1,12 +1,10 @@
-%define rel 0.fdr.1
-
 Summary: A PAM module that can mount volumes for a user session
 Name: pam_mount
-Version: 0.9.23
-Release: %rel
+Version: 0.9.24
+Release: 1
 License: LGPL
 Group: System Environment/Base
-Source: http://www.flyn.org/projects/%name/%name-%{PACKAGE_VERSION}.tar.gz
+Source: http://www.flyn.org/projects/%name/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: http://www.flyn.org
 Requires: pam
@@ -97,6 +95,18 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Sat May 14 2005 W. Michael Petullo <mike[@]flyn.org> - 0.9.24-1
+   - Updated to pam_mount 0.9.24.
+
+* Wed May 04 2005 W. Michael Petullo <mike[@]flyn.org> - 0.9.23-1
+   - Updated to pam_mount 0.9.23.
+
+   - Remove fdr from version.
+
+   - Get rid of rel variable.
+
+   - %{PACKAGE_VERSION} to %{name}-%{version}.
+
 * Thu Feb 10 2005 W. Michael Petullo <mike[@]flyn.org> - 0.9.22-0.fdr.1
    - Updated to pam_mount 0.9.22.
 

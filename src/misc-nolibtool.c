@@ -266,6 +266,8 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 		 fmt_ptrn_t * vinfo)
 {
 	char *filled, *space;
+	char *ptr;
+	int i = 0;
 
 	assert(argv != NULL);
 	/* need room for one more + terminating NULL for execv */
@@ -289,18 +291,34 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 	}
 	while (fmt_ptrn_parse_err(vinfo) != 0)
 		l0g("pam_mount: %s\n", fmt_ptrn_parse_strerror(vinfo));
-	/* FIXME: this is NOT robust enough (handles only single spaces) */
+	/* FIXME: this is NOT robust enough (handles only spaces -- no tabs, etc.) */
 	/* also, this breaks apart paths with spaces.
 	/* FIXME: this is silly, how can I avoid parsing this again after
 	 * dotfile did?
 	 */
-	while (filled && (space = strchr(filled, ' '))) {
-	                *space = (char) 0x00;
-			argv[(*argc)++] = filled;
-			filled = space + 1;
+	ptr = filled;
+	argv[(*argc)] = g_new(char, strlen(ptr));
+	while (*ptr) {
+		if (*ptr == '\\' && *(ptr + 1) == ' ') {
+			argv[(*argc)][i++] = ' ';
+			ptr += 2;
+		} else if (*ptr == ' ') {
+			argv[(*argc)][i] = 0x00;
+
+			while (*ptr == ' ')
+				ptr++;
+
+			if (*ptr) {
+				i = 0;
+				argv[++(*argc)] = g_new(char, strlen(ptr));
+			}
+		} else {
+			argv[(*argc)][i++] = *ptr;
+			ptr++;	
+		}
 	}
-	argv[(*argc)++] = filled;
-	argv[*argc] = NULL;
+	argv[(*argc)][i] = 0x00;
+	argv[++(*argc)] = NULL;
 }
 
 /* ============================ setrootid () =============================== */ 

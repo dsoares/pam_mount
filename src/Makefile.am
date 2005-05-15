@@ -50,7 +50,7 @@ pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-no
 pmvarrun_LDFLAGS = -lz $(GLIB_LIBS)
 
 if FLYN
-check_SOURCES = check.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c
+check_SOURCES = check.c dotconf-nolibtool.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c optlist-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c readconfig-nolibtool.c
 check_INCLUDES = @CHECK_CFLAGS@
 check_LDADD = @CHECK_LIBS@
 check_LDFLAGS = -lz $(GLIB_LIBS)
