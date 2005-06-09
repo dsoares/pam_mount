@@ -32,7 +32,7 @@
 #include <pam_mount.h>
 #include <pam_mount_private.h>
 #include <optlist.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #include <fstab.h>
 #elif defined(__linux__)
 #include <mntent.h>
@@ -561,7 +561,7 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 		l0g("pam_mount: field of %d invalid\n", field);
 		return 0;
 	}
-#elif defined (__FreeBSD__) || defined (__OpenBSD__)
+#elif defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
 	struct fstab *fstab_record;
 	if (!setfsent()) {
 		l0g("pam_mount: could not open fstab to determine mount point for %s\n", volume);
@@ -598,7 +598,7 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 	value[size - 1] = 0x00;
 #if defined(__linux__)
 	endmntent(fstab);
-#elif defined (__FreeBSD__) || defined (__OpenBSD__)
+#elif defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
 	endfsent();
 #endif
 	return 1;

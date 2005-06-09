@@ -29,7 +29,7 @@
 #include <string.h>
 #include <pwd.h>
 #include <assert.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #include <fstab.h>
 #elif defined(__linux__)
 #include <mntent.h>
@@ -49,7 +49,6 @@
 #define EVP_MAX_BLOCK_LENGTH 0  /* FIXME: this is ugly, but needed */
 #endif
 #include <sys/types.h>
-#include <sys/resource.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -115,6 +114,7 @@ static void run_lsof(const struct config_t *const config,
 /*
  * PRE:    config->volume[vol].type is a mount type (LCLMOUNT, SMBMOUNT, ...)
  *         sizeof(mntpt) >= PATH_MAX + 1
+ *         vinfo is a valid struct fmt_ptrn_t
  * POST:   mntpt contains:
  *           config->volume[vol].mountpoint if config->volume[vol].volume is
  *             already mounted there
@@ -124,14 +124,15 @@ static void run_lsof(const struct config_t *const config,
  *         errors are logged
  */
 static int already_mounted(const struct config_t *const config,
-			   const unsigned int vol, char *const mntpt)
+			   const unsigned int vol, char *const mntpt,
+			   fmt_ptrn_t *vinfo)
 {
 	char match[PATH_MAX + 1];
 	int mounted = 0;
 #if defined(__linux__)
 	FILE *mtab;
 	struct mntent *mtab_record;
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	int fds[2];
 	pid_t pid;
 #endif
@@ -225,7 +226,7 @@ static int already_mounted(const struct config_t *const config,
 	}
 	fclose(mtab);
 	return mounted;
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	{
 		FILE *fp;
 		GError *err = NULL;
@@ -680,7 +681,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 	assert(password);
 
 	/* FIXME: This is a little ugly, especially check for != LCLMOUNT */
-	if ((mount_again = already_mounted(config, vol, prev_mntpt))) {
+	if ((mount_again = already_mounted(config, vol, prev_mntpt, vinfo))) {
 		if (mount_again == -1) {
 			l0g("pam_mount: could not determine if %s is already mounted, failing\n", config->volume[vol].volume);
 			return 0;

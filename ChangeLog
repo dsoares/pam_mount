@@ -1,3 +1,11 @@
+09 June 2005 W. Michael Petullo <mike@flyn.org>
+
+	* Fix a memory allocation size mistake.
+
+15 May 2005 W. Michael Petullo <mike@flyn.org>
+
+	* Made some changes after an initial test of Mac OS X.
+
 14 May 2005 W. Michael Petullo <mike@flyn.org>
 
 	* Added the ability to use mount points and volumes containing

@@ -25,7 +25,7 @@ AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
 MINOR_VERSION=9
-MICRO_VERSION=24
+MICRO_VERSION=25
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -60,7 +60,12 @@ AC_ARG_ENABLE(system-fmt_ptrn,
               LOCAL_FMT_PTRN_INCLUDES="-I\$(srcdir)/../include-fmt_ptrn")
 AC_SUBST(LOCAL_FMT_PTRN_INCLUDES)
 
-AC_CHECK_HEADER(security/pam_modules.h,,AC_MSG_ERROR(You are missing security/pam_modules.h))
+AC_CHECK_HEADER(security/pam_modules.h,[have_pamheader="yes"],)
+# Mac OS X 10.3 puts PAM headers in /usr/include/pam.
+AC_CHECK_HEADER(pam/pam_modules.h,[have_pamheader="yes"],)
+if test x"$have_pamheader" != x"yes"; then
+	AC_MSG_ERROR(You are missing PAM headers)
+fi
 
 AM_PATH_CHECK(,[have_check="yes"],
   AC_MSG_WARN([Check not found; cannot run unit tests!])
@@ -71,6 +76,9 @@ case "$host" in
   *-*-linux*)
     # See also <configure-flags> in pam_mount.xml.
     PAM_MODDIR="\$(prefix)/../\$(libdir)/security"
+    ;;
+  *-*-darwin*)
+    PAM_MODDIR="/usr/lib/pam"
     ;;
   *)
     PAM_MODDIR="/usr/lib"

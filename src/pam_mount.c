@@ -38,7 +38,6 @@
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
-#include <security/pam_modules.h>
 #include <pam_mount.h>
 
 gboolean debug;

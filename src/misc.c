@@ -31,7 +31,6 @@
 #include <assert.h>
 #include <glib.h>
 #include <stdlib.h>
-#include <security/pam_modules.h>
 #include <pam_mount.h>
 
 #ifdef HAVE_SETFSUID
@@ -297,7 +296,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 	 * dotfile did?
 	 */
 	ptr = filled;
-	argv[(*argc)] = g_new(char, strlen(ptr));
+	argv[(*argc)] = g_new(char, strlen(ptr) + 1);
 	while (*ptr) {
 		if (*ptr == '\\' && *(ptr + 1) == ' ') {
 			argv[(*argc)][i++] = ' ';
@@ -310,7 +309,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 
 			if (*ptr) {
 				i = 0;
-				argv[++(*argc)] = g_new(char, strlen(ptr));
+				argv[++(*argc)] = g_new(char, strlen(ptr) + 1);
 			}
 		} else {
 			argv[(*argc)][i++] = *ptr;

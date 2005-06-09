@@ -30,14 +30,19 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+/* Mac OS X 10.3 puts PAM headers in /usr/include/pam */
+#if defined(__APPLE__)
+#include <pam/pam_modules.h>
+#else
 #include <security/pam_modules.h>
+#endif
 #include <errno.h>
 #include <limits.h>
 #include <optlist.h>
 #include <unistd.h>
 #include <new/fmt_ptrn.h>
 
-#ifdef __OpenBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #define CONFIGFILE	"/etc/pam_mount.conf"
 #else
 #define CONFIGFILE	"/etc/security/pam_mount.conf"
