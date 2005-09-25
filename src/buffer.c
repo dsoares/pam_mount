@@ -122,7 +122,7 @@ void realloc_n_cat(buffer_t * dest, const char *src)
 	dest->data = g_new0(char, dest->size);
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
-	dest->data = g_realloc(dest->data, sizeof(char) * dest->size);
+	dest->data = g_realloc(dest->data, dest->size);
     }
     g_strlcat(dest->data, src, dest->size);
 
@@ -148,7 +148,7 @@ void realloc_n_ncat(buffer_t * dest, const char *src,
 	dest->data = g_new0(char, dest->size);
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
-	dest->data = g_realloc(dest->data, sizeof(char) * dest->size);
+	dest->data = g_realloc(dest->data, dest->size);
     }
     /* g_strlcat will not work because its nc is the size of dest */
     strncat(dest->data, src, nc);

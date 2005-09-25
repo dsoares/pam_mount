@@ -69,7 +69,7 @@ static int _apply_delim(buffer_t * str, const char *start_cmnt,
     size_t len;
     if (str->size < 81) {
         /* FIXME: use proper buffer interfaces */
-	str->data = g_realloc(str->data, sizeof(char) * 81);
+	str->data = g_realloc(str->data, 81);
 	str->size = 81;
     }
     strcpy(ptr, start_cmnt);
@@ -174,7 +174,7 @@ int apply_before(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     /* FIXME: use proper buffer_t interface! */
     if (new_len + 1 > dest->size) {
 	dest->size = new_len + 1;
-	dest->data = g_realloc(dest->data, sizeof(char) * dest->size);
+	dest->data = g_realloc(dest->data, dest->size);
     }
     /* Shift dest over to make room for arg. */
     if (old_len > 0)
