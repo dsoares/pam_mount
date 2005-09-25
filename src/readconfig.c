@@ -82,6 +82,14 @@ static DOTCONF_CB(read_options_require);
 static DOTCONF_CB(read_options_allow);
 static DOTCONF_CB(read_options_deny);
 static DOTCONF_CB(read_fsckloop);
+static command_type_t get_command_index(const pm_command_t *, const char *);
+static int options_allow_ok(optlist_t *, optlist_t *);
+static int options_required_ok(optlist_t *, optlist_t *);
+static int options_deny_ok(optlist_t *, optlist_t *);
+static int _options_ok(config_t *, vol_t *);
+static int fstab_value(const char *, const fstab_field_t, char *, const int);
+static char *expand_home(char *, size_t, const char *);
+static char *expand_wildcard(char *, size_t, const char *, const char *);
 
 static const configoption_t legal_config[] = {
 	{"debug", ARG_TOGGLE, read_debug, &config.debug, CTX_ALL},
@@ -190,7 +198,7 @@ static DOTCONF_CB(read_options_deny)
  * OUTPUT: the index into the pm_command_t cooresponding to name
  */
 static command_type_t
-get_command_index(const pm_command_t command[], const char *name)
+get_command_index(const pm_command_t *command, const char *name)
 {
 	int i;
 

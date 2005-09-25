@@ -31,6 +31,9 @@
 
 extern void enqueue_parse_errmsg(fmt_ptrn_t * x, const char *msg, ...);
 
+static int _apply_delim(buffer_t *, const char *, const char *);
+static int _apply_comment(buffer_t *, char *, char *);
+
 /* ============================ apply_upper () ============================= */
 int apply_upper(buffer_t * dest, fmt_ptrn_t * x, char *arg)
 {

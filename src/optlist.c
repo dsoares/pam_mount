@@ -26,6 +26,10 @@
 #include <assert.h>
 #include <string.h>
 
+static int _parse_string_opt(const char *str, size_t, optlist_t **);
+static int _parse_opt(const char *, size_t, optlist_t **);
+static int _compare(gconstpointer, gconstpointer);
+
 /* ============================ _parse_string_opt () ======================= */
 /* INPUT: str, string to parse
  *        len, should be length up to first ',' or terminating 0x00

@@ -35,6 +35,11 @@
 #include <pwd.h>
 #endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
 
+static void _build_template_dir(char *, const char *, const char *);
+static int _at_path(char *);
+static int _mk_parent_dirs(const char *);
+static int _template_write(fmt_ptrn_t *, FILE *);
+
 /* Globals. */
 static char _template_errmsg[BUFSIZ + 1];
 static char _template_local_dir[PATH_MAX + 1];

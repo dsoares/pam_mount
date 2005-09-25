@@ -36,15 +36,18 @@
 int debug;
 const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
-/* ============================ settings_t ================================= */
 typedef struct settings_t {
 	char user[MAX_PAR + 1];
 	long operation;
 } settings_t;
 
+static void usage(int, const char *, const char *);
+static void set_defaults(settings_t *);
+static void parse_args(int, char **, settings_t *);
+static int modify_pm_count(const char *, long);
+
 /* ============================ usage () ==================================== */
-void usage(const int exitcode, const char *error, const char *more)
-{
+static void usage(int exitcode, const char *error, const char *more) {
 	fprintf(stderr, "%s\n", usage_pmvarrun);
 	if (error)
 		fprintf(stderr, "%s: %s.\n\n", error, more);
@@ -52,16 +55,14 @@ void usage(const int exitcode, const char *error, const char *more)
 }
 
 /* ============================ set_defaults () ============================= */
-void set_defaults(settings_t * settings)
-{
+static void set_defaults(settings_t *settings) {
 	debug = 0;
 	*settings->user = 0x00;
 	settings->operation = 1;
 }
 
 /* ============================ parse_args () =============================== */
-void parse_args(int argc, char *argv[], settings_t * settings)
-{
+static void parse_args(int argc, char **argv, settings_t *settings) {
 	int c;
 	int opt_index = 0;
 	struct option opts[] = {
@@ -105,8 +106,7 @@ void parse_args(int argc, char *argv[], settings_t * settings)
  * FIXME:  should this be replaced with utmp (man utmp) usage?  
  *         Is utmp portable?  This function is nasty and MAY BE INSECURE.
  */
-int modify_pm_count(const char *user, long amount)
-{
+static int modify_pm_count(const char *user, long amount) {
 	char filename[PATH_MAX + 1];
 	int tries = 0;
 	int fd = 0, err;
@@ -304,8 +304,7 @@ int modify_pm_count(const char *user, long amount)
 }
 
 /* ============================ main () ===================================== */
-int main(int argc, char *argv[], char *env[])
-{
+int main(int argc, char **argv) {
 	int pm_count;
 	settings_t settings;
 

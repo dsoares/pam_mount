@@ -37,6 +37,10 @@
 #include <pam_mount.h>
 
 #ifdef HAVE_LIBCRYPTO
+static void sslerror(const char *);
+static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,
+  unsigned char *, unsigned char *);
+
 /* human readable SSL error message */
 static void sslerror(const char *msg)
 {
@@ -53,9 +57,8 @@ static void sslerror(const char *msg)
  *               errors are logged
  * OUTPUT: if error 0 else 1
  */
-static int hash_authtok(FILE * const fp, const EVP_CIPHER * const cipher,
-			const char *const authtok,
-			unsigned char *const hash, unsigned char *const iv)
+static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
+ const char *authtok, unsigned char *hash, unsigned char *iv)
 {
 	const EVP_MD *md;
 	unsigned char salt[PKCS5_SALT_LEN];

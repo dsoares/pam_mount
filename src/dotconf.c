@@ -78,6 +78,9 @@ static char name[CFG_MAX_OPTION + 1];	/* option name */
  */
 static DOTCONF_CB(dotconf_cb_include);		/* internal 'Include'     */
 static DOTCONF_CB(dotconf_cb_includepath);	/* internal 'IncludePath' */
+static void skip_whitespace(char **, int, char);
+static void copy_word(char **, char **, int, char);
+static const configoption_t *get_argname_fallback(const configoption_t *);
 
 static configoption_t dotconf_options[] =
 {

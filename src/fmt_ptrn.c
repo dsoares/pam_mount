@@ -33,6 +33,31 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+typedef struct mystack_t {
+	modifier_t data[STACK_MAX_ITEMS];
+	int size;
+} mystack_t;
+
+static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t *);
+static gboolean _modifier_t_valid(const modifier_t *);
+static gboolean _stack_t_vald(const mystack_t *);
+static void _stack_init(mystack_t *);
+static gboolean _stack_push(fmt_ptrn_t *, mystack_t *, const modifier_t);
+static gboolean _stack_pop(mystack_t *, modifier_t *);
+static int _stack_contains(const mystack_t, const char *);
+static char *_matching_paren(char *);
+static void _read_alternate(fmt_ptrn_t *, char **, buffer_t *);
+static void _eat_alternate(fmt_ptrn_t *, char **);
+static void _read_modifier_arg(fmt_ptrn_t *, char **, modifier_t *);
+static gboolean _read_modifier(fmt_ptrn_t *, char **, mystack_t *);
+static void _read_modifiers(fmt_ptrn_t *, char **, mystack_t *);
+static void _read_key(fmt_ptrn_t *, char *, char **);
+static void _apply_modifiers(fmt_ptrn_t *, buffer_t *, mystack_t *);
+static gboolean _is_literal(fmt_ptrn_t *, char *);
+static void _read_literal(fmt_ptrn_t *, char *, buffer_t *);
+static void _handle_fmt_str(fmt_ptrn_t *, char **);
+static gboolean _fill_it(fmt_ptrn_t *, const char *);
+
 /* ============================ _fmt_ptrn_t_valid () ======================= */
 static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t * x)
 {
@@ -114,12 +139,6 @@ void enqueue_parse_errmsg(fmt_ptrn_t * x, const char *msg, ...)
 
 	assert(_fmt_ptrn_t_valid(x));
 }
-
-/* ============================ stack_t ==================================== */
-typedef struct stack_t {
-	modifier_t data[STACK_MAX_ITEMS];
-	int size;
-} stack_t;
 
 /* ============================ _modifier_t_valid () ======================= */
 static gboolean _modifier_t_valid(const modifier_t * m)

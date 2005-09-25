@@ -37,6 +37,11 @@
 #include <pwd.h>
 #endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
 
+static char *_firstname(void);
+static void shift_str(char *, char *);
+static char *_middlename(void);
+static char *_lastname(void);
+
 /* FIXME: the code in these functions needs to be checked for:
  * 1.  a consistent interface for memory management
  * 2.  memory leaks

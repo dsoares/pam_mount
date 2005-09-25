@@ -57,6 +57,9 @@
 
 extern gboolean debug;
 
+static void log_output(int);
+static void run_lsof(const struct config_t *, fmt_ptrn_t *);
+
 /* ============================ log_output () ============================== */
 /* INPUT: fd, a valid file descriptor
  * SIDE AFFECTS: contents of fd are logged, usually fd is connected by a 
@@ -81,9 +84,7 @@ static void log_output(int fd)
  * NOTE: this fn simply runs lsof on a directory and logs its output for
  * debugging purposes
  */
-static void run_lsof(const struct config_t *const config,
-		     fmt_ptrn_t * vinfo)
-{
+static void run_lsof(const struct config_t *config, fmt_ptrn_t * vinfo) {
 	int i, _argc = 0, cstdout = -1, child_exit;
 	char *_argv[MAX_PAR + 1];
 	GError *err = NULL;

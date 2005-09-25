@@ -40,6 +40,9 @@
 
 #include <pam_mount.h>
 
+static int converse(pam_handle_t *, int, const struct pam_message **,
+  struct pam_response **);
+
 gboolean debug;
 config_t config;
 pam_args_t args;
@@ -491,13 +494,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
 /* static module data */
 
 struct pam_module _pam_mount_modstruct = {
-    "pam_mount",
-    pam_sm_authenticate,
-    pam_sm_setcred,
-    pam_sm_acct_mgmt,
-    pam_sm_open_session,
-    pam_sm_close_session,
-    pam_sm_chauthtok,
+    .name                 = "pam_mount",
+    .pam_sm_authenticate  = pam_sm_authenticate,
+    .pam_sm_setcred       = pam_sm_setcred,
+    .pam_sm_acct_mgmt     = pam_sm_acct_mgmt,
+    .pam_sm_open_sesion   = pam_sm_open_session,
+    .pam_sm_close_session = pam_sm_close_session,
+    .pam_sm_chauthtok     = pam_sm_chauthtok,
 };
 
 #endif
