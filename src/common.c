@@ -56,8 +56,7 @@ static char *_firstname(void)
 	char *name, *ptr;
 	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
-	ptr = strchr(name, ' ');
-	if(ptr != NULL)
+	if((ptr = strchr(name, ' ')) != NULL)
 		*ptr = '\0';
 	return name;
 }
@@ -65,6 +64,8 @@ static char *_firstname(void)
 /* ============================ shift_str () =============================== */
 static void shift_str (char *ptr_0, char *ptr_1)
 {
+    /* This strcpy()-like function supports _overlapping_ strings.
+    Libc does not [explicitly]. */
     while(*ptr_1 != '\0')
         *ptr_0++ = *ptr_1++;
     *ptr_0 = '\0';
@@ -76,11 +77,9 @@ static char *_middlename(void)
 	char *name, *ptr_0, *ptr_1;
 	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
-	ptr_0 = strchr (name, ' ');
-	if(ptr_0 == NULL)
+	if((ptr_0 = strchr (name, ' ')) == NULL)
 		return NULL;
-	ptr_1 = strchr (++ptr_0, ' ');	
-	if(ptr_1 == NULL)
+	if((ptr_1 = strchr (++ptr_0, ' ')) == NULL)
 		return NULL;
 	*ptr_1 = '\0';
 	shift_str (name, ptr_0);
@@ -93,11 +92,9 @@ static char *_lastname(void)
 	char *name, *ptr_0, *ptr_1;
 	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
-	ptr_0 = strchr (name, ' ');
-	if(ptr_0 == NULL)
+	if((ptr_0 = strchr (name, ' ')) == NULL)
 		return NULL;
-	ptr_1 = strchr (++ptr_0, ' ');	
-	if(ptr_1 == NULL)
+	if((ptr_1 = strchr (++ptr_0, ' ')) == NULL)
 		return ptr_0;
 	shift_str (name, ++ptr_1);
 	return name;
@@ -165,9 +162,9 @@ void print_dir(DIR * dp)
 /* ============================= initialize_fillers_from_file () ============ */
 void initialize_fillers_from_file(fmt_ptrn_t *x, char *path)
 {
-    char line[PATH_MAX + 1], *key, *value, *ptr;
+    char line[PATH_MAX + 1], *key, *value, *ptr = line;
     FILE *input = fopen (path, "r");
-    ptr = line;
+
     while(fgets(ptr, sizeof(line), input) != NULL) {
         key = strsep(&ptr, "=");
 	value = ptr;
@@ -181,7 +178,7 @@ void initialize_fillers(fmt_ptrn_t *x)
     int i;
     char b[BUFSIZ + 1], *key, *val;
     for(i = 0; environ[i] != NULL; i++)
-        if (parse_kv (environ[i], &key, &val))
+        if(environ[i] != NULL && parse_kv(environ[i], &key, &val))
 	    fmt_ptrn_update_kv(x, key, val);
     fmt_ptrn_update_kv(x, g_strdup("DAY"), g_strdup(day(b, sizeof(b))));
     fmt_ptrn_update_kv(x, g_strdup("MONTH"), g_strdup(month(b, sizeof(b))));
@@ -196,9 +193,9 @@ void initialize_fillers(fmt_ptrn_t *x)
 /* ============================ parse_kv () ================================ */ 
 int parse_kv (char *str, char **key, char **val)
 {
-	/* FIXME: what if NULL pops up? */
-        *key = strdup(strsep(&str, "="));
-	*val = strdup((str != NULL) ? str : "");
-	/* FIXME: *(val - 1) = '='; /* FIXME: Restore original string. */
+        char *tmp = strdup(str), *wp = tmp;
+        *key = strdup(strsep(&wp, "="));
+	*val = strdup((wp != NULL) ? wp : "");
+        free(tmp);
 	return 1;
 }

@@ -95,9 +95,9 @@ char *fmt_ptrn_parse_strerror(fmt_ptrn_t * x)
 	assert(_fmt_ptrn_t_valid(x));
 
 	if((errmsg = g_queue_pop_tail(x->parse_errmsg)) == NULL)
-		fnval = g_strdup("no error");
+		fnval = g_strdup("no error"); // leak
 	else
-		fnval = errmsg;
+		fnval = errmsg; // g_queue_pop_tail: possible leak
 
 	assert(_fmt_ptrn_t_valid(x));
 	assert(fnval != NULL);
@@ -150,9 +150,7 @@ static gboolean _modifier_t_valid(const modifier_t * m)
 /* ============================ _stack_t_valid () ========================== */
 static gboolean _stack_t_valid(const mystack_t *s)
 {
-	if (s == NULL && s->size != 0)
-		return FALSE;
-	return TRUE;
+    return (s == NULL && s->size != 0) ? FALSE : TRUE;
 }
 
 /* ============================ _stack_init () ============================= */
@@ -220,7 +218,8 @@ void fmt_ptrn_update_kv_p(fmt_ptrn_t * x, const pair_t * p)
 {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(pair_t_valid(p));
-	/* FIXME: this strdups here but other fn requires malloced strs! */
+	/* [MP] FIXME: this strdups here but other fn requires malloced strs!
+           [JE] No problem here, strdup uses malloc. */
 	g_tree_insert(x->fillers, strdup(p->key), strdup(p->val));
 	assert(_fmt_ptrn_t_valid(x));
 }

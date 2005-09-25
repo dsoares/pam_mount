@@ -27,19 +27,13 @@
 /* ========================== pair_t_valid () =============================== */
 gboolean pair_t_valid(const pair_t *p)
 {
-	if (p == NULL)
-		return FALSE;
-	if (p->key == NULL)
-		return FALSE;
-	if (p->val == NULL)
-		return FALSE;
-	return TRUE;
+    return (p == NULL || p->key == NULL || p->val == NULL) ? FALSE : TRUE;
 }
 
 
 /* ========================== pair_init () ================================== */
 void pair_init(pair_t * pair, void *key, void *val,
-	       void (*destroy_k) (void *key), void (*destroy_v) (void *val))
+	       void (*destroy_k)(void *), void (*destroy_v)(void *))
 {
     pair->key = key;
     pair->val = val;

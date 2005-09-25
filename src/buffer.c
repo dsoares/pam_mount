@@ -40,9 +40,8 @@ gboolean buffer_t_valid(const buffer_t *b)
 			if(b->data[i] == '\0')
 				return TRUE;
 		}
-	} else
-		return TRUE;
-	return FALSE;
+	}
+	return TRUE;
 }
 
 /* ============================ buffer_clear () ============================ */
@@ -62,13 +61,7 @@ void buffer_clear(buffer_t *buf)
 /* ============================ buffer_init () ============================= */
 buffer_t buffer_init(void)
 {
-    buffer_t x;
-
-    x.data = NULL;
-    x.size = 0;
-
-    assert(buffer_t_valid(&x));
-
+    buffer_t x = {};
     return x;
 }
 
@@ -102,10 +95,7 @@ size_t buffer_len(buffer_t *buf)
 {
     assert(buffer_t_valid(buf));
 
-    if(buf->data == NULL)
-        return 0;
-    else
-        return strlen(buf->data);
+    return (buf->data == NULL) ? 0 : strlen(buf->data);
 }
 
 /* ============================ realloc_n_cat () =========================== */
@@ -152,6 +142,7 @@ void realloc_n_ncat(buffer_t * dest, const char *src,
     }
     /* g_strlcat will not work because its nc is the size of dest */
     strncat(dest->data, src, nc);
+    // g_strlcat(dest->data, src, dest->size); // voilà
     dest->data[dest->size - 1] = '\0';
 
     assert(buffer_t_valid(dest));
