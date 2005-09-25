@@ -21,13 +21,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+# Sanitize environment
+export PATH="/bin:/sbin:/usr/bin:/usr/sbin";
+export IFS=`echo -en " \t\n"`;
+
+# Commands
 LOSETUP=/sbin/losetup
 CRYPTSETUP=/sbin/cryptsetup
 MOUNT=/bin/mount
+FSCK="/sbin/fsck";
 
 OPTIONS=""
+FSTYPE="";
 
-USAGE="[-o options] dev dir
+USAGE="dev dir [-o options]
 
   -o options  set the mount options  [ $OPTIONS ]"
 
@@ -44,6 +51,10 @@ _losetup() {
 	echo "${0##*/}: error setting up loop device for $DEVICE" >&2
 	exit 1
 }
+
+DEVICE="$1";
+MOUNT_POINT="$2";
+shift 2;
 
 while :; do
 	case "$1" in
@@ -62,17 +73,17 @@ while :; do
 	shift
 done
 
-if [ -z "$1" ]; then
+if [ -z "$DEVICE" ]; then
 	echo "${0##*/}: device to mount not specified" >&2
 fi
 
-if [ ! -f "$1" -a ! -b "$1" ]; then
-        echo "${0##*/}: $1 is not a block device or file" >&2
+if [ ! -f "$DEVICE" -a ! -b "$DEVICE" ]; then
+        echo "${0##*/}: $DEVICE is not a block device or file" >&2;
 	exit 1
 fi
 
-if [ ! -d "$2" ]; then
-        echo "${0##*/}: $2 is not a directory" >&2
+if [ ! -d "$MOUNT_POINT" ]; then
+        echo "${0##*/}: $MOUNT_POINT is not a directory" >&2;
 	exit 1
 fi
 
@@ -80,14 +91,14 @@ CIPHER=""
 KEYSIZE=""
 HASH=""
 LOOP=false
+DOFSCK=false;
 MOUNTOPTIONS=""
-IFS=","
+OLDIFS="$IFS";
+IFS=", ";
 for opt in $OPTIONS; do
-	KEY=`echo "$opt" | awk -F = '{ print $1 }'`;
-	VAL=`echo "$opt" | awk -F = '{ print $2 }'`;
+    KEY=${opt%=*};
+    VAL=${opt#*=};
 	case "$KEY" in
-		# FIXME: use cipher instead of encryption to avoid conflicting
-		# with mount's built-in (cryptoloop) encryption argument.
 		cipher )
 			CIPHER="$VAL"
 			;;
@@ -100,72 +111,63 @@ for opt in $OPTIONS; do
 		loop )
 			LOOP=true
 			;;
+                fstype)
+                        FSTYPE="$VAL";
+                        ;;
+                fsck)
+                        DOFSCK=true;
+                        ;;
 		* )
 			if [ -z "$MOUNTOPTIONS" ]; then
 				MOUNTOPTIONS="$opt"
 			else
-				IFS=""
 				MOUNTOPTIONS="$MOUNTOPTIONS,$opt"
 			fi
 			;;
 	esac
 done
+IFS="$OLDIFS";
 
 if [ "$LOOP" == true ]; then
-	DEVICE=`_losetup "$1"`;
-else
-	DEVICE="$1";
+    DEVICE=`_losetup "$DEVICE"`;
 fi
 
 # if loop device, make device mapper name based on file pointed to
-if [ `echo "$1" | grep ^/dev/loop` ]; then
-    DMDEVICE=` "$LOSETUP" "$1" | egrep "(.+)" | awk '{print $3}' | sed 's/(//' | sed 's/)//'`;
-fi;
-# if not a loop device or previous command fails
-if [ -z "$DMDEVICE" ]; then
-    DMDEVICE="$1";
-fi;
+case "$DEVICE" in
+    /dev/loop*)
+        DMDEVICE=` "$LOSETUP" "$DEVICE" 2>/dev/null | sed -n '/(.+)/ { s/.*(//; s/).*//; p;}'`;
+esac;
+# if not a loop device or previous command fails use $DEVICE
+: ${DMDEVICE:=$DEVICE}
+
 # FIXME: blind replacement of / with _ may be a bad idea.
 DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
 
+"$CRYPTSETUP" -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
+  -s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
 
-CIPHEROPT="aes"
-if [ -n "$CIPHER" ]; then
-	CIPHEROPT="-c $CIPHER" # this can't work... we'd have -c -c CIPHER below
-fi
-
-HASHOPT="ripemd160"
-if [ -n "$HASH" ]; then
-	HASHOPT="-h $HASH"
-fi
-
-KEYSIZEOPT="256"
-if [ -n "$KEYSIZE" ]; then
-       KEYSIZEOPT="$KEYSIZE"
-fi
-
-"$CRYPTSETUP" -c $CIPHEROPT -h $HASHOPT -s $KEYSIZEOPT create "$DMDEVICE" "$DEVICE";
 if [ $? -ne 0 ]; then
 	echo "${0##*/}: error creating $DMDEVICE" >&2
 	[ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
 	exit 1
 fi
 
-if [ -z "$MOUNTOPTIONS" ]; then
-	# $2 might not exist as mount can try to read it from /etc/fstab
-	"$MOUNT" "/dev/mapper/$DMDEVICE" "$2";
-	if [ $? -ne 0 ]; then
-		echo "${0##*/}: error mounting $DMDEVICE" >&2
-		"$CRYPTSETUP" remove "$DMDEVICE";
-		[ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
-		exit 1
-	fi
-else
-	"$MOUNT" -o "$MOUNTOPTIONS" "/dev/mapper/$DMDEVICE" "$2";
-	if [ $? -ne 0 ]; then
-		echo "${0##*/}: error mounting $DMDEVICE" >&2
-		"$CRYPTSETUP" remove "$DMDEVICE";
-		[ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
-		exit 1
-	fi
-fi
+if [ "$DOFSCK" == "true" ]; then
+    "$FSCK" -p "/dev/mapper/$DMDEVICE";
+    if [ $? -gt 1 ]; then
+        echo "${0##*/}: filesystem $DMDEVICE has errors" >&2;
+        "$CRYPTSETUP" remove "$DMDEVICE";
+        [ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
+        exit 1;
+    fi;
+fi;
+
+# $MOUNT_POINT might not exist as mount can try to read it from /etc/fstab
+"$MOUNT" "${FSTYPE:+-t $FSTYPE}" "${MOUNTOPTIONS:+-o $MOUNTOPTIONS}" \
+ "/dev/mapper/$DMDEVICE" "$MOUNT_POINT";
+if [ $? -ne 0 ]; then
+    echo "${0##*/}: error mounting $DMDEVICE" >&2;
+    "$CRYPTSETUP" remove "$DMDEVICE";
+    [ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
+    exit 1;
+fi;
