@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <string.h>
 #ifdef HAVE_LIBCRYPTO
+#    include <openssl/ssl.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #ifndef EVP_MAX_BLOCK_LENGTH
