@@ -395,9 +395,9 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		ret = PAM_SERVICE_ERR;
 		goto _return;
 	}
-/* This code needs root priv. */
 	w4rn("pam_mount: real and effective user ID are %d and %d.\n",
 	     getuid(), geteuid());
+/* This code needs root priv. */
 	for(vol = 0; vol < Config.volcount; vol++) {
 		/* luserconf_volume_record_sane() is called here so that 
 		 * a user can nest loopback images. otherwise ownership
@@ -484,10 +484,10 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 			     Config.mkmntpoint))
 				l0g("pam_mount: unmount of %s failed\n",
 				    Config.volume[vol].volume);
+/* end root priv. */
 	} else
 		w4rn("pam_mount: %s seems to have other remaining open sessions\n",
                  Config.user);
-/* end root priv. */
       _return:
 	freeconfig(Config);
 	w4rn("pam_mount: pam_mount execution complete\n");

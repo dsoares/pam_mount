@@ -55,9 +55,7 @@ void l0g(const char *format, ...)
 	vfprintf(stderr, format, args);
 	va_end(args);
 	va_start(args, format);
-/* This code needs root priv? */
 	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
-/* end root priv. */
 	va_end(args);
 }
 
@@ -76,9 +74,7 @@ void w4rn(const char *format, ...)
 		vfprintf(stderr, format, args);
 		va_end(args);
 		va_start(args, format);
-/* This code needs root priv? */
 		vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
-/* end root priv. */
 		va_end(args);
 	}
 }
