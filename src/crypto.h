@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <sys/types.h>
+
 int decrypted_key(unsigned char *, size_t *, const char *, const char *,
     const char *);
 

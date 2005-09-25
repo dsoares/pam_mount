@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include "misc.h"
 
@@ -118,19 +119,16 @@ static int modify_pm_count(const char *user, long amount) {
 	struct stat st;
 	struct flock lockinfo;
 	char *buf = NULL;
-	/* FIXME: not needed if everything is to owned by root:
-	   struct passwd *passwd_ent;
-	 */
+        struct passwd *passwd_ent;
 
 	assert(user != NULL);
 
-	/* FIXME: not needed if everything is to owned by root:
-	   if (!(passwd_ent = getpwnam(user))) {
-	   w4rn("pam_mount: could not resolve uid for %s\n", user);
-	   err = -1;
-	   goto return_error;
-	   }
-	 */
+        if((passwd_ent = getpwnam(user)) == NULL) {
+            w4rn("pam_mount: could not resolve uid for %s\n", user);
+            err = -1;
+            goto return_error;
+        }
+
 	if (stat("/var/run/pam_mount", &st) == -1) {
 		w4rn("pam_mount: %s\n", "creating /var/run/pam_mount");
 		if (mkdir("/var/run/pam_mount", 0000) == -1) {
@@ -172,13 +170,10 @@ static int modify_pm_count(const char *user, long amount) {
 			goto return_error;
 		}
 		/*
-		 * su creates file group owned by user and the releases root
+		 * su creates file group owned by user and then releases root
 		 * perms.  User needs to be able to access file on logout.
 		 */
-/* FIXME: testing root owned /var/run/pam_mount/<user> -- requires that pam_mount
- *        has root privileges when clossing session.
-      if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
-*/
+            if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
 		/* FIXME: permission denied */
 		if (fchown(fd, 0, 0) == -1) {
 			w4rn("pam_mount: unable to chown %s\n", filename);
