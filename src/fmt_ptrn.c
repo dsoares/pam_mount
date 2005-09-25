@@ -130,7 +130,7 @@ void enqueue_parse_errmsg(fmt_ptrn_t * x, const char *msg, ...)
 	assert(_fmt_ptrn_t_valid(x));
 	assert(msg != NULL);
 
-	err = (char *) g_new0(char, PARSE_ERR_LEN + 1);
+	err = g_new0(char, PARSE_ERR_LEN + 1);
 	va_list args;
 	va_start(args, msg);
 	vsnprintf(err, PARSE_ERR_LEN, msg, args);
@@ -623,7 +623,7 @@ static gboolean _fill_it(fmt_ptrn_t * x, const char *p)
 	assert(_fmt_ptrn_t_valid(x));
 	assert(p != NULL);
 
-	pattern = orig_ptr = g_strdup((char *) p); /* stupid cast */
+	pattern = orig_ptr = g_strdup(p);
 	while(*pattern != '\0') {
 		if (*pattern == '%' && *(pattern + 1) == '%') {
 			/* Handle %%(...), which should be filled as %(...). */

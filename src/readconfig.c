@@ -133,7 +133,7 @@ static FUNC_ERRORHANDLER(log_error)
 	 * Segmentation fault
 	 * Other circumstances will also cause this segfault.  For example.
 	 * some functions do a return "foo."
-	 free((char *) msg);
+	 free(msg);
 	 */
 	return 0;
 }

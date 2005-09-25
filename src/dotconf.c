@@ -92,7 +92,7 @@ static configoption_t dotconf_options[] =
 static void skip_whitespace(char **cp, int n, char term)
 {
 	char *cp1 = *cp;
-	while(isspace((int)*cp1) && *cp1 != term && n--)
+	while(isspace(*cp1) && *cp1 != term && n--)
 		cp1++;
 	*cp = cp1;
 }
@@ -101,7 +101,7 @@ static void copy_word(char **dest, char **src, int max, char term)
 {
 	char *cp1 = *src;
 	char *cp2 = *dest;
-	while(max-- && !isspace((int)*cp1) && *cp1 != term)
+	while(max-- && !isspace(*cp1) && *cp1 != term)
 		*cp2++ = *cp1++;
 	*cp2 = 0;
 
@@ -421,7 +421,7 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 		}
 
 		/* unquoted space: start a new option argument */
-		if (isspace((int)*cp1) && !dq && !sq) {
+		if (isspace(*cp1) && !dq && !sq) {
 			*cp2 = '\0';
 			break;
 		}
@@ -438,7 +438,7 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 			return NULL;
 		}
 		/* not space or quoted: eat it; dont take quote if quoting */
-		else if ( (!isspace((int)*cp1) && !dq && !sq && *cp1 != '"' && *cp1 != '\'')
+		else if((!isspace(*cp1) && !dq && !sq && *cp1 != '"' && *cp1 != '\'')
 				   || (dq && (*cp1 != '"')) || (sq && *cp1 != '\'') ) {
 			*cp2++ = *cp1;
 		}
@@ -863,14 +863,14 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 
 			if ( *(tmp) == '/' )
 			{
-				*path = (char*)malloc(tmp_count+1);
+				*path = malloc(tmp_count+1);
 				found_path = 1;
 
 			} else
 
-				*path = (char*)malloc(1);
+				*path = malloc(1);
 
-			*pre =  (char*)malloc((prefix_len-(tmp_count-(found_path?0:1)))+1);
+			*pre = malloc((prefix_len-(tmp_count-(found_path?0:1)))+1);
 
 			if ( *path && *pre )
 			{
@@ -1016,7 +1016,7 @@ int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ex
 
 				if ( !alloced )
 				{
-					if ((new_path = (char*)malloc(new_path_len)) == NULL )
+					if((new_path = malloc(new_path_len)) == NULL)
 					{
 						return -1;
 					}
@@ -1174,7 +1174,7 @@ int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 
 				if ( !alloced )
 				{
-					if ((new_path = (char*)malloc(new_path_len)) == NULL )
+					if((new_path = malloc(new_path_len)) == NULL)
 					{
 						return -1;
 					}
