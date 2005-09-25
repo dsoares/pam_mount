@@ -683,36 +683,33 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 	unsigned char _password[MAX_PAR + EVP_MAX_BLOCK_LENGTH];
 	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
 	pid_t pid = -1;
+        vol_t *vpt;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
+
+        vpt = &config->volume[vol];
 
 	/* FIXME: This is a little ugly, especially check for != LCLMOUNT */
 	if((mount_again = already_mounted(config, vol, prev_mntpt, vinfo)) != 0) {
 		if (mount_again == -1) {
 			l0g("pam_mount: could not determine if %s is already mounted, failing\n", config->volume[vol].volume);
 			return 0;
-		} else
-		    if (strcmp
-			(prev_mntpt,
-			 config->volume[vol].mountpoint) == 0) {
+		} else if(strcmp(prev_mntpt, vpt->mountpoint) == 0) {
 			w4rn("pam_mount: %s already seems to be mounted at %s, skipping\n", config->volume[vol].volume, prev_mntpt);
 			return 1;
 		} else {
 			w4rn("pam_mount: %s already mounted elsewhere at %s\n", config->volume[vol].volume, prev_mntpt);
 			/* FIXME: ugly hack to support umount.crypt script.  I hope that
 			 * util-linux will have native dm_crypt support some day */
-			if (config->volume[vol].type != LCLMOUNT
-			    && config->volume[vol].type != CRYPTMOUNT)
+                        if(vpt->type != LCLMOUNT && vpt->type != CRYPTMOUNT)
 				mount_again = 0;
 		}
 	}
-	if (!exists(config->volume[vol].mountpoint)) {
+        if(!exists(vpt->mountpoint)) {
 		if (mkmntpoint) {
-			if (!mkmountpoint
-			    (&config->volume[vol],
-			     config->volume[vol].mountpoint))
+                        if(!mkmountpoint(vpt, vpt->mountpoint))
 				return 0;
 		} else {
 			l0g("pam_mount: mount point %s does not exist (pam_mount not configured to make it)\n", config->volume[vol].mountpoint);
@@ -741,24 +738,22 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		}
 	} else {
 		GError *err = NULL;
-		if(config->command[0][config->volume[vol].type] == NULL) {
+		if(config->command[0][vpt->type] == NULL) {
 			l0g("pam_mount: proper mount command not defined in pam_mount.conf\n");
 			return 0;
 		}
 		w4rn("pam_mount: %s\n",
 		     "checking for encrypted filesystem key configuration");
 		password = (password != NULL) ? password : "";	/* FIXME: better done elsewhere? */
-		if(strlen(config->volume[vol].fs_key_cipher) > 0) {
+		if(strlen(vpt->fs_key_cipher) > 0) {
 			/* _password is binary data -- no strlen, strcpy, etc! */
 			w4rn("pam_mount: decrypting FS key using system auth. token and %s\n", config->volume[vol].fs_key_cipher);
 			/*
 			 * config->volume[vol].fs_key_path contains real filesystem
 			 * key.
 			 */
-			if (!decrypted_key
-			    (_password, &_password_len,
-			     config->volume[vol].fs_key_path,
-			     config->volume[vol].fs_key_cipher, password))
+                    if(!decrypted_key(_password, &_password_len,
+                     vpt->fs_key_path, vpt->fs_key_cipher, password))
 				return 0;
 		} else {
 			/* _password is an ASCII string in this case -- we'll treat its
@@ -772,24 +767,19 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		     "about to start building mount command");
 		/* FIXME: NEW */
 		/* FIXME:
-		   l0g("pam_mount: %s\n",
-		   "config->volume[vol].type is unknown");
+		   l0g("pam_mount: volume type (%d) is unknown\n", vpt->type);
 		   return 0;
 		 */
-		for(i = 0; config->command[i][config->volume[vol].type] != NULL;
-		     i++)
-			add_to_argv(_argv, &_argc,
-				    config->command[i][config->volume[vol].
-						       type], vinfo);
+                for(i = 0; config->command[i][vpt->type] != NULL; ++i) {
+                    add_to_argv(_argv, &_argc, config->command[i][vpt->type], vinfo);
+                }
 		log_argv(_argv);
-		if (config->volume[vol].type == LCLMOUNT
-		    && !check_filesystem(config, vol, vinfo, _password,
-					 _password_len))
+                if(vpt->type == LCLMOUNT &&
+                  !check_filesystem(config, vol, vinfo, _password, _password_len))
 			l0g("pam_mount: %s\n",
 			    "error checking filesystem but will continue");
 		/* send password down pipe to mount process */
-		if (config->volume[vol].type == SMBMOUNT
-		    || config->volume[vol].type == CIFSMOUNT)
+                if(vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT)
 			setenv("PASSWD_FD", "0", 1);
 		if (g_spawn_async_with_pipes
 		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
@@ -799,7 +789,7 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 			g_error_free(err);
 			return 0;
 		}
-		if (config->volume[vol].type != NFSMOUNT) {
+                if(vpt->type != NFSMOUNT) {
 			if (pipewrite(cstdin, _password, _password_len) !=
 			    _password_len)
 				/* FIXME: clean: returns value of exit below */
