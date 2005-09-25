@@ -114,10 +114,17 @@ converse(pam_handle_t * pamh, int nargs,
 
 	*resp = NULL;
 	retval = pam_get_item(pamh, PAM_CONV, (const void **) &conv);
-	if (retval == PAM_SUCCESS)
-		retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
-        else
-               l0g("pam_mount: %s\n", pam_strerror(pamh, retval));
+
+        if(retval == PAM_SUCCESS) {
+            retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
+            if(retval != PAM_SUCCESS) {
+                l0g("pam_mount: conv->conv(...): %s\n",
+                 pam_strerror(pamh, retval));
+            }
+        } else {
+            l0g("pam_mount: pam_get_item: %s\n", pam_strerror(pamh, retval));
+        }
+
 	if(*resp == NULL)
 		retval = PAM_AUTH_ERR;
 
