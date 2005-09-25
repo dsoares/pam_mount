@@ -41,6 +41,8 @@
 #include "private.h"
 #include "readconfig.h"
 
+#define PMPREFIX "pam_mount: "
+
 /* ============================ l0g () ===================================== */
 /* INPUT: similar to printf; all args are valid strings != NULL
  * SIDE EFFECTS: format + args are logged and displayed */
@@ -107,13 +109,13 @@ gboolean owns(const char *user, const char *file)
 
 	userinfo = getpwnam(user);
 	if(userinfo == NULL) {
-		l0g("pam_mount: user %s could not be translated to UID\n",
+		l0g(PMPREFIX "user %s could not be translated to UID\n",
 		    user);
 		return FALSE;
 	}
 
 	if (stat(file, &filestat) != 0) {
-		w4rn("pam_mount: file %s could not be stat'ed\n", file);
+		w4rn(PMPREFIX "file %s could not be stat'ed\n", file);
 		return FALSE;
 	}
 
@@ -134,12 +136,12 @@ long str_to_long(const char *n) {
 	long val;
 	char *endptr = NULL;
 	if(n == NULL) {
-		l0g("pam_mount: %s\n", "count string is NULL");
+		l0g(PMPREFIX "count string is NULL\n");
 		return LONG_MAX;
 	}
 	val = strtol(n, &endptr, 10);
 	if(*endptr != '\0') {
-		l0g("pam_mount: count string is not valid\n");
+		l0g(PMPREFIX "count string is not valid\n");
 		return LONG_MAX;
 	}
 	return val;
@@ -248,7 +250,7 @@ void log_argv(char *const argv[])
 		if(strlen(str) >= sizeof(str) - 1) /* Should never be greater */
 			break;
 	}
-	w4rn("pam_mount: command: %s\n", str);
+	w4rn(PMPREFIX "command: %s\n", str);
 }
 
 /* ============================ add_to_argv () ============================= */
@@ -269,21 +271,20 @@ void add_to_argv(char **argv, int *argc, char *arg, fmt_ptrn_t *vinfo) {
 	assert(vinfo != NULL);
 
 	if (*argc == MAX_PAR) { /* FIXME: this is protected by assert above */
-		l0g("pam_mount: %s\n",
-		    "too many arguments to mount command");
+		l0g(PMPREFIX "too many arguments to mount command\n");
 		return;
 	}
 	if ((filled = fmt_ptrn_filled(vinfo, arg)) == NULL) {
-		l0g("pam_mount: could not fill %s\n", arg);
+		l0g(PMPREFIX "could not fill %s\n", arg);
 		while (fmt_ptrn_parse_err(vinfo) != 0)
-			l0g("pam_mount: %s\n",
+			l0g(PMPREFIX "%s\n",
 			    fmt_ptrn_parse_strerror(vinfo));
 		/* hopefully "key has no value" -- for example:
 		 *  %(before=\"-k \" KEYBITS) */
 		return;
 	}
 	while (fmt_ptrn_parse_err(vinfo) != 0)
-		l0g("pam_mount: %s\n", fmt_ptrn_parse_strerror(vinfo));
+		l0g(PMPREFIX "%s\n", fmt_ptrn_parse_strerror(vinfo));
 	/* FIXME: this is NOT robust enough (handles only spaces -- no tabs, etc.)
 	 * also, this breaks apart paths with spaces.
 	 * FIXME: this is silly, how can I avoid parsing this again after
@@ -322,35 +323,35 @@ void set_myuid(void *data) {
     const char *user = data;
 
     if(user == NULL) {
-        w4rn("pam_mount: setting uid to 0\n");
+        w4rn(PMPREFIX "setting uid to 0\n");
         if(setuid(0) == -1) {
-            l0g("pam_mount: error setting uid to 0\n");
+            l0g(PMPREFIX "error setting uid to 0\n");
             return;
         }
 #ifdef HAVE_SETFSUID
         if(setfsuid(0) == -1) {
-            l0g("pam_mount: error setting fsuid to 0\n");
+            l0g(PMPREFIX "error setting fsuid to 0\n");
             return;
         }
 #endif
     } else {
         // Set UID and GID to the user's one.
         struct passwd *real_user;
-        w4rn("pam_mount: setting uid to user %s\n", user);
+        w4rn(PMPREFIX "setting uid to user %s\n", user);
         if((real_user = getpwnam(user)) == NULL) {
-            l0g("pam_mount: could not get passwd entry for user %s\n", user);
+            l0g(PMPREFIX "could not get passwd entry for user %s\n", user);
             return;
         }
         if(setgid(real_user->pw_gid) == -1) {
-            l0g("pam_mount: could not set gid to %u\n", real_user->pw_gid);
+            l0g(PMPREFIX "could not set gid to %u\n", real_user->pw_gid);
             return;
         }
         if(setuid(real_user->pw_uid) == -1) {
-            l0g("pam_mount: could not set uid to %u\n", real_user->pw_uid);
+            l0g(PMPREFIX "could not set uid to %u\n", real_user->pw_uid);
             return;
         }
     }
-    w4rn("pam_mount: real user/group IDs are %d/%d, effective is %d/%d\n",
+    w4rn(PMPREFIX "real user/group IDs are %d/%d, effective is %d/%d\n",
       getuid(), getgid(), geteuid(), getegid());
     return;
 }

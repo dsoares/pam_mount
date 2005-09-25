@@ -38,6 +38,8 @@
 
 #include "misc.h"
 
+#define PREFIX "pmvarrun: "
+
 int Debug;
 static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
@@ -85,12 +87,10 @@ static void parse_args(int argc, char **argv, settings_t *settings) {
 			Debug = 1;
 			break;
 		case 'o':
-			if ((settings->operation =
-			     str_to_long(optarg)) == LONG_MAX
-			    || settings->operation == LONG_MIN)
-				usage(EXIT_FAILURE,
-				      "pam_mount: %s\n",
-				      "count string is not valid");
+                    if((settings->operation = str_to_long(optarg)) == LONG_MAX
+                     || settings->operation == LONG_MIN)
+                        usage(EXIT_FAILURE, PREFIX "%s\n",
+                          "count string is not valid");
 			break;
 		case 'u':
 			g_strlcpy(settings->user, optarg,
@@ -124,24 +124,24 @@ static int modify_pm_count(const char *user, long amount) {
 	assert(user != NULL);
 
         if((passwd_ent = getpwnam(user)) == NULL) {
-            w4rn("pam_mount: could not resolve uid for %s\n", user);
+            l0g(PREFIX "could not resolve uid for %s\n", user);
             err = -1;
             goto return_error;
         }
 
 	if (stat("/var/run/pam_mount", &st) == -1) {
-		w4rn("pam_mount: %s\n", "creating /var/run/pam_mount");
+                w4rn(PREFIX "creating /var/run/pam_mount");
 		if (mkdir("/var/run/pam_mount", 0000) == -1) {
-			w4rn("pam_mount: %s\n",
-			     "unable to create /var/run/pam_mount");
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "unable to create /var/run/pam_mount: %s\n",
+                      strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		if (chown("/var/run/pam_mount", 0, 0) == -1) {
-			w4rn("pam_mount: unable to chown %s\n",
-			     "/var/run/pam_mount");
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "unable to chown /var/run/pam_mount: %s\n",
+                      strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		/*
 		 * 0755: su creates file group owned by user and the releases
@@ -154,10 +154,10 @@ static int modify_pm_count(const char *user, long amount) {
 		 * str_to_long.
 		 */
 		if (chmod("/var/run/pam_mount", 0755) == -1) {
-			w4rn("pam_mount: unable to chmod %s\n",
-			     "/var/run/pam_mount");
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "unable to chmod /var/run/pam_mount: %s\n",
+                      strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 	}
 	g_snprintf(filename, sizeof(filename), "/var/run/pam_mount/%s", user);
@@ -165,9 +165,10 @@ static int modify_pm_count(const char *user, long amount) {
 	tries++;
 	if (stat(filename, &st) == -1) {
 		if ((fd = open(filename, O_RDWR | O_CREAT, 0000)) == -1) {
-			w4rn("pam_mount: unable to open %s\n", filename);
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "unable to open %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		/*
 		 * su creates file group owned by user and then releases root
@@ -176,36 +177,41 @@ static int modify_pm_count(const char *user, long amount) {
             if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
 		/* FIXME: permission denied */
 		if (fchown(fd, 0, 0) == -1) {
-			w4rn("pam_mount: unable to chown %s\n", filename);
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "unable to chown %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		if (fchmod(fd, 0600) == -1) {
-			w4rn("pam_mount: unable to chmod %s\n", filename);
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "unable to chmod %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		if (write(fd, "0", 1) == -1) {
-			w4rn("pam_mount: write error on %s\n", filename);
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "write error on %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		if (lseek(fd, SEEK_SET, 0) == -1) {
-			w4rn("pam_mount: seek error in %s\n", filename);
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "seek error on %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 	} else
 		fd = open(filename, O_RDWR);
+
 	if (stat(filename, &st) == -1) {
-		w4rn("pam_mount: unable to stat %s\n", filename);
-		err = -1;
-		goto return_error;
+            l0g(PREFIX "unable to stat %s: %s\n", filename, strerror(errno));
+            err = -1;
+            goto return_error;
 	}
 	if (fd < 0) {
-		w4rn("pam_mount: could not open count file %s\n",
-		     filename);
-		return 0;
+            l0g(PREFIX "could not open count file %s: %s\n",
+              filename, strerror(errno));
+            return 0;
 	}
 	lockinfo.l_type = F_WRLCK;
 	lockinfo.l_whence = SEEK_SET;
@@ -232,8 +238,7 @@ static int modify_pm_count(const char *user, long amount) {
 		 * wait and calling fcntl again, not likely to ever happen,
 		 * and not a problem other than cosmetics even if it does.
 		 */
-		w4rn("pam_mount: ignoring stale lock on file %s\n",
-		     filename);
+                w4rn(PREFIX "ignoring stale lock on file %s\n", filename);
 	}
 	/*
 	 * it is possible at this point that the file has been removed by a
@@ -243,35 +248,40 @@ static int modify_pm_count(const char *user, long amount) {
 	 */
 	if(access(filename, F_OK) == -1) {
 		if (tries < 10) {
-			w4rn("pam_mount: could not access %s, trying again\n", filename);
-			sleep(1);
-			CLOSE(fd);
-			goto top;
+                    l0g(PREFIX "could not access %s: %s; trying again\n",
+                      filename, strerror(errno));
+                    /* Waiting too long might interfere with
+                    /etc/login.defs:LOGIN_TIMEOUT and /bin/login itself may
+                    prematurely kill the session. */
+                    sleep(1);
+                    CLOSE(fd);
+                    goto top;
 		} else {
-			w4rn("pam_mount: %s\n",
-			     "tried ten times, quitting");
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "could not access %s in 10s, quitting\n",
+                      filename);
+                    err = -1;
+                    goto return_error;
 		}
 	}
 	buf = g_malloc(st.st_size + 2);	/* size will never grow by
 					 * more than one */
 	if(st.st_size > 0) {
 		if (read(fd, buf, st.st_size) == -1) {
-			w4rn("pam_mount: read error on %s\n", filename);
-			err = -1;
-			goto return_error;
+                    w4rn(PREFIX "read error on %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		if (lseek(fd, 0, SEEK_SET) == -1) {
-			w4rn("pam_mount: lseek error on %s\n", filename);
-			err = -1;
-			goto return_error;
+                    w4rn(PREFIX "lseek error on %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 		buf[st.st_size] = '\0';
 		if ((val = str_to_long(buf)) == LONG_MAX
 		    || val == LONG_MIN) {
-			l0g("pam_mount: %s\n",
-			    "session count corrupt (overflow)");
+                        l0g(PREFIX "session count corrupt (overflow)\n");
 			err = -1;
 			goto return_error;
 		}
@@ -280,17 +290,16 @@ static int modify_pm_count(const char *user, long amount) {
 	}
 	if(amount != 0) {		/* amount == 0 implies query */
 		val += amount;
-		if (val <= 0) {
-			if (unlink(filename)) {
-				w4rn("pam_mount: unlink error on %s\n",
-				     filename);
-			}
+                if(val <= 0 && unlink(filename) != 0) {
+                    l0g(PREFIX "could not unlink %s: %s\n",
+                      filename, strerror(errno));
 		}
 		g_snprintf(buf, st.st_size + 2, "%ld", val);
 		if (write(fd, buf, strlen(buf)) == -1) {
-			w4rn("pam_mount: write error on %s\n", filename);
-			err = -1;
-			goto return_error;
+                    l0g(PREFIX "write error on %s: %s\n",
+                      filename, strerror(errno));
+                    err = -1;
+                    goto return_error;
 		}
 	}
 	err = val;

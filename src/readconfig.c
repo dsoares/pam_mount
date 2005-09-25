@@ -22,6 +22,7 @@
 
 #include <sys/types.h>
 #include <assert.h>
+#include <errno.h>
 #include <glib.h>
 #include <limits.h>
 #include <stdio.h>
@@ -44,6 +45,7 @@
 #define DEBUG_DEFAULT           FALSE
 #define MKMOUNTPOINT_DEFAULT    FALSE
 #define FSCKLOOP_DEFAULT        "/dev/loop7"
+#define PMPREFIX                "pam_mount: "
 
 #define ICONTEXT (*(int *)cmd->context)
 #define ICONFIG ((config_t *)cmd->option->info)
@@ -138,7 +140,7 @@ static const configoption_t legal_config[] = {
  *       frees msg after logging it! */
 static FUNC_ERRORHANDLER(log_error)
 {
-	l0g("pam_mount: %s\n", msg);
+	l0g(PMPREFIX "%s\n", msg);
 	/* FIXME: This free is broken.
 	 * If an invalid command definition (ie: foomount) exists in 
 	 * pam_mount.conf then su, loging, gdm, etc. segfault with:
@@ -163,7 +165,7 @@ static DOTCONF_CB(read_options_require)
 
 	if(!ICONTEXT)
 		return "tried to set options_require from user config";
-	w4rn("pam_mount: %s\n", "reading options_require...");
+	w4rn(PMPREFIX "reading options_require...\n");
 	if(!str_to_optlist(&ICONFIG->options_require, cmd->data.str))
 		return "error parsing required options";
 	return NULL;
@@ -180,7 +182,7 @@ static DOTCONF_CB(read_options_allow)
 
 	if(!ICONTEXT)
 		return "tried to set options_allow from user config";
-	w4rn("pam_mount: %s\n", "reading options_allow...");
+	w4rn(PMPREFIX "reading options_allow...\n");
 	if(!str_to_optlist(&ICONFIG->options_allow, cmd->data.str))
 		return "error parsing allowed options";
 	return NULL;
@@ -197,7 +199,7 @@ static DOTCONF_CB(read_options_deny)
 
 	if(!ICONTEXT)
 		return "tried to set options_deny from user config";
-	w4rn("pam_mount: %s\n", "reading options_deny...");
+	w4rn(PMPREFIX "reading options_deny...\n");
 	if(!str_to_optlist(&ICONFIG->options_deny, cmd->data.str))
 		return "error parsing denied options";
 	return NULL;
@@ -253,7 +255,7 @@ static DOTCONF_CB(read_command)
 	if(!ICONTEXT)
 		return "tried to set command from user config";
 	if((command_index = get_command_index(Command, cmd->name)) == -1)
-		return "pam_mount: bad command in config";
+		return PMPREFIX "bad command in config";
 	if (cmd->arg_count <= 0)
 		return "command type specified without definition";
 	for (i = 0; i < cmd->arg_count; i++)
@@ -262,8 +264,7 @@ static DOTCONF_CB(read_command)
 	COMMAND(0) = g_strdup(cmd->data.list[0]);
 	for (i = 1; i < cmd->arg_count; i++) {
 		if (i > MAX_PAR)
-			return
-			    "pam_mount: command line configured to be too long";
+                    return PMPREFIX "command line configured to be too long";
 		COMMAND(i) = g_strdup(cmd->data.list[i]);
 	}
 	return NULL;
@@ -295,9 +296,8 @@ static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 		return 1;
 	for(e = options; e != NULL; e = optlist_next(e))
 		if (!option_in_list(allowed, optlist_key(e))) {
-			l0g("pam_mount: option %s not allowed\n",
-			    optlist_key(e));
-			return 0;
+                    l0g(PMPREFIX "option %s not allowed\n", optlist_key(e));
+                    return 0;
 		}
 	return 1;
 }
@@ -313,9 +313,8 @@ static int options_required_ok(optlist_t * required, optlist_t * options)
 	optlist_t *e;
 	for(e = required; e != NULL; e = optlist_next(e))
 		if (!option_in_list(options, optlist_key(e))) {
-			l0g("pam_mount: option %s required\n",
-			    optlist_key(e));
-			return 0;
+                    l0g(PMPREFIX "option %s required\n", optlist_key(e));
+                    return 0;
 		}
 	return 1;
 }
@@ -330,17 +329,15 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
 {
 	optlist_t *e;
 	if (!optlist_len(denied)) {
-		w4rn("pam_mount: %s\n", "no denied options");
+		w4rn(PMPREFIX "no denied options\n");
 		return 1;
 	} else if(optlist_exists(denied, "*") && optlist_len(options) > 0) {
-		l0g("pam_mount: %s\n",
-		    "all mount options denied, user tried to specify one");
+		l0g(PMPREFIX "all mount options denied, user tried to specify one\n");
 		return 0;
 	}
 	for(e = denied; e != NULL; e = optlist_next(e))
 		if (option_in_list(options, optlist_key(e))) {
-			l0g("pam_mount: option %s denied\n",
-			    optlist_key(e));
+			l0g(PMPREFIX "option %s denied\n", optlist_key(e));
 			return 0;
 		}
 	return 1;
@@ -360,8 +357,7 @@ static int _options_ok(config_t * config, vol_t * volume)
 
 	if(optlist_len(config->options_allow) > 0 &&
 	    optlist_len(config->options_deny) > 0) {
-		l0g("pam_mount: %s\n",
-		    "possible conflicting option settings (use allow OR deny)");
+		l0g(PMPREFIX "possible conflicting option settings (use allow OR deny)\n");
 		return 0;
 	}
 	if (volume->use_fstab == FALSE) {
@@ -379,8 +375,7 @@ static int _options_ok(config_t * config, vol_t * volume)
 					     volume->options))
 				return 0;
 		} else if(optlist_len(volume->options) > 0) {
-			l0g("pam_mount: %s\n",
-			    "user specified options denied by default");
+			l0g(PMPREFIX "user specified options denied by default\n");
 			return 0;
 		}
 	}
@@ -399,18 +394,18 @@ gboolean luserconf_volume_record_sane(config_t * config, int vol)
 	assert(config->volume != NULL);
 
 	if (config->volume[vol].used_wildcard == TRUE) {
-		l0g("pam_mount: wildcard used in user-defined volume\n");
+		l0g(PMPREFIX "wildcard used in user-defined volume\n");
 		return FALSE;
 	}
 	if (config->volume[vol].type == LCLMOUNT
 	    && owns(config->user, config->volume[vol].volume) == FALSE) {
-		l0g("pam_mount: user-defined volume, volume not owned by user\n");
+		l0g(PMPREFIX "user-defined volume, volume not owned by user\n");
 		return FALSE;
 	}
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
 	if (config->volume[vol].type == CRYPTMOUNT
 	    && owns(config->user, config->volume[vol].volume) == FALSE) {
-		l0g("pam_mount: user-defined volume, volume not owned by user\n");
+		l0g(PMPREFIX "user-defined volume, volume not owned by user\n");
 		return FALSE;
 	}
 	/*
@@ -420,18 +415,18 @@ gboolean luserconf_volume_record_sane(config_t * config, int vol)
 	if (config->volume[vol].type == LCLMOUNT
 	    && exists(config->volume[vol].mountpoint)
 	    && owns(config->user, config->volume[vol].mountpoint) == FALSE) {
-		l0g("pam_mount: user-defined volume, mountpoint not owned by user\n");
+		l0g(PMPREFIX "user-defined volume, mountpoint not owned by user\n");
 		return FALSE;
 	}
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
 	if (config->volume[vol].type == CRYPTMOUNT
 	    && exists(config->volume[vol].mountpoint)
 	    && owns(config->user, config->volume[vol].mountpoint) == FALSE) {
-		l0g("pam_mount: user-defined volume, mountpoint not owned by user\n");
+		l0g(PMPREFIX "user-defined volume, mountpoint not owned by user\n");
 		return FALSE;
 	}
 	if (!_options_ok(config, &config->volume[vol])) {
-		l0g("pam_mount: illegal option specified by user\n");
+		l0g(PMPREFIX "illegal option specified by user\n");
 		return FALSE;
 	}
 	return TRUE;
@@ -443,7 +438,7 @@ gboolean luserconf_volume_record_sane(config_t * config, int vol)
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 gboolean volume_record_sane(config_t * config, int vol)
 {
-	w4rn("pam_mount: checking sanity of volume record (%s)\n", config->volume[vol].volume);
+	w4rn(PMPREFIX "checking sanity of volume record (%s)\n", config->volume[vol].volume);
 	if (!config->command[0][config->volume[vol].type]) {
 		l0g("mount command not defined for this type\n");
 		return FALSE;
@@ -497,7 +492,7 @@ static DOTCONF_CB(read_luserconf)
 	strcpy(ICONFIG->luserconf, home_dir);
 	strcat(ICONFIG->luserconf, "/");
 	strcat(ICONFIG->luserconf, cmd->data.str);
-	w4rn("pam_mount: path to luserconf set to %s\n", ICONFIG->luserconf);
+	w4rn(PMPREFIX "path to luserconf set to %s\n", ICONFIG->luserconf);
 	return NULL;
 }
 
@@ -549,14 +544,14 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 	FILE *fstab;
 	struct mntent *fstab_record;
 	if((fstab = setmntent("/etc/fstab", "r")) == NULL) {
-		l0g("pam_mount: could not open fstab\n");
+		l0g(PMPREFIX "could not open fstab\n");
 		return 0;
 	}
 	fstab_record = getmntent(fstab);
 	while(fstab_record != NULL && strcmp(fstab_record->mnt_fsname, volume) != 0)
 		fstab_record = getmntent(fstab);
 	if(fstab_record == NULL) {
-		l0g("pam_mount: could not get %dth fstab field for %s\n",
+		l0g(PMPREFIX "could not get %dth fstab field for %s\n",
 		    field, volume);
 		return 0;
 	}
@@ -574,17 +569,17 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 		val = fstab_record->mnt_opts;
 		break;
 	default:
-		l0g("pam_mount: field of %d invalid\n", field);
+		l0g(PMPREFIX "field of %d invalid\n", field);
 		return 0;
 	}
 #elif defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
 	struct fstab *fstab_record;
 	if (!setfsent()) {
-		l0g("pam_mount: could not open fstab to determine mount point for %s\n", volume);
+		l0g(PMPREFIX "could not open fstab to determine mount point for %s\n", volume);
 		return 0;
 	}
 	if((fstab_record = getfsspec(volume)) == NULL) {
-		l0g("pam_mount: could not get %dth fstab field for %s\n",
+		l0g(PMPREFIX "could not get %dth fstab field for %s\n",
 		    field, volume);
 		return 0;
 	}
@@ -602,12 +597,12 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 		val = fstab_record->fs_mntops;
 		break;
 	default:
-		l0g("pam_mount: field of %d invalid\n", field);
+		l0g(PMPREFIX "field of %d invalid\n", field);
 		return 0;
 	}
 #else
 	/* FIXME */
-	l0g("pam_mount: %s\n", "reading fstab not implemented on arch.");
+	l0g(PMPREFIX "reading fstab not implemented on arch.\n");
 	return 0;
 #endif
 	strncpy(value, val, size - 1);
@@ -635,12 +630,12 @@ DOTCONF_CB(read_volume)
 		 * user may use other usernames to mount volumes using
 		 * luserconf
 		 */
-		w4rn("pam_mount: ignoring volume record (not for me)\n");
+		w4rn(PMPREFIX "ignoring volume record (not for me)\n");
 		return NULL;
 	} else if(strcmp(cmd->data.list[0], "*") == 0 &&
             strcmp(Config.user, "root") == 0) {
 		/* FIXME: should use uid == 0, not "root" */
-		w4rn("pam_mount: volume wildcard ignored for root");
+		w4rn(PMPREFIX "volume wildcard ignored for root\n");
 		return NULL;
 	}
 	for (i = 0; i < cmd->arg_count; i++)
@@ -724,12 +719,14 @@ readconfig(const char *user, char *file, int globalconf, config_t * config)
 	if(
 	    (configfile =
 	     dotconf_create(file, legal_config, &globalconf, 0)) == NULL) {
-		l0g("pam_mount: error opening %s\n", file);
+		l0g(PMPREFIX "error opening %s: %s\n", file, strerror(errno));
 		return 0;
 	}
 	configfile->errorhandler = (dotconf_errorhandler_t) log_error;
-	if (!dotconf_command_loop(configfile))
-		l0g("pam_mount: error reading %s\n", file);	/* may not be fatal */
+        if(!dotconf_command_loop(configfile)) {
+            // may not be fatal
+            l0g(PMPREFIX "error reading %s: %s\n", file, strerror(errno));
+        }
 	dotconf_cleanup(configfile);
 	return 1;
 }
@@ -801,14 +798,14 @@ static char *expand_home(char *path, size_t path_size, const char *user)
 			strcpy(path, p->pw_dir);
 			strcat(path, src + 1);	/* skip leading '~' */
 		} else {
-			l0g("pam_mount: destination string to short\n");
+			l0g(PMPREFIX "destination string to short\n");
 			g_free(src);
 			return NULL;
 		}
 	} else {
-		l0g("pam_mount: could not look up account information for %s", user);
-		g_free(src);
-		return NULL;
+            l0g(PMPREFIX "could not look up account information for %s\n", user);
+            g_free(src);
+            return NULL;
 	}
 	g_free(src);
 	return path;
@@ -825,9 +822,9 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 /* FIXME: this strdup/free is silly; req. dest and str point to diff. arrays? */
 {
 	char *pos, *src;
-	w4rn("pam_mount: expand_wildcard for %s\n", str);
+	w4rn(PMPREFIX "expand_wildcard for %s\n", str);
 	if (str == NULL) {
-		l0g("pam_mount %s\n", "tried to expand a NULL");
+		l0g(PMPREFIX "tried to expand a NULL\n");
 		return NULL;
 	}
 	src = g_strdup(str);

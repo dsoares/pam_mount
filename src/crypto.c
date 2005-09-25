@@ -39,6 +39,8 @@
 #include "crypto.h"
 #include "misc.h"
 
+#define PMPREFIX "pam_mount: "
+
 #ifdef HAVE_LIBCRYPTO
 static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,
   unsigned char *, unsigned char *);
@@ -49,7 +51,7 @@ static void sslerror(const char *msg)
 {
 	unsigned long err = ERR_get_error();
 	if (err != 0) {
-		l0g("pam_mount: %s: %s", msg, ERR_error_string(err, NULL));
+		l0g(PMPREFIX "%s: %s", msg, ERR_error_string(err, NULL));
 	}
 }
 
@@ -75,20 +77,18 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 
 	if(fread(magic, 1, sizeof(magic), fp) != sizeof("Salted__") - 1
 	    || fread(salt, 1, sizeof(salt), fp) != PKCS5_SALT_LEN) {
-		l0g("pam_mount: %s\n",
-		    "error reading salt from encrypted filesystem key");
+		l0g(PMPREFIX "error reading salt from encrypted filesystem key\n");
 		return 0;
 	}
 	if(memcmp(magic, "Salted__", sizeof(magic)) != 0) {
-		l0g("pam_mount: %s\n",
-		    "magic string Salted__ not in filesystem key file");
+		l0g(PMPREFIX "magic string Salted__ not in filesystem key file\n");
 		return 0;
 	}
 	md = EVP_md5();
 	if (EVP_BytesToKey
 	    (cipher, md, salt, (unsigned char *) authtok, strlen(authtok), 1,
 	     hash, iv) <= 0) {
-		l0g("pam_mount: %s\n", "failed to hash system password");
+		l0g(PMPREFIX "failed to hash system password\n");
 		return 0;
 	}
 
@@ -137,12 +137,12 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 	EVP_CIPHER_CTX_init(&ctx);
 	SSL_load_error_strings();
 	if((fs_key_fp = fopen(fs_key_path, "r")) == NULL) {
-		l0g("pam_mount: error opening %s\n", fs_key_path);
+		l0g(PMPREFIX "error opening %s\n", fs_key_path);
 		ret = 0;
 		goto _return_no_close;
 	}
 	if((cipher = EVP_get_cipherbyname((const char *) fs_key_cipher)) == NULL) {
-		l0g("pam_mount: error getting cipher \"%s\"\n",
+		l0g(PMPREFIX "error getting cipher \"%s\"\n",
 		    fs_key_cipher);
 		ret = 0;
 		goto _return;
@@ -153,7 +153,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 		goto _return;
 	}
 	if ((ct_fs_key_len = fread(ct_fs_key, 1, sizeof(ct_fs_key), fs_key_fp)) == 0) {
-		l0g("pam_mount: failed to read encrypted filesystem key from %s\n", fs_key_path);
+		l0g(PMPREFIX "failed to read encrypted filesystem key from %s\n", fs_key_path);
 		ret = 0;
 		goto _return;
 	}
@@ -183,7 +183,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 	*pt_fs_key_len += segment_len;
       _return:
 	if (fclose(fs_key_fp) != 0) {
-		l0g("pam_mount: error closing file pointer\n");
+		l0g(PMPREFIX "error closing file pointer\n");
 		ret = 0;
 	}
       _return_no_close:
@@ -199,8 +199,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 
 	return ret;
 #else
-	l0g("pam_mount: %s\n",
-	    "encrypted filesystem key not supported: no openssl");
+	l0g(PMPREFIX "encrypted filesystem key not supported: no openssl\n");
 	return 0;
 #endif				/* HAVE_LIBCRYPTO */
 }
