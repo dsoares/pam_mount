@@ -856,8 +856,7 @@ int mount_op(int (*mnt)(config_t *, const unsigned int, fmt_ptrn_t *,
 	fmt_ptrn_update_kv(&vinfo, "USER", config->volume[vol].user);
 	/* FIXME: should others remain undefined if == ""? */
 	optlist_to_str(options, config->volume[vol].options);
-	if(strlen(options) > 0)
-		fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
+	fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
 
 	if(Debug)
 		log_pm_input(config, vol);
