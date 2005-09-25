@@ -58,7 +58,7 @@ endif
 
 INCLUDES = -I$(srcdir)/../include @LOCAL_FMT_PTRN_INCLUDES@
 
-AM_CFLAGS = -g -Werror $(GLIB_CFLAGS)
+AM_CFLAGS = $(GLIB_CFLAGS)
 
 install-data-hook:
 	( \
