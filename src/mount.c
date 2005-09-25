@@ -462,13 +462,13 @@ int pipewrite(int fd, const void *buf, size_t count)
 	assert(count >= 0);
 
 	/* avoid bomb on command exiting before data written */
-	if (sigaction(SIGPIPE, &ignoresact, &oldsact) < 0) {
+	if(sigaction(SIGPIPE, &ignoresact, &oldsact) == -1) {
 		fnval = -1;
 		goto _return;
 	}
 	fnval = write(fd, buf, count);
 	/* restore old handler */
-	if (sigaction(SIGPIPE, &oldsact, NULL) < 0) {
+	if(sigaction(SIGPIPE, &oldsact, NULL) == -1) {
 		fnval = -1;
 		goto _return;
 	}

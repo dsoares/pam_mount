@@ -242,7 +242,7 @@ static int modify_pm_count(const char *user, long amount) {
 	 * Unfortunately, the only way to do this without potential stack
 	 * trashing is a goto.
 	 */
-	if (access(filename, F_OK) < 0) {
+	if(access(filename, F_OK) == -1) {
 		if (tries < 10) {
 			w4rn("pam_mount: could not access %s, trying again\n", filename);
 			sleep(1);

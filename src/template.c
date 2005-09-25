@@ -110,11 +110,11 @@ static int _at_path(char *template_path)
 /* Make sure template_path is big enough to have .gz added to the end! */
 {
     struct stat stat_buf;
-    if (stat(template_path, &stat_buf) != -1 && S_ISREG(stat_buf.st_mode))
+    if(stat(template_path, &stat_buf) == 0 && S_ISREG(stat_buf.st_mode))
 	return 1;
     else {
 	strcat(template_path, ".gz");
-	if (stat(template_path, &stat_buf) != -1 && S_ISREG(stat_buf.st_mode))
+	if(stat(template_path, &stat_buf) == 0 && S_ISREG(stat_buf.st_mode))
 	    return 1;
     }
     return 0;
@@ -181,8 +181,7 @@ static int _mk_parent_dirs(const char *path)
 	}
 	*delim = '\0';
 	ptr = delim + 1;
-	if (stat(path_copy, &stat_buf) == -1)
-	    if (mkdir(path_copy, mode) < 0)
+	if(stat(path_copy, &stat_buf) == -1 && mkdir(path_copy, mode) == -1)
 		return 0;
 	*delim = '/';
     }
@@ -207,7 +206,7 @@ int template_write_it_using_map(const char *filepath, const int force,
     FILE *output_file;
     GList *ptr;
     if(strcmp("-", filepath) != 0) {
-    if (!force && stat(filepath, &stat_buf) != -1) {
+    if(!force && stat(filepath, &stat_buf) == 0) {
 	sprintf(_template_errmsg, "%s exists", filepath);
 	return 0;
     }
