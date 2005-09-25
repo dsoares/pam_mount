@@ -125,7 +125,7 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
 	assert(str);
 
 	*optlist = NULL;
-	if (!strlen(str)) {
+	if(strlen(str) == 0) {
 		ret = 0;
 		goto _return;
 	}
@@ -144,7 +144,7 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
 		}
       _return:
 
-	assert(!ret || ((!strlen(str) && !*optlist) || *optlist));
+	assert(!ret || ((strlen(str) == 0 && !*optlist) || *optlist));
 
 	return ret;
 }
@@ -210,7 +210,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 		do {
 			strncat(str, ((pair_t *) ptr->data)->key,
 				MAX_PAR - strlen(str));
-			if (strlen(((pair_t *) ptr->data)->val)) {
+			if(strlen(((pair_t *) ptr->data)->val) > 0) {
 				strncat(str, "=", MAX_PAR - strlen(str));
 				strncat(str,
 					((pair_t *) ptr->data)->
@@ -221,7 +221,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 		} while (ptr);
 	str[MAX_PAR] = 0x00;
 
-	assert((!optlist && !strlen(str)) || strlen(str));
+	assert((!optlist && strlen(str) == 0) || strlen(str));
 
 	return str;
 }

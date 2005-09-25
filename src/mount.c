@@ -741,7 +741,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 		w4rn("pam_mount: %s\n",
 		     "checking for encrypted filesystem key configuration");
 		password = password ? password : "";	/* FIXME: better done elsewhere? */
-		if (strlen(config->volume[vol].fs_key_cipher)) {
+		if(strlen(config->volume[vol].fs_key_cipher) > 0) {
 			/* _password is binary data -- no strlen, strcpy, etc! */
 			w4rn("pam_mount: decrypting FS key using system auth. token and %s\n", config->volume[vol].fs_key_cipher);
 			/*
@@ -853,7 +853,7 @@ int mount_op(int (*mnt)
 	fmt_ptrn_update_kv(&vinfo, "USER", config->volume[vol].user);
 	/* FIXME: should others remain undefined if == ""? */
 	optlist_to_str(options, config->volume[vol].options);
-	if (strlen(options))
+	if(strlen(options) > 0)
 		fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
 
 	if (debug)

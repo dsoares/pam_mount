@@ -229,7 +229,7 @@ int template_write_it_using_map(const char *filepath, const int force,
     }
     fmt_ptrn_update_kv(&map, strdup("FILE"), basename(strdup(filepath)));
     initialize_fillers(&map);
-    if (strlen(mapping_file))
+    if(strlen(mapping_file) > 0)
         initialize_fillers_from_file(&map, mapping_file);
     for (ptr = m; ptr; ptr = g_list_next(ptr))
 	fmt_ptrn_update_kv_p(&map, ptr->data);

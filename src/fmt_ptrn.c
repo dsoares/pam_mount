@@ -565,7 +565,7 @@ static void _read_literal(fmt_ptrn_t *x, char *str, buffer_t * buf)
 
 	str++;
 	str[strlen(str) - 1] = 0x00;
-	if (strlen(str))
+	if(strlen(str) > 0)
 		realloc_n_cpy(buf, str);
 	else
 		enqueue_parse_errmsg(x, "%s: %ld: no literal found in quotes",

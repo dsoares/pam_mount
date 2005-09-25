@@ -356,7 +356,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		goto _return;
 	}
 	w4rn("pam_mount: %s\n", "back from global readconfig");
-	if (!strlen(config.luserconf))
+	if(strlen(config.luserconf) == 0)
 		w4rn("pam_mount: %s\n",
 		     "per-user configurations not allowed by pam_mount.conf");
 	else if (exists(config.luserconf)

@@ -442,7 +442,7 @@ gboolean volume_record_sane(config_t * config, int vol)
 	     || config->volume[vol].type == NCPMOUNT
 	     || config->volume[vol].type == CIFSMOUNT
 	     || config->volume[vol].type == NFSMOUNT)
-	    && !strlen(config->volume[vol].server)) {
+	    && strlen(config->volume[vol].server) == 0) {
 		l0g("remote mount type specified without server\n");
 		return FALSE;
 	}
@@ -454,13 +454,13 @@ gboolean volume_record_sane(config_t * config, int vol)
 		l0g("umount command not defined\n");
 		return FALSE;
 	}
-	if (strlen(config->volume[vol].fs_key_cipher)
-	    && !strlen(config->volume[vol].fs_key_path)) {
+	if(strlen(config->volume[vol].fs_key_cipher) > 0 &&
+	    strlen(config->volume[vol].fs_key_path) == 0) {
 		l0g("fs_key_cipher defined without fs_key_path\n");
 		return FALSE;
 	}
-	if (!strlen(config->volume[vol].fs_key_cipher)
-	    && strlen(config->volume[vol].fs_key_path)) {
+	if(strlen(config->volume[vol].fs_key_cipher) == 0 &&
+	    strlen(config->volume[vol].fs_key_path) > 0) {
 		l0g("fs_key_path defined without fs_key_cipher\n");
 		return FALSE;
 	}
