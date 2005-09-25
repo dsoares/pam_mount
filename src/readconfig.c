@@ -57,11 +57,13 @@ typedef enum fstab_field_t {
 
 /* defaults are included here but these are overridden by pam_mount.conf */
 static pm_command_t Command[] = {
-	{SMBMOUNT, "smb", "smbmount", {"/bin/mount", "-t", "smbfs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
-	{SMBMOUNT, "smbfs", "smbmount", {"/bin/mount", "-t", "smbfs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
+        {SMBMOUNT, "smb", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
+        {SMBMOUNT, "smbfs", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
+        {SMBUMOUNT, "smbfs", "smbumount", {"/usr/bin/smbumount", "%(MNTPT)", NULL}},
 	{CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
-	{NCPMOUNT, "ncp", "ncpmount", {"/bin/mount", "-t", "ncpfs", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
-	{NCPMOUNT, "ncpfs", "ncpmount", {"/bin/mount", "-t", "ncpfs", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+        {NCPMOUNT, "ncp", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+        {NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+        {NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
 	{NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o \" OPTIONS)", NULL}},	/* Don't use LCLMOUNT to avoid fsck */
 	{LCLMOUNT, "local", "lclmount", {"/bin/mount", "-p0", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o \" OPTIONS)", NULL}},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
@@ -107,8 +109,10 @@ static const configoption_t legal_config[] = {
 	{"luserconf", ARG_STR, read_luserconf, &Config, CTX_ALL},
 	{"fsckloop", ARG_STR, read_fsckloop, &Config, CTX_ALL},
 	{"smbmount", ARG_LIST, read_command, &Config, CTX_ALL},
+        {"smbumount", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"cifsmount", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"ncpmount", ARG_LIST, read_command, &Config, CTX_ALL},
+        {"ncpumount", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"umount", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"lclmount", ARG_LIST, read_command, &Config, CTX_ALL},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */

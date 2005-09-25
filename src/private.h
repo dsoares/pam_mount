@@ -16,8 +16,10 @@ extern "C" {
 
 typedef enum command_type_t {
     SMBMOUNT,
+    SMBUMOUNT,
     CIFSMOUNT,
     NCPMOUNT,
+    NCPUMOUNT,
     LCLMOUNT,
     CRYPTMOUNT, // FIXME: hope to have this in util-linux (LCLMOUNT) some day
     NFSMOUNT,

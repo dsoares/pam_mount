@@ -405,6 +405,7 @@ int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
 	char *_argv[MAX_PAR + 1];
+        int type;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
@@ -416,10 +417,19 @@ int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		 * logging out.  Running lsof helps debug this.
 		 */
 		run_lsof(config, vinfo);
-	/* FIXME: NEW */
-	for(i = 0; config->command[i][UMOUNT] != NULL; i++)
-		add_to_argv(_argv, &_argc, config->command[i][UMOUNT],
-			    vinfo);
+
+        switch(config->volume[vol].type) {
+            case SMBMOUNT: type = SMBUMOUNT; break;
+            case NCPMOUNT: type = NCPUMOUNT; break;
+            default:       type = UMOUNT; break;
+        }
+
+        if(config->command[0][type] == NULL)
+            l0g("pam_mount: {smb,ncp}umount not defined in pam_count.conf\n");
+
+        for(i = 0; config->command[i][type] != NULL; ++i)
+            add_to_argv(_argv, &_argc, config->command[i][type], vinfo);
+
 	/* FIXME: ugly hack to support umount.crypt script.  I hope that
 	 * util-linux will have native dm_crypt support some day */
 	if (config->volume[vol].type == CRYPTMOUNT) {
