@@ -175,7 +175,7 @@ gboolean vol_t_valid(const vol_t * v)
 {
 	if (v == NULL)
 		return FALSE;
-	if (!(0 <= v->type && v->type < COMMAND_MAX))
+	if (!(v->type >= 0 && v->type < COMMAND_MAX))
 		return FALSE;
 	/* should be guaranteed by volume_record_sane() */
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
@@ -271,7 +271,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 
 	assert(argv != NULL);
 	/* need room for one more + terminating NULL for execv */
-	assert(argc != NULL && 0 <= *argc && *argc <= MAX_PAR - 1);
+	assert(argc != NULL && *argc >= 0 && *argc <= MAX_PAR - 1);
 	assert(arg != NULL);
 	assert(vinfo != NULL);
 

@@ -606,7 +606,7 @@ check_filesystem(struct config_t *config, const unsigned int vol,
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
-	assert(0 <= password_len
+	assert(password_len >= 0
 	       && password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	if (!config->command[0][FSCK]) {
