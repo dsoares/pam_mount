@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #   FILE: mount.crypt -- mount a dm-crypt encrypted volume
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
@@ -32,29 +32,29 @@ USAGE="[-o options] dev dir
   -o options  set the mount options  [ $OPTIONS ]"
 
 _losetup() {
-	DEVICE=$1
+	DEVICE="$1";
 	LOOPDEV=0
-	while [ $LOOPDEV -le 15 ]; do
-		if $LOSETUP /dev/loop${LOOPDEV} $DEVICE 2> /dev/null; then
-			echo /dev/loop${LOOPDEV}
+	while [ "$LOOPDEV" -le 15 ]; do
+		if "$LOSETUP" "/dev/loop$LOOPDEV" "$DEVICE" 2>/dev/null; then
+			echo "/dev/loop$LOOPDEV";
 			return 0
 		fi
-		LOOPDEV=$(($LOOPDEV + 1))
+		LOOPDEV=$[$LOOPDEV+1];
 	done
 	echo "${0##*/}: error setting up loop device for $DEVICE" >&2
 	exit 1
 }
 
-while :;
-	do case "$1" in
+while :; do
+	case "$1" in
 		-h | "-?" )	
 			echo -e usage: ${0##*/} "$USAGE" >&2
 			exit 1 ;;
 		-o )
-			OPTIONS=$2
+			OPTIONS="$2";
 			shift ;;
 		-?* )
-			echo "${0##*/}: unrecognised option: $1" >&2
+			echo "${0##*/}: unrecognized option: $1" >&2
 			exit 1 ;;
 		* )
 			break ;;
@@ -66,7 +66,7 @@ if [ -z "$1" ]; then
 	echo "${0##*/}: device to mount not specified" >&2
 fi
 
-if [ ! -f "$1" ] && [ ! -b "$1" ]; then
+if [ ! -f "$1" -a ! -b "$1" ]; then
         echo "${0##*/}: $1 is not a block device or file" >&2
 	exit 1
 fi
@@ -83,9 +83,9 @@ LOOP=false
 MOUNTOPTIONS=""
 IFS=","
 for opt in $OPTIONS; do
-	KEY=`echo $opt | awk -F = '{ print $1 }'`
-	VAL=`echo $opt | awk -F = '{ print $2 }'`
-	case $KEY in
+	KEY=`echo "$opt" | awk -F = '{ print $1 }'`;
+	VAL=`echo "$opt" | awk -F = '{ print $2 }'`;
+	case "$KEY" in
 		# FIXME: use cipher instead of encryption to avoid conflicting
 		# with mount's built-in (cryptoloop) encryption argument.
 		cipher )
@@ -112,17 +112,17 @@ for opt in $OPTIONS; do
 done
 
 # FIXME: blind replacement of / with _ may be a bad idea.
-if [ x"${LOOP}" = xtrue ]; then
-	DEVICE=`_losetup $1`
-	DMDEVICE=`echo $DEVICE | sed 's/\//_/g'`
+if [ "$LOOP" == true ]; then
+	DEVICE=`_losetup "$1"`;
+	DMDEVICE=`echo "$DEVICE" | sed 's/\//_/g'`;
 else
-	DEVICE=$1
-	DMDEVICE=`echo $DEVICE | sed 's/\//_/g'`
+	DEVICE="$1";
+	DMDEVICE=`echo "$DEVICE" | sed 's/\//_/g'`;
 fi
 
 CIPHEROPT="aes"
 if [ -n "$CIPHER" ]; then
-	CIPHEROPT="-c $CIPHER"
+	CIPHEROPT="-c $CIPHER" # this can't work... we'd have -c -c CIPHER below
 fi
 
 HASHOPT="ripemd160"
@@ -135,28 +135,28 @@ if [ -n "$KEYSIZE" ]; then
        KEYSIZEOPT="$KEYSIZE"
 fi
 
-$CRYPTSETUP -c $CIPHEROPT -h $HASHOPT -s $KEYSIZEOPT create $DMDEVICE $DEVICE
-if [ $? != 0 ]; then
+"$CRYPTSETUP" -c $CIPHEROPT -h $HASHOPT -s $KEYSIZEOPT create "$DMDEVICE" "$DEVICE";
+if [ $? -ne 0 ]; then
 	echo "${0##*/}: error creating $DMDEVICE" >&2
-	[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
+	[ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
 	exit 1
 fi
 
 if [ -z "$MOUNTOPTIONS" ]; then
 	# $2 might not exist as mount can try to read it from /etc/fstab
-	$MOUNT /dev/mapper/$DMDEVICE $2
-	if [ $? != 0 ]; then
+	"$MOUNT" "/dev/mapper/$DMDEVICE" "$2";
+	if [ $? -ne 0 ]; then
 		echo "${0##*/}: error mounting $DMDEVICE" >&2
-		$CRYPTSETUP remove $DMDEVICE
-		[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
+		"$CRYPTSETUP" remove "$DMDEVICE";
+		[ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
 		exit 1
 	fi
 else
-	$MOUNT -o $MOUNTOPTIONS /dev/mapper/$DMDEVICE $2
-	if [ $? != 0 ]; then
+	"$MOUNT" -o "$MOUNTOPTIONS" "/dev/mapper/$DMDEVICE" "$2";
+	if [ $? -ne 0 ]; then
 		echo "${0##*/}: error mounting $DMDEVICE" >&2
-		$CRYPTSETUP remove $DMDEVICE
-		[ x"$LOOP" = xtrue ] && $LOSETUP -d $DEVICE
+		"$CRYPTSETUP" remove "$DMDEVICE";
+		[ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
 		exit 1
 	fi
 fi

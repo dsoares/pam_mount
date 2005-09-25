@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #   FILE: autoehd -- Mount the EHD of a user that is defined in pam_mount.conf.
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
@@ -27,13 +27,13 @@ USAGE="[USER] [OPTION]...
 
   -h, -?   print this message"
 
-while :;
-	do case "$1" in
+while :; do
+	case "$1" in
 		-h | "-?" )	
 			echo -e usage: ${0##*/} "$USAGE" >&2
 			exit 1 ;;
 		-?* )
-			echo "${0##*/}: unrecognised option: $1" >&2
+			echo "${0##*/}: unrecognized option: $1" >&2;
 			exit 1 ;;
 		* )
 			break ;;
@@ -41,38 +41,38 @@ while :;
 	shift
 done
 
-if [ ! -z $1 ]; then
-	USER=$1
+if [ -n "$1" ]; then
+	USER="$1";
 fi
 
-if [ ! -f $CONF ]; then
+if [ ! -f "$CONF" ]; then
 	echo "${0##*/}: $CONF is missing"
 	exit 1
 fi
 
-REGEX="^volume $USER"
-MNTPT=`grep "$REGEX" $CONF | awk '{ print $6 }'`
-OPTIONS=`grep "$REGEX" $CONF | awk '{ print $7 }'`
-CIPHER=`grep "$REGEX" $CONF | awk '{ print $8 }'`
-KEYPATH=`grep "$REGEX" $CONF | awk '{ print $9 }'`
-VOLUME=`grep "$REGEX" $CONF | awk '{ print $5 }'`
+REGEX="^volume $USER ";
+MNTPT=`grep "$REGEX" "$CONF" | awk '{ print $6 }'`;
+OPTIONS=`grep "$REGEX" "$CONF" | awk '{ print $7 }'`;
+CIPHER=`grep "$REGEX" "$CONF" | awk '{ print $8 }'`;
+KEYPATH=`grep "$REGEX" "$CONF" | awk '{ print $9 }'`;
+VOLUME=`grep "$REGEX" "$CONF" | awk '{ print $5 }'`;
 
 if [ -z "$VOLUME" ]; then
 	echo "${0##*/}: could not find configuration for $USER in pam_mount.conf" >&2
 	exit 1
 fi
 
-if [ x${MNTPT} = x- ]; then
+if [ "$MNTPT" == "-" ]; then
 	MNTPT=""	
 fi
 
-if [ x${OPTIONS} = x- ]; then
-	OPTIONS=""	
+if [ "$OPTIONS" == "-" ]; then
+	OPTIONS="";
 else
 	OPTIONS="-o $OPTIONS"
 fi
 
-if [ x${CIPHER} = x- ]; then
+if [ "$CIPHER" == "-" ]; then
 	mount $OPTIONS $VOLUME $MNTPT
 else
 	openssl enc -d -$CIPHER -in $KEYPATH | mount -p0 $OPTIONS $VOLUME $MNTPT

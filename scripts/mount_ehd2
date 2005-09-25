@@ -1,0 +1,8 @@
+#!/bin/bash -ex
+
+ARCH=`uname`
+
+if [ "$ARCH" == "OpenBSD" ]; then
+	/usr/sbin/vnconfig -k "$2" "$3";
+	/sbin/mount "/dev/${2}c" "$4";
+fi

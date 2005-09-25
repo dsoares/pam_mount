@@ -32,6 +32,8 @@
 # (will be passed as $1 and $2.  This should result in $3 being the
 # volume and $4 being the mount point.
 
+[ -x /bin/bash ] && exec mount_ehd2;
+
 ARCH=`uname`
 
 if [ x${ARCH} = xOpenBSD ]; then
