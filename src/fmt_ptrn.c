@@ -129,7 +129,7 @@ static gboolean _modifier_t_valid(const modifier_t * m)
 }
 
 /* ============================ _stack_t_valid () ========================== */
-static gboolean _stack_t_valid(const stack_t * s)
+static gboolean _stack_t_valid(const mystack_t *s)
 {
 	if (s == NULL && s->size != 0)
 		return FALSE;
@@ -137,14 +137,14 @@ static gboolean _stack_t_valid(const stack_t * s)
 }
 
 /* ============================ _stack_init () ============================= */
-static void _stack_init(stack_t * s)
+static void _stack_init(mystack_t *s)
 {
 	s->size = 0;
 	assert(_stack_t_valid(s));
 }
 
 /* ============================ _stack_push () ============================= */
-static gboolean _stack_push(fmt_ptrn_t * x, stack_t * s,
+static gboolean _stack_push(fmt_ptrn_t *x, mystack_t *s,
 			    const modifier_t data)
 {
 	gboolean fnval = FALSE;
@@ -168,7 +168,7 @@ static gboolean _stack_push(fmt_ptrn_t * x, stack_t * s,
 }
 
 /* ============================ _stack_pop () ============================== */
-static gboolean _stack_pop(stack_t * s, modifier_t * data)
+static gboolean _stack_pop(mystack_t *s, modifier_t *data)
 {
 	gboolean fnval = FALSE;
 	assert(_stack_t_valid(s));
@@ -186,7 +186,7 @@ static gboolean _stack_pop(stack_t * s, modifier_t * data)
 }
 
 /* ============================ _stack_contains () ========================= */
-static int _stack_contains(const stack_t s, const char *n)
+static int _stack_contains(const mystack_t s, const char *n)
 {
 	int i;
 	assert(_stack_t_valid(&s));
@@ -377,7 +377,7 @@ static void _read_modifier_arg(fmt_ptrn_t * x,
 
 /* ============================ _read_modifier () ========================== */
 static gboolean _read_modifier(fmt_ptrn_t * x, char **ptrn,
-			       stack_t * modifier)
+			       mystack_t *modifier)
 {
 	int i = 0;
 	modifier_t m;
@@ -415,7 +415,7 @@ static gboolean _read_modifier(fmt_ptrn_t * x, char **ptrn,
 
 /* ============================ _read_modifiers () ========================= */
 static void _read_modifiers(fmt_ptrn_t * x,
-			    char **ptrn, stack_t * modifier)
+			    char **ptrn, mystack_t *modifier)
 {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(ptrn != NULL);
@@ -465,7 +465,7 @@ static void _read_key(fmt_ptrn_t * x, char *key, char **p)
 
 /* ============================ _apply_modifiers () ======================== */
 static void _apply_modifiers(fmt_ptrn_t * x,
-			     buffer_t * str, stack_t * modifier)
+			     buffer_t *str, mystack_t *modifier)
 {
 	modifier_t m;
 
@@ -561,7 +561,7 @@ static void _read_literal(fmt_ptrn_t *x, char *str, buffer_t * buf)
 static void _handle_fmt_str(fmt_ptrn_t * x, char **p)
 {
 	/* format string -> %(<modifier_0> ... <modifier_n> <key>:<alt>) */
-	stack_t modifier;
+	mystack_t modifier;
 	char key[KEY_LEN + 1];
 
 	assert(_fmt_ptrn_t_valid(x));
