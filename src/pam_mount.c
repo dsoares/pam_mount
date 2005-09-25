@@ -277,7 +277,10 @@ static int modify_pm_count(config_t *config, char *user, char *operation) {
                 add_to_argv(_argv, &_argc, config->command[i][PMVARRUN], &vinfo);
 	fmt_ptrn_close(&vinfo);
 	log_argv(_argv);
-	if (g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
+
+	if(g_spawn_async_with_pipes(NULL, _argv, NULL,
+         G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL, &pid, NULL, &cstdout,
+         NULL, &err) == FALSE) {
 		l0g("pam_mount: error executing /usr/sbin/pmvarrun\n");
 		fnval = -1;
 		goto _return;

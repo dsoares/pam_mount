@@ -318,14 +318,43 @@ void add_to_argv(char **argv, int *argc, char *arg, fmt_ptrn_t *vinfo) {
 	argv[++*argc] = NULL;
 }
 
-/* ============================ setrootid () =============================== */ 
-/* SIDE EFFECTS: sets uid to 0 */
-void setrootid(void *ignored)
-{
-	if (setuid(0) == -1)
-		w4rn("pam_mount: %s\n", "error setting uid to 0");
+void set_myuid(void *data) {
+    /* INPUT: user, the username or NULL to setuid(0)
+     * SIDE EFFECTS: sets process uid (and gid if user!=NULL)
+     * OUTPUT: -1 on error, 0 else
+     */
+    const char *user = data;
+
+    if(user == NULL) {
+        w4rn("pam_mount: setting uid to 0\n");
+        if(setuid(0) == -1) {
+            l0g("pam_mount: error setting uid to 0\n");
+            return;
+        }
 #ifdef HAVE_SETFSUID
-	/* Red Hat's su changes fsuid to the processes' uid instead of euid */
-	setfsuid(0);
-#endif				/* HAVE_SETFSUID */
+        if(setfsuid(0) == -1) {
+            l0g("pam_mount: error setting fsuid to 0\n");
+            return;
+        }
+#endif
+    } else {
+        // Set UID and GID to the user's one.
+        struct passwd *real_user;
+        w4rn("pam_mount: setting uid to user %s\n", user);
+        if((real_user = getpwnam(user)) == NULL) {
+            l0g("pam_mount: could not get passwd entry for user %s\n", user);
+            return;
+        }
+        if(setgid(real_user->pw_gid) == -1) {
+            l0g("pam_mount: could not set gid to %u\n", real_user->pw_gid);
+            return;
+        }
+        if(setuid(real_user->pw_uid) == -1) {
+            l0g("pam_mount: could not set uid to %u\n", real_user->pw_uid);
+            return;
+        }
+    }
+    w4rn("pam_mount: real user/group IDs are %d/%d, effective is %d/%d\n",
+      getuid(), getgid(), geteuid(), getegid());
+    return;
 }

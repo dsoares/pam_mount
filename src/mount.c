@@ -429,7 +429,7 @@ int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 	}
 	log_argv(_argv);
 	if (g_spawn_async_with_pipes
-	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, setrootid, NULL,
+	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL,
 	     &pid, NULL, NULL, &cstderr, &err) == FALSE) {
 		l0g("pam_mount: %s\n", err->message);
 		g_error_free(err);
@@ -527,7 +527,7 @@ static int do_losetup(config_t *config, const unsigned int vol,
 	}
 	log_argv(_argv);
 	if (g_spawn_async_with_pipes
-	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, setrootid, NULL,
+	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL,
 	     &pid, NULL, NULL, &cstderr, &err) == FALSE) {
 		l0g("pam_mount: %s\n", err->message);
 		g_error_free(err);
@@ -723,7 +723,7 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		log_argv(_argv);
 		if (g_spawn_async_with_pipes
 		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-		     setrootid, NULL, &pid, NULL, NULL, &cstderr,
+		     set_myuid, NULL, &pid, NULL, NULL, &cstderr,
 		     &err) == FALSE) {
 			l0g("pam_mount: %s\n", err->message);
 			g_error_free(err);
@@ -783,7 +783,7 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 			setenv("PASSWD_FD", "0", 1);
 		if (g_spawn_async_with_pipes
 		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-		     setrootid, NULL, &pid, &cstdin, NULL, &cstderr,
+		     set_myuid, NULL, &pid, &cstdin, NULL, &cstderr,
 		     &err) == FALSE) {
 			l0g("pam_mount: %s\n", err->message);
 			g_error_free(err);
