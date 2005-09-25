@@ -10,7 +10,7 @@ This program is Copyright (C) 2000 Conectiva SA
 	    to be the user's $HOME
 
 2001/12/17: Daniel Fairs <d.fairs@cogtest.com> tested a possible solution
-	    for the no-wait-for-mount situation. There is anothed
+	    for the no-wait-for-mount situation. There is another
 	    seemingly French guy that actually pointed the problem and
 	    suggested a solution, I need to find his name to print it here.
 
@@ -21,3 +21,10 @@ This program is Copyright (C) 2000 Conectiva SA
 
 2002:       Mike Petullo <pam_mount@flyn.org> became the primary maintainer of
             pam_mount.
+
+Sep 2005:   Jan Engelhardt <jengelh@linux01.gwdg.de> became new
+            maintainer of the project.
+            Incorporated patches from Debian, SUSE and others, authors are:
+            Bastian Kleineidam <calvin@debian.org>, Jörg Sommer
+            <joerg@alea.gnuu.de>, <brianr@xandros.com>, Sören Köpping,
+            Florian Frank and Julien Soula.
