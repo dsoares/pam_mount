@@ -39,7 +39,7 @@ if [ ! -d "$1" ]; then
 	exit 1
 fi
 
-DMDEVICE=` "$MOUNT" | grep "$1" | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`;
+DMDEVICE=` "$MOUNT" | grep " $1 " | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`;
 
 # ask cryptsetup about the underlying device
 REALDEVICE=` "$CRYPTSETUP" status "$DMDEVICE" | sed -n '/device/s/[ ]*device:[ ]*//p'`;
