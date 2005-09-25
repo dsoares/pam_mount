@@ -55,8 +55,8 @@ o int to gboolean and 1/0 to TRUE/FALSE
 o Migrate to glib functions.
 
 o replace PRE, POST and FN VAL conditions with asserts in code where applicable
-	- Document fns with INPUT, SIDE AFFECTS and OUTPUT
-	- assert that side affects happen if OUTPUT is not an error code
+	- Document fns with INPUT, SIDE EFFECTS and OUTPUT
+	- assert that side effects happen if OUTPUT is not an error code
 	- only one return statement per function so assertions may be made
 
 	- readconfig.c (started -- see last INPUT)
@@ -124,7 +124,7 @@ used for local mounts)
 o Test/scrub glib code in optlist.c, etc.
 
 o Should -N go in pam_mount.conf like it is now?  Shall I put this in
-conf/pam_mount.conf?  How does hashing/not hashing affect scripts?
+conf/pam_mount.conf?  How does hashing/not hashing effect scripts?
 
 o ensure const's are used (see esp. hash argument to hash_authtok).
 

@@ -53,7 +53,7 @@ static void sslerror(const char *msg)
 /* ============================ hash_authtok () ============================ */
 /* INPUT: fp, file containing encrypted stream; cipher; authtok, the key
  *        to unlock stream contained in fs
- * SIDE AFFECTS: hash, hash(authtok); iv, the initialization vector for fp;
+ * SIDE EFFECTS: hash, hash(authtok); iv, the initialization vector for fp;
  *               errors are logged
  * OUTPUT: if error 0 else 1
  */
@@ -98,7 +98,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 /* INPUT: fs_key_path, the path to an encrypted file (efsk); fs_key_cipher,
  *        the cipher used to encrypt the file; authtok, the key to unlock the
  *        file at fs_key_path
- * SIDE AFFECTS: pt_fs_key points to the decrypted data from the file at
+ * SIDE EFFECTS: pt_fs_key points to the decrypted data from the file at
  *               fs_key_path (fsk); pt_fs_key_len is the length of pt_fs_key;
  *               errors are logged
  * OUTPUT: if error 0 else 1

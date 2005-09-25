@@ -33,7 +33,7 @@ static int _compare(gconstpointer, gconstpointer);
 /* ============================ _parse_string_opt () ======================= */
 /* INPUT: str, string to parse
  *        len, should be length up to first ',' or terminating '\0'
- * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
+ * SIDE EFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
 static int _parse_string_opt(const char *str, size_t len,
@@ -77,7 +77,7 @@ static int _parse_string_opt(const char *str, size_t len,
 /* ============================ _parse_opt () ============================== */
 /* INPUT: str, string to parse
  *        len, should be length up to first ',' or terminating '\0'
- * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
+ * SIDE EFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
 static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
@@ -113,7 +113,7 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 
 /* ============================ str_to_optlist () ========================== */
 /* INPUT: str, string to parse
- * SIDE AFFECTS: str has been parsed and placed in optlist
+ * SIDE EFFECTS: str has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
 gboolean str_to_optlist(optlist_t ** optlist, const char *str)

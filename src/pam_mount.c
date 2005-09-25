@@ -49,7 +49,7 @@ pam_args_t args;
 
 /* ============================ parse_pam_args () ========================== */
 /* INPUT: argc and argv, standard main()-type arguments
- * SIDE AFFECTS: gloabl args is initialized, based on argc and argv */
+ * SIDE EFFECTS: gloabl args is initialized, based on argc and argv */
 void parse_pam_args(int argc, const char **argv)
 {
 	int i;
@@ -73,7 +73,7 @@ void parse_pam_args(int argc, const char **argv)
 
 /* ============================ clean_system_authtok () ==================== */
 /* INPUT: pamh; data; errcode
- * SIDE AFFECTS: if data does not point to NULL then it is zeroized and freed 
+ * SIDE EFFECTS: if data does not point to NULL then it is zeroized and freed 
  * NOTE: this is registered as a PAM callback function and called directly */
 void clean_system_authtok(pam_handle_t * pamh, void *data, int errcode)
 {
@@ -89,7 +89,7 @@ void clean_system_authtok(pam_handle_t * pamh, void *data, int errcode)
 
 /* ============================ converse () ================================ */
 /* INPUT: pamh; nargs; message, a prompt message
- * SIDE AFFECTS: resp points to PAM's (user's) response to message
+ * SIDE EFFECTS: resp points to PAM's (user's) response to message
  * OUTPUT: any PAM error code encountered or PAM_SUCCESS
  * NOTE:   adapted from pam_unix/support.c */
 static int
@@ -121,7 +121,7 @@ converse(pam_handle_t * pamh, int nargs,
 
 /* ============================ read_password () =========================== */
 /* INPUT: pamh; prompt1, a prompt message
- * SIDE AFFECTS: pass points to PAM's (user's) response to prompt1 (malloc'ed)
+ * SIDE EFFECTS: pass points to PAM's (user's) response to prompt1 (malloc'ed)
  * OUTPUT: any PAM error code encountered or PAM_SUCCESS
  * NOTE:   adapted from pam_unix/support.c (_unix_read_password)
  */
@@ -151,7 +151,7 @@ int read_password(pam_handle_t * pamh, const char *prompt1, char **pass)
 
 /* ============================ pam_sm_authenticate () ===================== */
 /* INPUT: this function is called by PAM
- * SIDE AFFECTS: user's system password is added to PAM's global module data
+ * SIDE EFFECTS: user's system password is added to PAM's global module data
  *               Pam_sm_open_session does the rest.
  * OUTPUT: PAM error code on error or PAM_SUCCESS
  * NOTE: this is here because many PAM implementations don't allow
@@ -237,7 +237,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 }
 
 /* ============================ modify_pm_count () ========================= */
-/* FIXME: use INPUT, SIDE AFFECTS and OUTPUT */
+/* FIXME: use INPUT, SIDE EFFECTS and OUTPUT */
 /* FIXME: add PRE/POST assertions */
 /* POST:   amount is added to /var/run/pam_mount/<user>'s value
  *         if value == 0, then file is removed.
@@ -304,7 +304,7 @@ _nosigact_return:
 
 /* ============================ pam_sm_open_session () ===================== */
 /* INPUT: this function is called by PAM
- * SIDE AFFECTS: user's directories are mounted if pam_mount.conf says they
+ * SIDE EFFECTS: user's directories are mounted if pam_mount.conf says they
  *               should be or an error is logged
  * OUTPUT: PAM error code on error or PAM_SUCCESS
  */
@@ -421,7 +421,7 @@ pam_sm_chauthtok(pam_handle_t * pamh, int flags, int argc,
 
 /* ============================ pam_sm_close_session () ==================== */
 /* INPUT: this function is called by PAM
- * SIDE AFFECTS: user's directories are unmounted if pam_mount.conf says they
+ * SIDE EFFECTS: user's directories are unmounted if pam_mount.conf says they
  *               should be or an error is logged
  * OUTPUT: PAM error code on error or PAM_SUCCESS
  */

@@ -233,7 +233,7 @@ images must have their file context set to user_home_t.
 
 Because it changes the context of child processes of things like login
 and su, pam_selinux must be invoked after pam_mount on login.  Because
-this affect on contexts must be reversed before pam_mount, pam_selinux
+this effect on contexts must be reversed before pam_mount, pam_selinux
 must be invoked before pam_mount on logout:
 
 session    required     /lib/security/$ISA/pam_selinux.so close

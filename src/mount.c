@@ -62,7 +62,7 @@ static void run_lsof(const struct config_t *, fmt_ptrn_t *);
 
 /* ============================ log_output () ============================== */
 /* INPUT: fd, a valid file descriptor
- * SIDE AFFECTS: contents of fd are logged, usually fd is connected by a 
+ * SIDE EFFECTS: contents of fd are logged, usually fd is connected by a 
  *               pipe to another process's stdout or stderr
  */
 static void log_output(int fd)
@@ -447,7 +447,7 @@ do_unmount(struct config_t *config, const unsigned int vol,
 
 /* ============================ pipewrite () =============================== */ 
 /* INPUT: fd, a valid file descriptor; buf, a buffer of size count
- * SIDE AFFECTS: buf is written to fd
+ * SIDE EFFECTS: buf is written to fd
  * OUTPUT: number of bytes written or 0 on error
  * NOTE: SIGPIPE is ignored during this operation to avoid "broken pipe"
  */

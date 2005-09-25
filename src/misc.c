@@ -42,7 +42,7 @@ extern int debug;
 
 /* ============================ l0g () ===================================== */
 /* INPUT: similar to printf; all args are valid strings != NULL
- * SIDE AFFECTS: format + args are logged and displayed */
+ * SIDE EFFECTS: format + args are logged and displayed */
 void l0g(const char *format, ...)
 {
 	/* Used to log issues that cause pam_mount to fail. */
@@ -62,7 +62,7 @@ void l0g(const char *format, ...)
 
 /* ============================ w4rn () ==================================== */
 /* INPUT: similar to printf; all args are valid string != NULL
- * SIDE AFFECTS: format + args are logged and displayed iff debug == 1
+ * SIDE EFFECTS: format + args are logged and displayed iff debug == 1
  * NOTE: Used to log informational messages and issues that should not cause
  *       pam_mount to fail. */
 void w4rn(const char *format, ...)
@@ -129,7 +129,7 @@ gboolean owns(const char *user, const char *file)
 /* ============================ str_to_long () ============================= */
 long str_to_long(char *n)
 /* INPUT: n, a string
- * SIDE AFFECT: errors are logged
+ * SIDE EFFECT: errors are logged
  * OUTPUT: if error LONG_MAX or LONG_MIN else long value of n
  * NOTE:   this is needed because users own /var/run/pam_mount/<user> 
  *         and they could try something sneaky
@@ -322,7 +322,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 }
 
 /* ============================ setrootid () =============================== */ 
-/* SIDE AFFECTS: sets uid to 0 */
+/* SIDE EFFECTS: sets uid to 0 */
 void setrootid(void *ignored)
 {
 	if (setuid(0) == -1)

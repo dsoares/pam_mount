@@ -275,7 +275,7 @@ int option_in_list(optlist_t * haystack, const char *needle)
 /* INPUT:  allowed, an optlist of allowed options
  *         options, a list of options
  * OUTPUT: if options acceptable 1 else 0
- * SIDE AFFECTS: error logged 
+ * SIDE EFFECTS: error logged 
  */
 static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 {
@@ -296,7 +296,7 @@ static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 /* INPUT:  required, an optlist of required options
  *         options, a list of options
  * OUTPUT: if options acceptable 1 else 0
- * SIDE AFFECTS: error logged
+ * SIDE EFFECTS: error logged
  */
 static int options_required_ok(optlist_t * required, optlist_t * options)
 {
@@ -314,7 +314,7 @@ static int options_required_ok(optlist_t * required, optlist_t * options)
 /* INPUT:  denied, an optlist of denied options
  *         options, a list of options
  * OUTPUT: if options acceptable 1 else 0
- * SIDE AFFECTS: error logged
+ * SIDE EFFECTS: error logged
  */
 static int options_deny_ok(optlist_t * denied, optlist_t * options)
 {
@@ -340,7 +340,7 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
 /* INPUT:  config, the configuration to use as a basis for checking
  *         volume, a volume to check
  * OUTPUT: if volume checks okay 1, else 0
- * SIDE AFFECTS: error logged
+ * SIDE EFFECTS: error logged
  */
 static int _options_ok(config_t * config, vol_t * volume)
 {

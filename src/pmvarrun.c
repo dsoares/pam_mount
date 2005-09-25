@@ -98,7 +98,7 @@ static void parse_args(int argc, char **argv, settings_t *settings) {
 }
 
 /* ============================ modify_pm_count () ========================= */
-/* FIXME: use INPUT, SIDE AFFECTS and OUTPUT */
+/* FIXME: use INPUT, SIDE EFFECTS and OUTPUT */
 /* POST:   amount is added to /var/run/pam_mount/<user>'s value
  *         if value == 0, then file is removed. 
  * FN VAL: new value else -1 on error, errors are logged 
