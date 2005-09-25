@@ -38,6 +38,9 @@
 #include <mntent.h>
 #endif
 
+#define ICONTEXT (*(int *)cmd->context)
+#define ICONFIG ((config_t *)cmd->option->info)
+
 typedef enum fstab_field_t {
 	FSTAB_VOLUME,
 	FSTAB_MNTPT,
@@ -147,11 +150,11 @@ static DOTCONF_CB(read_options_require)
 	assert(cmd->option != NULL);
 	assert(cmd->option->info != NULL);
 
-	if (!*((int *) cmd->context))
+
+	if(!ICONTEXT)
 		return "tried to set options_require from user config";
 	w4rn("pam_mount: %s\n", "reading options_require...");
-	if (!str_to_optlist(&((config_t *) cmd->option->info)->
-			    options_require, cmd->data.str))
+	if(!str_to_optlist(&ICONFIG->options_require, cmd->data.str))
 		return "error parsing required options";
 	return NULL;
 }
@@ -165,11 +168,10 @@ static DOTCONF_CB(read_options_allow)
 	assert(cmd->option != NULL);
 	assert(cmd->option->info != NULL);
 
-	if (!*((int *) cmd->context))
+	if(!ICONTEXT)
 		return "tried to set options_allow from user config";
 	w4rn("pam_mount: %s\n", "reading options_allow...");
-	if (!str_to_optlist(&((config_t *) cmd->option->info)->
-			    options_allow, cmd->data.str))
+	if(!str_to_optlist(&ICONFIG->options_allow, cmd->data.str))
 		return "error parsing allowed options";
 	return NULL;
 }
@@ -183,11 +185,10 @@ static DOTCONF_CB(read_options_deny)
 	assert(cmd->option != NULL);
 	assert(cmd->option->info != NULL);
 
-	if (!*((int *) cmd->context))
+	if(!ICONTEXT)
 		return "tried to set options_deny from user config";
 	w4rn("pam_mount: %s\n", "reading options_deny...");
-	if (!str_to_optlist(&((config_t *) cmd->option->info)->
-			    options_deny, cmd->data.str))
+	if(!str_to_optlist(&ICONFIG->options_deny, cmd->data.str))
 		return "error parsing denied options";
 	return NULL;
 }
@@ -222,7 +223,7 @@ get_command_index(const pm_command_t *command, const char *name)
  *       execv anything so don't worry about missing configurations */
 static DOTCONF_CB(read_command)
 {
-#define COMMAND(n) ((config_t *) cmd->option->info)->command[(n)][command_index]
+#define COMMAND(n) ICONFIG->command[(n)][command_index]
 	int i;
 	command_type_t command_index;
 
@@ -231,15 +232,15 @@ static DOTCONF_CB(read_command)
 	assert(cmd->context != NULL);
 	assert(cmd->data.list != NULL);
 	assert(cmd->option != NULL);
-	assert(cmd->option->info != NULL);
-	assert(((config_t *) cmd->option->info)->command != NULL);
+	assert(ICONFIG != NULL);
+	assert(ICONFIG->command != NULL);
 	for (i = 0; i < cmd->arg_count; i++) {
 		/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
 		assert(cmd->data.list[i] != NULL);
 	}
 	/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
 
-	if (!*((int *) cmd->context))
+	if(!ICONTEXT)
 		return "tried to set command from user config";
 	if ((command_index = get_command_index(command, cmd->name)) == -1)
 		return "pam_mount: bad command in config";
@@ -473,9 +474,9 @@ static DOTCONF_CB(read_luserconf)
 {
 	char *home_dir;
 	struct passwd *passwd_ent;
-	if (!*((int *) cmd->context))
+	if(!ICONTEXT)
 		return "tried to set luserconf from user config";
-	passwd_ent = getpwnam(((config_t *) cmd->option->info)->user);
+	passwd_ent = getpwnam(ICONFIG->user);
 	if(passwd_ent == NULL) {
 		home_dir = "~";
 	} else {
@@ -484,11 +485,10 @@ static DOTCONF_CB(read_luserconf)
 	if (strlen(home_dir) + strlen("/") + strlen(cmd->data.str) >
 	    PATH_MAX)
 		return "expanded luserconf path too long";
-	strcpy(((config_t *) cmd->option->info)->luserconf, home_dir);
-	strcat(((config_t *) cmd->option->info)->luserconf, "/");
-	strcat(((config_t *) cmd->option->info)->luserconf, cmd->data.str);
-	w4rn("pam_mount: path to luserconf set to %s\n",
-	     ((config_t *) cmd->option->info)->luserconf);
+	strcpy(ICONFIG->luserconf, home_dir);
+	strcat(ICONFIG->luserconf, "/");
+	strcat(ICONFIG->luserconf, cmd->data.str);
+	w4rn("pam_mount: path to luserconf set to %s\n", ICONFIG->luserconf);
 	return NULL;
 }
 
@@ -496,13 +496,12 @@ static DOTCONF_CB(read_luserconf)
 /* NOTE: callback function for reading configuration parameters */
 static DOTCONF_CB(read_fsckloop)
 {
-	if (!*((int *) cmd->context))
+	if(!ICONTEXT)
 		return "tried to set fsckloop from user config";
 	if (strlen(cmd->data.str) > PATH_MAX)
 		return "fsckloop path too long";
-	strncpy(((config_t *) cmd->option->info)->fsckloop, cmd->data.str,
-		PATH_MAX);
-	((config_t *) cmd->option->info)->fsckloop[PATH_MAX] = '\0';
+	strncpy(ICONFIG->fsckloop, cmd->data.str, PATH_MAX);
+	ICONFIG->fsckloop[PATH_MAX] = '\0';
 	return NULL;
 }
 
@@ -510,7 +509,7 @@ static DOTCONF_CB(read_fsckloop)
 /* NOTE: callback function for reading configuration parameters */
 static DOTCONF_CB(read_int_param)
 {
-	if (!*((int *) cmd->context))
+	if(!ICONTEXT)
 		return "tried to set int param from user config";
 	*((int *) cmd->option->info) = cmd->data.value;
 	return NULL;
@@ -616,15 +615,13 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 /* NOTE: callback function for reading volume parameters */
 DOTCONF_CB(read_volume)
 {
-#define VOL ((config_t *)cmd->option->info)->volume
-#define VOLCOUNT ((config_t *)cmd->option->info)->volcount
+#define VOL ICONFIG->volume
+#define VOLCOUNT ICONFIG->volcount
 	int i;
 	if (cmd->arg_count != 8)
 		return "bad number of args for volume";
-	else if (*((int *) cmd->context) && strcmp
-		 (cmd->data.list[0],
-		  ((config_t *) cmd->option->info)->user) != 0
-		 && strcmp(cmd->data.list[0], "*") != 0) {
+	else if(ICONTEXT && strcmp(cmd->data.list[0], ICONFIG->user) != 0 &&
+	    strcmp(cmd->data.list[0], "*") != 0) {
 		/*
 		 * user may use other usernames to mount volumes using
 		 * luserconf
@@ -642,7 +639,7 @@ DOTCONF_CB(read_volume)
 			return "command too long";
 	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
 	memset(&VOL[VOLCOUNT], 0, sizeof(vol_t));
-	VOL[VOLCOUNT].globalconf = *((int *) cmd->context) ? TRUE : FALSE;
+	VOL[VOLCOUNT].globalconf = ICONTEXT ? TRUE : FALSE;
 	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
 	VOL[VOLCOUNT].type = -1;
 	for (i = 0; command[i].type != -1; i++)

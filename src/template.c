@@ -206,21 +206,23 @@ int template_write_it_using_map(const char *filepath, const int force,
     FILE *output_file;
     GList *ptr;
     if(strcmp("-", filepath) != 0) {
-    if(!force && stat(filepath, &stat_buf) == 0) {
-	sprintf(_template_errmsg, "%s exists", filepath);
-	return 0;
-    }
-    if (!_mk_parent_dirs(filepath)) {
-	sprintf(_template_errmsg, "could not create parent dirs for %s",
-		filepath);
-	return 0;
-    }
-    if((output_file = fopen(filepath, "w")) == NULL) {
-	sprintf(_template_errmsg, "could not open %s", filepath);
-	return 0;
-    }
-    } else
+        if(!force && stat(filepath, &stat_buf) == 0) {
+            sprintf(_template_errmsg, "%s exists", filepath);
+            return 0;
+        }
+        if(!_mk_parent_dirs(filepath)) {
+            sprintf(_template_errmsg, "could not create parent dirs for %s",
+              filepath);
+            return 0;
+        }
+        if((output_file = fopen(filepath, "w")) == NULL) {
+            sprintf(_template_errmsg, "could not open %s", filepath);
+            return 0;
+        }
+    } else {
         output_file = stdout;
+    }
+
     if (!fmt_ptrn_open(template_path, &map)) {
 	sprintf(_template_errmsg, "could not open template %s",
 		template_path);

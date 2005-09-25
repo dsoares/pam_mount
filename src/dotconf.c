@@ -576,9 +576,7 @@ void dotconf_free_command(command_t *command)
 {
 	int i;
 
-	if (command->data.str)
-		free(command->data.str);
-
+	free(command->data.str);
 	for (i = 0; i < command->arg_count; i++)
 		free(command->data.list[i]);
 	free(command->data.list);
@@ -740,21 +738,13 @@ configfile_t *dotconf_create(char *fname, const configoption_t * options,
 	return new;
 }
 
-void dotconf_cleanup(configfile_t *configfile)
-{
-	if (configfile->stream)
-		fclose(configfile->stream);
-
-	if (configfile->filename)
-		free(configfile->filename);
-
-	if (configfile->config_options)
-		free(configfile->config_options);
-
-	if (configfile->includepath)
-		free(configfile->includepath);
-
-	free(configfile);
+void dotconf_cleanup(configfile_t *configfile) {
+    fclose(configfile->stream);
+    free(configfile->filename);
+    free(configfile->config_options);
+    free(configfile->includepath);
+    free(configfile);
+    return;
 }
 
 /* ------ internal utility function that verifies if a character is in the WILDCARDS list -- */
@@ -804,19 +794,10 @@ int dotconf_handle_wild_card(command_t* cmd, char wild_card, char* path, char* p
 
 
 /* ------ internal utility function that frees allocated memory from dotcont_find_wild_card -- */
-void dotconf_wild_card_cleanup(char* path, char* pre)
-{
-
-	if (path != NULL)
-	{
-		free(path);
-	}
-
-	if (pre != NULL)
-	{
-		free(pre);
-	}
-
+void dotconf_wild_card_cleanup(char *path, char *pre) {
+    free(path);
+    free(pre);
+    return;
 }
 
 /* ------ internal utility function to check for wild cards in file path -- */
