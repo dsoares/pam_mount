@@ -48,13 +48,11 @@
 #    include <fstab.h>
 #elif defined(__linux__)
 #    include <mntent.h>
-/* FIXME: for LOOP_ code below:
 #    include <sys/ioctl.h>
 #    include <sys/stat.h>
 #    include <fcntl.h>
 #    include <linux/loop.h>
 #    include <linux/major.h>
-*/
 #endif
 
 #ifdef HAVE_LIBCRYPTO
@@ -77,6 +75,7 @@ static void log_pm_input(const config_t * const, const unsigned int);
 static int mkmountpoint(vol_t * const, const char * const);
 static int pipewrite(int, const void *, size_t);
 static void run_lsof(const config_t *, fmt_ptrn_t *);
+static inline const char *loop_bk(const char *, struct loop_info64 *);
 
 /* ============================ log_output () ============================== */
 /* INPUT: fd, a valid file descriptor
@@ -206,28 +205,19 @@ static int already_mounted(const config_t *const config,
 	}
 	w4rn("pam_mount: checking to see if %s is already mounted at %s\n",
 	     match, config->volume[vol].mountpoint);
+
 	while ((mtab_record = getmntent(mtab)) != NULL) {
-               char const *mnt_fsname = mtab_record->mnt_fsname;
-		/* FIXME: need to figure out where LOOP_GET_STATUS64 is from
-               struct stat statbuf;
-               if (stat(mnt_fsname, &statbuf) == 0 &&
-                    S_ISBLK(statbuf.st_mode) &&
-                    major(statbuf.st_rdev) == LOOP_MAJOR) {
-		*/
-			/* if /etc/mtab is a link to /proc/mounts then the loop
-			 * device instead of the real device will be listed --
-			 * resolve it.
-			 */
-		/*
-                       int fd = open(mnt_fsname, O_RDONLY);
-                       if (fd != -1) {
-                               struct loop_info64 loopinfo64;
-                               if (ioctl(fd, LOOP_GET_STATUS64, &loopinfo64) == 0)
-                                       mnt_fsname = loopinfo64.lo_file_name;
-                               close(fd);
-                       }
-               }
-		*/
+            char const *mnt_fsname = mtab_record->mnt_fsname;
+            struct loop_info64 loopdev;
+            struct stat statbuf;
+
+            if(stat(mnt_fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
+             major(statbuf.st_rdev) == LOOP_MAJOR) {
+                /* If /etc/mtab is a link to /proc/mounts then the loop device
+                instead of the real device will be listed -- resolve it. */
+                mnt_fsname = loop_bk(mnt_fsname, &loopdev);
+            }
+
 		/* FIXME: okay to always ignore case (needed for NCP)? */
 		if(strcasecmp(mnt_fsname, match) == 0) {
 			strncpy(mntpt, mtab_record->mnt_dir, PATH_MAX);
@@ -854,4 +844,19 @@ int mount_op(int (*mnt)(config_t *, const unsigned int, fmt_ptrn_t *,
 	fnval = mnt(config, vol, &vinfo, password, mkmntpoint);
 	fmt_ptrn_close(&vinfo);
 	return fnval;
+}
+
+static inline const char *loop_bk(const char *filename,
+ struct loop_info64 *i)
+{
+    int fd;
+    if((fd = open(filename, O_RDONLY)) < 0) {
+        return filename;
+    }
+    if(ioctl(fd, LOOP_GET_STATUS64, i) != 0) {
+        close(fd);
+        return filename;
+    }
+    close(fd);
+    return (char *)i->lo_file_name; // signed_cast<>
 }
