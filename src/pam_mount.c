@@ -56,7 +56,7 @@ void parse_pam_args(int argc, const char **argv)
 
 	assert(argc >= 0);
 	for (i = 0; i < argc; i++)
-		assert(argv[i]);
+		assert(argv[i] != NULL);
 
 	/* first, set default values */
 	args.auth_type = GET_PASS;
@@ -109,7 +109,7 @@ converse(pam_handle_t * pamh, int nargs,
 		retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
         else
                l0g("pam_mount: %s\n", pam_strerror(pamh, retval));
-	if (!*resp)
+	if(*resp == NULL)
 		retval = PAM_AUTH_ERR;
 
 	assert(retval != PAM_SUCCESS
@@ -166,7 +166,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	const void *tmp = NULL;
 	const char *pam_user = NULL;
 
-	assert(pamh);
+	assert(pamh != NULL);
 
 	/* FIXME: this is called again in pam_sm_open_session.  this is because 
          * pam_sm_authenticate is never called when root su's to another user.
@@ -188,8 +188,8 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		if ((ret =
 		     pam_get_item(pamh, PAM_AUTHTOK,
 				  (const void **) &ptr)) != PAM_SUCCESS
-                    || !ptr) {
-                        if (ret == PAM_SUCCESS && !ptr)
+                    || ptr == NULL) {
+                        if (ret == PAM_SUCCESS && ptr == NULL)
                                 ret = PAM_AUTHINFO_UNAVAIL;
 			l0g("pam_mount: %s\n",
 			    "could not get password from PAM system");
@@ -231,7 +231,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	assert(ret != PAM_SUCCESS
 	       || pam_get_data(pamh, "pam_mount_system_authtok",
 			       &tmp) == PAM_SUCCESS);
-	assert(ret != PAM_SUCCESS || tmp);
+	assert(ret != PAM_SUCCESS || tmp != NULL);
 
 	return ret;
 }
@@ -266,7 +266,7 @@ int modify_pm_count(config_t *config, char *user, char *operation)
 	fmt_ptrn_init(&vinfo);
 	fmt_ptrn_update_kv(&vinfo, "USER", user);
 	fmt_ptrn_update_kv(&vinfo, "OPERATION", operation);
-	for (i = 0; config->command[i][PMVARRUN]; i++)
+	for(i = 0; config->command[i][PMVARRUN] != NULL; i++)
                 add_to_argv(_argv, &_argc, config->command[i][PMVARRUN], &vinfo);
 	fmt_ptrn_close(&vinfo);
 	log_argv(_argv);
@@ -317,7 +317,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	char *system_authtok;
 	const char *pam_user = NULL;
 
-	assert(pamh);
+	assert(pamh != NULL);
 
 	initconfig(&config);
 	/* call pam_get_user again because ssh calls PAM fns from seperate
@@ -434,7 +434,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 	int ret = PAM_SUCCESS;
 	const char *pam_user = NULL;
 
-	assert(pamh);
+	assert(pamh != NULL);
 
 	w4rn("pam_mount: %s\n", "received order to close things");
 	w4rn("pam_mount: real and effective user ID are %d and %d.\n",
@@ -452,7 +452,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 	config.user = g_strdup(pam_user);
 	w4rn("pam_mount: user is %s\n", config.user);
 	/* if our CWD is in the home directory, it might not get umounted */
-	if (chdir("/"))
+	if(chdir("/") != 0)
 		l0g("pam_mount %s\n", "could not chdir");
 	if (config.volcount <= 0)
 		w4rn("pam_mount: %s\n", "volcount is zero");

@@ -109,7 +109,7 @@ gboolean owns(const char *user, const char *file)
 	assert(file != NULL);
 
 	userinfo = getpwnam(user);
-	if (!userinfo) {
+	if(userinfo == NULL) {
 		l0g("pam_mount: user %s could not be translated to UID\n",
 		    user);
 		return FALSE;
@@ -137,12 +137,12 @@ long str_to_long(char *n)
 {
 	long val;
 	char *endptr = NULL;
-	if (!n) {
+	if(n == NULL) {
 		l0g("pam_mount: %s\n", "count string is NULL");
 		return LONG_MAX;
 	}
 	val = strtol(n, &endptr, 10);
-	if (*endptr) {
+	if(*endptr != '\0') {
 		l0g("pam_mount: count string is not valid\n");
 		return LONG_MAX;
 	}
@@ -297,7 +297,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 	 */
 	ptr = filled;
 	argv[*argc] = g_new(char, strlen(ptr) + 1);
-	while (*ptr) {
+	while(*ptr != '\0') {
 		if (*ptr == '\\' && *(ptr + 1) == ' ') {
 			argv[*argc][i++] = ' ';
 			ptr += 2;
@@ -307,7 +307,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 			while (*ptr == ' ')
 				ptr++;
 
-			if (*ptr) {
+			if(*ptr != '\0') {
 				i = 0;
 				argv[++*argc] = g_new(char, strlen(ptr) + 1);
 			}

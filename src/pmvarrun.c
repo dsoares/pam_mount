@@ -49,7 +49,7 @@ static int modify_pm_count(const char *, long);
 /* ============================ usage () ==================================== */
 static void usage(int exitcode, const char *error, const char *more) {
 	fprintf(stderr, "%s\n", usage_pmvarrun);
-	if (error)
+	if(error != NULL)
 		fprintf(stderr, "%s: %s.\n\n", error, more);
 	exit(exitcode);
 }
@@ -118,7 +118,7 @@ static int modify_pm_count(const char *user, long amount) {
 	   struct passwd *passwd_ent;
 	 */
 
-	assert(user);
+	assert(user != NULL);
 
 	/* FIXME: not needed if everything is to owned by root:
 	   if (!(passwd_ent = getpwnam(user))) {
@@ -257,7 +257,7 @@ static int modify_pm_count(const char *user, long amount) {
 	}
 	buf = g_malloc(st.st_size + 2);	/* size will never grow by
 					 * more than one */
-	if (st.st_size) {
+	if(st.st_size > 0) {
 		if (read(fd, buf, st.st_size) == -1) {
 			w4rn("pam_mount: read error on %s\n", filename);
 			err = -1;
@@ -279,7 +279,7 @@ static int modify_pm_count(const char *user, long amount) {
 	} else {
 		val = 0;
 	}
-	if (amount) {		/* amount == 0 implies query */
+	if(amount != 0) {		/* amount == 0 implies query */
 		val += amount;
 		if (val <= 0) {
 			if (unlink(filename)) {

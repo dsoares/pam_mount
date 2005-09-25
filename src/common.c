@@ -54,10 +54,10 @@ static char *_lastname(void);
 static char *_firstname(void)
 {
 	char *name, *ptr;
-	if (! (name = g_strdup(g_get_real_name())))
+	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
 	ptr = strchr(name, ' ');
-	if (ptr)
+	if(ptr != NULL)
 		*ptr = '\0';
 	return name;
 }
@@ -65,7 +65,7 @@ static char *_firstname(void)
 /* ============================ shift_str () =============================== */
 static void shift_str (char *ptr_0, char *ptr_1)
 {
-    while (*ptr_1)
+    while(*ptr_1 != '\0')
         *ptr_0++ = *ptr_1++;
     *ptr_0 = '\0';
 }
@@ -74,13 +74,13 @@ static void shift_str (char *ptr_0, char *ptr_1)
 static char *_middlename(void)
 {
 	char *name, *ptr_0, *ptr_1;
-	if (! (name = g_strdup(g_get_real_name())))
+	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
 	ptr_0 = strchr (name, ' ');
-	if (! ptr_0)
+	if(ptr_0 == NULL)
 		return NULL;
 	ptr_1 = strchr (++ptr_0, ' ');	
-	if (! ptr_1)
+	if(ptr_1 == NULL)
 		return NULL;
 	*ptr_1 = '\0';
 	shift_str (name, ptr_0);
@@ -91,13 +91,13 @@ static char *_middlename(void)
 static char *_lastname(void)
 {
 	char *name, *ptr_0, *ptr_1;
-	if (! (name = g_strdup(g_get_real_name())))
+	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
 	ptr_0 = strchr (name, ' ');
-	if (! ptr_0)
+	if(ptr_0 == NULL)
 		return NULL;
 	ptr_1 = strchr (++ptr_0, ' ');	
-	if (! ptr_1)
+	if(ptr_1 == NULL)
 		return ptr_0;
 	shift_str (name, ++ptr_1);
 	return name;
@@ -155,7 +155,7 @@ char *year(char *y)
 void print_dir(DIR * dp)
 {
     struct dirent *ent;
-    while ((ent = readdir(dp))) {
+    while((ent = readdir(dp)) != NULL) {
 	if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
 	    continue;
 	printf("  %s\n", ent->d_name);
@@ -168,7 +168,7 @@ void initialize_fillers_from_file(fmt_ptrn_t *x, char *path)
     char line[PATH_MAX + 1], *key, *value, *ptr;
     FILE *input = fopen (path, "r");
     ptr = line;
-    while (fgets(ptr, PATH_MAX + 1, input)) {
+    while(fgets(ptr, PATH_MAX + 1, input) != NULL) {
         key = strsep(&ptr, "=");
 	value = ptr;
         fmt_ptrn_update_kv(x, g_strdup(key), g_strdup(value));

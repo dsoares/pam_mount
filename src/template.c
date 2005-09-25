@@ -67,7 +67,7 @@ void template_destroy(void)
 int template_set_type(char *type, const char *filename)
 {
     char *dot = strrchr(filename, '.');
-    if (dot)
+    if(dot != NULL)
 	strcpy(type, (dot == filename) ? dot : ++dot);
     return (dot != NULL) ? 1 : 0;
 }
@@ -76,7 +76,7 @@ int template_set_type(char *type, const char *filename)
 int template_set_local_dir(const char *d)
 {
     const char *dir;
-    if (!(dir = g_get_home_dir())) {
+    if((dir = g_get_home_dir()) == NULL) {
 	sprintf(_template_errmsg, "could not get homedir");
 	return 0;
     }
@@ -98,7 +98,7 @@ static void _build_template_dir(char *path, const char *dir,
 				const char *type)
 {
     strcpy(path, dir);
-    if (type) {
+    if(type != NULL) {
 	strcat(path, "/");
 	strcat(path, type);
     }
@@ -150,7 +150,7 @@ int template_list(const char *type)
     printf("Personal templates for file type .%s:\n", type);
     /* Try $HOME/.new/templates first. */
     _build_template_dir(template_path, _template_local_dir, type);
-    if (!(dp = opendir(template_path)))
+    if((dp = opendir(template_path)) == NULL)
 	printf("  <none>\n");
     else
 	print_dir(dp);
@@ -158,7 +158,7 @@ int template_list(const char *type)
     printf("\nGlobal templates for file type .%s:\n", type);
     /* Try global location. */
     _build_template_dir(template_path, _template_global_dir, type);
-    if (!(dp = opendir(template_path)))
+    if((dp = opendir(template_path)) == NULL)
 	printf("  <none>\n");
     else
 	print_dir(dp);
@@ -173,8 +173,8 @@ static int _mk_parent_dirs(const char *path)
     struct stat stat_buf;
     mode_t mode = 0777;
     ptr = strcpy(path_copy, path);
-    while ((delim = strchr(ptr, '/'))) {
-	if (!strcspn(ptr, "/")) {
+    while((delim = strchr(ptr, '/')) != NULL) {
+	if(strcspn(ptr, "/") == 0) {
 	    /* Found leading '/.' */
 	    ptr++;
 	    continue;
@@ -193,7 +193,7 @@ static int _mk_parent_dirs(const char *path)
 static int _template_write(fmt_ptrn_t * template, FILE * output_file)
 {
     char b[BUFSIZ];
-    while (fmt_ptrn_gets(b, BUFSIZ, template))
+    while(fmt_ptrn_gets(b, BUFSIZ, template) != NULL)
 	fprintf(output_file, "%s", b);
     return 1;
 }
@@ -216,7 +216,7 @@ int template_write_it_using_map(const char *filepath, const int force,
 		filepath);
 	return 0;
     }
-    if (!(output_file = fopen(filepath, "w"))) {
+    if((output_file = fopen(filepath, "w")) == NULL) {
 	sprintf(_template_errmsg, "could not open %s", filepath);
 	return 0;
     }
@@ -231,7 +231,7 @@ int template_write_it_using_map(const char *filepath, const int force,
     initialize_fillers(&map);
     if(strlen(mapping_file) > 0)
         initialize_fillers_from_file(&map, mapping_file);
-    for (ptr = m; ptr; ptr = g_list_next(ptr))
+    for(ptr = m; ptr != NULL; ptr = g_list_next(ptr))
 	fmt_ptrn_update_kv_p(&map, ptr->data);
     if (!_template_write(&map, output_file))
 	return 0;

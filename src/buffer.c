@@ -90,7 +90,7 @@ void buffer_eat(buffer_t buf, size_t n)
     assert(buffer_t_valid(&buf));
 
     p_1 = buf.data;
-    if (n)
+    if(n > 0)
         for (p_2 = p_1 + n; p_2 <= p_1 + strlen(p_1); p_2++)
 	    *p_1++ = *p_2;
 
@@ -163,7 +163,7 @@ void realloc_n_cpy(buffer_t * dest, const char *src)
     assert(buffer_t_valid(dest));
     assert(src != NULL);
 
-    if (dest->data)
+    if(dest->data != NULL)
 	*dest->data = '\0';
     realloc_n_cat(dest, src);
 

@@ -52,7 +52,7 @@ int apply_lower(buffer_t * dest, fmt_ptrn_t * x, char *arg)
 int apply_basename(buffer_t * dest, fmt_ptrn_t * x, char *arg)
 {
     char *ptr = strchr(dest->data, '.');
-    if (ptr)
+    if(ptr != NULL)
 	*ptr = '\0';
     return 1;
 }
@@ -242,7 +242,7 @@ int apply_file(buffer_t * dest, fmt_ptrn_t * x, const char *arg)
 {
     char b[BUFSIZ];
     gzFile f;
-    if (!(f = gzopen(dest->data, "rb")))
+    if((f = gzopen(dest->data, "rb")) == NULL)
 	return 0;
     realloc_n_cpy(dest, "");
     while (gzgets(f, b, BUFSIZ) != Z_NULL)
@@ -271,7 +271,7 @@ int apply_template(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     }
     f.fillers = x->fillers;
     realloc_n_cpy(dest, "");
-    while (fmt_ptrn_gets(b, BUFSIZ, &f))
+    while(fmt_ptrn_gets(b, BUFSIZ, &f) != NULL)
 	realloc_n_cat(dest, b);
     while (fmt_ptrn_parse_err(&f))
 	/* Copy parse error messages into the main fmt_ptrn_t data structure. */

@@ -75,7 +75,7 @@ static void log_output(int fd)
 		     strerror(errno));
 		return;
 	}
-	while (fgets(buf, BUFSIZ + 1, fp))
+	while(fgets(buf, BUFSIZ + 1, fp) != NULL)
 		w4rn("pam_mount: %s\n", buf);
 }
 
@@ -89,10 +89,10 @@ static void run_lsof(const struct config_t *config, fmt_ptrn_t * vinfo) {
 	char *_argv[MAX_PAR + 1];
 	GError *err = NULL;
 	pid_t pid;
-	if (!config->command[0][LSOF])
+	if(config->command[0][LSOF] == NULL)
 		l0g("pam_mount: lsof not defined in pam_mount.conf\n");
 	/* FIXME: NEW */
-	for (i = 0; config->command[i][LSOF]; i++)
+	for(i = 0; config->command[i][LSOF] != NULL; i++)
 		add_to_argv(_argv, &_argc, config->command[i][LSOF],
 			    vinfo);
 	log_argv(_argv);
@@ -183,7 +183,7 @@ static int already_mounted(const struct config_t *const config,
 		strncpy(match, config->volume[vol].volume, PATH_MAX);
 	}
 #if defined(__linux__)
-	if (!(mtab = fopen("/etc/mtab", "r"))) {
+	if((mtab = fopen("/etc/mtab", "r")) == NULL) {
 		l0g("pam_mount: %s\n", "could not open /etc/mtab");
 		return -1;
 	}
@@ -212,7 +212,7 @@ static int already_mounted(const struct config_t *const config,
                }
 		*/
 		/* FIXME: okay to always ignore case (needed for NCP)? */
-		if (!strcasecmp(mnt_fsname, match)) {
+		if(strcasecmp(mnt_fsname, match) == 0) {
 			strncpy(mntpt, mtab_record->mnt_dir, PATH_MAX);
 			mntpt[PATH_MAX] = '\0';
 			mounted = 1;
@@ -237,12 +237,12 @@ static int already_mounted(const struct config_t *const config,
 		 * FIXME: I'm not overly fond of using mount, but BSD has no
 		 * /etc/mtab?
 		 */
-		if (!config->command[0][MNTCHECK]) {
+		if(config->command[0][MNTCHECK] == NULL) {
 			l0g("pam_mount: mntcheck not defined in pam_mount.conf\n");
 			return -1;
 		}
 		/* FIXME: NEW */
-		for (i = 0; config->command[i][MNTCHECK]; i++)
+		for(i = 0; config->command[i][MNTCHECK] != NULL; i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTCHECK], vinfo);
 		log_argv(_argv);
@@ -254,7 +254,7 @@ static int already_mounted(const struct config_t *const config,
 			return -1;
 		}
 		fp = fdopen(cstdout, "r");
-		while (fgets(dev, BUFSIZ, fp)) {
+		while(fgets(dev, BUFSIZ, fp) != NULL) {
 			/*
 			 * FIXME: A bit ugly but
 			 * works.
@@ -262,24 +262,24 @@ static int already_mounted(const struct config_t *const config,
 			char *mp, *trash;
 			w4rn("pam_mount: mounted filesystem: %s", dev);	/* dev includes '\n' */
 			trash = strchr(dev, ' ');
-			if (!trash) {
+			if(trash == NULL) {
 				mounted = -1;	/* parse err */
 				break;
 			}
-			*trash = NULL;
+			*trash = '\0';
 			mp = strchr(trash + 1, ' ');
-			if (!mp++) {
+			if(mp++ == NULL) {
 				mounted = -1;	/* parse err */
 				break;
 			}
 			trash = strchr(mp, ' ');
-			if (!trash) {
+			if(trash == NULL) {
 				mounted = -1;	/* parse err */
 				break;
 			}
-			*trash = NULL;
+			*trash = '\0';
 			/* FIXME: okay to always ignore case (needed for NCP)? */
-			if (!strcasecmp(dev, match)) {
+			if(strcasecmp(dev, match) == 0) {
 				strncpy(mntpt, mp, PATH_MAX);
 				mntpt[PATH_MAX] = NULL;
 				mounted = 1;
@@ -346,11 +346,11 @@ static int mkmountpoint(vol_t * const volume, const char *const d)
 	strncpy(dcopy, d, PATH_MAX);
 	dcopy[PATH_MAX] = '\0';
 	parent = g_dirname(dcopy);
-	if (exists(parent) == 0 && mkmountpoint(volume, parent) == 0) {
+	if(!exists(parent) && mkmountpoint(volume, parent) == 0) {
 		ret = 0;
 		goto _return;
 	}
-	if ((passwd_ent = getpwnam(volume->user))) {
+	if((passwd_ent = getpwnam(volume->user)) != NULL) {
 		if (mkdir(d, 0700) != 0) {
 			l0g("pam_mount: tried to create %s but failed\n",
 			    d);
@@ -404,7 +404,7 @@ do_unmount(struct config_t *config, const unsigned int vol,
 		 */
 		run_lsof(config, vinfo);
 	/* FIXME: NEW */
-	for (i = 0; config->command[i][UMOUNT]; i++)
+	for(i = 0; config->command[i][UMOUNT] != NULL; i++)
 		add_to_argv(_argv, &_argc, config->command[i][UMOUNT],
 			    vinfo);
 	/* FIXME: ugly hack to support umount.crypt script.  I hope that
@@ -504,18 +504,18 @@ do_losetup(struct config_t *config, const unsigned int vol,
 	/* password_len is unsigned */
 	assert(password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
-	if (!config->command[0][LOSETUP]) {
+	if(config->command[0][LOSETUP] == NULL) {
 		l0g("pam_mount: losetup not defined in pam_mount.conf\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
 	/* FIXME: NEW */
-	if (cipher) {
+	if(cipher != NULL) {
 		fmt_ptrn_update_kv(vinfo, "CIPHER", cipher);
-		if (keybits)
+		if(keybits != NULL)
 			fmt_ptrn_update_kv(vinfo, "KEYBITS", keybits);
 	}
-	for (i = 0; config->command[i][LOSETUP]; i++) {
+	for(i = 0; config->command[i][LOSETUP] != NULL; i++) {
 		add_to_argv(_argv, &_argc,
 			    config->command[i][LOSETUP], vinfo);
 	}
@@ -560,13 +560,13 @@ int do_unlosetup(struct config_t *config, fmt_ptrn_t * vinfo)
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
 
-	if (!config->command[0][UNLOSETUP]) {
+	if(config->command[0][UNLOSETUP] == NULL) {
 		l0g("pam_mount: unlosetup not defined in pam_mount.conf\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
 	/* FIXME: NEW */
-	for (i = 0; config->command[i][UNLOSETUP]; i++)
+	for(i = 0; config->command[i][UNLOSETUP] != NULL; i++)
 		add_to_argv(_argv, &_argc,
 			    config->command[i][UNLOSETUP], vinfo);
 	log_argv(_argv);
@@ -580,7 +580,7 @@ int do_unlosetup(struct config_t *config, fmt_ptrn_t * vinfo)
 	w4rn("pam_mount: %s\n", "waiting for losetup delete");
 	waitpid(pid, &child_exit, 0);
 	/* pass on through the result */
-	return (!WEXITSTATUS(child_exit));
+	return !WEXITSTATUS(child_exit);
 }
 
 /* ============================ check_filesystem () ======================== */
@@ -609,7 +609,7 @@ check_filesystem(struct config_t *config, const unsigned int vol,
 	assert(password_len >= 0
 	       && password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
-	if (!config->command[0][FSCK]) {
+	if(config->command[0][FSCK] == NULL) {
 		l0g("pam_mount: fsck not defined in pam_mount.conf\n");
 		return 0;
 	}
@@ -677,11 +677,11 @@ do_mount(struct config_t *config, const unsigned int vol,
 	pid_t pid = -1;
 
 	assert(config_t_valid(config));
-	assert(vinfo);
-	assert(password);
+	assert(vinfo != NULL);
+	assert(password != NULL);
 
 	/* FIXME: This is a little ugly, especially check for != LCLMOUNT */
-	if ((mount_again = already_mounted(config, vol, prev_mntpt, vinfo))) {
+	if((mount_again = already_mounted(config, vol, prev_mntpt, vinfo)) != 0) {
 		if (mount_again == -1) {
 			l0g("pam_mount: could not determine if %s is already mounted, failing\n", config->volume[vol].volume);
 			return 0;
@@ -713,7 +713,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 	}
 	if (mount_again) {
 		GError *err = NULL;
-		if (!config->command[0][MNTAGAIN]) {
+		if(config->command[0][MNTAGAIN] == NULL) {
 			l0g("pam_mount: mntagain not defined in pam_mount.conf\n");
 			return 0;
 		}
@@ -733,7 +733,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 		}
 	} else {
 		GError *err = NULL;
-		if (!config->command[0][config->volume[vol].type]) {
+		if(config->command[0][config->volume[vol].type] == NULL) {
 			l0g("pam_mount: proper mount command not defined in pam_mount.conf\n");
 			return 0;
 		}
@@ -768,7 +768,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 		   "config->volume[vol].type is unknown");
 		   return 0;
 		 */
-		for (i = 0; config->command[i][config->volume[vol].type];
+		for(i = 0; config->command[i][config->volume[vol].type] != NULL;
 		     i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][config->volume[vol].

@@ -94,7 +94,7 @@ char *fmt_ptrn_parse_strerror(fmt_ptrn_t * x)
 
 	assert(_fmt_ptrn_t_valid(x));
 
-	if (!(errmsg = g_queue_pop_tail(x->parse_errmsg)))
+	if((errmsg = g_queue_pop_tail(x->parse_errmsg)) == NULL)
 		fnval = g_strdup("no error");
 	else
 		fnval = errmsg;
@@ -113,7 +113,7 @@ void fmt_ptrn_parse_perror(fmt_ptrn_t * x, const char *msg)
 	assert(_fmt_ptrn_t_valid(x));
 
 	errmsg = fmt_ptrn_parse_strerror(x);
-	if (msg)
+	if(msg != NULL)
 		fprintf(stderr, "%s: %s\n", msg, errmsg);
 	else
 		fprintf(stderr, "%s\n", errmsg);
@@ -192,7 +192,7 @@ static gboolean _stack_pop(mystack_t *s, modifier_t *data)
 	gboolean fnval = FALSE;
 	assert(_stack_t_valid(s));
 	assert(_modifier_t_valid(data));
-	if (!s->size)
+	if(s->size == 0)
 		fnval = FALSE;
 	else {
 		*data = s->data[--s->size];
@@ -244,7 +244,7 @@ static char *_matching_paren(char *str)
 {
 	int count = 1;
 	assert(str != NULL);
-	while (*str) {
+	while(*str != '\0') {
 		if (*str == '(')
 			count++;
 		else if (*str == ')')
@@ -295,11 +295,11 @@ static void _read_alternate(fmt_ptrn_t * x, char **p, buffer_t * buf)
 	assert(p != NULL);
 	assert(*p != NULL);
 	assert(buffer_t_valid(buf));
-	if (!**p)		/* Already queued error, hopefully. */
+	if(**p == '\0')		/* Already queued error, hopefully. */
 		return;
 	if (**p == ':') {
 		(*p)++;
-		if ((alt_end = _matching_paren(*p))) {
+		if((alt_end = _matching_paren(*p)) != NULL) {
 			/* FIXME: clean up? */
 			fmt_ptrn_t y;
 			char *alt, *filled_alt;
@@ -340,12 +340,12 @@ static void _eat_alternate(fmt_ptrn_t * x, char **pattern)
 	assert(_fmt_ptrn_t_valid(x));
 	assert(pattern != NULL);
 	assert(*pattern != NULL);
-	if (!**pattern || **pattern != ':')
+	if(**pattern == '\0' || **pattern != ':')
 		/* No alternate provided to eat. */
 		return;
-	if ((alt_end = _matching_paren(*pattern)))
+	if((alt_end = _matching_paren(*pattern)) != NULL)
 		*pattern += (alt_end - *pattern);
-	if (!**pattern)
+	if(**pattern == '\0')
 		enqueue_parse_errmsg(x, "%s: %ld: end of input",
 				     x->template_path, x->line_num);
 	assert(_fmt_ptrn_t_valid(x));
@@ -367,7 +367,7 @@ static void _read_modifier_arg(fmt_ptrn_t * x,
 
 	end_quote = strchr(*pattern, '"');
 	end_paren = strchr(*pattern, ')');
-	if (!end_quote || (end_paren && end_quote > end_paren))
+	if(end_quote == NULL || (end_paren != NULL && end_quote > end_paren))
 		enqueue_parse_errmsg(x, "%s: %ld: no end quote",
 				     x->template_path, x->line_num);
 	else {
@@ -407,7 +407,7 @@ static gboolean _read_modifier(fmt_ptrn_t * x, char **ptrn,
 	assert(*ptrn != NULL);
 	assert(_stack_t_valid(modifier));
 
-	while (mod_fn[i].id) {
+	while(mod_fn[i].id != NULL) {
 		if(strncmp(mod_fn[i].id, *ptrn, strlen(mod_fn[i].id)) == 0) {
 			*ptrn +=
 			    strlen(mod_fn[i].id) +
@@ -464,16 +464,16 @@ static void _read_key(fmt_ptrn_t * x, char *key, char **p)
 	assert(*p != NULL);
 
 	*key = '\0';
-	for (i = 0; i < KEY_LEN && **p && !strchr(":)", **p); i++)
+	for(i = 0; i < KEY_LEN && **p != '\0' && strchr(":)", **p) == NULL; i++)
 		strncat(key, (*p)++, 1);
-	if (**p && !strchr(":)", **p)) {
+	if(**p != '\0' && strchr(":)", **p) == NULL) {
 		/* Uh oh, key is too many characters, eat the rest. */
-		while (**p && **p != ':' && **p != ')')
+		while(**p != '\0' && **p != ':' && **p != ')')
 			(*p)++;
 		enqueue_parse_errmsg(x, "%s: %ld: key too long",
 				     x->template_path, x->line_num);
 	}
-	if (!**p)
+	if(**p == '\0')
 		enqueue_parse_errmsg(x, "%s: %ld: end of input",
 				     x->template_path, x->line_num);
 
@@ -494,7 +494,7 @@ static void _apply_modifiers(fmt_ptrn_t * x,
 
 	if (buffer_len(str) > 0)	/* error should have been queued elsewhere */
 		while (_stack_pop(modifier, &m))
-			if (m.fn.fn)
+			if(m.fn.fn != NULL)
 				if (!m.fn.fn(str, x, m.arg))
 					enqueue_parse_errmsg(x,
 							     "%s: %ld: error applying %s modifier to %s",
@@ -520,7 +520,7 @@ gboolean _lookup(const fmt_ptrn_t * x, const char *key, buffer_t * value)
 	assert(buffer_t_valid(value));
 
 	tmp = g_tree_lookup(x->fillers, key);
-	if (tmp) {
+	if(tmp != NULL) {
 		realloc_n_cpy(value, tmp);
 		fnval = TRUE;
 	} else {
@@ -543,7 +543,7 @@ static gboolean _is_literal(fmt_ptrn_t * x, char *str)
 	assert(str != NULL);
 
 	if (*str == '"') {
-		if (strchr(str + 1, '"'))
+		if(strchr(str + 1, '"') != NULL)
 			enqueue_parse_errmsg(x, "%s: %ld: no end quote",
 					     x->template_path,
 					     x->line_num);
@@ -606,7 +606,7 @@ static void _handle_fmt_str(fmt_ptrn_t * x, char **p)
 			/* error should have been queued elsewhere */
 			realloc_n_cat(&x->filled_buf, x->lookup_buf.data);
 	}
-	if (**p)
+	if(**p != '\0')
 		(*p)++;		/* Skip ')'. */
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -655,7 +655,7 @@ char *fmt_ptrn_filled(fmt_ptrn_t * x, const char *p)
 	buffer_clear(&x->filled_buf);
 	if (!_fill_it(x, p))
 		return NULL;
-	if (buffer_len(&x->filled_buf))	
+	if(buffer_len(&x->filled_buf) > 0)
 		/* FIXME: what if len == 0? protected by assert, but... */
 		fnval = g_strdup(x->filled_buf.data);
 
@@ -669,11 +669,11 @@ char *fmt_ptrn_filled(fmt_ptrn_t * x, const char *p)
 gint _cmp(gconstpointer a, gconstpointer b)
 {
 	/* FIXME: why is a and/or b sometimes NULL? */
-	if (!a && !b)
+	if(a == NULL && b == NULL)
 		return 0;
-	if (!a)
+	if(a == NULL)
 		return -1;
-	if (!b)
+	if(b == NULL)
 		return 1;
 	return strcmp(a, b);
 }
@@ -708,7 +708,7 @@ gboolean fmt_ptrn_open(const char *path, fmt_ptrn_t * x)
 	assert(path != NULL);
 	assert(_fmt_ptrn_t_valid(x));
 
-	if (!(in_file = gzopen(path, "rb"))) {
+	if((in_file = gzopen(path, "rb")) == NULL) {
 		fnval = FALSE;
 		goto _return;
 	} 

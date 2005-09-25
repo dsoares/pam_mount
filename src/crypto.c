@@ -137,12 +137,12 @@ decrypted_key(unsigned char *const pt_fs_key, size_t * const pt_fs_key_len,
 	OpenSSL_add_all_ciphers();
 	EVP_CIPHER_CTX_init(&ctx);
 	SSL_load_error_strings();
-	if (!(fs_key_fp = fopen(fs_key_path, "r"))) {
+	if((fs_key_fp = fopen(fs_key_path, "r")) == NULL) {
 		l0g("pam_mount: error opening %s\n", fs_key_path);
 		ret = 0;
 		goto _return_no_close;
 	}
-	if (!(cipher = EVP_get_cipherbyname((const char *) fs_key_cipher))) {
+	if((cipher = EVP_get_cipherbyname((const char *) fs_key_cipher)) == NULL) {
 		l0g("pam_mount: error getting cipher \"%s\"\n",
 		    fs_key_cipher);
 		ret = 0;

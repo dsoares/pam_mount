@@ -206,7 +206,7 @@ get_command_index(const pm_command_t *command, const char *name)
 	for (i = 0; command[i].type != -1; i++) {
 		assert(command[i].command_name != NULL);
 	}
-	assert(name);
+	assert(name != NULL);
 
 	for (i = 0; command[i].type != -1; i++)
 		if (strcmp(command[i].command_name, name) == 0)
@@ -226,16 +226,16 @@ static DOTCONF_CB(read_command)
 	int i;
 	command_type_t command_index;
 
-	assert(cmd);
-	assert(cmd->name);
-	assert(cmd->context);
-	assert(cmd->data.list);
-	assert(cmd->option);
-	assert(cmd->option->info);
-	assert(((config_t *) cmd->option->info)->command);
+	assert(cmd != NULL);
+	assert(cmd->name != NULL);
+	assert(cmd->context != NULL);
+	assert(cmd->data.list != NULL);
+	assert(cmd->option != NULL);
+	assert(cmd->option->info != NULL);
+	assert(((config_t *) cmd->option->info)->command != NULL);
 	for (i = 0; i < cmd->arg_count; i++) {
 		/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
-		assert(cmd->data.list[i]);
+		assert(cmd->data.list[i] != NULL);
 	}
 	/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
 
@@ -265,7 +265,7 @@ static DOTCONF_CB(read_command)
  */
 int option_in_list(optlist_t * haystack, const char *needle)
 {
-	assert(needle);
+	assert(needle != NULL);
 
 	/* FIXME: this fn. is not needed, just call the following directly: */
 	return optlist_exists(haystack, needle);
@@ -283,7 +283,7 @@ static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 
 	if (optlist_exists(allowed, "*") || !optlist_len(options))
 		return 1;
-	for (e = options; e; e = optlist_next(e))
+	for(e = options; e != NULL; e = optlist_next(e))
 		if (!option_in_list(allowed, optlist_key(e))) {
 			l0g("pam_mount: option %s not allowed\n",
 			    optlist_key(e));
@@ -301,7 +301,7 @@ static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 static int options_required_ok(optlist_t * required, optlist_t * options)
 {
 	optlist_t *e;
-	for (e = required; e; e = optlist_next(e))
+	for(e = required; e != NULL; e = optlist_next(e))
 		if (!option_in_list(options, optlist_key(e))) {
 			l0g("pam_mount: option %s required\n",
 			    optlist_key(e));
@@ -322,12 +322,12 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
 	if (!optlist_len(denied)) {
 		w4rn("pam_mount: %s\n", "no denied options");
 		return 1;
-	} else if (optlist_exists(denied, "*") && optlist_len(options)) {
+	} else if(optlist_exists(denied, "*") && optlist_len(options) > 0) {
 		l0g("pam_mount: %s\n",
 		    "all mount options denied, user tried to specify one");
 		return 0;
 	}
-	for (e = denied; e; e = optlist_next(e))
+	for(e = denied; e != NULL; e = optlist_next(e))
 		if (option_in_list(options, optlist_key(e))) {
 			l0g("pam_mount: option %s denied\n",
 			    optlist_key(e));
@@ -345,11 +345,11 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
 static int _options_ok(config_t * config, vol_t * volume)
 {
 
-	assert(config);
-	assert(volume);
+	assert(config != NULL);
+	assert(volume != NULL);
 
-	if (optlist_len(config->options_allow)
-	    && optlist_len(config->options_deny)) {
+	if(optlist_len(config->options_allow) > 0 &&
+	    optlist_len(config->options_deny) > 0) {
 		l0g("pam_mount: %s\n",
 		    "possible conflicting option settings (use allow OR deny)");
 		return 0;
@@ -358,17 +358,17 @@ static int _options_ok(config_t * config, vol_t * volume)
 		if (!options_required_ok
 		    (config->options_require, volume->options))
 			return 0;
-		else if (optlist_len(config->options_allow)) {
+		else if(optlist_len(config->options_allow) > 0) {
 			if (!options_allow_ok(config->
 					      options_allow,
 					      volume->options))
 				return 0;
-		} else if (optlist_len(config->options_deny)) {
+		} else if(optlist_len(config->options_deny) > 0) {
 			if (!options_deny_ok(config->
 					     options_deny,
 					     volume->options))
 				return 0;
-		} else if (optlist_len(volume->options)) {
+		} else if(optlist_len(volume->options) > 0) {
 			l0g("pam_mount: %s\n",
 			    "user specified options denied by default");
 			return 0;
@@ -450,7 +450,7 @@ gboolean volume_record_sane(config_t * config, int vol)
 		l0g("NCP volume definition missing user option\n");
 		return FALSE;
 	}
-	if (!config->command[0][UMOUNT]) {
+	if(config->command[0][UMOUNT] == NULL) {
 		l0g("umount command not defined\n");
 		return FALSE;
 	}
@@ -476,7 +476,7 @@ static DOTCONF_CB(read_luserconf)
 	if (!*((int *) cmd->context))
 		return "tried to set luserconf from user config";
 	passwd_ent = getpwnam(((config_t *) cmd->option->info)->user);
-	if (!passwd_ent) {
+	if(passwd_ent == NULL) {
 		home_dir = "~";
 	} else {
 		home_dir = passwd_ent->pw_dir;
@@ -540,14 +540,14 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 #if defined(__linux__)
 	FILE *fstab;
 	struct mntent *fstab_record;
-	if (!(fstab = setmntent("/etc/fstab", "r"))) {
+	if((fstab = setmntent("/etc/fstab", "r")) == NULL) {
 		l0g("pam_mount: could not open fstab\n");
 		return 0;
 	}
 	fstab_record = getmntent(fstab);
-	while (fstab_record && strcmp(fstab_record->mnt_fsname, volume) != 0)
+	while(fstab_record != NULL && strcmp(fstab_record->mnt_fsname, volume) != 0)
 		fstab_record = getmntent(fstab);
-	if (!fstab_record) {
+	if(fstab_record == NULL) {
 		l0g("pam_mount: could not get %dth fstab field for %s\n",
 		    field, volume);
 		return 0;
@@ -575,7 +575,7 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 		l0g("pam_mount: could not open fstab to determine mount point for %s\n", volume);
 		return 0;
 	}
-	if (!(fstab_record = getfsspec(volume))) {
+	if((fstab_record = getfsspec(volume)) == NULL) {
 		l0g("pam_mount: could not get %dth fstab field for %s\n",
 		    field, volume);
 		return 0;
@@ -646,8 +646,8 @@ DOTCONF_CB(read_volume)
 	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
 	VOL[VOLCOUNT].type = -1;
 	for (i = 0; command[i].type != -1; i++)
-		if (command[i].fs
-		    && !strcasecmp(cmd->data.list[1], command[i].fs)) {
+		if(command[i].fs != NULL &&
+		    strcasecmp(cmd->data.list[1], command[i].fs) == 0) {
 			VOL[VOLCOUNT].type = command[i].type;
 			break;
 		}
@@ -715,9 +715,9 @@ int
 readconfig(const char *user, char *file, int globalconf, config_t * config)
 {
 	configfile_t *configfile;
-	if (!
+	if(
 	    (configfile =
-	     dotconf_create(file, legal_config, &globalconf, NONE))) {
+	     dotconf_create(file, legal_config, &globalconf, NONE)) == NULL) {
 		l0g("pam_mount: error opening %s\n", file);
 		return 0;
 	}
@@ -744,7 +744,7 @@ int initconfig(config_t * config)
 	/* set commands to defaults */
 	for (i = 0; command[i].type != -1; i++) {
 		config->command[0][command[i].type] = g_strdup(command[i].def[0]);
-		for (j = 1; command[i].def[j]; j++) {
+		for(j = 1; command[i].def[j] != NULL; j++) {
 			config->command[j][command[i].type] = g_strdup(command[i].def[j]);
 		}
 		config->command[j + 1][command[i].type] = NULL;
@@ -788,7 +788,7 @@ static char *expand_home(char *path, size_t path_size, const char *user)
 	struct passwd *p = getpwnam(user);
 	char *src;
 	src = g_strdup(path);
-	if (p) {
+	if(p != NULL) {
 		/* - 1 because ~ is dropped from str */
 		if ((seg_len =
 		     strlen(p->pw_dir) + strlen(src) - 1) < path_size) {
@@ -826,7 +826,7 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 	}
 	src = g_strdup(str);
 	pos = strchr(src, '&');
-	if (pos) {
+	if(pos != NULL) {
 		size_t seg_len;
 		/* - 1 because & is dropped from str */
 		if (strlen(src) + strlen(user) - 1 < dest_size) {
@@ -899,7 +899,7 @@ int expandconfig(config_t * config)
 					     config->user))
 				return 0;
 			for (e = config->volume[i].options;
-			     e; e = optlist_next(e)) {
+			     e != NULL; e = optlist_next(e)) {
 				if (!expand_wildcard
 				    (tmp, sizeof(tmp), optlist_key(e),
 				     config->user))

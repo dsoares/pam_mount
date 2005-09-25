@@ -113,8 +113,8 @@ static const configoption_t *get_argname_fallback(const configoption_t *options)
 {
 	int i;
 
-	for(i = 0; options[i].name && options[i].name[0]; i++);
-	if (options[i].type == ARG_NAME && options[i].callback)
+	for(i = 0; options[i].name != NULL && options[i].name[0] != '\0'; i++);
+	if(options[i].type == ARG_NAME && options[i].callback != NULL)
 		return &options[i];
 	return NULL;
 }
@@ -226,7 +226,7 @@ void dotconf_register_options(configfile_t *configfile, const configoption_t * o
 		configfile->config_options = malloc(sizeof(void *) * (GROW_BY + 1));
 	else
 	{
-		if ( !(num % GROW_BY) )
+		if((num % GROW_BY) == 0)
 			configfile->config_options = realloc(configfile->config_options,
 											 sizeof(void *) * (num + GROW_BY + 1));
 	}
@@ -286,8 +286,7 @@ int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile
 
 	cp1 = fgets(buffer, CFG_BUFSIZE, configfile->stream);
 
-	if (!cp1)
-	{
+	if(cp1 == NULL) {
 		configfile->eof = 1;
 		return 1;
 	}
@@ -297,8 +296,7 @@ int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile
 	while ( dotconf_continue_line(cp1, length) )
 	{
 		cp2 = fgets(buf2, CFG_BUFSIZE, configfile->stream);
-		if (!cp2)
-		{
+		if(cp2 == NULL) {
 			fprintf(stderr, "[dotconf] Parse error. Unexpected end of file at "
 					"line %ld in file %s\n", configfile->line, configfile->filename);
 			configfile->eof = 1;
@@ -325,7 +323,7 @@ char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
 
 	if (configfile->size <= 0)
 	{
-		if (stat(configfile->filename, &finfo))
+		if(stat(configfile->filename, &finfo) != 0)
 		{
 			dotconf_warning(configfile, DCLOG_EMERG, ERR_NOACCESS,
 						   "[emerg] could not stat currently read file (%s)\n",
@@ -381,12 +379,12 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 	cp2 = buf;
 	eos = cp2 + CFG_MAX_VALUE - 1;
 
-	if (*cp1 == '#' || !*cp1)
+	if(*cp1 == '#' || *cp1 == '\0')
 		return NULL;
 
 	skip_whitespace(&cp1, CFG_MAX_VALUE, 0);
 
-	while ((*cp1 != '\0') && (cp2 != eos) && !done) {
+	while(*cp1 != '\0' && cp2 != eos && !done) {
 		switch (*cp1) {
 			case '\'':					/* single quote */
 				if (dq)
@@ -405,12 +403,12 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 					dq++;					/* set state for double quoting */
 				break;
 			case '\\':					/* protected chars */
-				if (!cp1[1])			/* dont protect NUL */
+				if(cp1[1] == '\0')			/* dont protect NUL */
 					break;
 				if (sq) 			/* preserve '\' if in single quote */
 					break;
 				else {
-					*cp2++ = *(++cp1);
+					*cp2++ = *++cp1;
 					cp1++;					/* skip the protected one */
 				    continue;
 				}
@@ -451,7 +449,7 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 		Subst ${HOME} \$\{HOME\}
 		BOTH! will be substituted, which is somewhat wrong, ain't it ?? :-(
 	*/
-	if ( (configfile->flags & DONT_SUBSTITUTE) == DONT_SUBSTITUTE )
+	if(configfile->flags & DONT_SUBSTITUTE)
 		return (buf[0] != '\0') ? strdup(buf) : NULL;
  	return (buf[0] != '\0') ? dotconf_substitute_env(configfile, strdup(buf)) : NULL;
 }
@@ -465,11 +463,11 @@ configoption_t *dotconf_find_command(configfile_t *configfile, const char *comma
 	configoption_t *option;
 	int i = 0, mod = 0, done = 0;
 
-	for (option = 0, mod = 0; configfile->config_options[mod] && !done; mod++)
-		for (i = 0; configfile->config_options[mod][i].name[0]; i++)
+	for(option = 0, mod = 0; configfile->config_options[mod] != NULL && !done; mod++)
+		for (i = 0; configfile->config_options[mod][i].name[0] != '\0'; i++)
 		{
-			if (!configfile->cmp_func(name, 
-									  configfile->config_options[mod][i].name, CFG_MAX_OPTION))
+			if(configfile->cmp_func(name, 
+				configfile->config_options[mod][i].name, CFG_MAX_OPTION) == 0)
 			{
 				option = (configoption_t *) &configfile->config_options[mod][i];
 				/* TODO: this could be flagged: option overwriting by modules */
@@ -479,8 +477,8 @@ configoption_t *dotconf_find_command(configfile_t *configfile, const char *comma
 		}
 
 	/* handle ARG_NAME fallback */
-	if ( (option && option->name[0] == 0) 
-		  || configfile->config_options[mod - 1][i].type == ARG_NAME)
+	if((option != NULL && option->name[0] == '\0') ||
+		configfile->config_options[mod - 1][i].type == ARG_NAME)
 	{
 		option = (configoption_t *) &configfile->config_options[mod - 1][i];
 	}
@@ -524,17 +522,17 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 
 		cmd->arg_count = 0;
 		while ( cmd->arg_count < (CFG_VALUES - 1)
-				&& (cmd->data.list[cmd->arg_count] = dotconf_read_arg(configfile, &args)) ) {
+				&& (cmd->data.list[cmd->arg_count] = dotconf_read_arg(configfile, &args)) != NULL) {
 			cmd->arg_count++;
 		}
 
 		skip_whitespace(&args, eob - args, 0);
 
-		if (cmd->arg_count && cmd->data.list[cmd->arg_count-1] && *args)
+		if(cmd->arg_count > 0 && cmd->data.list[cmd->arg_count-1] != NULL && *args != '\0')
 			cmd->data.list[cmd->arg_count++] = strdup(args);
 
 		/* has an option entry been found before or do we have to use a fallback? */
-		if ((option->name && option->name[0] > 32) || option->type == ARG_NAME) {
+		if((option->name != NULL && option->name[0] > ' ') || option->type == ARG_NAME) {
 			/* found it, now check the type of args it wants */
 			switch (option->type) {
 				case ARG_TOGGLE:
@@ -615,7 +613,7 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 	skip_whitespace(&cp1, eob - cp1, 0);
 
 	/* ignore comments and empty lines */
-	if(!cp1 || !*cp1 || *cp1 == '#' || *cp1 == '\n' || *cp1 == EOF)
+	if(cp1 == NULL || *cp1 == '\0' || *cp1 == '#' || *cp1 == '\n' || *cp1 == EOF)
 		return NULL;
 
 	/* skip line if it only contains whitespace */
@@ -631,9 +629,9 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 		int done = 0;
 		int opt_idx = 0;
 
-		for (option = 0; configfile->config_options[mod] && !done; mod++) {
-			for (opt_idx = next_opt_idx; configfile->config_options[mod][opt_idx].name[0]; opt_idx++) {
-				if (!configfile->cmp_func(name, configfile->config_options[mod][opt_idx].name, CFG_MAX_OPTION)) {
+		for(option = 0; configfile->config_options[mod] != NULL && !done; mod++) {
+			for(opt_idx = next_opt_idx; configfile->config_options[mod][opt_idx].name[0] != '\0'; opt_idx++) {
+				if(configfile->cmp_func(name, configfile->config_options[mod][opt_idx].name, CFG_MAX_OPTION) == 0) {
 					/* TODO: this could be flagged: option overwriting by modules */
 					option = (configoption_t *) &configfile->config_options[mod][opt_idx];
 					done = 1;
@@ -642,11 +640,11 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 			}
 		}
 
-		if (!option)
+		if(option == NULL)
 			option = get_argname_fallback(configfile->config_options[1]);
 		
-		if (!option || !option->callback) {
-			if (error)
+		if(option == NULL || option->callback == NULL) {
+			if(error != NULL)
 				return error;
 			dotconf_warning(configfile, DCLOG_INFO, ERR_UNKNOWN_OPTION,
 							"Unknown Config-Option: '%s'", name);
@@ -656,13 +654,13 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 		/* set up the command structure (contextchecker wants this) */
 		dotconf_set_command(configfile, option, cp1, &command);
 
-		if (configfile->contextchecker)
+		if(configfile->contextchecker != NULL)
 			context_error = configfile->contextchecker(&command, command.option->context);
 
-		if (!context_error) 
+		if(context_error == NULL)
 			error = dotconf_invoke_command(configfile, &command);
 		else {
-			if (!error) {
+			if(error == NULL) {
 				/* avoid returning another error then the first. This makes it easier to
                    reproduce problems. */
 				error = context_error;
@@ -671,7 +669,7 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 
 		dotconf_free_command(&command);
 
-		if (!context_error || !(configfile->flags & DUPLICATE_OPTION_NAMES)) {
+		if(context_error == NULL || !(configfile->flags & DUPLICATE_OPTION_NAMES)) {
 			/* don't try more, just quit now. */
 			break;
 		}
@@ -687,7 +685,7 @@ const char *dotconf_command_loop_until_error(configfile_t *configfile)
 	while ( !(dotconf_get_next_line(buffer, CFG_BUFSIZE, configfile)) )
 	{
 		const char *error = dotconf_handle_command(configfile, buffer);
-		if ( error )
+		if(error != NULL)
 			return error;
 	}
 	return NULL;
@@ -723,8 +721,7 @@ configfile_t *dotconf_create(char *fname, const configoption_t * options,
 	}
 
 	new = calloc(1, sizeof(configfile_t));
-	if (!(new->stream = fopen(fname, "r")))
-	{
+	if((new->stream = fopen(fname, "r")) == NULL) {
 		fprintf(stderr, "Error opening configuration file '%s'\n", fname);
 		free(new);
 		return NULL;
@@ -868,8 +865,7 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 
 			*pre = malloc(prefix_len - (tmp_count - (found_path ? 0 : 1)) + 1);
 
-			if ( *path && *pre )
-			{
+			if(*path != NULL && *pre != NULL) {
 				if (found_path)
 					strncpy(*path,filename,tmp_count);
 				(*path)[tmp_count] = '\0';
@@ -1081,8 +1077,7 @@ int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ex
 
 				included = dotconf_create(new_path, cmd->configfile->config_options[1],
 											cmd->configfile->context, cmd->configfile->flags);
-				if (included)
-				{
+				if(included != NULL) {
 					for (i = 2; cmd->configfile->config_options[i]; i++)
 						dotconf_register_options(included, cmd->configfile->config_options[i]);
 					included->errorhandler = cmd->configfile->errorhandler;
@@ -1144,7 +1139,7 @@ int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 
 	t_ext = s_ext;
 
-	while(t_ext != NULL && !(dotconf_is_wild_card(*t_ext)) && *t_ext != '\0')
+	while(t_ext != NULL && !dotconf_is_wild_card(*t_ext) && *t_ext != '\0')
 	{
 		t_ext++;				/* find non-wild-card string */
 		t_ext_count++;
@@ -1256,8 +1251,7 @@ int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 
 				included = dotconf_create(new_path, cmd->configfile->config_options[1],
 											cmd->configfile->context, cmd->configfile->flags);
-				if (included)
-				{
+				if(included != NULL) {
 					included->errorhandler = cmd->configfile->errorhandler;
 					included->contextchecker = cmd->configfile->contextchecker;
 					dotconf_command_loop(included);
@@ -1288,7 +1282,7 @@ DOTCONF_CB(dotconf_cb_include)
 	char* ext = 0;
 
 
-	if (cmd->configfile->includepath
+	if (cmd->configfile->includepath != NULL
 		&& cmd->data.str[0] != '/' && cmd->configfile->includepath[0] != '\0')
 	{
 		/* relative file AND include path is used */
@@ -1344,8 +1338,7 @@ DOTCONF_CB(dotconf_cb_include)
 
 	included = dotconf_create(filename, cmd->configfile->config_options[1],
 							   cmd->configfile->context, cmd->configfile->flags);
-	if (included)
-	{
+	if(included != NULL) {
 		included->contextchecker = (dotconf_contextchecker_t) cmd->configfile->contextchecker;
 		included->errorhandler = (dotconf_errorhandler_t) cmd->configfile->errorhandler;
 
@@ -1361,7 +1354,7 @@ DOTCONF_CB(dotconf_cb_includepath)
 {
 	char *env = getenv(CFG_INCLUDEPATH_ENV);
 	/* environment overrides configuration file setting */
-	if (!env)
+	if(env == NULL)
 		snprintf(cmd->configfile->includepath, CFG_MAX_FILENAME, "%s", cmd->data.str);
 	return NULL;
 }

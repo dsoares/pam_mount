@@ -43,17 +43,17 @@ static int _parse_string_opt(const char *str, size_t len,
 	pair_t *pair;
 	char *delim, *key, *val;
 
-	assert(str);
+	assert(str != NULL);
 	/* a user could config "loop,,,foo=bar==..." */
 	if (len <= 0 || len > MAX_PAR) {
 		ret = 0;
 		goto _return;
 	}
 	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
-	assert(optlist);
+	assert(optlist != NULL);
 
 	delim = strchr(str, '=');
-	if (!delim || delim - str >= len) {
+	if(delim == NULL || delim - str >= len) {
 		ret = 0;
 		goto _return;
 	}
@@ -86,14 +86,14 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 	pair_t *pair;
 	char *key, *val;
 
-	assert(str);
+	assert(str != NULL);
 	/* a user could config "loop,,,foo=bar==..." */
 	if (len <= 0 || len > MAX_PAR) {
 		ret = 0;
 		goto _return;
 	}
 	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
-	assert(optlist);
+	assert(optlist != NULL);
 
 	pair = g_new0(pair_t, 1);
 	key = g_new0(char, len + 1);
@@ -121,8 +121,8 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
 	int ret = 1;
 	char *ptr;
 
-	assert(optlist);
-	assert(str);
+	assert(optlist != NULL);
+	assert(str != NULL);
 
 	*optlist = NULL;
 	if(strlen(str) == 0) {
@@ -144,7 +144,7 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
 		}
       _return:
 
-	assert(!ret || ((strlen(str) == 0 && !*optlist) || *optlist));
+	assert(!ret || ((strlen(str) == 0 && *optlist == '\0') || *optlist != '\0'));
 
 	return ret;
 }
@@ -155,9 +155,9 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
  */
 static int _compare(gconstpointer x, gconstpointer y)
 {
-	assert(x);
-	assert(((pair_t *) x)->key);
-	assert(y);
+	assert(x != NULL);
+	assert(((pair_t *) x)->key != NULL);
+	assert(y != NULL);
 
 	return strcmp(((pair_t *) x)->key, y);
 }
@@ -168,9 +168,9 @@ static int _compare(gconstpointer x, gconstpointer y)
  */
 gboolean optlist_exists(optlist_t * optlist, const char *str)
 {
-	assert(str);
+	assert(str != NULL);
 
-	if (!optlist)
+	if(optlist == NULL)
 		return 0;
 	return g_list_find_custom(optlist, str, _compare) ? 1 : 0;
 }
@@ -183,13 +183,13 @@ const char *optlist_value(optlist_t * optlist, const char *str)
 {
 	GList *ptr;
 
-	assert(str);
+	assert(str != NULL);
 
-	if (!optlist)
+	if(optlist == NULL)
 		return NULL;
 	ptr = g_list_find_custom(optlist, str, _compare);
 
-	assert(ptr || !optlist_exists(optlist, str));
+	assert(ptr != NULL || !optlist_exists(optlist, str));
 
 	return (ptr != NULL) ? ((pair_t *) ptr->data)->val : NULL;
 }
@@ -203,10 +203,10 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 {
 	const optlist_t *ptr = optlist;
 
-	assert(str);
+	assert(str != NULL);
 
 	*str = '\0';
-	if (optlist)
+	if(optlist != NULL)
 		do {
                         pair_t *pair = ptr->data;
 			strncat(str, pair->key, MAX_PAR - strlen(str));
@@ -220,7 +220,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 		} while (ptr);
 	str[MAX_PAR] = '\0';
 
-	assert((!optlist && strlen(str) == 0) || strlen(str));
+	assert((optlist == NULL && strlen(str) == 0) || strlen(str) > 0);
 
 	return str;
 }
