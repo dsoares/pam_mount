@@ -125,7 +125,7 @@ converse(pam_handle_t * pamh, int nargs,
             l0g("pam_mount: pam_get_item: %s\n", pam_strerror(pamh, retval));
         }
 
-	if(*resp == NULL)
+        if(resp == NULL || *resp == NULL || (*resp)->resp == NULL)
 		retval = PAM_AUTH_ERR;
 
 	assert(retval != PAM_SUCCESS
