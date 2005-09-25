@@ -72,7 +72,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 
 	if(fread(magic, 1, sizeof("Salted__") - 1, fp) !=
 	     sizeof("Salted__") - 1
-	    || (fread(salt, 1, PKCS5_SALT_LEN, fp) != PKCS5_SALT_LEN)) {
+	    || fread(salt, 1, PKCS5_SALT_LEN, fp) != PKCS5_SALT_LEN) {
 		l0g("pam_mount: %s\n",
 		    "error reading salt from encrypted filesystem key");
 		return 0;

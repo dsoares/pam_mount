@@ -521,7 +521,7 @@ static DOTCONF_CB(read_int_param)
 static DOTCONF_CB(read_debug)
 {
 	/* debug is handled as a special case so global debug can be set ASAP */
-	debug = (cmd->data.value != 0);
+	debug = cmd->data.value != 0;
 	return read_int_param(cmd, ctx);
 }
 
@@ -851,7 +851,7 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 		dest[dest_size - 1] = '\0';
 	}
 	g_free(src);
-	return (dest);
+	return dest;
 }
 
 /* ============================ expandconfig () ============================ */

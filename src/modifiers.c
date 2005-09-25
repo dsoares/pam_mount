@@ -74,14 +74,14 @@ static int _apply_delim(buffer_t * str, const char *start_cmnt,
     }
     strcpy(ptr, start_cmnt);
     strcat(ptr, " ");
-    for (i = 0; i < (31 - start_cmnt_len - 2); i++)	/* - 2 for spaces. */
+    for(i = 0; i < 31 - start_cmnt_len - 2; i++)	/* - 2 for spaces. */
 	strcat(ptr, "=");
     strcat(ptr, " ");
     len = strlen(ptr);
     strncat(ptr, str->data, 80 - len - 2 - end_cmnt_len);	/* - 2 for spaces. */
     strcat(ptr, " ");
     len = strlen(ptr);
-    for (i = 0; i < (80 - len - end_cmnt_len); i++)
+    for(i = 0; i < 80 - len - end_cmnt_len; i++)
 	strcat(ptr, "=");
     strcat(ptr, (end_cmnt != NULL) ? " " : "");
     strcat(ptr, (end_cmnt != NULL) ? end_cmnt : "");

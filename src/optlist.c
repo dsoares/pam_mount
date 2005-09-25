@@ -58,7 +58,7 @@ static int _parse_string_opt(const char *str, size_t len,
 		goto _return;
 	}
 	pair = g_new0(pair_t, 1);
-	key = g_new0(char, (delim - str) + 1);
+	key = g_new0(char, delim - str + 1);
 	val = g_new0(char, len - (delim - str));	/* '=' is +1 */
 	strncpy(key, str, delim - str);
 	key[delim - str] = '\0';
@@ -208,12 +208,11 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 	*str = '\0';
 	if (optlist)
 		do {
-			strncat(str, ((pair_t *) ptr->data)->key,
-				MAX_PAR - strlen(str));
-			if(strlen(((pair_t *) ptr->data)->val) > 0) {
+                        pair_t *pair = ptr->data;
+			strncat(str, pair->key, MAX_PAR - strlen(str));
+			if(strlen(pair->val) > 0) {
 				strncat(str, "=", MAX_PAR - strlen(str));
-				strncat(str,
-					((pair_t *) ptr->data)->
+				strncat(str, pair->
 					val, MAX_PAR - strlen(str));
 			}
 			if ((ptr = g_list_next(ptr)) != NULL)

@@ -454,7 +454,7 @@ int pipewrite(int fd, const void *buf, size_t count)
 {
 	int fnval;
 	struct sigaction ignoresact = {
-		.sa_handler = SIG_IGN
+		.sa_handler = SIG_IGN,
 	}, oldsact;
 
 	assert(fd >= 0);

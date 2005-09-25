@@ -130,7 +130,7 @@ int template_find(char *template_path, /*const char *filename,*/
 	_build_template_dir(template_path, _template_local_dir, type);
 	strcat(template_path, template_name);
     }
-    if (((!use_global) && !_at_path(template_path))
+    if((!use_global && !_at_path(template_path))
 	|| use_global) {
 	_build_template_dir(template_path, _template_global_dir, type);
 	strcat(template_path, template_name);

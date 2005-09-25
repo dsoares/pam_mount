@@ -120,8 +120,7 @@ gboolean owns(const char *user, const char *file)
 		return FALSE;
 	}
 
-	if ((filestat.st_uid == userinfo->pw_uid)
-	    && !S_ISLNK(filestat.st_mode))
+	if(filestat.st_uid == userinfo->pw_uid && !S_ISLNK(filestat.st_mode))
 		return TRUE;
 	return FALSE;
 }
@@ -297,10 +296,10 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 	 * dotfile did?
 	 */
 	ptr = filled;
-	argv[(*argc)] = g_new(char, strlen(ptr) + 1);
+	argv[*argc] = g_new(char, strlen(ptr) + 1);
 	while (*ptr) {
 		if (*ptr == '\\' && *(ptr + 1) == ' ') {
-			argv[(*argc)][i++] = ' ';
+			argv[*argc][i++] = ' ';
 			ptr += 2;
 		} else if (*ptr == ' ') {
 			argv[*argc][i] = '\0';
@@ -310,15 +309,15 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 
 			if (*ptr) {
 				i = 0;
-				argv[++(*argc)] = g_new(char, strlen(ptr) + 1);
+				argv[++*argc] = g_new(char, strlen(ptr) + 1);
 			}
 		} else {
-			argv[(*argc)][i++] = *ptr;
+			argv[*argc][i++] = *ptr;
 			ptr++;	
 		}
 	}
 	argv[*argc][i] = '\0';
-	argv[++(*argc)] = NULL;
+	argv[++*argc] = NULL;
 }
 
 /* ============================ setrootid () =============================== */ 

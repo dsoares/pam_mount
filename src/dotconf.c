@@ -113,7 +113,7 @@ static const configoption_t *get_argname_fallback(const configoption_t *options)
 {
 	int i;
 
-	for (i = 0; (options[i].name && options[i].name[0]); i++);
+	for(i = 0; options[i].name && options[i].name[0]; i++);
 	if (options[i].type == ARG_NAME && options[i].callback)
 		return &options[i];
 	return NULL;
@@ -136,14 +136,13 @@ char *dotconf_substitute_env(configfile_t *configfile, char *str)
 	cp2 = tmp_value;
 	eos = cp2 + CFG_MAX_VALUE + 1;
 
-	while ((cp1 < eob) && (cp2 < eos) && (*cp1 != '\0'))
-	{
+	while(cp1 < eob && cp2 < eos && *cp1 != '\0') {
 		/* substitution needed ?? */
 		if (*cp1 == '$' && *(cp1 + 1) == '{')
 		{
 			cp1 += 2;			/* skip ${ */
 			cp3 = env_name;
-			while ((cp1 < eob) && !(*cp1 == '}' || *cp1 == ':'))
+			while(cp1 < eob && !(*cp1 == '}' || *cp1 == ':'))
 				*cp3++ = *cp1++;
 			*cp3 = '\0';		/* terminate */
 
@@ -152,13 +151,13 @@ char *dotconf_substitute_env(configfile_t *configfile, char *str)
 			{
 				cp1 += 2;		/* skip :- */
 				cp3 = env_default;
-				while ((cp1 < eob) && (*cp1 != '}'))
+				while(cp1 < eob && *cp1 != '}')
 					*cp3++ = *cp1++;
 				*cp3 = '\0';	/* terminate */
 			}
 			else
 			{
-				while ((cp1 < eob) && (*cp1 != '}'))
+				while(cp1 < eob && *cp1 != '}')
 					cp1++;
 			}
 
@@ -273,7 +272,7 @@ int dotconf_continue_line(char *buffer, size_t length)
 		return 0;
 
 	cp1[1] = 0;						/* strip escape character and/or newline */
-	return (*cp1 != '\\');
+	return *cp1 != '\\';
 }
 
 int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile)
@@ -351,14 +350,14 @@ char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
 			here_string = 0;
 			break;
 		}
-		offset += snprintf( (here_doc + offset), configfile->size - offset - 1, "%s", buffer);
+		offset += snprintf(here_doc + offset, configfile->size - offset - 1, "%s", buffer);
 	}
 	if (here_string)
 		dotconf_warning(configfile, DCLOG_WARNING, ERR_PARSE_ERROR, "Unterminated here-document!");
 
 	here_doc[offset-1] = '\0';	/* strip newline */
 
-	return (char *)realloc(here_doc, offset);
+	return realloc(here_doc, offset);
 }
 
 const char *dotconf_invoke_command(configfile_t *configfile, command_t *cmd)
@@ -439,7 +438,7 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 		}
 		/* not space or quoted: eat it; dont take quote if quoting */
 		else if((!isspace(*cp1) && !dq && !sq && *cp1 != '"' && *cp1 != '\'')
-				   || (dq && (*cp1 != '"')) || (sq && *cp1 != '\'') ) {
+				   || (dq && *cp1 != '"') || (sq && *cp1 != '\'')) {
 			*cp2++ = *cp1;
 		}
 
@@ -616,8 +615,7 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 	skip_whitespace(&cp1, eob - cp1, 0);
 
 	/* ignore comments and empty lines */
-	if (!cp1 || !*cp1 || *cp1 == '#' || *cp1 == '\n' ||
-		*(signed char *)cp1 == EOF)
+	if(!cp1 || !*cp1 || *cp1 == '#' || *cp1 == '\n' || *cp1 == EOF)
 		return NULL;
 
 	/* skip line if it only contains whitespace */
@@ -855,14 +853,12 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 			tmp = filename + prefix_len;
 			tmp_count = prefix_len + 1;
 
-			while ( tmp != filename && *(tmp) != '/' )
-			{
+			while(tmp != filename && *tmp != '/') {
 				tmp--;
 				tmp_count--;
 			}
 
-			if ( *(tmp) == '/' )
-			{
+			if(*tmp == '/') {
 				*path = malloc(tmp_count+1);
 				found_path = 1;
 
@@ -870,7 +866,7 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 
 				*path = malloc(1);
 
-			*pre = malloc((prefix_len-(tmp_count-(found_path?0:1)))+1);
+			*pre = malloc(prefix_len - (tmp_count - (found_path ? 0 : 1)) + 1);
 
 			if ( *path && *pre )
 			{
@@ -878,12 +874,12 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 					strncpy(*path,filename,tmp_count);
 				(*path)[tmp_count] = '\0';
 
-				strncpy(*pre,(tmp+(found_path?1:0)),
-						(prefix_len-(tmp_count-(found_path?0:1))));
-				(*pre)[(prefix_len-(tmp_count-(found_path?0:1)))] = '\0';
+				strncpy(*pre, tmp + (found_path ? 1 : 0),
+				    prefix_len - (tmp_count - (found_path ? 0 : 1)));
+				(*pre)[prefix_len - (tmp_count - (found_path ? 0 : 1))] = '\0';
 
 				*ext = filename + prefix_len;
-				*wildcard = (**ext);
+				*wildcard = **ext;
 				(*ext)++;
 
 				retval = prefix_len;
@@ -905,8 +901,7 @@ int dotconf_strcmp_from_back(const char* s1, const char* s2)
 	int len_1 = strlen(s1);
 	int len_2 = strlen(s2);
 
-	for (i=len_1,j=len_2;(i>=0 && j>=0);i--,j--)
-	{
+	for(i = len_1, j = len_2; i >= 0 && j >= 0; i--, j--) {
 		if (s1[i] != s2[j])
 		{
 			retval = -1;
@@ -926,17 +921,17 @@ int dotconf_question_mark_match(char* dir_name, char* pre, char* ext)
 	int ext_len = strlen(ext);
 	int w_card_check = strcspn(ext,WILDCARDS);
 
-	if ( (w_card_check < ext_len) && (strncmp(dir_name,pre,pre_len) == 0)
-		 && (strcmp(dir_name,".") != 0 ) && (strcmp(dir_name,"..") != 0) )
+	if(w_card_check < ext_len && strncmp(dir_name, pre, pre_len) == 0 &&
+	    strcmp(dir_name, ".") != 0 && strcmp(dir_name, "..") != 0)
 	{
 		retval = 1;    /* Another wildcard found */
 
 	} else {
 
-		if ((dir_name_len >= pre_len) &&
-			 (strncmp(dir_name,pre,pre_len) == 0) &&
-			 (strcmp(dir_name,".") != 0 ) &&
-			 (strcmp(dir_name,"..") != 0))
+		if(dir_name_len >= pre_len &&
+			 strncmp(dir_name, pre, pre_len) == 0 &&
+			 strcmp(dir_name, ".") != 0 &&
+			 strcmp(dir_name, "..") != 0)
 		{
 			retval = 0; /* Matches no other wildcards */
 		}
@@ -955,18 +950,18 @@ int dotconf_star_match(char* dir_name, char* pre, char* ext)
 	int ext_len = strlen(ext);
 	int w_card_check = strcspn(ext,WILDCARDS);
 
-	if ( (w_card_check < ext_len) && (strncmp(dir_name,pre,pre_len) == 0)
-		 && (strcmp(dir_name,".") != 0 ) && (strcmp(dir_name,"..") != 0) )
+	if(w_card_check < ext_len && strncmp(dir_name, pre, pre_len) == 0 &&
+	    strcmp(dir_name, ".") != 0 && strcmp(dir_name, "..") != 0)
 	{
 		retval = 1;    /* Another wildcard found */
 
 	} else {
 
-		if ((dir_name_len >= (ext_len + pre_len)) &&
-			 (dotconf_strcmp_from_back(dir_name,ext) == 0) &&
-			 (strncmp(dir_name,pre,pre_len) == 0) &&
-			 (strcmp(dir_name,".") != 0 ) &&
-			 (strcmp(dir_name,"..") != 0))
+		if(dir_name_len >= ext_len + pre_len &&
+			dotconf_strcmp_from_back(dir_name, ext) == 0 &&
+			strncmp(dir_name, pre, pre_len) == 0 &&
+			strcmp(dir_name, ".") != 0 &&
+			strcmp(dir_name, "..") != 0)
 		{
 			retval = 0; /* Matches no other wildcards */
 		}
@@ -1040,8 +1035,8 @@ int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ex
 				if (match_state == 1)
 				{
 
-					strncpy(new_pre,dirptr->d_name,(name_len > pre_len)?(pre_len+1):pre_len);
-					new_pre[(name_len > pre_len)?(pre_len+1):pre_len] = '\0';
+					strncpy(new_pre, dirptr->d_name, (name_len > pre_len) ? pre_len + 1 : pre_len);
+					new_pre[(name_len > pre_len) ? pre_len + 1 : pre_len] = '\0';
 
 					sprintf(new_path,"%s%s%s",path,new_pre,ext);
 
@@ -1214,7 +1209,7 @@ int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 						continue;
 					}
 
-					strncpy(new_pre,dirptr->d_name,(sub_count+t_ext_count));
+					strncpy(new_pre, dirptr->d_name, sub_count + t_ext_count);
 					new_pre[sub_count+t_ext_count] = '\0';
 					strcat(new_pre,new_ext);
 
@@ -1301,7 +1296,7 @@ DOTCONF_CB(dotconf_cb_include)
 		char *sl;
 
 		inclen = strlen(cmd->configfile->includepath);
-		if (( len = (strlen(cmd->data.str) + inclen + 1)) == CFG_MAX_FILENAME)
+		if((len = strlen(cmd->data.str) + inclen + 1) == CFG_MAX_FILENAME)
 		{
 			dotconf_warning(cmd->configfile, DCLOG_WARNING, ERR_INCLUDE_ERROR,
 							"Absolute filename too long (>%d)", CFG_MAX_FILENAME);

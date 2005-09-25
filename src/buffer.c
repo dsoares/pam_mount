@@ -105,7 +105,7 @@ size_t buffer_len(buffer_t *buf)
     if(buf->data == NULL)
         return 0;
     else
-        return (strlen(buf->data));
+        return strlen(buf->data);
 }
 
 /* ============================ realloc_n_cat () =========================== */

@@ -48,12 +48,14 @@ void pair_init(pair_t * pair, void *key, void *val,
 }
 
 /* ========================== pair_destroy () =============================== */
-void pair_destroy(void * pair)
-{
-    if (((pair_t *)pair)->destroy_k)
-	((pair_t *)pair)->destroy_k(((pair_t *)pair)->key);
-    if (((pair_t *)pair)->destroy_v)
-	((pair_t *)pair)->destroy_v(((pair_t *)pair)->val);
+void pair_destroy(void *vp) {
+    pair_t *pair = vp;
+
+    if(pair->destroy_k != NULL)
+        pair->destroy_k(pair->key);
+    if(pair->destroy_v != NULL)
+        pair->destroy_v(pair->val);
+
     memset(pair, 0, sizeof(pair_t));
     g_free(pair);
 }
