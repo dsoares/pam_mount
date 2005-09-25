@@ -116,7 +116,7 @@ void realloc_n_cat(buffer_t * dest, const char *src)
     assert(buffer_t_valid(dest));
     assert(src != NULL);
 
-    new_len = (dest && dest->data ? strlen(dest->data) : 0) + strlen(src);
+    new_len = ((dest && dest->data) ? strlen(dest->data) : 0) + strlen(src);
     if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
 	dest->data = g_new0(char, dest->size);
@@ -140,9 +140,9 @@ void realloc_n_ncat(buffer_t * dest, const char *src,
     assert(src != NULL);
 
     src_len = strlen(src);
-    new_len = (dest && dest->data ? strlen(dest->data) : 0) + (src_len <
-							 nc ? src_len :
-							 nc);
+    new_len = ((dest && dest->data) ? strlen(dest->data) : 0) +
+              ((src_len < nc) ? src_len : nc);
+
     if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
 	dest->data = g_new0(char, dest->size);

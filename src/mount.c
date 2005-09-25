@@ -311,9 +311,8 @@ static void log_pm_input(const struct config_t *const config,
 	w4rn("pam_mount: %s\n", "information for mount:");
 	w4rn("pam_mount: %s\n", "--------");
 	w4rn("pam_mount: %s\n",
-	     config->volume[vol].
-	     globalconf == TRUE ? "(defined by globalconf)" :
-	     "(defined by luserconf)");
+	     (config->volume[vol].globalconf == TRUE) ?
+              "(defined by globalconf)" : "(defined by luserconf)");
 	w4rn("pam_mount: user:          %s\n", config->volume[vol].user);
 	w4rn("pam_mount: server:        %s\n", config->volume[vol].server);
 	w4rn("pam_mount: volume:        %s\n", config->volume[vol].volume);
@@ -740,7 +739,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 		}
 		w4rn("pam_mount: %s\n",
 		     "checking for encrypted filesystem key configuration");
-		password = password ? password : "";	/* FIXME: better done elsewhere? */
+		password = (password != NULL) ? password : "";	/* FIXME: better done elsewhere? */
 		if(strlen(config->volume[vol].fs_key_cipher) > 0) {
 			/* _password is binary data -- no strlen, strcpy, etc! */
 			w4rn("pam_mount: decrypting FS key using system auth. token and %s\n", config->volume[vol].fs_key_cipher);

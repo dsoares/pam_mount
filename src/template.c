@@ -68,8 +68,8 @@ int template_set_type(char *type, const char *filename)
 {
     char *dot = strrchr(filename, '.');
     if (dot)
-	strcpy(type, dot == filename ? dot : ++dot);
-    return dot ? 1 : 0;
+	strcpy(type, (dot == filename) ? dot : ++dot);
+    return (dot != NULL) ? 1 : 0;
 }
 
 /* ============================ template_set_local_dir () =================== */

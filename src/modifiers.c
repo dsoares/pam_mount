@@ -65,7 +65,7 @@ static int _apply_delim(buffer_t * str, const char *start_cmnt,
     int i;
     char ptr[81];
     size_t start_cmnt_len = strlen(start_cmnt) + 1;	/* + 1 for ' '. */
-    size_t end_cmnt_len = end_cmnt ? strlen(end_cmnt) + 1 : 0;
+    size_t end_cmnt_len = (end_cmnt != NULL) ? strlen(end_cmnt) + 1 : 0;
     size_t len;
     if (str->size < 81) {
         /* FIXME: use proper buffer interfaces */
@@ -83,8 +83,8 @@ static int _apply_delim(buffer_t * str, const char *start_cmnt,
     len = strlen(ptr);
     for (i = 0; i < (80 - len - end_cmnt_len); i++)
 	strcat(ptr, "=");
-    strcat(ptr, end_cmnt ? " " : "");
-    strcat(ptr, end_cmnt ? end_cmnt : "");
+    strcat(ptr, (end_cmnt != NULL) ? " " : "");
+    strcat(ptr, (end_cmnt != NULL) ? end_cmnt : "");
     strcpy(str->data, ptr);
     return 1;
 }

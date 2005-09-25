@@ -191,7 +191,7 @@ const char *optlist_value(optlist_t * optlist, const char *str)
 
 	assert(ptr || !optlist_exists(optlist, str));
 
-	return ptr ? ((pair_t *) ptr->data)->val : NULL;
+	return (ptr != NULL) ? ((pair_t *) ptr->data)->val : NULL;
 }
 
 /* ============================ optlist_to_str () ========================== */

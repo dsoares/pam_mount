@@ -453,8 +453,8 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 		BOTH! will be substituted, which is somewhat wrong, ain't it ?? :-(
 	*/
 	if ( (configfile->flags & DONT_SUBSTITUTE) == DONT_SUBSTITUTE )
-		return buf[0] ? strdup(buf) : NULL;
- 	return buf[0] ? dotconf_substitute_env(configfile, strdup(buf)) : NULL;
+		return (buf[0] != '\0') ? strdup(buf) : NULL;
+ 	return (buf[0] != '\0') ? dotconf_substitute_env(configfile, strdup(buf)) : NULL;
 }
 
 /* dotconf_find_command remains here for backwards compatability. it's
@@ -494,7 +494,7 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 	char *eob = args + strlen(args);
 
 	/* fill in the command_t structure with values we already know */
-	cmd->name = option->type == ARG_NAME ? name : option->name;
+	cmd->name = (option->type == ARG_NAME) ? name : option->name;
 	cmd->option = (configoption_t *)option;
 	cmd->context = configfile->context;
 	cmd->configfile = configfile;

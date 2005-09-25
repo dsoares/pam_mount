@@ -784,7 +784,8 @@ int fmt_ptrn_close(fmt_ptrn_t * x)
 	/* x->template_fp == NULL if fmt_ptrn_init was used instead of 
 	 * fmt_ptrn_open.
 	 */
-	return x && x->template_fp ? gzclose(x->template_fp) : 1;
+	return (x != NULL && x->template_fp != NULL) ?
+            gzclose(x->template_fp) : 1;
 }
 
 /* ============================ fmt_ptrn_perror () ========================= */

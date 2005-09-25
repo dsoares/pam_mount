@@ -107,9 +107,9 @@ static char *_lastname(void)
 char *homedir(char *homedir)
 {
     char *hd = g_strdup(g_get_home_dir());
-    g_strlcpy(homedir, hd ? hd : "", BUFSIZ + 1);
+    g_strlcpy(homedir, (hd != NULL) ? hd : "", BUFSIZ + 1);
     g_free(hd);
-    return hd ? homedir : NULL;
+    return (hd != NULL) ? homedir : NULL;
 }
 
 /* ============================ day () ====================================== */
@@ -198,7 +198,7 @@ int parse_kv (char *str, char **key, char **val)
 {
 	/* FIXME: what if NULL pops up? */
         *key = strdup(strsep(&str, "="));
-	*val = strdup(str ? str : "");
+	*val = strdup((str != NULL) ? str : "");
 	/* FIXME: *(val - 1) = '='; /* FIXME: Restore original string. */
 	return 1;
 }
