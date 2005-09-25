@@ -103,7 +103,7 @@ static void copy_word(char **dest, char **src, int max, char term)
 	char *cp2 = *dest;
 	while(max-- && !isspace(*cp1) && *cp1 != term)
 		*cp2++ = *cp1++;
-	*cp2 = 0;
+	*cp2 = '\0';
 
 	*src = cp1;
 	*dest = cp2;
@@ -197,8 +197,7 @@ int dotconf_warning(configfile_t *configfile, int type, unsigned long errnum, co
 	int retval = 0;
 
 	va_start(args, fmt);
-	if (configfile->errorhandler != 0)	/* an errorhandler is registered */
-	{
+	if(configfile->errorhandler != NULL) {	/* an errorhandler is registered */
 		char msg[CFG_BUFSIZE];
 		vsnprintf(msg, CFG_BUFSIZE, fmt, args);
 		retval = configfile->errorhandler(configfile, type, errnum, msg);
@@ -235,7 +234,7 @@ void dotconf_register_options(configfile_t *configfile, const configoption_t * o
 
 	/* append new options */
 	configfile->config_options[configfile->config_option_count] = options;
-	configfile->config_options[ ++configfile->config_option_count ] = 0;
+	configfile->config_options[++configfile->config_option_count] = NULL;
 
 }
 
@@ -271,7 +270,7 @@ int dotconf_continue_line(char *buffer, size_t length)
 	if (*cp1-- != '\\')
 		return 0;
 
-	cp1[1] = 0;						/* strip escape character and/or newline */
+	cp1[1] = '\0'; /* strip escape character and/or newline */
 	return *cp1 != '\\';
 }
 
@@ -316,7 +315,7 @@ char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
 	unsigned int limit_len;
 	char here_string;
 	char buffer[CFG_BUFSIZE];
-	char *here_doc = 0;
+	char *here_doc = NULL;
 	char here_limit[9];	                       /* max length for here-document delimiter: 8 */
 	struct stat finfo;
 	int offset = 0;
@@ -360,29 +359,25 @@ char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
 
 const char *dotconf_invoke_command(configfile_t *configfile, command_t *cmd)
 {
-	const char *error = 0;
-
-	error = cmd->option->callback(cmd, configfile->context);
-	return error;
+	return cmd->option->callback(cmd, configfile->context);
 }
 
 char *dotconf_read_arg(configfile_t *configfile, char **line)
 {
 	int sq = 0, dq = 0;							/* single quote, double quote */
-	int done;
+	int done = 0;
 	char *cp1 = *line;
 	char *cp2, *eos;
 	char buf[CFG_MAX_VALUE];
 
 	memset(buf, 0, CFG_MAX_VALUE);
-	done = 0;
 	cp2 = buf;
 	eos = cp2 + CFG_MAX_VALUE - 1;
 
 	if(*cp1 == '#' || *cp1 == '\0')
 		return NULL;
 
-	skip_whitespace(&cp1, CFG_MAX_VALUE, 0);
+	skip_whitespace(&cp1, CFG_MAX_VALUE, '\0');
 
 	while(*cp1 != '\0' && cp2 != eos && !done) {
 		switch (*cp1) {
@@ -429,8 +424,7 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
              * skipped every argument starting with a #, instead of simply eating it!
 			 */
 
-			*cp2 = 0;
-			*cp1 = 0;
+			*cp2 = *cp1 = '\0';
 			*line = cp1;
 			return NULL;
 		}
@@ -496,7 +490,7 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 	cmd->context = configfile->context;
 	cmd->configfile = configfile;
 	cmd->data.list = (char **)calloc(CFG_VALUES, sizeof(char *));
-	cmd->data.str = 0;
+	cmd->data.str = NULL;
 
 	if (option->type == ARG_RAW) {
 		/* if it is an ARG_RAW type, save some time and call the
@@ -507,7 +501,7 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 		char *cp = args;
 
 		/* check if it's a here-document and act accordingly */
-		skip_whitespace(&cp, eob - cp, 0);
+		skip_whitespace(&cp, eob - cp, '\0');
 
 		if(strncmp("<<", cp, 2) == 0) {
 			cmd->data.str = dotconf_get_here_document(configfile, cp + 2);
@@ -515,10 +509,10 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 		}
 	}
 
-	if (!(option->type == ARG_STR && cmd->data.str != 0)) {
+	if (!(option->type == ARG_STR && cmd->data.str != NULL)) {
 		/* we only get here for non-heredocument lines */
 
-		skip_whitespace(&args, eob - args, 0);
+		skip_whitespace(&args, eob - args, '\0');
 
 		cmd->arg_count = 0;
 		while ( cmd->arg_count < (CFG_VALUES - 1)
@@ -526,7 +520,7 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 			cmd->arg_count++;
 		}
 
-		skip_whitespace(&args, eob - args, 0);
+		skip_whitespace(&args, eob - args, '\0');
 
 		if(cmd->arg_count > 0 && cmd->data.list[cmd->arg_count-1] != NULL && *args != '\0')
 			cmd->data.list[cmd->arg_count++] = strdup(args);
@@ -596,21 +590,19 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 	char *cp2;
 	/* generic char pointer      */
 	char *eob;									/* end of buffer; end of string  */
-	const char *error;							/* error message we'll return */
-	const char *context_error;					/* error message returned by contextchecker */
+	const char *error = NULL;         /* error message we'll return */
+	const char *context_error = NULL; /* error message returned by contextchecker */
 	command_t command;							/* command structure */
 	int mod = 0;
 	int next_opt_idx = 0;
 
 	memset(&command, 0, sizeof(command_t));
-	name[0] = 0;
-	error = 0;
-	context_error = 0;
+	name[0] = '\0';
 
 	cp1 = buffer;
 	eob = cp1 + strlen(cp1);
 
-	skip_whitespace(&cp1, eob - cp1, 0);
+	skip_whitespace(&cp1, eob - cp1, '\0');
 
 	/* ignore comments and empty lines */
 	if(cp1 == NULL || *cp1 == '\0' || *cp1 == '#' || *cp1 == '\n' || *cp1 == EOF)
@@ -622,7 +614,7 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 
 	/* get first token: read the name of a possible option */
 	cp2 = name;
-	copy_word(&cp2, &cp1, MIN(eob - cp1, CFG_MAX_OPTION), 0);
+	copy_word(&cp2, &cp1, MIN(eob - cp1, CFG_MAX_OPTION), '\0');
 
 	while (1) {
 		const configoption_t *option;
@@ -711,7 +703,7 @@ int dotconf_command_loop(configfile_t *configfile)
 configfile_t *dotconf_create(char *fname, const configoption_t * options,
                              context_t *context, unsigned long flags)
 {
-	configfile_t *new = 0;
+	configfile_t *new = NULL;
 	char *dc_env;
 
 	if (access(fname, R_OK))
@@ -836,7 +828,7 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 	int retval = -1;
 	int prefix_len = 0;
 	int tmp_count = 0;
-	char* tmp = 0;
+	char* tmp = NULL;
 	int found_path = 0;
 
 	int len = strlen(filename);
@@ -972,19 +964,14 @@ int dotconf_star_match(char* dir_name, char* pre, char* ext)
 int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ext)
 {
 	configfile_t *included;
-	DIR* dh = 0;
-	struct dirent* dirptr = 0;
+	DIR *dh = NULL;
+	struct dirent *dirptr = NULL;
 	int i;
 
 	char new_pre[CFG_MAX_FILENAME];
 	char already_matched[CFG_MAX_FILENAME];
-
 	char wc = '\0';
-
-	char* new_path = 0;
-	char* wc_path = 0;
-	char* wc_pre = 0;
-	char* wc_ext = 0;
+        char *new_path = NULL, *wc_path = NULL, *wc_pre = NULL, *wc_ext = NULL;
 
 	int pre_len;
 	int new_path_len;
@@ -1103,22 +1090,15 @@ int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ex
 int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 {
 	configfile_t *included;
-	DIR* dh = 0;
-	struct dirent* dirptr = 0;
+	DIR *dh = NULL;
+	struct dirent *dirptr = NULL;
 
 	char new_pre[CFG_MAX_FILENAME];
 	char new_ext[CFG_MAX_FILENAME];
 	char already_matched[CFG_MAX_FILENAME];
-
 	char wc = '\0';
-
-	char* new_path = 0;
-	char* s_ext = 0;
-	char* t_ext = 0;
-	char* sub = 0;
-	char* wc_path = 0;
-	char* wc_pre = 0;
-	char* wc_ext = 0;
+        char *new_path = NULL, *s_ext = NULL, *t_ext = NULL, *sub = NULL,
+             *wc_path = NULL, *wc_pre = NULL, *wc_ext = NULL;
 
 	int pre_len;
 	int new_path_len;
@@ -1273,14 +1253,9 @@ int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 /* ------ callbacks of the internal option (Include, IncludePath) ------------------------------- */
 DOTCONF_CB(dotconf_cb_include)
 {
-	char *filename = 0;
+	char *filename = NULL, *path = NULL, *pre = NULL, *ext = NULL;
 	configfile_t *included;
-
 	char wild_card;
-	char* path = 0;
-	char* pre = 0;
-	char* ext = 0;
-
 
 	if (cmd->configfile->includepath != NULL
 		&& cmd->data.str[0] != '/' && cmd->configfile->includepath[0] != '\0')
