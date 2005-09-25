@@ -11,7 +11,6 @@ extern "C" {
 #define optlist_key(element) (((pair_t *)(element)->data)->key)
 #define optlist_val(element) (((pair_t *)(element)->data)->val)
 #define optlist_len(list) g_list_length(list)
-//define optlist_next(element) g_list_next(element)
 
 typedef GList optlist_t;
 
