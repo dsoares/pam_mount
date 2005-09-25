@@ -64,7 +64,7 @@ typedef unsigned long ulong;
 #endif /* !WIN32 */
 
 #include <ctype.h>
-#include "./dotconf.h"
+#include "dotconf.h"
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))
@@ -81,6 +81,32 @@ static DOTCONF_CB(dotconf_cb_includepath);	/* internal 'IncludePath' */
 static void skip_whitespace(char **, int, char);
 static void copy_word(char **, char **, int, char);
 static const configoption_t *get_argname_fallback(const configoption_t *);
+static char *dotconf_substitute_env(configfile_t *, char *);
+static int dotconf_warning(configfile_t *, int, unsigned long, const char *, ...);
+static void dotconf_register_options(configfile_t *, const configoption_t *);
+static void dotconf_callback(configfile_t *, callback_types, dotconf_callback_t);
+static int dotconf_continue_line(char *, size_t);
+static int dotconf_get_next_line(char *, size_t, configfile_t *);
+static char *dotconf_get_here_document(configfile_t *, const char *);
+static const char *dotconf_invoke_command(configfile_t *, command_t *);
+static char *dotconf_read_arg(configfile_t *, char **);
+static configoption_t *dotconf_find_command(configfile_t *, const char *);
+static void dotconf_set_command(configfile_t *, const configoption_t *,
+    char *, command_t *);
+static void dotconf_free_command(command_t *);
+static const char *dotconf_handle_command(configfile_t *, char *);
+static const char *dotconf_command_loop_until_error(configfile_t *);
+static int dotconf_is_wild_card(char);
+static int dotconf_handle_wild_card(command_t *, char, char *, char *, char *);
+static void dotconf_wild_card_cleanup(char *, char *);
+static int dotconf_find_wild_card(char *, char *, char **, char **, char **);
+static int dotconf_strcmp_from_back(const char *, const char *);
+static int dotconf_question_mark_match(char *, char *, char *);
+static int dotconf_star_match(char *, char *, char *);
+static int dotconf_handle_question_mark(command_t *, char *, char *, char *);
+static int dotconf_handle_star(command_t *, char *, char *, char *);
+static DOTCONF_CB(dotconf_cb_include);
+static DOTCONF_CB(dotconf_cb_includepath);
 
 static configoption_t dotconf_options[] =
 {
@@ -119,8 +145,7 @@ static const configoption_t *get_argname_fallback(const configoption_t *options)
 	return NULL;
 }
 
-char *dotconf_substitute_env(configfile_t *configfile, char *str)
-{
+static char *dotconf_substitute_env(configfile_t *configfile, char *str) {
 	char *cp1, *cp2, *cp3, *eos, *eob;
 	char *env_value;
 	char env_name[CFG_MAX_VALUE + 1];
@@ -191,7 +216,8 @@ char *dotconf_substitute_env(configfile_t *configfile, char *str)
 	return strdup(tmp_value);
 }
 
-int dotconf_warning(configfile_t *configfile, int type, unsigned long errnum, const char *fmt, ...)
+static int dotconf_warning(configfile_t *configfile, int type,
+ unsigned long errnum, const char *fmt, ...)
 {
 	va_list args;
 	int retval = 0;
@@ -214,7 +240,8 @@ int dotconf_warning(configfile_t *configfile, int type, unsigned long errnum, co
 	return retval;
 }
 
-void dotconf_register_options(configfile_t *configfile, const configoption_t * options)
+static void dotconf_register_options(configfile_t *configfile,
+ const configoption_t * options)
 {
 	int num = configfile->config_option_count;
 
@@ -238,7 +265,8 @@ void dotconf_register_options(configfile_t *configfile, const configoption_t * o
 
 }
 
-void dotconf_callback(configfile_t *configfile, callback_types type, dotconf_callback_t callback)
+static void dotconf_callback(configfile_t *configfile, callback_types type,
+ dotconf_callback_t callback)
 {
 	switch(type)
 	{
@@ -253,8 +281,7 @@ void dotconf_callback(configfile_t *configfile, callback_types type, dotconf_cal
 	}
 }
 
-int dotconf_continue_line(char *buffer, size_t length)
-{
+static int dotconf_continue_line(char *buffer, size_t length) {
 	/* ------ match [^\\]\\[\r]\n ------------------------------ */
 	char *cp1 = buffer + length - 1;
 
@@ -274,7 +301,8 @@ int dotconf_continue_line(char *buffer, size_t length)
 	return *cp1 != '\\';
 }
 
-int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile)
+static int dotconf_get_next_line(char *buffer, size_t bufsize,
+ configfile_t *configfile)
 {
 	char *cp1, *cp2;
 	char buf2[CFG_BUFSIZE];
@@ -309,7 +337,8 @@ int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile
 	return 0;
 }
 
-char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
+static char *dotconf_get_here_document(configfile_t *configfile,
+ const char *delimit)
 {
 	/* it's a here-document: yeah, what a cool feature ;) */
 	unsigned int limit_len;
@@ -357,13 +386,13 @@ char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
 	return realloc(here_doc, offset);
 }
 
-const char *dotconf_invoke_command(configfile_t *configfile, command_t *cmd)
+static const char *dotconf_invoke_command(configfile_t *configfile,
+ command_t *cmd)
 {
 	return cmd->option->callback(cmd, configfile->context);
 }
 
-char *dotconf_read_arg(configfile_t *configfile, char **line)
-{
+static char *dotconf_read_arg(configfile_t *configfile, char **line) {
 	int sq = 0, dq = 0;							/* single quote, double quote */
 	int done = 0;
 	char *cp1 = *line;
@@ -452,7 +481,8 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
  * internally unused since dot.conf 1.0.9 because it cannot handle the
  * DUPLICATE_OPTION_NAMES flag
  */
-configoption_t *dotconf_find_command(configfile_t *configfile, const char *command)
+static configoption_t *dotconf_find_command(configfile_t *configfile,
+ const char *command)
 {
 	configoption_t *option;
 	int i = 0, mod = 0, done = 0;
@@ -480,7 +510,8 @@ configoption_t *dotconf_find_command(configfile_t *configfile, const char *comma
 	return option;
 }
 
-void dotconf_set_command(configfile_t *configfile, const configoption_t *option, char *args, command_t *cmd)
+static void dotconf_set_command(configfile_t *configfile,
+ const configoption_t *option, char *args, command_t *cmd)
 {
 	char *eob = args + strlen(args);
 
@@ -572,8 +603,7 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 	}
 }
 
-void dotconf_free_command(command_t *command)
-{
+static void dotconf_free_command(command_t *command) {
 	int i;
 
 	free(command->data.str);
@@ -582,7 +612,8 @@ void dotconf_free_command(command_t *command)
 	free(command->data.list);
 }
 
-const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
+static const char *dotconf_handle_command(configfile_t *configfile,
+ char *buffer)
 {
 	char *cp1; 
 	char *cp2;
@@ -668,8 +699,7 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 	return error;
 }
 
-const char *dotconf_command_loop_until_error(configfile_t *configfile)
-{
+static const char *dotconf_command_loop_until_error(configfile_t *configfile) {
 	char buffer[CFG_BUFSIZE];
 
 	while(!(dotconf_get_next_line(buffer, sizeof(buffer), configfile))) {
@@ -748,8 +778,7 @@ void dotconf_cleanup(configfile_t *configfile) {
 }
 
 /* ------ internal utility function that verifies if a character is in the WILDCARDS list -- */
-int dotconf_is_wild_card(char value)
-{
+static int dotconf_is_wild_card(char value) {
 	int retval = 0;
 	int i;
 	int wildcards_len = strlen(WILDCARDS);
@@ -767,7 +796,8 @@ int dotconf_is_wild_card(char value)
 }
 
 /* ------ internal utility function that calls the appropriate routine for the wildcard passed in -- */
-int dotconf_handle_wild_card(command_t* cmd, char wild_card, char* path, char* pre, char* ext)
+static int dotconf_handle_wild_card(command_t *cmd, char wild_card, char *path,
+ char *pre, char *ext)
 {
 	int retval = 0;
 
@@ -794,7 +824,7 @@ int dotconf_handle_wild_card(command_t* cmd, char wild_card, char* path, char* p
 
 
 /* ------ internal utility function that frees allocated memory from dotcont_find_wild_card -- */
-void dotconf_wild_card_cleanup(char *path, char *pre) {
+static void dotconf_wild_card_cleanup(char *path, char *pre) {
     free(path);
     free(pre);
     return;
@@ -802,7 +832,8 @@ void dotconf_wild_card_cleanup(char *path, char *pre) {
 
 /* ------ internal utility function to check for wild cards in file path -- */
 /* ------ path and pre must be freed by the developer ( dotconf_wild_card_cleanup) -- */
-int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** pre, char** ext)
+static int dotconf_find_wild_card(char *filename, char *wildcard, char **path,
+ char **pre, char **ext)
 {
 	int retval = -1;
 	int prefix_len = 0;
@@ -861,8 +892,7 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 }
 
 /* ------ internal utility function that compares two stings from back to front -- */
-int dotconf_strcmp_from_back(const char* s1, const char* s2)
-{
+static int dotconf_strcmp_from_back(const char *s1, const char *s2) {
 	int retval = 0;
 	int i,j;
 	int len_1 = strlen(s1);
@@ -880,8 +910,7 @@ int dotconf_strcmp_from_back(const char* s1, const char* s2)
 }
 
 /* ------ internal utility function that determins if a string matches the '?' criteria -- */
-int dotconf_question_mark_match(char* dir_name, char* pre, char* ext)
-{
+static int dotconf_question_mark_match(char *dir_name, char *pre, char *ext) {
 	int retval = -1;
 	int dir_name_len = strlen(dir_name);
 	int pre_len = strlen(pre);
@@ -909,8 +938,7 @@ int dotconf_question_mark_match(char* dir_name, char* pre, char* ext)
 }
 
 /* ------ internal utility function that determins if a string matches the '*' criteria -- */
-int dotconf_star_match(char* dir_name, char* pre, char* ext)
-{
+static int dotconf_star_match(char *dir_name, char *pre, char *ext) {
 	int retval = -1;
 	int dir_name_len = strlen(dir_name);
 	int pre_len = strlen(pre);
@@ -940,7 +968,8 @@ int dotconf_star_match(char* dir_name, char* pre, char* ext)
 
 /* ------ internal utility function that determins matches for filenames with   -- */
 /* ------ a '?' in name and calls the Internal Include function on that filename -- */
-int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ext)
+static int dotconf_handle_question_mark(command_t *cmd, char *path,
+ char *pre, char *ext)
 {
 	configfile_t *included;
 	DIR *dh = NULL;
@@ -1066,7 +1095,8 @@ int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ex
 
 /* ------ internal utility function that determins matches for filenames with   --- */
 /* ------ a '*' in name and calls the Internal Include function on that filename -- */
-int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
+static int dotconf_handle_star(command_t *cmd, char *path,
+ char *pre, char *ext)
 {
 	configfile_t *included;
 	DIR *dh = NULL;
@@ -1230,8 +1260,7 @@ int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 }
 
 /* ------ callbacks of the internal option (Include, IncludePath) ------------------------------- */
-DOTCONF_CB(dotconf_cb_include)
-{
+static DOTCONF_CB(dotconf_cb_include) {
 	char *filename = NULL, *path = NULL, *pre = NULL, *ext = NULL;
 	configfile_t *included;
 	char wild_card;
@@ -1304,13 +1333,10 @@ DOTCONF_CB(dotconf_cb_include)
 	return NULL;
 }
 
-DOTCONF_CB(dotconf_cb_includepath)
-{
+static DOTCONF_CB(dotconf_cb_includepath) {
 	char *env = getenv(CFG_INCLUDEPATH_ENV);
 	/* environment overrides configuration file setting */
 	if(env == NULL)
 		snprintf(cmd->configfile->includepath, CFG_MAX_FILENAME, "%s", cmd->data.str);
 	return NULL;
 }
-
-/* vim:set ts=4: */

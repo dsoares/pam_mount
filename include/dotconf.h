@@ -186,74 +186,74 @@ void dotconf_cleanup(configfile_t *configfile);
 int dotconf_command_loop(configfile_t *configfile);
 
 /* ------ dotconf_command_loop_until_error() - like continue_line but return on the first error - */
-const char *dotconf_command_loop_until_error(configfile_t *configfile);
+//const char *dotconf_command_loop_until_error(configfile_t *configfile);
 
 /* ------ dotconf_continue_line() - check if line continuation is to be handled ----------------- */
-int dotconf_continue_line(char *buffer, size_t length);
+//int dotconf_continue_line(char *buffer, size_t length);
 
 /* ------ dotconf_get_next_line() - read in the next line of the configfile_t ------------------- */
-int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile);
+//int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile);
 
 /* ------ dotconf_get_here_document() - read the here document until delimit is found ----------- */
-char *dotconf_get_here_document(configfile_t *configfile, const char *delimit);
+//char *dotconf_get_here_document(configfile_t *configfile, const char *delimit);
 
 /* ------ dotconf_invoke_command() - call the callback for command_t ---------------------------- */
-const char *dotconf_invoke_command(configfile_t *configfile, command_t *cmd);
+//const char *dotconf_invoke_command(configfile_t *configfile, command_t *cmd);
 
 /* ------ dotconf_find_command() - iterate through all registered options trying to match ------- */
-configoption_t *dotconf_find_command(configfile_t *configfile, const char *command);
+//configoption_t *dotconf_find_command(configfile_t *configfile, const char *command);
 
 /* ------ dotconf_read_arg() - read one argument from the line handling quoting and escaping ---- */
 /*
 	side effects: the char* returned by dotconf_read_arg is malloc() before, hence that pointer
                   will have to be free()ed later.
 */
-char *dotconf_read_arg(configfile_t *configfile, char **line);
+//char *dotconf_read_arg(configfile_t *configfile, char **line);
 
 /* ------ dotconf_handle_command() - parse, substitute, find, invoke the command found in buffer  */
-const char *dotconf_handle_command(configfile_t *configfile, char *buffer);
+//const char *dotconf_handle_command(configfile_t *configfile, char *buffer);
 
 /* ------ dotconf_register_option() - add a new option table to the list of commands ------------ */
-void dotconf_register_options(configfile_t *configfile, const configoption_t *options);
+//void dotconf_register_options(configfile_t *configfile, const configoption_t *options);
 
 /* ------ dotconf_warning() - handle the dispatch of error messages of various levels ----------- */
-int dotconf_warning(configfile_t *configfile, int level, unsigned long errnum, const char *, ...);
+//int dotconf_warning(configfile_t *configfile, int level, unsigned long errnum, const char *, ...);
 
 /* ------ dotconf_callback() - register a special callback -------------------------------------- */
-void dotconf_callback(configfile_t *configfile, callback_types type, dotconf_callback_t);
+//void dotconf_callback(configfile_t *configfile, callback_types type, dotconf_callback_t);
 
 /* ------ dotconf_substitute_env() - handle the substitution on environment variables ----------- */
-char *dotconf_substitute_env(configfile_t *, char *);
+//char *dotconf_substitute_env(configfile_t *, char *);
 
 /* ------ internal utility function that verifies if a character is in the WILDCARDS list -- */
-int dotconf_is_wild_card(char value);
+//int dotconf_is_wild_card(char value);
 
 /* ------ internal utility function that calls the appropriate routine for the wildcard passed in -- */
-int dotconf_handle_wild_card(command_t* cmd, char wild_card, char* path, char* pre, char* ext);
+//int dotconf_handle_wild_card(command_t* cmd, char wild_card, char* path, char* pre, char* ext);
 
 /* ------ internal utility function that frees allocated memory from dotcont_find_wild_card -- */
-void dotconf_wild_card_cleanup(char* path, char* pre);
+//void dotconf_wild_card_cleanup(char* path, char* pre);
 
 /* ------ internal utility function to check for wild cards in file path -- */
 /* ------ path and pre must be freed by the developer ( dotconf_wild_card_cleanup) -- */
-int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** pre, char** ext);
+//int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** pre, char** ext);
 
 /* ------ internal utility function that compares two stings from back to front -- */
-int dotconf_strcmp_from_back(const char* s1, const char* s2);
+//int dotconf_strcmp_from_back(const char* s1, const char* s2);
 
 /* ------ internal utility function that determins if a string matches the '?' criteria -- */
-int dotconf_question_mark_match(char* dir_name, char* pre, char* ext);
+//int dotconf_question_mark_match(char* dir_name, char* pre, char* ext);
 
 /* ------ internal utility function that determins if a string matches the '*' criteria -- */
-int dotconf_star_match(char* dir_name, char* pre, char* ext);
+//int dotconf_star_match(char* dir_name, char* pre, char* ext);
 
 /* ------ internal utility function that determins matches for filenames with   -- */
 /* ------ a '?' in name and calls the Internal Include function on that filename -- */
-int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ext);
+//int dotconf_handle_question_mark(command_t* cmd, char* path, char* pre, char* ext);
 
 /* ------ internal utility function that determins matches for filenames with   -- */
 /* ------ a '*' in name and calls the Internal Include function on that filename -- */
-int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext);
+//int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext);
 
 
 

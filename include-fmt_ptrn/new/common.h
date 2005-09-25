@@ -36,14 +36,14 @@ extern char **environ;
 extern "C" {
 #endif
 /* ============================ homedir () ================================== */
-	char *homedir(char *homedir);
+//	char *homedir(char *homedir);
 
 /* ============================ print_dir () ================================ */
     void print_dir(DIR * dp);
 
 /* ============================ today () ==================================== */
 /* Make sure date is at least large enough to hold "10 September 1999". */
-    char *today(char *date);
+//    char *today(char *date);
 
 /* ============================= initialize_fillers_from_file () ============ */
 void initialize_fillers_from_file(fmt_ptrn_t *x, char *path);
@@ -52,7 +52,7 @@ void initialize_fillers_from_file(fmt_ptrn_t *x, char *path);
 void initialize_fillers(fmt_ptrn_t *x);
 
 /* ============================ parse_kv () ================================ */ 
-int parse_kv (char *str, char **key, char **val);
+//int parse_kv (char *str, char **key, char **val);
 
 #ifdef __cplusplus
 }

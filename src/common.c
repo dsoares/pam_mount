@@ -41,6 +41,11 @@ static char *_firstname(void);
 static void shift_str(char *, char *);
 static char *_middlename(void);
 static char *_lastname(void);
+static char *homedir(char *);
+static char *day(char *, size_t);
+static char *month(char *, size_t);
+static char *year(char *, size_t);
+static int parse_kv(char *, char **, char **);
 
 /* FIXME: the code in these functions needs to be checked for:
  * 1.  a consistent interface for memory management
@@ -100,17 +105,14 @@ static char *_lastname(void)
 	return name;
 }
 
-/* ============================ homedir () ================================== */
-char *homedir(char *homedir)
-{
+static char *homedir(char *arg) {
     char *hd = g_strdup(g_get_home_dir());
-    g_strlcpy(homedir, (hd != NULL) ? hd : "", BUFSIZ + 1);
+    g_strlcpy(arg, (hd != NULL) ? hd : "", BUFSIZ + 1);
     g_free(hd);
-    return (hd != NULL) ? homedir : NULL;
+    return (hd != NULL) ? arg : NULL;
 }
 
-/* ============================ day () ====================================== */
-char *day(char *d, size_t s) {
+static char *day(char *d, size_t s) {
     time_t sec_since_1970;
     struct tm *curr_time;
 
@@ -122,8 +124,7 @@ char *day(char *d, size_t s) {
     return d;
 }
 
-/* ============================ month () ==================================== */
-char *month(char *m, size_t s) {
+static char *month(char *m, size_t s) {
     time_t sec_since_1970;
     struct tm *curr_time;
 
@@ -135,8 +136,7 @@ char *month(char *m, size_t s) {
     return m;
 }
 
-/* ============================ year () ===================================== */
-char *year(char *y, size_t s) {
+static char *year(char *y, size_t s) {
     time_t sec_since_1970;
     struct tm *curr_time;
 
@@ -190,12 +190,10 @@ void initialize_fillers(fmt_ptrn_t *x)
     fmt_ptrn_update_kv(x, g_strdup("EMPTY_STR"), g_strdup(""));
 }
 
-/* ============================ parse_kv () ================================ */ 
-int parse_kv (char *str, char **key, char **val)
-{
-        char *tmp = strdup(str), *wp = tmp;
-        *key = strdup(strsep(&wp, "="));
-	*val = strdup((wp != NULL) ? wp : "");
-        free(tmp);
-	return 1;
+static int parse_kv(char *str, char **key, char **val) {
+    char *tmp = strdup(str), *wp = tmp;
+    *key = strdup(strsep(&wp, "="));
+    *val = strdup((wp != NULL) ? wp : "");
+    free(tmp);
+    return 1;
 }
