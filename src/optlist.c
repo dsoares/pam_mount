@@ -196,7 +196,7 @@ const char *optlist_value(optlist_t * optlist, const char *str)
 
 /* ============================ optlist_to_str () ========================== */
 /* INPUT: str and optlist
- *        sizeof str >= MAX_PAR + 1
+ *        sizeof(str) >= MAX_PAR + 1
  * OUTPUT: string encapsulating optlist
  */
 char *optlist_to_str(char *str, const optlist_t * optlist)

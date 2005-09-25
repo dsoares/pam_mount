@@ -62,7 +62,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 {
 	const EVP_MD *md;
 	unsigned char salt[PKCS5_SALT_LEN];
-	char magic[sizeof "Salted__" - 1];
+	char magic[sizeof("Salted__") - 1];
 
 	assert(fp != NULL);	/* FIXME: check if valid, open file */
 	assert(cipher != NULL);	/* FIXME: check if cipher is valid OpenSSL cipher */
@@ -70,14 +70,14 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 	assert(hash != NULL);	/* FIXME: check hash is big enough? */
 	assert(iv != NULL);	/* FIXME: check iv is big enough? */
 
-	if ((fread(magic, 1, sizeof "Salted__" - 1, fp) !=
-	     sizeof "Salted__" - 1)
+	if(fread(magic, 1, sizeof("Salted__") - 1, fp) !=
+	     sizeof("Salted__") - 1
 	    || (fread(salt, 1, PKCS5_SALT_LEN, fp) != PKCS5_SALT_LEN)) {
 		l0g("pam_mount: %s\n",
 		    "error reading salt from encrypted filesystem key");
 		return 0;
 	}
-	if (memcmp(magic, "Salted__", sizeof "Salted__" - 1) != 0) {
+	if(memcmp(magic, "Salted__", sizeof("Salted__") - 1) != 0) {
 		l0g("pam_mount: %s\n",
 		    "magic string Salted__ not in filesystem key file");
 		return 0;
