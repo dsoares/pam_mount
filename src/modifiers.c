@@ -67,10 +67,10 @@ static int _apply_delim(buffer_t * str, const char *start_cmnt,
     size_t start_cmnt_len = strlen(start_cmnt) + 1;	/* + 1 for ' '. */
     size_t end_cmnt_len = (end_cmnt != NULL) ? strlen(end_cmnt) + 1 : 0;
     size_t len;
-    if (str->size < 81) {
+    if(str->size < sizeof(ptr)) {
         /* FIXME: use proper buffer interfaces */
 	str->data = g_realloc(str->data, 81);
-	str->size = 81;
+	str->size = sizeof(ptr);
     }
     strcpy(ptr, start_cmnt);
     strcat(ptr, " ");
@@ -78,10 +78,10 @@ static int _apply_delim(buffer_t * str, const char *start_cmnt,
 	strcat(ptr, "=");
     strcat(ptr, " ");
     len = strlen(ptr);
-    strncat(ptr, str->data, 80 - len - 2 - end_cmnt_len);	/* - 2 for spaces. */
+    strncat(ptr, str->data, sizeof(ptr) - 1 - len - 2 - end_cmnt_len);	/* - 2 for spaces. */
     strcat(ptr, " ");
     len = strlen(ptr);
-    for(i = 0; i < 80 - len - end_cmnt_len; i++)
+    for(i = 0; i < sizeof(ptr) - 1 - len - end_cmnt_len; i++)
 	strcat(ptr, "=");
     strcat(ptr, (end_cmnt != NULL) ? " " : "");
     strcat(ptr, (end_cmnt != NULL) ? end_cmnt : "");
@@ -245,7 +245,7 @@ int apply_file(buffer_t * dest, fmt_ptrn_t * x, const char *arg)
     if((f = gzopen(dest->data, "rb")) == NULL)
 	return 0;
     realloc_n_cpy(dest, "");
-    while (gzgets(f, b, BUFSIZ) != Z_NULL)
+    while(gzgets(f, b, sizeof(b)) != Z_NULL)
 	realloc_n_cat(dest, b);
     gzclose(f);
     return 1;
@@ -271,7 +271,7 @@ int apply_template(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     }
     f.fillers = x->fillers;
     realloc_n_cpy(dest, "");
-    while(fmt_ptrn_gets(b, BUFSIZ, &f) != NULL)
+    while(fmt_ptrn_gets(b, sizeof(b), &f) != NULL)
 	realloc_n_cat(dest, b);
     while (fmt_ptrn_parse_err(&f))
 	/* Copy parse error messages into the main fmt_ptrn_t data structure. */

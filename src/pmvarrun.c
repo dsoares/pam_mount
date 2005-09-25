@@ -158,7 +158,7 @@ static int modify_pm_count(const char *user, long amount) {
 			goto return_error;
 		}
 	}
-	g_snprintf(filename, PATH_MAX + 1, "/var/run/pam_mount/%s", user);
+	g_snprintf(filename, sizeof(filename), "/var/run/pam_mount/%s", user);
       top:
 	tries++;
 	if (stat(filename, &st) == -1) {

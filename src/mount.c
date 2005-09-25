@@ -75,7 +75,7 @@ static void log_output(int fd)
 		     strerror(errno));
 		return;
 	}
-	while(fgets(buf, BUFSIZ + 1, fp) != NULL)
+	while(fgets(buf, sizeof(buf), fp) != NULL)
 		w4rn("pam_mount: %s\n", buf);
 }
 
@@ -145,32 +145,32 @@ static int already_mounted(const struct config_t *const config,
 	    || config->volume[vol].type == CIFSMOUNT) {
 		strcpy(match, "//");
 		strncat(match, config->volume[vol].server,
-			PATH_MAX - strlen(match));
-		strncat(match, "/", PATH_MAX - strlen(match));
+			sizeof(match) - strlen(match) - 1);
+		strncat(match, "/", sizeof(match) - strlen(match) - 1);
 		strncat(match, config->volume[vol].volume,
-			PATH_MAX - strlen(match));
+			sizeof(match) - strlen(match) - 1);
 	} else if (config->volume[vol].type == NCPMOUNT) {
 		strncpy(match, config->volume[vol].server,
-			PATH_MAX - strlen(match));
-		strncat(match, "/", PATH_MAX - strlen(match));
+			sizeof(match) - strlen(match) - 1);
+		strncat(match, "/", sizeof(match) - strlen(match) - 1);
 		/* FIXME: volume sanity check in readconfig.c ensures optlist_value() will not return NULL for user */
 		strncat(match,
 			optlist_value(config->volume[vol].options, "user"),
-			PATH_MAX - strlen(match));
+			sizeof(match) - strlen(match) - 1);
 	} else if (config->volume[vol].type == NFSMOUNT) {
 		strncpy(match, config->volume[vol].server,
-			PATH_MAX - strlen(match));
-		strncat(match, ":", PATH_MAX - strlen(match));
+			sizeof(match) - strlen(match) - 1);
+		strncat(match, ":", sizeof(match) - strlen(match) - 1);
 		strncat(match, config->volume[vol].volume,
-			PATH_MAX - strlen(match));
+			sizeof(match) - strlen(match) - 1);
 		/* FIXME: ugly hack to support umount.crypt script.  I hope that
 		 * util-linux will have native dm_crypt support some day */
 	} else if (config->volume[vol].type == CRYPTMOUNT) {
 		int i;
 		char escaped_vol[PATH_MAX + 1];
-		strncpy(match, "/dev/mapper/", PATH_MAX - strlen(match));
+		strncpy(match, "/dev/mapper/", sizeof(match) - strlen(match) - 1);
 		/* isn't there a function to do this in libc or glib? */
-		for (i = 0; config->volume[vol].volume && i < PATH_MAX;
+		for (i = 0; config->volume[vol].volume && i < sizeof(escaped_vol) - 1;
 		     i++) {
 			if (config->volume[vol].volume[i] == '/')
 				escaped_vol[i] = '_';
@@ -178,9 +178,9 @@ static int already_mounted(const struct config_t *const config,
 				escaped_vol[i] =
 				    config->volume[vol].volume[i];
 		}
-		strncat(match, escaped_vol, PATH_MAX - strlen(match));
+		strncat(match, escaped_vol, sizeof(match) - strlen(match) - 1);
 	} else {
-		strncpy(match, config->volume[vol].volume, PATH_MAX);
+		strncpy(match, config->volume[vol].volume, sizeof(match) - 1);
 	}
 #if defined(__linux__)
 	if((mtab = fopen("/etc/mtab", "r")) == NULL) {
@@ -343,7 +343,7 @@ static int mkmountpoint(vol_t * const volume, const char *const d)
 	assert(d != NULL);
 
 	w4rn("pam_mount: creating mount point %s\n", d);
-	strncpy(dcopy, d, PATH_MAX);
+	strncpy(dcopy, d, sizeof(dcopy) - 1);
 	dcopy[PATH_MAX] = '\0';
 	parent = g_dirname(dcopy);
 	if(!exists(parent) && mkmountpoint(volume, parent) == 0) {
@@ -719,7 +719,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 		}
 		/* FIXME: NEW */
 		fmt_ptrn_update_kv(vinfo, "PREVMNTPT", prev_mntpt);
-		for (i = 0; config->command[i][MNTAGAIN]; i++)
+		for(i = 0; config->command[i][MNTAGAIN] != NULL; i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTAGAIN], vinfo);
 		log_argv(_argv);
@@ -802,7 +802,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 	}
 _return:
 	/* Paranoia? */
-	memset(_password, 0, MAX_PAR + EVP_MAX_BLOCK_LENGTH);
+	memset(_password, 0, sizeof(_password));
 	w4rn("pam_mount: mount errors (should be empty):\n");
 	log_output(cstderr);
 	CLOSE(cstderr);

@@ -127,14 +127,14 @@ char *dotconf_substitute_env(configfile_t *configfile, char *str)
 	char env_default[CFG_MAX_VALUE + 1];
 	char tmp_value[CFG_MAX_VALUE + 1];
 
-	memset(env_name, 0, CFG_MAX_VALUE + 1);
-	memset(env_default, 0, CFG_MAX_VALUE + 1);
-	memset(tmp_value, 0, CFG_MAX_VALUE + 1);
+	memset(env_name, 0, sizeof(env_name));
+	memset(env_default, 0, sizeof(env_default));
+	memset(tmp_value, 0, sizeof(tmp_value));
 
 	cp1 = str;
 	eob = cp1 + strlen(str) + 1;
 	cp2 = tmp_value;
-	eos = cp2 + CFG_MAX_VALUE + 1;
+	eos = cp2 + sizeof(tmp_value);
 
 	while(cp1 < eob && cp2 < eos && *cp1 != '\0') {
 		/* substitution needed ?? */
@@ -199,7 +199,7 @@ int dotconf_warning(configfile_t *configfile, int type, unsigned long errnum, co
 	va_start(args, fmt);
 	if(configfile->errorhandler != NULL) {	/* an errorhandler is registered */
 		char msg[CFG_BUFSIZE];
-		vsnprintf(msg, CFG_BUFSIZE, fmt, args);
+		vsnprintf(msg, sizeof(msg), fmt, args);
 		retval = configfile->errorhandler(configfile, type, errnum, msg);
 	}
 	else						/* no errorhandler, do-it-yourself */
@@ -294,7 +294,7 @@ int dotconf_get_next_line(char *buffer, size_t bufsize, configfile_t *configfile
 	length = strlen(cp1);
 	while ( dotconf_continue_line(cp1, length) )
 	{
-		cp2 = fgets(buf2, CFG_BUFSIZE, configfile->stream);
+		cp2 = fgets(buf2, sizeof(buf2), configfile->stream);
 		if(cp2 == NULL) {
 			fprintf(stderr, "[dotconf] Parse error. Unexpected end of file at "
 					"line %ld in file %s\n", configfile->line, configfile->filename);
@@ -341,7 +341,7 @@ char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
 
 	here_string = 1;
 	limit_len = snprintf(here_limit, 9, "%s", delimit);
-	while (!dotconf_get_next_line(buffer, CFG_BUFSIZE, configfile))
+	while (!dotconf_get_next_line(buffer, sizeof(buffer), configfile))
 	{
 		if(strncmp(here_limit, buffer, limit_len - 1) == 0) {
 			here_string = 0;
@@ -370,9 +370,9 @@ char *dotconf_read_arg(configfile_t *configfile, char **line)
 	char *cp2, *eos;
 	char buf[CFG_MAX_VALUE];
 
-	memset(buf, 0, CFG_MAX_VALUE);
+	memset(buf, 0, sizeof(buf));
 	cp2 = buf;
-	eos = cp2 + CFG_MAX_VALUE - 1;
+	eos = cp2 + sizeof(buf) - 1;
 
 	if(*cp1 == '#' || *cp1 == '\0')
 		return NULL;
@@ -596,7 +596,7 @@ const char *dotconf_handle_command(configfile_t *configfile, char *buffer)
 	int mod = 0;
 	int next_opt_idx = 0;
 
-	memset(&command, 0, sizeof(command_t));
+	memset(&command, 0, sizeof(command));
 	name[0] = '\0';
 
 	cp1 = buffer;
@@ -674,8 +674,7 @@ const char *dotconf_command_loop_until_error(configfile_t *configfile)
 {
 	char buffer[CFG_BUFSIZE];
 
-	while ( !(dotconf_get_next_line(buffer, CFG_BUFSIZE, configfile)) )
-	{
+	while(!(dotconf_get_next_line(buffer, sizeof(buffer), configfile))) {
 		const char *error = dotconf_handle_command(configfile, buffer);
 		if(error != NULL)
 			return error;
@@ -688,8 +687,7 @@ int dotconf_command_loop(configfile_t *configfile)
 	/* ------ returns: 0 for failure -- !0 for success ------------------------------------------ */
 	char buffer[CFG_BUFSIZE];
 
-	while ( !(dotconf_get_next_line(buffer, CFG_BUFSIZE, configfile)) )
-	{
+	while(!(dotconf_get_next_line(buffer, sizeof(buffer), configfile))) {
 		const char *error = dotconf_handle_command(configfile, buffer);
 		if ( error != NULL )
 		{
@@ -828,7 +826,7 @@ int dotconf_find_wild_card(char* filename, char* wildcard, char** path, char** p
 	int retval = -1;
 	int prefix_len = 0;
 	int tmp_count = 0;
-	char* tmp = NULL;
+	char *tmp = NULL;
 	int found_path = 0;
 
 	int len = strlen(filename);
@@ -1109,7 +1107,7 @@ int dotconf_handle_star(command_t* cmd, char* path, char* pre, char* ext)
 	int sub_count = 0;
 
 	pre_len = strlen(pre);
-	memset(already_matched,0,CFG_MAX_FILENAME);
+	memset(already_matched, 0, sizeof(already_matched));
 	s_ext = ext;
 
 	while (dotconf_is_wild_card(*s_ext)) /* remove trailing wild-cards proceeded by * */

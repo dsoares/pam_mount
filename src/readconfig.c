@@ -675,7 +675,7 @@ DOTCONF_CB(read_volume)
 			char options[MAX_PAR + 1];
 			if (!fstab_value
 			    (VOL[VOLCOUNT].volume, FSTAB_OPTS, options,
-			     MAX_PAR + 1))
+			     sizeof(options)))
 				return "could not determine options";
 			if (!str_to_optlist
 			    (&VOL[VOLCOUNT].options, options))

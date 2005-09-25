@@ -241,15 +241,15 @@ void log_argv(char *const argv[])
 	char str[MAX_PAR + 1];
 	if (debug == FALSE)
 		return;
-	g_strlcpy(str, argv[0], MAX_PAR + 1);
-	g_strlcat(str, " ", MAX_PAR + 1);
-	str[MAX_PAR] = '\0';
-	for (i = 1; argv[i] != NULL && strlen(str) < MAX_PAR - 1; i++) {
-		g_strlcat(str, "[", MAX_PAR + 1);
-		g_strlcat(str, argv[i], MAX_PAR + 1);
-		g_strlcat(str, "] ", MAX_PAR + 1);
-		str[MAX_PAR] = '\0';
-		if (strlen(str) >= MAX_PAR)	/* Should never be greater */
+	g_strlcpy(str, argv[0], sizeof(str));
+	g_strlcat(str, " ", sizeof(str));
+	str[sizeof(str)-1] = '\0';
+	for (i = 1; argv[i] != NULL && strlen(str) < sizeof(str) - 2; i++) {
+		g_strlcat(str, "[", sizeof(str));
+		g_strlcat(str, argv[i], sizeof(str));
+		g_strlcat(str, "] ", sizeof(str));
+		str[sizeof(str)-1] = '\0';
+		if(strlen(str) >= sizeof(str) - 1) /* Should never be greater */
 			break;
 	}
 	w4rn("pam_mount: command: %s\n", str);

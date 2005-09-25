@@ -89,7 +89,7 @@ int template_set_local_dir(const char *d)
 /* ============================ template_set_global_dir () ================== */
 int template_set_global_dir(const char *path)
 {
-    strncpy(_template_global_dir, path, PATH_MAX);
+    strncpy(_template_global_dir, path, sizeof(_template_global_dir));
     return 1;
 }
 
@@ -193,7 +193,7 @@ static int _mk_parent_dirs(const char *path)
 static int _template_write(fmt_ptrn_t * template, FILE * output_file)
 {
     char b[BUFSIZ];
-    while(fmt_ptrn_gets(b, BUFSIZ, template) != NULL)
+    while(fmt_ptrn_gets(b, sizeof(b), template) != NULL)
 	fprintf(output_file, "%s", b);
     return 1;
 }

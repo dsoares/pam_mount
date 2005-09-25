@@ -70,14 +70,13 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 	assert(hash != NULL);	/* FIXME: check hash is big enough? */
 	assert(iv != NULL);	/* FIXME: check iv is big enough? */
 
-	if(fread(magic, 1, sizeof("Salted__") - 1, fp) !=
-	     sizeof("Salted__") - 1
-	    || fread(salt, 1, PKCS5_SALT_LEN, fp) != PKCS5_SALT_LEN) {
+	if(fread(magic, 1, sizeof(magic), fp) != sizeof("Salted__") - 1
+	    || fread(salt, 1, sizeof(salt), fp) != PKCS5_SALT_LEN) {
 		l0g("pam_mount: %s\n",
 		    "error reading salt from encrypted filesystem key");
 		return 0;
 	}
-	if(memcmp(magic, "Salted__", sizeof("Salted__") - 1) != 0) {
+	if(memcmp(magic, "Salted__", sizeof(magic)) != 0) {
 		l0g("pam_mount: %s\n",
 		    "magic string Salted__ not in filesystem key file");
 		return 0;
@@ -153,7 +152,7 @@ decrypted_key(unsigned char *const pt_fs_key, size_t * const pt_fs_key_len,
 		ret = 0;
 		goto _return;
 	}
-	if ((ct_fs_key_len = fread(ct_fs_key, 1, MAX_PAR, fs_key_fp)) == 0) {
+	if ((ct_fs_key_len = fread(ct_fs_key, 1, sizeof(ct_fs_key), fs_key_fp)) == 0) {
 		l0g("pam_mount: failed to read encrypted filesystem key from %s\n", fs_key_path);
 		ret = 0;
 		goto _return;

@@ -113,41 +113,41 @@ char *homedir(char *homedir)
 }
 
 /* ============================ day () ====================================== */
-char *day(char *d)
-/* Make sure d is at least large enough to hold "10". */
-{
+char *day(char *d, size_t s) {
     time_t sec_since_1970;
     struct tm *curr_time;
+
     *d = '\0';
     time(&sec_since_1970);
     curr_time = localtime(&sec_since_1970);
-    strftime(d, 3, "%d", curr_time);
+    strftime(d, s, "%d", curr_time);
+
     return d;
 }
 
 /* ============================ month () ==================================== */
-char *month(char *m)
-/* Make sure m is at least large enough to hold "September". */
-{
+char *month(char *m, size_t s) {
     time_t sec_since_1970;
     struct tm *curr_time;
+
     *m = '\0';
     time(&sec_since_1970);
     curr_time = localtime(&sec_since_1970);
-    strftime(m, 10, "%B", curr_time);
+    strftime(m, s, "%B", curr_time);
+
     return m;
 }
 
 /* ============================ year () ===================================== */
-char *year(char *y)
-/* Make sure y is at least large enough to hold "1999". */
-{
+char *year(char *y, size_t s) {
     time_t sec_since_1970;
     struct tm *curr_time;
+
     *y = '\0';
     time(&sec_since_1970);
     curr_time = localtime(&sec_since_1970);
-    strftime(y, 18, "%Y", curr_time);
+    strftime(y, s, "%Y", curr_time);
+
     return y;
 }
 
@@ -168,7 +168,7 @@ void initialize_fillers_from_file(fmt_ptrn_t *x, char *path)
     char line[PATH_MAX + 1], *key, *value, *ptr;
     FILE *input = fopen (path, "r");
     ptr = line;
-    while(fgets(ptr, PATH_MAX + 1, input) != NULL) {
+    while(fgets(ptr, sizeof(line), input) != NULL) {
         key = strsep(&ptr, "=");
 	value = ptr;
         fmt_ptrn_update_kv(x, g_strdup(key), g_strdup(value));
@@ -183,9 +183,9 @@ void initialize_fillers(fmt_ptrn_t *x)
     for(i = 0; environ[i] != NULL; i++)
         if (parse_kv (environ[i], &key, &val))
 	    fmt_ptrn_update_kv(x, key, val);
-    fmt_ptrn_update_kv(x, g_strdup("DAY"), g_strdup(day(b)));
-    fmt_ptrn_update_kv(x, g_strdup("MONTH"), g_strdup(month(b)));
-    fmt_ptrn_update_kv(x, g_strdup("YEAR"), g_strdup(year(b)));
+    fmt_ptrn_update_kv(x, g_strdup("DAY"), g_strdup(day(b, sizeof(b))));
+    fmt_ptrn_update_kv(x, g_strdup("MONTH"), g_strdup(month(b, sizeof(b))));
+    fmt_ptrn_update_kv(x, g_strdup("YEAR"), g_strdup(year(b, sizeof(b))));
     fmt_ptrn_update_kv(x, g_strdup("FULLNAME"), g_strdup(g_get_real_name()));
     fmt_ptrn_update_kv(x, g_strdup("FIRSTNAME"), _firstname());
     fmt_ptrn_update_kv(x, g_strdup("MIDDLENAME"), _middlename());
