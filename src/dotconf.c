@@ -60,6 +60,14 @@
 #define CFG_INCLUDEPATH_ENV "DC_INCLUDEPATH"
 #define WILDCARDS "*?" // list of supported wild-card characters
 
+#define CFG_TOGGLED(_val) ( \
+    (*_val == 'Y' || *_val == 'y') || \
+    (*_val == '1') || ( \
+        (_val[0] == 'o' || _val[0] == 'O') && \
+        (_val[1] == 'n' || _val[1] == 'N') \
+    ) \
+)
+
 // for convenience of terminating the dotconf_options list
 #define LAST_CONTEXT_OPTION     {"", 0, NULL, NULL, 0}
 
@@ -116,12 +124,9 @@ typedef enum callback_types callback_types;
 
 static const configoption_t *get_argname_fallback(const configoption_t *);
 static void copy_word(char **, char **, int, char);
-static void dotconf_callback(configfile_t *, callback_types, dotconf_callback_t);
 static DOTCONF_CB(dotconf_cb_include);          // internal 'Include'
 static DOTCONF_CB(dotconf_cb_includepath);      // internal 'IncludePath'
-static const char *dotconf_command_loop_until_error(configfile_t *);
 static int dotconf_continue_line(char *, size_t);
-static configoption_t *dotconf_find_command(configfile_t *, const char *);
 static int dotconf_find_wild_card(char *, char *, char **, char **, char **);
 static void dotconf_free_command(command_t *);
 static char *dotconf_get_here_document(configfile_t *, const char *);
@@ -302,22 +307,6 @@ static void dotconf_register_options(configfile_t *configfile,
 	configfile->config_options[configfile->config_option_count] = options;
 	configfile->config_options[++configfile->config_option_count] = NULL;
 
-}
-
-static void dotconf_callback(configfile_t *configfile, callback_types type,
- dotconf_callback_t callback)
-{
-	switch(type)
-	{
-		case ERROR_HANDLER:
-			configfile->errorhandler = (dotconf_errorhandler_t) callback;
-			break;
-		case CONTEXT_CHECKER:
-			configfile->contextchecker = (dotconf_contextchecker_t) callback;
-			break;
-		default:
-			break;
-	}
 }
 
 static int dotconf_continue_line(char *buffer, size_t length) {
@@ -516,39 +505,6 @@ static char *dotconf_read_arg(configfile_t *configfile, char **line) {
  	return (buf[0] != '\0') ? dotconf_substitute_env(configfile, strdup(buf)) : NULL;
 }
 
-/* dotconf_find_command remains here for backwards compatability. it's
- * internally unused since dot.conf 1.0.9 because it cannot handle the
- * DUPLICATE_OPTION_NAMES flag
- */
-static configoption_t *dotconf_find_command(configfile_t *configfile,
- const char *command)
-{
-	configoption_t *option;
-	int i = 0, mod = 0, done = 0;
-
-	for(option = 0, mod = 0; configfile->config_options[mod] != NULL && !done; mod++)
-		for (i = 0; configfile->config_options[mod][i].name[0] != '\0'; i++)
-		{
-			if(configfile->cmp_func(name, 
-				configfile->config_options[mod][i].name, CFG_MAX_OPTION) == 0)
-			{
-				option = (configoption_t *) &configfile->config_options[mod][i];
-				/* TODO: this could be flagged: option overwriting by modules */
-				done = 1;
-				break;		/* found it; break out */
-			}
-		}
-
-	/* handle ARG_NAME fallback */
-	if((option != NULL && option->name[0] == '\0') ||
-		configfile->config_options[mod - 1][i].type == ARG_NAME)
-	{
-		option = (configoption_t *) &configfile->config_options[mod - 1][i];
-	}
-
-	return option;
-}
-
 static void dotconf_set_command(configfile_t *configfile,
  const configoption_t *option, char *args, command_t *cmd)
 {
@@ -736,17 +692,6 @@ static const char *dotconf_handle_command(configfile_t *configfile,
 	}
 
 	return error;
-}
-
-static const char *dotconf_command_loop_until_error(configfile_t *configfile) {
-	char buffer[CFG_BUFSIZE];
-
-	while(!(dotconf_get_next_line(buffer, sizeof(buffer), configfile))) {
-		const char *error = dotconf_handle_command(configfile, buffer);
-		if(error != NULL)
-			return error;
-	}
-	return NULL;
 }
 
 int dotconf_command_loop(configfile_t *configfile)

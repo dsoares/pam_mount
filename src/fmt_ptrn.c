@@ -64,10 +64,7 @@ static int      _stack_contains(const mystack_t, const char *);
 static void     _stack_init(mystack_t *);
 static gboolean _stack_pop(mystack_t *, modifier_t *);
 static gboolean _stack_push(fmt_ptrn_t *, mystack_t *, const modifier_t);
-static gboolean _stack_t_vald(const mystack_t *);
-
-static void fmt_ptrn_perror(const fmt_ptrn_t *, const char *);
-static const char *fmt_ptrn_strerror(const fmt_ptrn_t *);
+static gboolean _stack_t_valid(const mystack_t *);
 
 /* ============================ _fmt_ptrn_t_valid () ======================= */
 static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t * x)
@@ -796,7 +793,7 @@ int fmt_ptrn_close(fmt_ptrn_t * x)
 }
 
 /* ============================ fmt_ptrn_perror () ========================= */
-static void fmt_ptrn_perror(const fmt_ptrn_t *x, const char *msg) {
+void fmt_ptrn_perror(const fmt_ptrn_t *x, const char *msg) {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(msg != NULL);
 
@@ -804,7 +801,7 @@ static void fmt_ptrn_perror(const fmt_ptrn_t *x, const char *msg) {
 }
 
 /* ============================ fmt_ptrn_strerror () ======================= */
-static const char *fmt_ptrn_strerror(const fmt_ptrn_t *x) {
+const char *fmt_ptrn_strerror(const fmt_ptrn_t *x) {
 	assert(_fmt_ptrn_t_valid(x));
 
 	return x->errmsg;

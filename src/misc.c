@@ -70,7 +70,7 @@ void w4rn(const char *format, ...)
 {
 	assert(format != NULL);
 
-	if (debug != 0) {
+	if(Debug != 0) {
 		va_list args;
 		va_start(args, format);
 		vfprintf(stderr, format, args);
@@ -239,7 +239,7 @@ void log_argv(char *const argv[])
 	/* FIXME: UGLY! */
 	int i;
 	char str[MAX_PAR + 1];
-	if (debug == FALSE)
+	if(Debug == FALSE)
 		return;
 	g_strlcpy(str, argv[0], sizeof(str));
 	g_strlcat(str, " ", sizeof(str));
@@ -262,7 +262,7 @@ void log_argv(char *const argv[])
  *       overflow would otherwise have occured
  */
 void add_to_argv(char **argv, int *argc, char *arg, fmt_ptrn_t *vinfo) {
-	char *filled, *space;
+	char *filled;
 	char *ptr;
 	int i = 0;
 
@@ -288,9 +288,9 @@ void add_to_argv(char **argv, int *argc, char *arg, fmt_ptrn_t *vinfo) {
 	}
 	while (fmt_ptrn_parse_err(vinfo) != 0)
 		l0g("pam_mount: %s\n", fmt_ptrn_parse_strerror(vinfo));
-	/* FIXME: this is NOT robust enough (handles only spaces -- no tabs, etc.) */
-	/* also, this breaks apart paths with spaces.
-	/* FIXME: this is silly, how can I avoid parsing this again after
+	/* FIXME: this is NOT robust enough (handles only spaces -- no tabs, etc.)
+	 * also, this breaks apart paths with spaces.
+	 * FIXME: this is silly, how can I avoid parsing this again after
 	 * dotfile did?
 	 */
 	ptr = filled;

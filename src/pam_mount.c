@@ -54,9 +54,9 @@ static int modify_pm_count(config_t *, char *, char *);
 static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
-gboolean debug;
-config_t config;
-pam_args_t args;
+gboolean Debug;
+config_t Config;
+pam_args_t Args;
 
 /* ============================ parse_pam_args () ========================== */
 /* INPUT: argc and argv, standard main()-type arguments
@@ -69,13 +69,13 @@ static void parse_pam_args(int argc, const char **argv) {
 		assert(argv[i] != NULL);
 
 	/* first, set default values */
-	args.auth_type = GET_PASS;
+	Args.auth_type = GET_PASS;
 	for (i = 0; i < argc; i++) {
 		w4rn("pam_mount: pam_sm_open_session args: %s\n", argv[i]);
 		if(strcmp("use_first_pass", argv[i]) == 0)
-			args.auth_type = USE_FIRST_PASS;
+			Args.auth_type = USE_FIRST_PASS;
 		else if(strcmp("try_first_pass", argv[i]) == 0)
-			args.auth_type = TRY_FIRST_PASS;
+			Args.auth_type = TRY_FIRST_PASS;
 		else
 			w4rn("pam_mount: %s\n", "bad pam_mount option");
 	}
@@ -179,7 +179,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	/* FIXME: this is called again in pam_sm_open_session.  this is because 
          * pam_sm_authenticate is never called when root su's to another user.
 	 */
-	initconfig(&config);
+	initconfig(&Config);
 	parse_pam_args(argc, argv);
 	/* needed because gdm does not prompt for username as login does: */
 	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
@@ -189,9 +189,9 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		goto _return;
 	}
 	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
-	config.user = g_strdup(pam_user);
-	w4rn("pam_mount: user is %s\n", config.user);
-	if (args.auth_type != GET_PASS) {	/* get password from PAM system */
+	Config.user = g_strdup(pam_user);
+	w4rn("pam_mount: user is %s\n", Config.user);
+	if(Args.auth_type != GET_PASS) {	/* get password from PAM system */
 		char *ptr = NULL;
 		if ((ret =
 		     pam_get_item(pamh, PAM_AUTHTOK,
@@ -201,7 +201,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                 ret = PAM_AUTHINFO_UNAVAIL;
 			l0g("pam_mount: %s\n",
 			    "could not get password from PAM system");
-			if (args.auth_type == USE_FIRST_PASS)
+			if(Args.auth_type == USE_FIRST_PASS)
 				goto _return;
 		} else
 			authtok = strdup(ptr);
@@ -326,7 +326,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 
 	assert(pamh != NULL);
 
-	initconfig(&config);
+	initconfig(&Config);
 	/* call pam_get_user again because ssh calls PAM fns from seperate
  	 * processes.
 	 */
@@ -337,10 +337,10 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
                 goto _return;
 	}
 	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
-	config.user = g_strdup(pam_user);
-	w4rn("pam_mount: user is %s\n", config.user);
-	if (strlen(config.user) > MAX_PAR) {
-		l0g("pam_mount: username %s is too long\n", config.user);
+	Config.user = g_strdup(pam_user);
+	w4rn("pam_mount: user is %s\n", Config.user);
+	if(strlen(Config.user) > MAX_PAR) {
+		l0g("pam_mount: username %s is too long\n", Config.user);
 		ret = PAM_SERVICE_ERR;
 		goto _return;
 	}
@@ -358,28 +358,29 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
                }
 
 	}
-	if (!readconfig(config.user, CONFIGFILE, 1, &config)) {
+	if(!readconfig(Config.user, CONFIGFILE, 1, &Config)) {
 		ret = PAM_SERVICE_ERR;
 		goto _return;
 	}
 	w4rn("pam_mount: %s\n", "back from global readconfig");
-	if(strlen(config.luserconf) == 0)
+	if(strlen(Config.luserconf) == 0)
 		w4rn("pam_mount: %s\n",
 		     "per-user configurations not allowed by pam_mount.conf");
-	else if (exists(config.luserconf)
-		 && owns(config.user, config.luserconf) == TRUE) {
+	else if(exists(Config.luserconf) &&
+	    owns(Config.user, Config.luserconf) == TRUE) {
 		w4rn("pam_mount: %s\n", "going to readconfig user");
-		if (!readconfig(config.user, config.luserconf, 0, &config)) {
+		if(!readconfig(Config.user, Config.luserconf, 0, &Config)) {
 			ret = PAM_SERVICE_ERR;
 			goto _return;
 		}
 		w4rn("pam_mount: %s\n", "back from user readconfig");
 	} else
-		w4rn("pam_mount: %s does not exist or is not owned by user\n", config.luserconf);
-	if (config.volcount <= 0) {
+		w4rn("pam_mount: %s does not exist or is not owned by user\n",
+                 Config.luserconf);
+	if(Config.volcount <= 0) {
 		w4rn("pam_mount: %s\n", "no volumes to mount");
 	}
-	if (!expandconfig(&config)) {
+	if(!expandconfig(&Config)) {
 		l0g("pam_mount: %s\n", "error expanding configuration");
 		ret = PAM_SERVICE_ERR;
 		goto _return;
@@ -387,29 +388,29 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 /* This code needs root priv. */
 	w4rn("pam_mount: real and effective user ID are %d and %d.\n",
 	     getuid(), geteuid());
-	for (vol = 0; vol < config.volcount; vol++) {
+	for(vol = 0; vol < Config.volcount; vol++) {
 		/* luserconf_volume_record_sane() is called here so that 
 		 * a user can nest loopback images. otherwise ownership
 		 * tests will fail if parent loopback image not yet 
 		 * mounted.  volume_record_sane() is here to be consistent */
-		if (volume_record_sane(&config, vol) != TRUE)
+		if(volume_record_sane(&Config, vol) != TRUE)
 			continue;
-		if (config.volume[vol].globalconf != TRUE
-		    && luserconf_volume_record_sane(&config, vol) != TRUE)
+		if(Config.volume[vol].globalconf != TRUE &&
+		    luserconf_volume_record_sane(&Config, vol) != TRUE)
 			continue;
 		w4rn("pam_mount: %s\n",
 		     "about to perform mount operations");
 		if (!mount_op
-		    (do_mount, &config, vol, system_authtok,
-		     config.mkmntpoint))
+		    (do_mount, &Config, vol, system_authtok,
+		     Config.mkmntpoint))
 			l0g("pam_mount: mount of %s failed\n",
-			    config.volume[vol].volume);
+			    Config.volume[vol].volume);
 	}
 /* end root priv. */
 	/* Paranoia? */
 	clean_system_authtok(pamh, system_authtok, 0);
 /* This code needs root priv. */
-	modify_pm_count(&config, config.user, "1");
+	modify_pm_count(&Config, Config.user, "1");
 /* end root priv. */
 
       _return:
@@ -456,28 +457,29 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 		goto _return;
 	}
 	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
-	config.user = g_strdup(pam_user);
-	w4rn("pam_mount: user is %s\n", config.user);
+	Config.user = g_strdup(pam_user);
+	w4rn("pam_mount: user is %s\n", Config.user);
 	/* if our CWD is in the home directory, it might not get umounted */
 	if(chdir("/") != 0)
 		l0g("pam_mount %s\n", "could not chdir");
-	if (config.volcount <= 0)
+	if(Config.volcount <= 0)
 		w4rn("pam_mount: %s\n", "volcount is zero");
 /* This code needs root priv. */
-	if (modify_pm_count(&config, config.user, "-1") <= 0)
+	if(modify_pm_count(&Config, Config.user, "-1") <= 0)
 		/* Unmount in reverse order to facilitate nested mounting. */
-		for (vol = config.volcount - 1; vol >= 0; vol--) {
+		for(vol = Config.volcount - 1; vol >= 0; vol--) {
 			w4rn("pam_mount: %s\n", "going to unmount");
 			if (!mount_op
-			    (do_unmount, &config, vol, NULL,
-			     config.mkmntpoint))
+			    (do_unmount, &Config, vol, NULL,
+			     Config.mkmntpoint))
 				l0g("pam_mount: unmount of %s failed\n",
-				    config.volume[vol].volume);
+				    Config.volume[vol].volume);
 	} else
-		w4rn("pam_mount: %s seems to have other remaining open sessions\n", config.user);
+		w4rn("pam_mount: %s seems to have other remaining open sessions\n",
+                 Config.user);
 /* end root priv. */
       _return:
-	freeconfig(config);
+	freeconfig(Config);
 	w4rn("pam_mount: pam_mount execution complete\n");
 	return ret;
 }

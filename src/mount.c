@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <pwd.h>
 
+#include "crypto.h"
 #include "fmt_ptrn.h"
 #include "misc.h"
 #include "mount.h"
@@ -207,8 +208,8 @@ static int already_mounted(const config_t *const config,
 	     match, config->volume[vol].mountpoint);
 	while ((mtab_record = getmntent(mtab)) != NULL) {
                char const *mnt_fsname = mtab_record->mnt_fsname;
-               struct stat statbuf;
 		/* FIXME: need to figure out where LOOP_GET_STATUS64 is from
+               struct stat statbuf;
                if (stat(mnt_fsname, &statbuf) == 0 &&
                     S_ISBLK(statbuf.st_mode) &&
                     major(statbuf.st_rdev) == LOOP_MAJOR) {
@@ -409,7 +410,7 @@ int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
 
-	if (debug == TRUE)
+	if(Debug == TRUE)
 		/*
 		 * Often, a process still exists with ~ as its pwd after
 		 * logging out.  Running lsof helps debug this.
@@ -496,7 +497,7 @@ static int do_losetup(config_t *config, const unsigned int vol,
 {
 	pid_t pid;
 	GError *err = NULL;
-	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
+	int i, ret = 1, child_exit, _argc = 0, cstderr = -1;
 	char *_argv[MAX_PAR + 1];
 	const char *cipher =
 	    optlist_value(config->volume[vol].options, "encryption");
@@ -797,7 +798,6 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		}
 
 	}
-_return:
 	/* Paranoia? */
 	memset(_password, 0, sizeof(_password));
 	w4rn("pam_mount: mount errors (should be empty):\n");
@@ -849,11 +849,10 @@ int mount_op(int (*mnt)(config_t *, const unsigned int, fmt_ptrn_t *,
 	if(strlen(options) > 0)
 		fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
 
-	if (debug)
+	if(Debug)
 		log_pm_input(config, vol);
 
 	fnval = mnt(config, vol, &vinfo, password, mkmntpoint);
 	fmt_ptrn_close(&vinfo);
-      _return:
 	return fnval;
 }

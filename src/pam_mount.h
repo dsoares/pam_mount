@@ -8,9 +8,9 @@ extern "C" {
 #include <glib.h>
 #include "private.h"
 
-extern gboolean debug;
-extern config_t config;
-extern pam_args_t args;
+extern gboolean Debug;
+extern config_t Config;
+extern pam_args_t Args;
 
 #ifdef __cplusplus
 } // extern "C"

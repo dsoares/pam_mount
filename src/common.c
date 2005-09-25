@@ -25,6 +25,7 @@
 #include <glib.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -36,7 +37,6 @@ static char *_firstname(void);
 static char *_lastname(void);
 static char *_middlename(void);
 static char *day(char *, size_t);
-static char *homedir(char *);
 static char *month(char *, size_t);
 static int parse_kv(char *, char **, char **);
 static void shift_str(char *, char *);
@@ -100,13 +100,6 @@ static char *_lastname(void)
 		return ptr_0;
 	shift_str (name, ++ptr_1);
 	return name;
-}
-
-static char *homedir(char *arg) {
-    char *hd = g_strdup(g_get_home_dir());
-    g_strlcpy(arg, (hd != NULL) ? hd : "", BUFSIZ + 1);
-    g_free(hd);
-    return (hd != NULL) ? arg : NULL;
 }
 
 static char *day(char *d, size_t s) {

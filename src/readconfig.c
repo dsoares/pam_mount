@@ -56,7 +56,7 @@ typedef enum fstab_field_t {
 } fstab_field_t;
 
 /* defaults are included here but these are overridden by pam_mount.conf */
-static pm_command_t command[] = {
+static pm_command_t Command[] = {
 	{SMBMOUNT, "smb", "smbmount", {"/bin/mount", "-t", "smbfs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
 	{SMBMOUNT, "smbfs", "smbmount", {"/bin/mount", "-t", "smbfs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
 	{CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
@@ -101,31 +101,31 @@ static int option_in_list(optlist_t *, const char *);
 static int options_required_ok(optlist_t *, optlist_t *);
 
 static const configoption_t legal_config[] = {
-	{"debug", ARG_TOGGLE, read_debug, &config.debug, CTX_ALL},
-	{"mkmountpoint", ARG_TOGGLE, read_int_param, &config.mkmntpoint,
+	{"debug", ARG_TOGGLE, read_debug, &Config.debug, CTX_ALL},
+	{"mkmountpoint", ARG_TOGGLE, read_int_param, &Config.mkmntpoint,
 	 CTX_ALL},
-	{"luserconf", ARG_STR, read_luserconf, &config, CTX_ALL},
-	{"fsckloop", ARG_STR, read_fsckloop, &config, CTX_ALL},
-	{"smbmount", ARG_LIST, read_command, &config, CTX_ALL},
-	{"cifsmount", ARG_LIST, read_command, &config, CTX_ALL},
-	{"ncpmount", ARG_LIST, read_command, &config, CTX_ALL},
-	{"umount", ARG_LIST, read_command, &config, CTX_ALL},
-	{"lclmount", ARG_LIST, read_command, &config, CTX_ALL},
+	{"luserconf", ARG_STR, read_luserconf, &Config, CTX_ALL},
+	{"fsckloop", ARG_STR, read_fsckloop, &Config, CTX_ALL},
+	{"smbmount", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"cifsmount", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"ncpmount", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"umount", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"lclmount", ARG_LIST, read_command, &Config, CTX_ALL},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	{"cryptmount", ARG_LIST, read_command, &config, CTX_ALL},
-	{"nfsmount", ARG_LIST, read_command, &config, CTX_ALL},
-	{"lsof", ARG_LIST, read_command, &config, CTX_ALL},
-	{"mntagain", ARG_LIST, read_command, &config, CTX_ALL},
-	{"mntcheck", ARG_LIST, read_command, &config, CTX_ALL},
-	{"fsck", ARG_LIST, read_command, &config, CTX_ALL},
-	{"losetup", ARG_LIST, read_command, &config, CTX_ALL},
-	{"unlosetup", ARG_LIST, read_command, &config, CTX_ALL},
-	{"pmvarrun", ARG_LIST, read_command, &config, CTX_ALL},
-	{"options_require", ARG_STR, read_options_require, &config,
+	{"cryptmount", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"nfsmount", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"lsof", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"mntagain", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"mntcheck", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"fsck", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"losetup", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"unlosetup", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"pmvarrun", ARG_LIST, read_command, &Config, CTX_ALL},
+	{"options_require", ARG_STR, read_options_require, &Config,
 	 CTX_ALL},
-	{"options_allow", ARG_STR, read_options_allow, &config, CTX_ALL},
-	{"options_deny", ARG_STR, read_options_deny, &config, CTX_ALL},
-	{"volume", ARG_LIST, read_volume, &config, CTX_ALL},
+	{"options_allow", ARG_STR, read_options_allow, &Config, CTX_ALL},
+	{"options_deny", ARG_STR, read_options_deny, &Config, CTX_ALL},
+	{"volume", ARG_LIST, read_volume, &Config, CTX_ALL},
 	LAST_OPTION
 };
 
@@ -248,7 +248,7 @@ static DOTCONF_CB(read_command)
 
 	if(!ICONTEXT)
 		return "tried to set command from user config";
-	if ((command_index = get_command_index(command, cmd->name)) == -1)
+	if((command_index = get_command_index(Command, cmd->name)) == -1)
 		return "pam_mount: bad command in config";
 	if (cmd->arg_count <= 0)
 		return "command type specified without definition";
@@ -525,7 +525,7 @@ static DOTCONF_CB(read_int_param)
 static DOTCONF_CB(read_debug)
 {
 	/* debug is handled as a special case so global debug can be set ASAP */
-	debug = cmd->data.value != 0;
+	Debug = cmd->data.value != 0;
 	return read_int_param(cmd, ctx);
 }
 
@@ -634,7 +634,7 @@ DOTCONF_CB(read_volume)
 		w4rn("pam_mount: ignoring volume record (not for me)\n");
 		return NULL;
 	} else if(strcmp(cmd->data.list[0], "*") == 0 &&
-		   strcmp(config.user, "root") == 0) {
+            strcmp(Config.user, "root") == 0) {
 		/* FIXME: should use uid == 0, not "root" */
 		w4rn("pam_mount: volume wildcard ignored for root");
 		return NULL;
@@ -647,10 +647,10 @@ DOTCONF_CB(read_volume)
 	VOL[VOLCOUNT].globalconf = ICONTEXT ? TRUE : FALSE;
 	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
 	VOL[VOLCOUNT].type = -1;
-	for (i = 0; command[i].type != -1; i++)
-		if(command[i].fs != NULL &&
-		    strcasecmp(cmd->data.list[1], command[i].fs) == 0) {
-			VOL[VOLCOUNT].type = command[i].type;
+	for(i = 0; Command[i].type != -1; ++i)
+		if(Command[i].fs != NULL &&
+		    strcasecmp(cmd->data.list[1], Command[i].fs) == 0) {
+			VOL[VOLCOUNT].type = Command[i].type;
 			break;
 		}
 	if (VOL[VOLCOUNT].type == -1)
@@ -744,12 +744,12 @@ int initconfig(config_t * config)
 	strcpy(config->fsckloop, FSCKLOOP_DEFAULT);
 
 	/* set commands to defaults */
-	for (i = 0; command[i].type != -1; i++) {
-		config->command[0][command[i].type] = g_strdup(command[i].def[0]);
-		for(j = 1; command[i].def[j] != NULL; j++) {
-			config->command[j][command[i].type] = g_strdup(command[i].def[j]);
+	for(i = 0; Command[i].type != -1; i++) {
+		config->command[0][Command[i].type] = g_strdup(Command[i].def[0]);
+		for(j = 1; Command[i].def[j] != NULL; j++) {
+			config->command[j][Command[i].type] = g_strdup(Command[i].def[j]);
 		}
-		config->command[j + 1][command[i].type] = NULL;
+		config->command[j + 1][Command[i].type] = NULL;
 	}
 
 	/* FIXME: initialize options_require, _allow and _deny */

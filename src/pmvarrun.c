@@ -37,7 +37,7 @@
 
 #include "misc.h"
 
-int debug;
+int Debug;
 static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
 typedef struct settings_t {
@@ -60,7 +60,7 @@ static void usage(int exitcode, const char *error, const char *more) {
 
 /* ============================ set_defaults () ============================= */
 static void set_defaults(settings_t *settings) {
-	debug = 0;
+	Debug = 0;
 	*settings->user = '\0';
 	settings->operation = 1;
 }
@@ -81,7 +81,7 @@ static void parse_args(int argc, char **argv, settings_t *settings) {
 		case 'h':
 			usage(EXIT_SUCCESS, NULL, NULL);
 		case 'd':
-			debug = 1;
+			Debug = 1;
 			break;
 		case 'o':
 			if ((settings->operation =
