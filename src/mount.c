@@ -361,7 +361,7 @@ static int mkmountpoint(vol_t *const volume, const char *const d) {
 	w4rn("pam_mount: creating mount point %s\n", d);
 	strncpy(dcopy, d, sizeof(dcopy) - 1);
 	dcopy[PATH_MAX] = '\0';
-	parent = g_dirname(dcopy);
+	parent = g_path_get_dirname(dcopy);
 	if(!exists(parent) && mkmountpoint(volume, parent) == 0) {
 		ret = 0;
 		goto _return;
