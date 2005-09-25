@@ -111,14 +111,23 @@ for opt in $OPTIONS; do
 	esac
 done
 
-# FIXME: blind replacement of / with _ may be a bad idea.
 if [ "$LOOP" == true ]; then
 	DEVICE=`_losetup "$1"`;
-	DMDEVICE=`echo "$DEVICE" | sed 's/\//_/g'`;
 else
 	DEVICE="$1";
-	DMDEVICE=`echo "$DEVICE" | sed 's/\//_/g'`;
 fi
+
+# if loop device, make device mapper name based on file pointed to
+if [ `echo "$1" | grep ^/dev/loop` ]; then
+    DMDEVICE=` "$LOSETUP" "$1" | egrep "(.+)" | awk '{print $3}' | sed 's/(//' | sed 's/)//'`;
+fi;
+# if not a loop device or previous command fails
+if [ -z "$DMDEVICE" ]; then
+    DMDEVICE="$1";
+fi;
+# FIXME: blind replacement of / with _ may be a bad idea.
+DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
+
 
 CIPHEROPT="aes"
 if [ -n "$CIPHER" ]; then
