@@ -20,23 +20,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <config.h>
+#include <sys/types.h>
 #include <assert.h>
 #include <glib.h>
+#include <limits.h>
+#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <dotconf.h>
-#include <libgen.h>
 #include <pwd.h>
-#include <pam_mount.h>
-#include <pam_mount_private.h>
-#include <optlist.h>
+
+#include "dotconf.h"
+#include "misc.h"
+#include "optlist.h"
+#include "pam_mount.h"
+#include "private.h"
+#include "readconfig.h"
+
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-#include <fstab.h>
+#    include <fstab.h>
 #elif defined(__linux__)
-#include <mntent.h>
+#    include <mntent.h>
 #endif
+
+#define DEBUG_DEFAULT           FALSE
+#define MKMOUNTPOINT_DEFAULT    FALSE
+#define FSCKLOOP_DEFAULT        "/dev/loop7"
 
 #define ICONTEXT (*(int *)cmd->context)
 #define ICONFIG ((config_t *)cmd->option->info)
@@ -47,9 +54,6 @@ typedef enum fstab_field_t {
 	FSTAB_FSTYPE,
 	FSTAB_OPTS
 } fstab_field_t;
-
-extern config_t config;
-extern gboolean debug;
 
 /* defaults are included here but these are overridden by pam_mount.conf */
 static pm_command_t command[] = {
@@ -77,22 +81,24 @@ static pm_command_t command[] = {
 	{-1, NULL, NULL, {NULL}}
 };
 
-static DOTCONF_CB(read_int_param);
-static DOTCONF_CB(read_debug);
-static DOTCONF_CB(read_luserconf);
-static DOTCONF_CB(read_command);
-static DOTCONF_CB(read_options_require);
-static DOTCONF_CB(read_options_allow);
-static DOTCONF_CB(read_options_deny);
-static DOTCONF_CB(read_fsckloop);
-static command_type_t get_command_index(const pm_command_t *, const char *);
-static int options_allow_ok(optlist_t *, optlist_t *);
-static int options_required_ok(optlist_t *, optlist_t *);
-static int options_deny_ok(optlist_t *, optlist_t *);
-static int _options_ok(config_t *, vol_t *);
-static int fstab_value(const char *, const fstab_field_t, char *, const int);
 static char *expand_home(char *, size_t, const char *);
 static char *expand_wildcard(char *, size_t, const char *, const char *);
+static int fstab_value(const char *, const fstab_field_t, char *, const int);
+static command_type_t get_command_index(const pm_command_t *, const char *);
+static FUNC_ERRORHANDLER(log_error);
+static DOTCONF_CB(read_command);
+static DOTCONF_CB(read_debug);
+static DOTCONF_CB(read_fsckloop);
+static DOTCONF_CB(read_int_param);
+static DOTCONF_CB(read_luserconf);
+static DOTCONF_CB(read_options_allow);
+static DOTCONF_CB(read_options_deny);
+static DOTCONF_CB(read_options_require);
+static int _options_ok(config_t *, vol_t *);
+static int options_allow_ok(optlist_t *, optlist_t *);
+static int options_deny_ok(optlist_t *, optlist_t *);
+static int option_in_list(optlist_t *, const char *);
+static int options_required_ok(optlist_t *, optlist_t *);
 
 static const configoption_t legal_config[] = {
 	{"debug", ARG_TOGGLE, read_debug, &config.debug, CTX_ALL},
@@ -264,8 +270,7 @@ static DOTCONF_CB(read_command)
  *         needle, a key to look for
  * OUTPUT: 1 if haystack[needle] exists, else 0
  */
-int option_in_list(optlist_t * haystack, const char *needle)
-{
+static int option_in_list(optlist_t *haystack, const char *needle) {
 	assert(needle != NULL);
 
 	/* FIXME: this fn. is not needed, just call the following directly: */
@@ -714,7 +719,7 @@ readconfig(const char *user, char *file, int globalconf, config_t * config)
 	configfile_t *configfile;
 	if(
 	    (configfile =
-	     dotconf_create(file, legal_config, &globalconf, NONE)) == NULL) {
+	     dotconf_create(file, legal_config, &globalconf, 0)) == NULL) {
 		l0g("pam_mount: error opening %s\n", file);
 		return 0;
 	}

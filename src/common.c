@@ -20,32 +20,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <new/common.h>
-#include <new/template.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include <glib.h>
 #include <limits.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <config.h>
-#include <sys/stat.h>
-#ifdef HAVE_PWDB_PWDB_PUBLIC_H
-#include <pwdb/pwdb_public.h>
-#else
-#include <pwd.h>
-#endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
+
+#include "common.h"
+#include "fmt_ptrn.h"
 
 static char *_firstname(void);
-static void shift_str(char *, char *);
-static char *_middlename(void);
 static char *_lastname(void);
-static char *homedir(char *);
+static char *_middlename(void);
 static char *day(char *, size_t);
+static char *homedir(char *);
 static char *month(char *, size_t);
-static char *year(char *, size_t);
 static int parse_kv(char *, char **, char **);
+static void shift_str(char *, char *);
+static char *year(char *, size_t);
+
+extern char **environ;
 
 /* FIXME: the code in these functions needs to be checked for:
  * 1.  a consistent interface for memory management
@@ -82,9 +79,9 @@ static char *_middlename(void)
 	char *name, *ptr_0, *ptr_1;
 	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
-	if((ptr_0 = strchr (name, ' ')) == NULL)
+	if((ptr_0 = strchr(name, ' ')) == NULL)
 		return NULL;
-	if((ptr_1 = strchr (++ptr_0, ' ')) == NULL)
+	if((ptr_1 = strchr(++ptr_0, ' ')) == NULL)
 		return NULL;
 	*ptr_1 = '\0';
 	shift_str (name, ptr_0);
@@ -97,9 +94,9 @@ static char *_lastname(void)
 	char *name, *ptr_0, *ptr_1;
 	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
-	if((ptr_0 = strchr (name, ' ')) == NULL)
+	if((ptr_0 = strchr(name, ' ')) == NULL)
 		return NULL;
-	if((ptr_1 = strchr (++ptr_0, ' ')) == NULL)
+	if((ptr_1 = strchr(++ptr_0, ' ')) == NULL)
 		return ptr_0;
 	shift_str (name, ++ptr_1);
 	return name;

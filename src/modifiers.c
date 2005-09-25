@@ -20,46 +20,85 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <new/fmt_ptrn.h>
-#include <new/common.h>
-#include <new/buffer.h>
-#include <new/template.h>
-#include <libgen.h>
-#include <ctype.h>
-#include <string.h>
 #include <glib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <zlib.h>
 
-extern void enqueue_parse_errmsg(fmt_ptrn_t * x, const char *msg, ...);
+#include "buffer.h"
+#include "modifiers.h"
+#include "fmt_ptrn.h"
+#include "template.h"
 
-static int _apply_delim(buffer_t *, const char *, const char *);
 static int _apply_comment(buffer_t *, char *, char *);
+static int _apply_delim(buffer_t *, const char *, const char *);
+static int apply_after(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_basename(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_before(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_c_comment(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_c_delim(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_cpp_comment(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_cpp_delim(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_file(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_fn(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_lower(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_newlines(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_no_newlines(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_remove_underscore(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_sh_comment(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_sh_delim(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_template(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_tex_comment(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_tex_delim(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_upper(buffer_t *, fmt_ptrn_t *, char *);
+static int apply_xml_comment(buffer_t *, fmt_ptrn_t *, char *);
 
-/* ============================ apply_upper () ============================= */
-int apply_upper(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+const modifier_fns_t mod_fn[] = {
+    {"upper", apply_upper, 0},
+    {"lower", apply_lower, 0},
+    {"basename", apply_basename, 0},
+    {"before=\"", apply_before, 1},
+    {"after=\"", apply_after, 1},
+    {"fn", apply_fn, 0},
+    {"c_delim", apply_c_delim, 0},
+    {"cpp_delim", apply_cpp_delim, 0},
+    {"sh_delim", apply_sh_delim, 0},
+    {"tex_delim", apply_tex_delim, 0},
+    {"c_comment", apply_c_comment, 0},
+    {"cpp_comment", apply_cpp_comment, 0},
+    {"sh_comment", apply_sh_comment, 0},
+    {"tex_comment", apply_tex_comment, 0},
+    {"xml_comment", apply_xml_comment, 0},
+    {"sgml_comment", apply_xml_comment, 0},
+    {"newlines", apply_newlines, 0},
+    {"no_newlines", apply_no_newlines, 0},
+    {"template", apply_template, 0},
+    {"file", apply_file, 0},
+    {"#", NULL, 0},		/* FIXME: This is handled as a special case. */
+    {"remove_underscore", apply_remove_underscore, 0},
+    {NULL, NULL, 0},
+};
+
+static int apply_upper(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     g_strup(dest->data);
     return 1;
 }
 
-/* ============================ apply_lower () ============================= */
-int apply_lower(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_lower(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     g_strdown(dest->data);
     return 1;
 }
 
-/* ============================ apply_basename () ========================== */
-int apply_basename(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_basename(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     char *ptr = strchr(dest->data, '.');
     if(ptr != NULL)
 	*ptr = '\0';
     return 1;
 }
 
-/* ============================ _apply_delim () ============================ */
-static int _apply_delim(buffer_t * str, const char *start_cmnt,
-			const char *end_cmnt)
+static int _apply_delim(buffer_t *str, const char *start_cmnt,
+ const char *end_cmnt)
 {
     /* This one is a bit ugly, but not very interesting. */
     int i;
@@ -89,37 +128,27 @@ static int _apply_delim(buffer_t * str, const char *start_cmnt,
     return 1;
 }
 
-/* ============================ apply_c_delim () =========================== */
-int apply_c_delim(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_c_delim(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     _apply_delim(dest, "/*", "*/");
     return 1;
 }
 
-/* ============================ apply_cpp_delim () ========================= */
-int apply_cpp_delim(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_cpp_delim(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     _apply_delim(dest, "//", NULL);
     return 1;
 }
 
-/* ============================ apply_sh_delim () ========================== */
-int apply_sh_delim(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_sh_delim(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     _apply_delim(dest, "#", NULL);
     return 1;
 }
 
-/* ============================ apply_tex_delim () ========================= */
-int apply_tex_delim(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_tex_delim(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     _apply_delim(dest, "%", NULL);
     return 1;
 }
 
-/* ============================ _apply_comment () ========================== */
-static int _apply_comment(buffer_t * dest, char *c0, char *c1)
-{
+static int _apply_comment(buffer_t *dest, char *c0, char *c1) {
     int i;
     buffer_t tmp = buffer_init();
     realloc_n_cat(&tmp, c0);
@@ -135,39 +164,27 @@ static int _apply_comment(buffer_t * dest, char *c0, char *c1)
     return 1;
 }
 
-/* ============================ apply_c_comment () ========================= */
-int apply_c_comment(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_c_comment(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     return _apply_comment(dest, "/* ", " */");
 }
 
-/* ============================ apply_xml_comment () ======================= */
-int apply_xml_comment(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_xml_comment(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     return _apply_comment(dest, "<!-- ", " -->");
 }
 
-/* ============================ apply_sh_comment () ======================== */
-int apply_sh_comment(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_sh_comment(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     return _apply_comment(dest, "# ", NULL);
 }
 
-/* ============================ apply_cpp_comment () ======================= */
-int apply_cpp_comment(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_cpp_comment(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     return _apply_comment(dest, "// ", NULL);
 }
 
-/* ============================ apply_tex_comment () ======================= */
-int apply_tex_comment(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_tex_comment(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     return _apply_comment(dest, "% ", NULL);
 }
 
-/* ============================ apply_before () ============================ */
-int apply_before(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_before(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     /* Done with no malloc'd tmp. */
     size_t i, j, old_len = strlen(dest->data), src_len =
 	strlen(arg), new_len = old_len + src_len;
@@ -189,9 +206,7 @@ int apply_before(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     return 1;
 }
 
-/* ============================ apply_no_newlines () ======================= */
-int apply_no_newlines(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_no_newlines(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     int i;
     for (i = 0; i < dest->size; i++)
 	if (dest->data[i] == '\n')
@@ -199,9 +214,7 @@ int apply_no_newlines(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     return 1;
 }
 
-/* ============================ apply_newlines () ========================== */
-int apply_newlines(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_newlines(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     int i;
     for (i = 0; i < dest->size; i++)
 	if (dest->data[i] == ' ')
@@ -209,9 +222,7 @@ int apply_newlines(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     return 1;
 }
 
-/* ============================ apply_remove_underscore () ================= */
-int apply_remove_underscore(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_remove_underscore(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     int i;
     for (i = 0; i < dest->size; i++)
 	if (dest->data[i] == '_')
@@ -219,27 +230,21 @@ int apply_remove_underscore(buffer_t * dest, fmt_ptrn_t * x, char *arg)
     return 1;
 }
 
-/* ============================ apply_after () ============================= */
-int apply_after(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_after(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     /* Too easy. */
     realloc_n_cat(dest, arg);
     return 1;
 }
 
-/* ============================ apply_fn () ================================ */
-int apply_fn(buffer_t * dest, fmt_ptrn_t * x, char *arg)
-{
+static int apply_fn(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
     apply_after(dest, x, " ()");
     return 1;
 }
 
-/* ============================ apply_file () ============================== */
-int apply_file(buffer_t * dest, fmt_ptrn_t * x, const char *arg)
+static int apply_file(buffer_t *dest, fmt_ptrn_t *x, /* const */ char *arg) {
 /* This function handles the case where the FMT_PTRN_FILE modifier is 
  * used. 
  */
-{
     char b[BUFSIZ];
     gzFile f;
     if((f = gzopen(dest->data, "rb")) == NULL)
@@ -251,12 +256,10 @@ int apply_file(buffer_t * dest, fmt_ptrn_t * x, const char *arg)
     return 1;
 }
 
-/* ============================ apply_template () ========================== */
-int apply_template(buffer_t * dest, fmt_ptrn_t * x, char *arg)
+static int apply_template(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
 /* This function handles the case where the FMT_PTRN_TEMPLATE modifier is 
  * used. 
  */
-{
     fmt_ptrn_t f;
     char b[BUFSIZ];
     char template_path[PATH_MAX + 1];

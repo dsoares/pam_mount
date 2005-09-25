@@ -21,24 +21,25 @@
  */
 
 #include <config.h>
-#include <sys/fsuid.h>
-#include <sys/types.h>
+#ifdef HAVE_SETFSUID
+#    include <sys/fsuid.h>
+#endif
 #include <sys/stat.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <string.h>
-#include <syslog.h>
-#include <stdarg.h>
 #include <assert.h>
 #include <glib.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <pam_mount.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <pwd.h>
 
-#ifdef HAVE_SETFSUID
-#include <sys/fsuid.h>
-#endif
-
-extern int debug;
+#include "misc.h"
+#include "pam_mount.h"
+#include "private.h"
+#include "readconfig.h"
 
 /* ============================ l0g () ===================================== */
 /* INPUT: similar to printf; all args are valid strings != NULL
@@ -126,7 +127,7 @@ gboolean owns(const char *user, const char *file)
 }
 
 /* ============================ str_to_long () ============================= */
-long str_to_long(char *n)
+long str_to_long(const char *n) {
 /* INPUT: n, a string
  * SIDE EFFECT: errors are logged
  * OUTPUT: if error LONG_MAX or LONG_MIN else long value of n
@@ -134,7 +135,6 @@ long str_to_long(char *n)
  *         and they could try something sneaky
  *         FIXME: the above NOTE may no longer be true
  */
-{
 	long val;
 	char *endptr = NULL;
 	if(n == NULL) {
@@ -150,9 +150,9 @@ long str_to_long(char *n)
 }
 
 /* ============================ static_string_valid () ===================== */
-gboolean static_string_valid(const char *s, const int len)
+gboolean static_string_valid(const char *s, size_t len)
 {
-	int i;
+	size_t i;
 	if (s == NULL)
 		return FALSE;
 	/* make sure there is a terminating NULL */
@@ -261,9 +261,7 @@ void log_argv(char *const argv[])
  * NOTE: this function exits on an error as an error means a buffer
  *       overflow would otherwise have occured
  */
-void add_to_argv(char *argv[], int *const argc, char *const arg,
-		 fmt_ptrn_t * vinfo)
-{
+void add_to_argv(char **argv, int *argc, char *arg, fmt_ptrn_t *vinfo) {
 	char *filled, *space;
 	char *ptr;
 	int i = 0;

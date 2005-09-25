@@ -20,15 +20,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <optlist.h>
-#include <stdlib.h>
-#include <pam_mount.h>
+#include <sys/types.h>
 #include <assert.h>
+#include <glib.h>
+#include <stdlib.h>
 #include <string.h>
 
-static int _parse_string_opt(const char *str, size_t, optlist_t **);
-static int _parse_opt(const char *, size_t, optlist_t **);
+#include "optlist.h"
+#include "pair.h"
+#include "private.h"
+
 static int _compare(gconstpointer, gconstpointer);
+static int _parse_opt(const char *, size_t, optlist_t **);
+static int _parse_string_opt(const char *str, size_t, optlist_t **);
 
 /* ============================ _parse_string_opt () ======================= */
 /* INPUT: str, string to parse

@@ -20,34 +20,47 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <new/common.h>
-#include <libgen.h>
+#include <config.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <glib.h>
+#include <libgen.h> // basename()
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <dirent.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <config.h>
 #ifdef HAVE_PWDB_PWDB_PUBLIC_H
-#include <pwdb/pwdb_public.h>
+#    include <pwdb/pwdb_public.h>
 #else
-#include <pwd.h>
-#endif				/* HAVE_PWDB_PWDB_PUBLIC_H */
+#    include <pwd.h>
+#endif
 
-static void _build_template_dir(char *, const char *, const char *);
+#include "common.h"
+#include "fmt_ptrn.h"
+#include "template.h"
+
 static int _at_path(char *);
+static void _build_template_dir(char *, const char *, const char *);
 static int _mk_parent_dirs(const char *);
 static int _template_write(fmt_ptrn_t *, FILE *);
+static void template_init(void);
+static void template_destroy(void);
+static void template_error(const char *);
+static int template_set_type(char *, const char *);
+static int template_set_local_dir(const char *);
+static int template_set_global_dir(const char *);
+static char *template_strerror(void);
+static int template_list(const char *);
+static int template_write_it_using_map(const char *, const int, const char *,
+    GList *, char *);
 
 /* Globals. */
 static char _template_errmsg[BUFSIZ + 1];
 static char _template_local_dir[PATH_MAX + 1];
 static char _template_global_dir[PATH_MAX + 1];
 
-/* ============================ template_init () ============================ */
-void template_init(void)
-{
+
+static void template_init(void) {
     strcpy(_template_errmsg, "no error");
 #ifdef HAVE_PWDB_PWDB_PUBLIC_H
     if (pwdb_start() != PWDB_SUCCESS)
@@ -55,26 +68,20 @@ void template_init(void)
 #endif
 }
 
-/* ============================ template_destroy () ========================= */
-void template_destroy(void)
-{
+static void template_destroy(void) {
 #ifdef HAVE_PWDB_PWDB_PUBLIC_H
     pwdb_end();
 #endif
 }
 
-/* ============================ template_set_type () ======================== */
-int template_set_type(char *type, const char *filename)
-{
+static int template_set_type(char *type, const char *filename) {
     char *dot = strrchr(filename, '.');
     if(dot != NULL)
 	strcpy(type, (dot == filename) ? dot : ++dot);
     return (dot != NULL) ? 1 : 0;
 }
 
-/* ============================ template_set_local_dir () =================== */
-int template_set_local_dir(const char *d)
-{
+static int template_set_local_dir(const char *d) {
     const char *dir;
     if((dir = g_get_home_dir()) == NULL) {
 	sprintf(_template_errmsg, "could not get homedir");
@@ -87,8 +94,7 @@ int template_set_local_dir(const char *d)
 }
 
 /* ============================ template_set_global_dir () ================== */
-int template_set_global_dir(const char *path)
-{
+static int template_set_global_dir(const char *path) {
     strncpy(_template_global_dir, path, sizeof(_template_global_dir));
     return 1;
 }
@@ -142,9 +148,7 @@ int template_find(char *template_path, /*const char *filename,*/
     return 1;
 }
 
-/* ============================ template_list () ============================ */
-int template_list(const char *type)
-{
+static int template_list(const char *type) {
     char template_path[PATH_MAX + 1];
     DIR *dp;
     printf("Personal templates for file type .%s:\n", type);
@@ -197,9 +201,8 @@ static int _template_write(fmt_ptrn_t * template, FILE * output_file)
     return 1;
 }
 
-/* ============================ template_write_it_using_map () ============== */
-int template_write_it_using_map(const char *filepath, const int force,
-				const char *template_path, GList * m, char *mapping_file)
+static int template_write_it_using_map(const char *filepath, const int force,
+ const char *template_path, GList * m, char *mapping_file)
 {
     fmt_ptrn_t map;
     struct stat stat_buf;
@@ -244,14 +247,10 @@ int template_write_it_using_map(const char *filepath, const int force,
     return 1;
 }
 
-/* ============================ template_perror () ========================== */
-void template_perror(const char *msg)
-{
+static void template_perror(const char *msg) {
     fprintf(stderr, "%s: %s\n", msg, _template_errmsg);
 }
 
-/* ============================ template_strerror () ======================== */
-char *template_strerror(void)
-{
+static char *template_strerror(void) {
     return _template_errmsg;
 }

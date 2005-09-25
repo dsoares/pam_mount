@@ -28,85 +28,122 @@
 /* Added by Stephen W. Boyer <sboyer@caldera.com>
  * for wildcard support in Include file paths
  */
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-
 /* -- AIX 4.3 compile time fix
  * by Eduardo Marcel Macan <macan@colband.com.br>
- *
  * modified by Stephen W. Boyer <sboyer@caldera.com>
  * for Unixware and OpenServer
  */
 
-#if defined (_AIX43) || defined(UNIXWARE) || defined(OSR5)
-#include <strings.h>
+#include <config.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#ifdef HAVE_SYSLOG
+#    include <syslog.h>
 #endif
 
-#include <stdarg.h>
-#include <time.h>
-#include <sys/stat.h>
-
-#ifndef WIN32
-
-#include <dirent.h>
-#include <unistd.h>
-
-#else /* ndef WIN32 */
-
-#include "readdir.h"			/* WIN32 fix by Robert J. Buck */
-
-#define strncasecmp strnicmp
-typedef unsigned long ulong;
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf
-#endif /* !WIN32 */
-
-#include <ctype.h>
 #include "dotconf.h"
 
-#ifndef MIN
-#define MIN(a,b) ((a)<(b)?(a):(b))
-#endif
+// some buffersize definitions
+#define CFG_BUFSIZE             4096    // max length of one line */
+#define CFG_MAX_OPTION          32	// max length of any option name */
+#define CFG_MAX_VALUE           4064    // max length of any options value */
+#define CFG_MAX_FILENAME        256     // max length of a filename */
+#define CFG_VALUES              16      // max # of arguments an option takes */
 
-static char name[CFG_MAX_OPTION + 1];	/* option name */
+#define CFG_INCLUDEPATH_ENV "DC_INCLUDEPATH"
+#define WILDCARDS "*?" // list of supported wild-card characters
 
-/*
- * some 'magic' options that are predefined by dot.conf itself for
- * advanced functionality
- */
-static DOTCONF_CB(dotconf_cb_include);		/* internal 'Include'     */
-static DOTCONF_CB(dotconf_cb_includepath);	/* internal 'IncludePath' */
-static void skip_whitespace(char **, int, char);
-static void copy_word(char **, char **, int, char);
+// for convenience of terminating the dotconf_options list
+#define LAST_CONTEXT_OPTION     {"", 0, NULL, NULL, 0}
+
+// some flags that change the runtime behaviour of dotconf
+#define NONE                   0
+#define CASE_INSENSITIVE       (1 << 0) // match option names case insensitive
+#define DONT_SUBSTITUTE        (1 << 1) // do not call substitute_env after read_arg
+#define NO_INLINE_COMMENTS     (1 << 2) // do not allow inline comments
+#define DUPLICATE_OPTION_NAMES (1 << 3) // allow for duplicate option names
+
+// syslog style errors as suggested by Sander Steffann <sander@steffann.nl>
+#ifdef HAVE_SYSLOG
+#    define DCLOG_EMERG         LOG_EMERG
+#    define DCLOG_ALERT         LOG_ALERT
+#    define DCLOG_CRIT          LOG_CRIT
+#    define DCLOG_ERR           LOG_ERR
+#    define DCLOG_WARNING       LOG_WARNING
+#    define DCLOG_NOTICE        LOG_NOTICE
+#    define DCLOG_INFO          LOG_INFO
+#    define DCLOG_DEBUG         LOG_DEBUG
+#    define DCLOG_LEVELMASK     LOG_PRIMASK
+#else
+    enum {
+        DCLOG_EMERG = 0,
+        DCLOG_ALERT,
+        DCLOG_CRIT,
+        DCLOG_ERR,
+        DCLOG_WARNING,
+        DCLOG_NOTICE,
+        DCLOG_INFO,
+        DCLOG_DEBUG,
+    };
+#    define DCLOG_LEVELMASK 7 // mask off the level value
+#endif // HAVE_SYSLOG
+
+// error constants
+enum {
+    ERR_NOERROR = 0,
+    ERR_PARSE_ERROR,
+    ERR_UNKNOWN_OPTION,
+    ERR_WRONG_ARG_COUNT,
+    ERR_INCLUDE_ERROR,
+    ERR_NOACCESS,
+    ERR_USER = 0x1000, // base for userdefined errno's
+};
+
+enum callback_types
+{
+	ERROR_HANDLER = 1,
+	CONTEXT_CHECKER
+};
+
+typedef enum callback_types callback_types;
+
 static const configoption_t *get_argname_fallback(const configoption_t *);
-static char *dotconf_substitute_env(configfile_t *, char *);
-static int dotconf_warning(configfile_t *, int, unsigned long, const char *, ...);
-static void dotconf_register_options(configfile_t *, const configoption_t *);
+static void copy_word(char **, char **, int, char);
 static void dotconf_callback(configfile_t *, callback_types, dotconf_callback_t);
+static DOTCONF_CB(dotconf_cb_include);          // internal 'Include'
+static DOTCONF_CB(dotconf_cb_includepath);      // internal 'IncludePath'
+static const char *dotconf_command_loop_until_error(configfile_t *);
 static int dotconf_continue_line(char *, size_t);
-static int dotconf_get_next_line(char *, size_t, configfile_t *);
-static char *dotconf_get_here_document(configfile_t *, const char *);
-static const char *dotconf_invoke_command(configfile_t *, command_t *);
-static char *dotconf_read_arg(configfile_t *, char **);
 static configoption_t *dotconf_find_command(configfile_t *, const char *);
+static int dotconf_find_wild_card(char *, char *, char **, char **, char **);
+static void dotconf_free_command(command_t *);
+static char *dotconf_get_here_document(configfile_t *, const char *);
+static int dotconf_get_next_line(char *, size_t, configfile_t *);
+static const char *dotconf_handle_command(configfile_t *, char *);
+static int dotconf_handle_star(command_t *, char *, char *, char *);
+static int dotconf_handle_question_mark(command_t *, char *, char *, char *);
+static int dotconf_handle_wild_card(command_t *, char, char *, char *, char *);
+static const char *dotconf_invoke_command(configfile_t *, command_t *);
+static int dotconf_is_wild_card(char);
+static int dotconf_question_mark_match(char *, char *, char *);
+static char *dotconf_read_arg(configfile_t *, char **);
+static void dotconf_register_options(configfile_t *, const configoption_t *);
 static void dotconf_set_command(configfile_t *, const configoption_t *,
     char *, command_t *);
-static void dotconf_free_command(command_t *);
-static const char *dotconf_handle_command(configfile_t *, char *);
-static const char *dotconf_command_loop_until_error(configfile_t *);
-static int dotconf_is_wild_card(char);
-static int dotconf_handle_wild_card(command_t *, char, char *, char *, char *);
-static void dotconf_wild_card_cleanup(char *, char *);
-static int dotconf_find_wild_card(char *, char *, char **, char **, char **);
-static int dotconf_strcmp_from_back(const char *, const char *);
-static int dotconf_question_mark_match(char *, char *, char *);
 static int dotconf_star_match(char *, char *, char *);
-static int dotconf_handle_question_mark(command_t *, char *, char *, char *);
-static int dotconf_handle_star(command_t *, char *, char *, char *);
-static DOTCONF_CB(dotconf_cb_include);
-static DOTCONF_CB(dotconf_cb_includepath);
+static int dotconf_strcmp_from_back(const char *, const char *);
+static char *dotconf_substitute_env(configfile_t *, char *);
+static int dotconf_warning(configfile_t *, int, unsigned long, const char *, ...);
+static void dotconf_wild_card_cleanup(char *, char *);
+static void skip_whitespace(char **, int, char);
+static inline long MIN(long, long);
 
 static configoption_t dotconf_options[] =
 {
@@ -114,6 +151,8 @@ static configoption_t dotconf_options[] =
 	{ "IncludePath", ARG_STR, dotconf_cb_includepath, NULL, CTX_ALL },
 	LAST_CONTEXT_OPTION
 };
+
+static char name[CFG_MAX_OPTION + 1]; // option name
 
 static void skip_whitespace(char **cp, int n, char term)
 {
@@ -726,7 +765,7 @@ int dotconf_command_loop(configfile_t *configfile)
 	return 1;
 }
 
-configfile_t *dotconf_create(char *fname, const configoption_t * options,
+configfile_t *dotconf_create(const char *fname, const configoption_t *options,
                              context_t *context, unsigned long flags)
 {
 	configfile_t *new = NULL;
@@ -1339,4 +1378,8 @@ static DOTCONF_CB(dotconf_cb_includepath) {
 	if(env == NULL)
 		snprintf(cmd->configfile->includepath, CFG_MAX_FILENAME, "%s", cmd->data.str);
 	return NULL;
+}
+
+static inline long MIN(long a, long b) {
+    return (a < b) ? a : b;
 }

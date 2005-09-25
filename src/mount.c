@@ -21,44 +21,61 @@
  */
 
 #include <config.h>
-#include <glib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <signal.h>
-#include <errno.h>
-#include <string.h>
-#include <pwd.h>
-#include <assert.h>
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-#include <fstab.h>
-#elif defined(__linux__)
-#include <mntent.h>
-/* FIXME: for LOOP_ code below:
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/loop.h>
-#include <linux/major.h>
 #include <sys/stat.h>
-*/
-#endif
-#ifdef HAVE_LIBCRYPTO
-#ifndef EVP_MAX_BLOCK_LENGTH
-#define EVP_MAX_BLOCK_LENGTH 32 /* some older openssl versions need this */
-#endif
-#else
-#define EVP_MAX_BLOCK_LENGTH 0  /* FIXME: this is ugly, but needed */
-#endif
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <stdlib.h>
+#include <assert.h>
+#include <errno.h>
+#include <glib.h>
 #include <limits.h>
-#include <pam_mount.h>
-#include <libgen.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <pwd.h>
 
-extern gboolean debug;
+#include "fmt_ptrn.h"
+#include "misc.h"
+#include "mount.h"
+#include "optlist.h"
+#include "pam_mount.h"
+#include "private.h"
+#include "readconfig.h"
 
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#    include <fstab.h>
+#elif defined(__linux__)
+#    include <mntent.h>
+/* FIXME: for LOOP_ code below:
+#    include <sys/ioctl.h>
+#    include <sys/stat.h>
+#    include <fcntl.h>
+#    include <linux/loop.h>
+#    include <linux/major.h>
+*/
+#endif
+
+#ifdef HAVE_LIBCRYPTO
+#    ifndef EVP_MAX_BLOCK_LENGTH
+#        define EVP_MAX_BLOCK_LENGTH 32 // some older openssl versions need this
+#    endif
+#else
+#    define EVP_MAX_BLOCK_LENGTH 0 // FIXME: this is ugly, but needed
+#endif
+
+static int already_mounted(const config_t * const, const unsigned int,
+    char * const, fmt_ptrn_t *);
+static int check_filesystem(config_t *, const unsigned int, fmt_ptrn_t *,
+    const unsigned char *, size_t);
+static int do_losetup(config_t *, const unsigned int, fmt_ptrn_t *,
+    const unsigned char *, size_t);
+static int do_unlosetup(config_t *, fmt_ptrn_t *);
 static void log_output(int);
-static void run_lsof(const struct config_t *, fmt_ptrn_t *);
+static void log_pm_input(const config_t * const, const unsigned int);
+static int mkmountpoint(vol_t * const, const char * const);
+static int pipewrite(int, const void *, size_t);
+static void run_lsof(const config_t *, fmt_ptrn_t *);
 
 /* ============================ log_output () ============================== */
 /* INPUT: fd, a valid file descriptor
@@ -84,7 +101,7 @@ static void log_output(int fd)
  * NOTE: this fn simply runs lsof on a directory and logs its output for
  * debugging purposes
  */
-static void run_lsof(const struct config_t *config, fmt_ptrn_t * vinfo) {
+static void run_lsof(const config_t *config, fmt_ptrn_t *vinfo) {
 	int i, _argc = 0, cstdout = -1, child_exit;
 	char *_argv[MAX_PAR + 1];
 	GError *err = NULL;
@@ -124,9 +141,8 @@ static void run_lsof(const struct config_t *config, fmt_ptrn_t * vinfo) {
  * FN VAL: 1 if config->volume[vol].volume is mounted, 0 if not, -1 on error
  *         errors are logged
  */
-static int already_mounted(const struct config_t *const config,
-			   const unsigned int vol, char *const mntpt,
-			   fmt_ptrn_t *vinfo)
+static int already_mounted(const config_t *const config,
+ const unsigned int vol, char *const mntpt, fmt_ptrn_t *vinfo)
 {
 	char match[PATH_MAX + 1];
 	int mounted = 0;
@@ -304,8 +320,8 @@ static int already_mounted(const struct config_t *const config,
 }
 
 /* ============================ log_pm_input () ============================ */
-static void log_pm_input(const struct config_t *const config,
-			 const unsigned int vol)
+static void log_pm_input(const config_t *const config,
+ const unsigned int vol)
 {
 	char options[MAX_PAR + 1];
 	w4rn("pam_mount: %s\n", "information for mount:");
@@ -333,8 +349,7 @@ static void log_pm_input(const struct config_t *const config,
 /* POST:   the directory named d exists && volume->created_mntpt = TRUE
  * FN VAL: if error 0 else 1, errors are logged
  */
-static int mkmountpoint(vol_t * const volume, const char *const d)
-{
+static int mkmountpoint(vol_t *const volume, const char *const d) {
 	int ret = 1;
 	struct passwd *passwd_ent;
 	char dcopy[PATH_MAX + 1], *parent;
@@ -375,12 +390,9 @@ static int mkmountpoint(vol_t * const volume, const char *const d)
 	return ret;
 }
 
-/* ============================ do_unmount () ============================== */
-int
-do_unmount(struct config_t *config, const unsigned int vol,
-	   fmt_ptrn_t * vinfo, const char *const password,
-	   const gboolean mkmntpoint)
-/* PRE:    config points to a valid struct config_t*
+int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
+ const char *const password, const gboolean mkmntpoint)
+/* PRE:    config points to a valid config_t*
  *         config->volume[vol] is a valid struct vol_t
  *         vinfo is a valid struct fmt_ptrn_t
  *         mkmntpoint is true if mount point should be rmdir'ed
@@ -444,18 +456,14 @@ do_unmount(struct config_t *config, const unsigned int vol,
 	return ret;
 }
 
-/* ============================ pipewrite () =============================== */ 
 /* INPUT: fd, a valid file descriptor; buf, a buffer of size count
  * SIDE EFFECTS: buf is written to fd
  * OUTPUT: number of bytes written or 0 on error
  * NOTE: SIGPIPE is ignored during this operation to avoid "broken pipe"
  */
-int pipewrite(int fd, const void *buf, size_t count)
-{
+static int pipewrite(int fd, const void *buf, size_t count) {
 	int fnval;
-	struct sigaction ignoresact = {
-		.sa_handler = SIG_IGN,
-	}, oldsact;
+	struct sigaction ignoresact = {.sa_handler = SIG_IGN}, oldsact;
 
 	assert(fd >= 0);
 	assert(buf != NULL);
@@ -476,12 +484,9 @@ _return:
 	return fnval;
 }
 
-/* ============================ do_losetup () ============================== */
-int
-do_losetup(struct config_t *config, const unsigned int vol,
-	   fmt_ptrn_t * vinfo, const unsigned char *password,
-	   size_t password_len)
-/* PRE:    config points to a valid struct config_t*
+static int do_losetup(config_t *config, const unsigned int vol,
+ fmt_ptrn_t *vinfo, const unsigned char *password, size_t password_len)
+/* PRE:    config points to a valid config_t*
  *         config->volume[vol] is a valid struct vol_t
  *         vinfo is a valid struct fmt_ptrn_t
  *         config->volume[vol].options is valid
@@ -544,14 +549,12 @@ do_losetup(struct config_t *config, const unsigned int vol,
 	return ret;
 }
 
-/* ============================ do_unlosetup () ============================ */
-int do_unlosetup(struct config_t *config, fmt_ptrn_t * vinfo)
-/* PRE:    config points to a valid struct config_t*
+static int do_unlosetup(config_t *config, fmt_ptrn_t *vinfo) {
+/* PRE:    config points to a valid config_t*
  *         vinfo is a valid struct fmt_ptrn_t
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
  */
-{
 	pid_t pid;
 	GError *err = NULL;
 	char *_argv[MAX_PAR + 1];
@@ -583,11 +586,8 @@ int do_unlosetup(struct config_t *config, fmt_ptrn_t * vinfo)
 	return !WEXITSTATUS(child_exit);
 }
 
-/* ============================ check_filesystem () ======================== */
-static int
-check_filesystem(struct config_t *config, const unsigned int vol,
-		 fmt_ptrn_t * vinfo, const unsigned char *password,
-		 size_t password_len)
+static int check_filesystem(config_t *config, const unsigned int vol,
+ fmt_ptrn_t * vinfo, const unsigned char *password, size_t password_len)
 /* PRE:    config points to a valid struct config_t*
  *         config->volume[vol] is a valid struct vol_t
  *         vinfo is a valid struct fmt_ptrn_t
@@ -654,11 +654,8 @@ check_filesystem(struct config_t *config, const unsigned int vol,
 #endif
 }
 
-/* ============================ do_mount () ================================ */
-int
-do_mount(struct config_t *config, const unsigned int vol,
-	 fmt_ptrn_t * vinfo, const char *password,
-	 const gboolean mkmntpoint)
+int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
+ const char *password, const gboolean mkmntpoint)
 /* PRE:    config points to a valid struct config_t*
  *         config->volume[vol] is a valid struct vol_t
  *         vinfo is a valid struct fmt_ptrn_t
@@ -830,12 +827,9 @@ _return:
  * NOTE:   * checked by volume_record_sane
  *         ** checked by read_volume()
  */
-int mount_op(int (*mnt)
-	      (struct config_t * config, const unsigned int vol,
-	       fmt_ptrn_t * vinfo, const char *password,
-	       const int mkmntpoint), struct config_t *config,
-	     const unsigned int vol, const char *password,
-	     const int mkmntpoint)
+int mount_op(int (*mnt)(config_t *, const unsigned int, fmt_ptrn_t *,
+ const char *, const int), config_t *config, const unsigned int vol,
+ const char *password, const int mkmntpoint)
 {
 	int fnval;
 	fmt_ptrn_t vinfo;

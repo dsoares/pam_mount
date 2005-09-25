@@ -22,8 +22,9 @@
 
 #include <assert.h>
 #include <glib.h>
-#include <new/buffer.h>
 #include <string.h>
+
+#include "buffer.h"
 
 /* ============================ buffer_t_valid () ========================= */
 gboolean buffer_t_valid(const buffer_t *b)

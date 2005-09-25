@@ -20,28 +20,39 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <config.h>
-#include <glib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <signal.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <pwd.h>
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
 #define PAM_SM_SESSION
 #define PAM_SM_PASSWORD
 
-#include <pam_mount.h>
+#include <security/pam_modules.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <assert.h>
+#include <errno.h>
+#include <glib.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
+#include "fmt_ptrn.h"
+#include "misc.h"
+#include "mount.h"
+#include "pam_mount.h"
+#include "private.h"
+#include "readconfig.h"
+
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#    define CONFIGFILE "/etc/pam_mount.conf"
+#else
+#    define CONFIGFILE "/etc/security/pam_mount.conf"
+#endif
+
+static void clean_system_authtok(pam_handle_t *, void *, int);
 static int converse(pam_handle_t *, int, const struct pam_message **,
-  struct pam_response **);
+    struct pam_response **);
+static int modify_pm_count(config_t *, char *, char *);
+static void parse_pam_args(int, const char **);
+static int read_password(pam_handle_t *, const char *, char **);
 
 gboolean debug;
 config_t config;
@@ -50,8 +61,7 @@ pam_args_t args;
 /* ============================ parse_pam_args () ========================== */
 /* INPUT: argc and argv, standard main()-type arguments
  * SIDE EFFECTS: gloabl args is initialized, based on argc and argv */
-void parse_pam_args(int argc, const char **argv)
-{
+static void parse_pam_args(int argc, const char **argv) {
 	int i;
 
 	assert(argc >= 0);
@@ -75,8 +85,7 @@ void parse_pam_args(int argc, const char **argv)
 /* INPUT: pamh; data; errcode
  * SIDE EFFECTS: if data does not point to NULL then it is zeroized and freed 
  * NOTE: this is registered as a PAM callback function and called directly */
-void clean_system_authtok(pam_handle_t * pamh, void *data, int errcode)
-{
+static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode) {
 	w4rn("pam_mount: clean system authtok (%d)\n", errcode);
 /* FIXME: not binary password safe */
 /* FIXME: valgrind does not like -- called previously?
@@ -125,21 +134,20 @@ converse(pam_handle_t * pamh, int nargs,
  * OUTPUT: any PAM error code encountered or PAM_SUCCESS
  * NOTE:   adapted from pam_unix/support.c (_unix_read_password)
  */
-int read_password(pam_handle_t * pamh, const char *prompt1, char **pass)
-{
+static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
 	int retval;
 	struct pam_message msg;
 	const struct pam_message *pmsg = &msg;
 	struct pam_response *resp = NULL;
 
 	assert(pamh != NULL);
-	assert(prompt1 != NULL);
+	assert(prompt != NULL);
 	assert(pass != NULL);
 
 	w4rn("pam_mount: %s\n", "enter read_password");
 	*pass = NULL;
 	msg.msg_style = PAM_PROMPT_ECHO_OFF;
-	msg.msg = prompt1;
+	msg.msg = prompt;
 	retval = converse(pamh, 1, &pmsg, &resp);
 	if (retval == PAM_SUCCESS)
 		*pass = strdup(resp->resp);
@@ -246,8 +254,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
  * FIXME:  should this be replaced with utmp (man utmp) usage?
  *         Is utmp portable?  This function is nasty and MAY BE INSECURE.
  */
-int modify_pm_count(config_t *config, char *user, char *operation)
-{
+static int modify_pm_count(config_t *config, char *user, char *operation) {
 	FILE *fp;
 	GError *err;
 	fmt_ptrn_t vinfo;

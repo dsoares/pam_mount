@@ -20,9 +20,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <new/pair.h>
 #include <stdlib.h>
 #include <string.h>
+#include <glib.h>
+
+#include "pair.h"
 
 /* ========================== pair_t_valid () =============================== */
 gboolean pair_t_valid(const pair_t *p)
@@ -42,9 +44,7 @@ void pair_init(pair_t * pair, void *key, void *val,
 }
 
 /* ========================== pair_destroy () =============================== */
-void pair_destroy(void *vp) {
-    pair_t *pair = vp;
-
+void pair_destroy(pair_t *pair) {
     if(pair->destroy_k != NULL)
         pair->destroy_k(pair->key);
     if(pair->destroy_v != NULL)

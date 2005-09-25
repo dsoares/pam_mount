@@ -23,28 +23,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <stdio.h>
-#include <string.h>
-#include <getopt.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <assert.h>
-#include <pam_mount.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "misc.h"
 
 int debug;
-const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
+static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
 typedef struct settings_t {
 	char user[MAX_PAR + 1];
 	long operation;
 } settings_t;
 
-static void usage(int, const char *, const char *);
-static void set_defaults(settings_t *);
-static void parse_args(int, char **, settings_t *);
 static int modify_pm_count(const char *, long);
+static void parse_args(int, char **, settings_t *);
+static void set_defaults(settings_t *);
+static void usage(int, const char *, const char *);
 
 /* ============================ usage () ==================================== */
 static void usage(int exitcode, const char *error, const char *more) {

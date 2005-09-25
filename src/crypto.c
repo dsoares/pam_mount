@@ -21,25 +21,28 @@
  */
 
 #include <config.h>
-#include <assert.h>
 #include <sys/types.h>
+#include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #ifdef HAVE_LIBCRYPTO
 #    include <openssl/ssl.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#ifndef EVP_MAX_BLOCK_LENGTH
-#define EVP_MAX_BLOCK_LENGTH 32	/* some older openssl versions need this */
-#endif
+#    include <openssl/evp.h>
+#    include <openssl/err.h>
+#    ifndef EVP_MAX_BLOCK_LENGTH
+#        define EVP_MAX_BLOCK_LENGTH 32	/* some older openssl versions need this */
+#    endif
 #else
-#define EVP_MAX_BLOCK_LENGTH 0	/* FIXME: this is ugly, but needed */
+#    define EVP_MAX_BLOCK_LENGTH 0	/* FIXME: this is ugly, but needed */
 #endif
-#include <pam_mount.h>
+
+#include "crypto.h"
+#include "misc.h"
 
 #ifdef HAVE_LIBCRYPTO
-static void sslerror(const char *);
 static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,
   unsigned char *, unsigned char *);
+static void sslerror(const char *);
 
 /* human readable SSL error message */
 static void sslerror(const char *msg)
@@ -108,11 +111,8 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
  *       pt_fs_key will contain binary data; don't use strlen, strcpy, etc.
  *       pt_fs_key may contain trailing garbage; use pt_fs_key_len
  */
-int
-decrypted_key(unsigned char *const pt_fs_key, size_t * const pt_fs_key_len,
-	      const char *const fs_key_path,
-	      const char *const fs_key_cipher,
-	      const char *const authtok)
+int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
+ const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
 {
 /* FIXME: this function may need to be broken up and made more readable */
 #ifdef HAVE_LIBCRYPTO
