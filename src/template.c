@@ -206,7 +206,7 @@ int template_write_it_using_map(const char *filepath, const int force,
     struct stat stat_buf;
     FILE *output_file;
     GList *ptr;
-    if (strcmp("-", filepath)) {
+    if(strcmp("-", filepath) != 0) {
     if (!force && stat(filepath, &stat_buf) != -1) {
 	sprintf(_template_errmsg, "%s exists", filepath);
 	return 0;

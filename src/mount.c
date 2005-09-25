@@ -216,8 +216,8 @@ static int already_mounted(const struct config_t *const config,
 			strncpy(mntpt, mtab_record->mnt_dir, PATH_MAX);
 			mntpt[PATH_MAX] = 0x00;
 			mounted = 1;
-			if (!strcmp(mtab_record->mnt_dir,
-				    config->volume[vol].mountpoint)) {
+			if(strcmp(mtab_record->mnt_dir,
+				    config->volume[vol].mountpoint) == 0) {
 				strncpy(mntpt, mtab_record->mnt_dir,
 					PATH_MAX);
 				mntpt[PATH_MAX] = 0x00;
@@ -283,9 +283,9 @@ static int already_mounted(const struct config_t *const config,
 				strncpy(mntpt, mp, PATH_MAX);
 				mntpt[PATH_MAX] = 0x00;
 				mounted = 1;
-				if (!strcmp(mp,
+				if(strcmp(mp,
 					    config->volume[vol].
-					    mountpoint)) {
+					    mountpoint) == 0) {
 					strncpy(mntpt, mp, PATH_MAX);
 					mntpt[PATH_MAX] = 0x00;
 					mounted = 1;

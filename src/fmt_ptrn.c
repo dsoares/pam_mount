@@ -408,7 +408,7 @@ static gboolean _read_modifier(fmt_ptrn_t * x, char **ptrn,
 	assert(_stack_t_valid(modifier));
 
 	while (mod_fn[i].id) {
-		if (!strncmp(mod_fn[i].id, *ptrn, strlen(mod_fn[i].id))) {
+		if(strncmp(mod_fn[i].id, *ptrn, strlen(mod_fn[i].id)) == 0) {
 			*ptrn +=
 			    strlen(mod_fn[i].id) +
 			    (mod_fn[i].has_arg ? 0 : 1);

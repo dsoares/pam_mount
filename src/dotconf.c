@@ -347,8 +347,7 @@ char *dotconf_get_here_document(configfile_t *configfile, const char *delimit)
 	limit_len = snprintf(here_limit, 9, "%s", delimit);
 	while (!dotconf_get_next_line(buffer, CFG_BUFSIZE, configfile))
 	{
-		if (!strncmp(here_limit, buffer, limit_len - 1))
-		{
+		if(strncmp(here_limit, buffer, limit_len - 1) == 0) {
 			here_string = 0;
 			break;
 		}
@@ -513,7 +512,7 @@ void dotconf_set_command(configfile_t *configfile, const configoption_t *option,
 		/* check if it's a here-document and act accordingly */
 		skip_whitespace(&cp, eob - cp, 0);
 
-		if (!strncmp("<<", cp, 2)) {
+		if(strncmp("<<", cp, 2) == 0) {
 			cmd->data.str = dotconf_get_here_document(configfile, cp + 2);
 			cmd->arg_count = 1;
 		}

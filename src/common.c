@@ -156,7 +156,7 @@ void print_dir(DIR * dp)
 {
     struct dirent *ent;
     while ((ent = readdir(dp))) {
-	if (!(strcmp(ent->d_name, ".") && strcmp(ent->d_name, "..")))
+	if(strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
 	    continue;
 	printf("  %s\n", ent->d_name);
     }

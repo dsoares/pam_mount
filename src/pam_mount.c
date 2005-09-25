@@ -62,9 +62,9 @@ void parse_pam_args(int argc, const char **argv)
 	args.auth_type = GET_PASS;
 	for (i = 0; i < argc; i++) {
 		w4rn("pam_mount: pam_sm_open_session args: %s\n", argv[i]);
-		if (!strcmp("use_first_pass", argv[i]))
+		if(strcmp("use_first_pass", argv[i]) == 0)
 			args.auth_type = USE_FIRST_PASS;
-		else if (!strcmp("try_first_pass", argv[i]))
+		else if(strcmp("try_first_pass", argv[i]) == 0)
 			args.auth_type = TRY_FIRST_PASS;
 		else
 			w4rn("pam_mount: %s\n", "bad pam_mount option");

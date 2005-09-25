@@ -545,7 +545,7 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 		return 0;
 	}
 	fstab_record = getmntent(fstab);
-	while (fstab_record && strcmp(fstab_record->mnt_fsname, volume))
+	while (fstab_record && strcmp(fstab_record->mnt_fsname, volume) != 0)
 		fstab_record = getmntent(fstab);
 	if (!fstab_record) {
 		l0g("pam_mount: could not get %dth fstab field for %s\n",
@@ -623,16 +623,16 @@ DOTCONF_CB(read_volume)
 		return "bad number of args for volume";
 	else if (*((int *) cmd->context) && strcmp
 		 (cmd->data.list[0],
-		  ((config_t *) cmd->option->info)->user)
-		 && strcmp(cmd->data.list[0], "*")) {
+		  ((config_t *) cmd->option->info)->user) != 0
+		 && strcmp(cmd->data.list[0], "*") != 0) {
 		/*
 		 * user may use other usernames to mount volumes using
 		 * luserconf
 		 */
 		w4rn("pam_mount: ignoring volume record (not for me)\n");
 		return NULL;
-	} else if (!strcmp(cmd->data.list[0], "*")
-		   && !strcmp(config.user, "root")) {
+	} else if(strcmp(cmd->data.list[0], "*") == 0 &&
+		   strcmp(config.user, "root") == 0) {
 		/* FIXME: should use uid == 0, not "root" */
 		w4rn("pam_mount: volume wildcard ignored for root");
 		return NULL;
@@ -882,7 +882,7 @@ int expandconfig(config_t * config)
 						fs_key_path),
 					 config->user))
 				return 0;
-		if (!strcmp(config->volume[i].user, "*")) {
+		if(strcmp(config->volume[i].user, "*") == 0) {
 			optlist_t *e;
 			config->volume[i].used_wildcard = TRUE;
 			strcpy(config->volume[i].user, config->user);

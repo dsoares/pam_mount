@@ -69,7 +69,7 @@ static int _parse_string_opt(const char *str, size_t len,
       _return:
 
 	assert(!ret || (optlist_exists(*optlist, key)
-			&& !strcmp(optlist_value(*optlist, key), val)));
+			&& strcmp(optlist_value(*optlist, key), val) == 0));
 
 	return ret;
 }
