@@ -53,7 +53,7 @@ int apply_basename(buffer_t * dest, fmt_ptrn_t * x, char *arg)
 {
     char *ptr = strchr(dest->data, '.');
     if (ptr)
-	*ptr = 0x00;
+	*ptr = '\0';
     return 1;
 }
 
@@ -182,7 +182,7 @@ int apply_before(buffer_t * dest, fmt_ptrn_t * x, char *arg)
         for (i = old_len - 1, j = new_len - 1; i > 0; i--, j--)
 	    dest->data[j] = dest->data[i];
     dest->data[src_len] = dest->data[0];
-    dest->data[new_len] = 0x00;
+    dest->data[new_len] = '\0';
     /* Copy arg into dest. */
     for (i = 0; i < src_len; i++)
 	dest->data[i] = arg[i];

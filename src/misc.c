@@ -158,7 +158,7 @@ gboolean static_string_valid(const char *s, const int len)
 		return FALSE;
 	/* make sure there is a terminating NULL */
 	for (i = 0; i < len; i++)
-		if (s[i] == 0x00)
+		if(s[i] == '\0')
 			return TRUE;
 	return FALSE;
 }
@@ -244,12 +244,12 @@ void log_argv(char *const argv[])
 		return;
 	g_strlcpy(str, argv[0], MAX_PAR + 1);
 	g_strlcat(str, " ", MAX_PAR + 1);
-	str[MAX_PAR] = (char) 0x00;
+	str[MAX_PAR] = '\0';
 	for (i = 1; argv[i] != NULL && strlen(str) < MAX_PAR - 1; i++) {
 		g_strlcat(str, "[", MAX_PAR + 1);
 		g_strlcat(str, argv[i], MAX_PAR + 1);
 		g_strlcat(str, "] ", MAX_PAR + 1);
-		str[MAX_PAR] = (char) 0x00;
+		str[MAX_PAR] = '\0';
 		if (strlen(str) >= MAX_PAR)	/* Should never be greater */
 			break;
 	}
@@ -303,7 +303,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 			argv[(*argc)][i++] = ' ';
 			ptr += 2;
 		} else if (*ptr == ' ') {
-			argv[(*argc)][i] = 0x00;
+			argv[*argc][i] = '\0';
 
 			while (*ptr == ' ')
 				ptr++;
@@ -317,7 +317,7 @@ void add_to_argv(char *argv[], int *const argc, char *const arg,
 			ptr++;	
 		}
 	}
-	argv[(*argc)][i] = 0x00;
+	argv[*argc][i] = '\0';
 	argv[++(*argc)] = NULL;
 }
 

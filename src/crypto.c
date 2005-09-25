@@ -133,7 +133,7 @@ decrypted_key(unsigned char *const pt_fs_key, size_t * const pt_fs_key_len,
 	assert(fs_key_path != NULL);	/* path to efsk */
 	assert(authtok != NULL);	/* should unlock efsk */
 
-	memset(pt_fs_key, 0x00, MAX_PAR + EVP_MAX_BLOCK_LENGTH);
+	memset(pt_fs_key, 0, MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 	OpenSSL_add_all_ciphers();
 	EVP_CIPHER_CTX_init(&ctx);
 	SSL_load_error_strings();

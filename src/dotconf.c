@@ -736,7 +736,7 @@ configfile_t *dotconf_create(char *fname, const configoption_t * options,
 	new->filename = strdup(fname);
 
 	new->includepath = malloc(CFG_MAX_FILENAME);
-	new->includepath[0] = 0x00;
+	new->includepath[0] = '\0';
 
 	/* take includepath from environment if present */
 	if ((dc_env = getenv(CFG_INCLUDEPATH_ENV)) != NULL)

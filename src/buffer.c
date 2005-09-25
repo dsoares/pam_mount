@@ -31,13 +31,13 @@ gboolean buffer_t_valid(const buffer_t *b)
 	int i;
 	if (b == NULL)
 		return FALSE;
-	if (b->data == 0x00 && b->size > 0)
+	if(b->data == NULL && b->size > 0)
 		return FALSE;
-	if (b->data != 0x00 && b->size == 0)
+	if(b->data != NULL && b->size == 0)
 		return FALSE;
-	if (b->data != 0x00) {
+	if(b->data != NULL) {
 		for (i = 0; i < b->size; i++) {
-			if (b->data[i] == 0x00)
+			if(b->data[i] == '\0')
 				return TRUE;
 		}
 	} else
@@ -50,9 +50,9 @@ void buffer_clear(buffer_t *buf)
 {
     assert(buffer_t_valid(buf));
 
-    if (buf->data != 0x00) {
+    if(buf->data != NULL) {
             g_free(buf->data);
- 	    buf->data = 0x00;
+ 	    buf->data = NULL;
     }
     buf->size = 0;
 
@@ -64,7 +64,7 @@ buffer_t buffer_init(void)
 {
     buffer_t x;
 
-    x.data = 0x00;
+    x.data = NULL;
     x.size = 0;
 
     assert(buffer_t_valid(&x));
@@ -102,7 +102,7 @@ size_t buffer_len(buffer_t *buf)
 {
     assert(buffer_t_valid(buf));
 
-    if (buf->data == 0x00)
+    if(buf->data == NULL)
         return 0;
     else
         return (strlen(buf->data));
@@ -117,7 +117,7 @@ void realloc_n_cat(buffer_t * dest, const char *src)
     assert(src != NULL);
 
     new_len = (dest && dest->data ? strlen(dest->data) : 0) + strlen(src);
-    if (dest->data == 0x00) {
+    if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
 	dest->data = g_new0(char, dest->size);
     } else if (new_len + 1 > dest->size) {
@@ -143,7 +143,7 @@ void realloc_n_ncat(buffer_t * dest, const char *src,
     new_len = (dest && dest->data ? strlen(dest->data) : 0) + (src_len <
 							 nc ? src_len :
 							 nc);
-    if (dest->data == 0x00) {
+    if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
 	dest->data = g_new0(char, dest->size);
     } else if (new_len + 1 > dest->size) {
@@ -152,7 +152,7 @@ void realloc_n_ncat(buffer_t * dest, const char *src,
     }
     /* g_strlcat will not work because its nc is the size of dest */
     strncat(dest->data, src, nc);
-    dest->data[dest->size - 1] = 0x00;
+    dest->data[dest->size - 1] = '\0';
 
     assert(buffer_t_valid(dest));
 }
@@ -164,7 +164,7 @@ void realloc_n_cpy(buffer_t * dest, const char *src)
     assert(src != NULL);
 
     if (dest->data)
-	*dest->data = 0x00;
+	*dest->data = '\0';
     realloc_n_cat(dest, src);
 
     assert(buffer_t_valid(dest));

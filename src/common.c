@@ -58,7 +58,7 @@ static char *_firstname(void)
 		return NULL;
 	ptr = strchr(name, ' ');
 	if (ptr)
-		*ptr = 0x00;
+		*ptr = '\0';
 	return name;
 }
 
@@ -67,7 +67,7 @@ static void shift_str (char *ptr_0, char *ptr_1)
 {
     while (*ptr_1)
         *ptr_0++ = *ptr_1++;
-    *ptr_0 = 0x00;
+    *ptr_0 = '\0';
 }
 
 /* ============================ middlename () =============================== */
@@ -82,7 +82,7 @@ static char *_middlename(void)
 	ptr_1 = strchr (++ptr_0, ' ');	
 	if (! ptr_1)
 		return NULL;
-	*ptr_1 = 0x00;
+	*ptr_1 = '\0';
 	shift_str (name, ptr_0);
         return name;
 }
@@ -118,7 +118,7 @@ char *day(char *d)
 {
     time_t sec_since_1970;
     struct tm *curr_time;
-    *d = 0x00;
+    *d = '\0';
     time(&sec_since_1970);
     curr_time = localtime(&sec_since_1970);
     strftime(d, 3, "%d", curr_time);
@@ -131,7 +131,7 @@ char *month(char *m)
 {
     time_t sec_since_1970;
     struct tm *curr_time;
-    *m = 0x00;
+    *m = '\0';
     time(&sec_since_1970);
     curr_time = localtime(&sec_since_1970);
     strftime(m, 10, "%B", curr_time);
@@ -144,7 +144,7 @@ char *year(char *y)
 {
     time_t sec_since_1970;
     struct tm *curr_time;
-    *y = 0x00;
+    *y = '\0';
     time(&sec_since_1970);
     curr_time = localtime(&sec_since_1970);
     strftime(y, 18, "%Y", curr_time);
@@ -180,7 +180,7 @@ void initialize_fillers(fmt_ptrn_t *x)
 {
     int i;
     char b[BUFSIZ + 1], *key, *val;
-    for (i = 0; environ[i] != 0x00; i++)
+    for(i = 0; environ[i] != NULL; i++)
         if (parse_kv (environ[i], &key, &val))
 	    fmt_ptrn_update_kv(x, key, val);
     fmt_ptrn_update_kv(x, g_strdup("DAY"), g_strdup(day(b)));

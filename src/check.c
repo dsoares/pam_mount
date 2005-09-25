@@ -45,7 +45,7 @@ START_TEST(test_static_string_valid)
 	fail_unless(static_string_valid(str, 2) == FALSE,
 	            "static_string_valid test failed");
 
-	str[0] = 'a'; str[1] = 0x00;
+	str[0] = 'a'; str[1] = '\0';
 	fail_unless(static_string_valid(str, 2) == TRUE,
 	            "static_string_valid test failed");
 }

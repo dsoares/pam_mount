@@ -32,7 +32,7 @@ static int _compare(gconstpointer, gconstpointer);
 
 /* ============================ _parse_string_opt () ======================= */
 /* INPUT: str, string to parse
- *        len, should be length up to first ',' or terminating 0x00
+ *        len, should be length up to first ',' or terminating '\0'
  * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
@@ -61,9 +61,9 @@ static int _parse_string_opt(const char *str, size_t len,
 	key = g_new0(char, (delim - str) + 1);
 	val = g_new0(char, len - (delim - str));	/* '=' is +1 */
 	strncpy(key, str, delim - str);
-	key[delim - str] = 0x00;
+	key[delim - str] = '\0';
 	strncpy(val, delim + 1, len - (delim - str) - 1);
-	val[len - (delim - str) - 1] = 0x00;
+	val[len - (delim - str) - 1] = '\0';
 	pair_init(pair, key, val, g_free, g_free);
 	*optlist = g_list_append(*optlist, pair);
       _return:
@@ -76,7 +76,7 @@ static int _parse_string_opt(const char *str, size_t len,
 
 /* ============================ _parse_opt () ============================== */
 /* INPUT: str, string to parse
- *        len, should be length up to first ',' or terminating 0x00
+ *        len, should be length up to first ',' or terminating '\0'
  * SIDE AFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
@@ -99,8 +99,8 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 	key = g_new0(char, len + 1);
 	val = g_new0(char, 1);
 	strncpy(key, str, len);
-	key[len] = 0x00;
-	*val = 0x00;
+	key[len] = '\0';
+	*val = '\0';
 	pair_init(pair, key, val, g_free, g_free);
 	*optlist = g_list_append(*optlist, pair);
       _return:
@@ -205,7 +205,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 
 	assert(str);
 
-	*str = 0x00;
+	*str = '\0';
 	if (optlist)
 		do {
 			strncat(str, ((pair_t *) ptr->data)->key,
@@ -219,7 +219,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 			if ((ptr = g_list_next(ptr)) != NULL)
 				strncat(str, ",", MAX_PAR - strlen(str));
 		} while (ptr);
-	str[MAX_PAR] = 0x00;
+	str[MAX_PAR] = '\0';
 
 	assert((!optlist && strlen(str) == 0) || strlen(str));
 

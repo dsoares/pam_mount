@@ -502,7 +502,7 @@ static DOTCONF_CB(read_fsckloop)
 		return "fsckloop path too long";
 	strncpy(((config_t *) cmd->option->info)->fsckloop, cmd->data.str,
 		PATH_MAX);
-	((config_t *) cmd->option->info)->fsckloop[PATH_MAX] = 0x00;
+	((config_t *) cmd->option->info)->fsckloop[PATH_MAX] = '\0';
 	return NULL;
 }
 
@@ -603,7 +603,7 @@ fstab_value(const char *volume, const fstab_field_t field, char *value,
 	return 0;
 #endif
 	strncpy(value, val, size - 1);
-	value[size - 1] = 0x00;
+	value[size - 1] = '\0';
 #if defined(__linux__)
 	endmntent(fstab);
 #elif defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
@@ -641,7 +641,7 @@ DOTCONF_CB(read_volume)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
 	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
-	memset(&VOL[VOLCOUNT], 0x00, sizeof(vol_t));
+	memset(&VOL[VOLCOUNT], 0, sizeof(vol_t));
 	VOL[VOLCOUNT].globalconf = *((int *) cmd->context) ? TRUE : FALSE;
 	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
 	VOL[VOLCOUNT].type = -1;
@@ -654,7 +654,7 @@ DOTCONF_CB(read_volume)
 	if (VOL[VOLCOUNT].type == -1)
 		return "filesystem not supported";
 	if (*cmd->data.list[2] == '-')
-		*VOL[VOLCOUNT].server = 0x00;
+		*VOL[VOLCOUNT].server = '\0';
 	else
 		strncpy(VOL[VOLCOUNT].server, cmd->data.list[2], MAX_PAR);
 	strncpy(VOL[VOLCOUNT].volume, cmd->data.list[3], MAX_PAR);
@@ -686,12 +686,12 @@ DOTCONF_CB(read_volume)
 	    if (!str_to_optlist(&VOL[VOLCOUNT].options, cmd->data.list[5]))
 		return "error parsing mount options";
 	if (*cmd->data.list[6] == '-')
-		*VOL[VOLCOUNT].fs_key_cipher = 0x00;
+		*VOL[VOLCOUNT].fs_key_cipher = '\0';
 	else
 		strncpy(VOL[VOLCOUNT].fs_key_cipher, cmd->data.list[6],
 			MAX_PAR);
 	if (*cmd->data.list[7] == '-')
-		*VOL[VOLCOUNT].fs_key_path = 0x00;
+		*VOL[VOLCOUNT].fs_key_path = '\0';
 	else
 		strncpy(VOL[VOLCOUNT].fs_key_path, cmd->data.list[7],
 			MAX_PAR);
@@ -747,7 +747,7 @@ int initconfig(config_t * config)
 		for (j = 1; command[i].def[j]; j++) {
 			config->command[j][command[i].type] = g_strdup(command[i].def[j]);
 		}
-		config->command[j + 1][command[i].type] = 0x00;
+		config->command[j + 1][command[i].type] = NULL;
 	}
 
 	/* FIXME: initialize options_require, _allow and _deny */
@@ -848,7 +848,7 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 		}
 	} else {
 		strncpy(dest, src, dest_size);
-		dest[dest_size - 1] = 0x00;
+		dest[dest_size - 1] = '\0';
 	}
 	g_free(src);
 	return (dest);

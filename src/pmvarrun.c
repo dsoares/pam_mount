@@ -57,7 +57,7 @@ static void usage(int exitcode, const char *error, const char *more) {
 /* ============================ set_defaults () ============================= */
 static void set_defaults(settings_t *settings) {
 	debug = 0;
-	*settings->user = 0x00;
+	*settings->user = '\0';
 	settings->operation = 1;
 }
 

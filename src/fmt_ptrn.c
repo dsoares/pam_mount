@@ -416,7 +416,7 @@ static gboolean _read_modifier(fmt_ptrn_t * x, char **ptrn,
 			if (mod_fn[i].has_arg)
 				_read_modifier_arg(x, ptrn, &m);
 			else
-				*m.arg = 0x00;
+				*m.arg = '\0';
 			_stack_push(x, modifier, m);
 			fnval = TRUE;
 			break;
@@ -463,7 +463,7 @@ static void _read_key(fmt_ptrn_t * x, char *key, char **p)
 	assert(p != NULL);
 	assert(*p != NULL);
 
-	*key = 0x00;
+	*key = '\0';
 	for (i = 0; i < KEY_LEN && **p && !strchr(":)", **p); i++)
 		strncat(key, (*p)++, 1);
 	if (**p && !strchr(":)", **p)) {
@@ -525,7 +525,7 @@ gboolean _lookup(const fmt_ptrn_t * x, const char *key, buffer_t * value)
 		fnval = TRUE;
 	} else {
 		if (buffer_len(value) > 0) /* error should have been queue elsewhere */
-			*value->data = 0x00;	/* Otherwise _read_alternate will append onto garbage. */
+			*value->data = '\0';	/* Otherwise _read_alternate will append onto garbage. */
 		fnval = FALSE;
 	}
 
@@ -564,7 +564,7 @@ static void _read_literal(fmt_ptrn_t *x, char *str, buffer_t * buf)
 	assert(buffer_t_valid(buf));
 
 	str++;
-	str[strlen(str) - 1] = 0x00;
+	str[strlen(str) - 1] = '\0';
 	if(strlen(str) > 0)
 		realloc_n_cpy(buf, str);
 	else
@@ -624,7 +624,7 @@ static gboolean _fill_it(fmt_ptrn_t * x, const char *p)
 	assert(p != NULL);
 
 	pattern = orig_ptr = g_strdup((char *) p); /* stupid cast */
-	while (*pattern != 0x00) {
+	while(*pattern != '\0') {
 		if (*pattern == '%' && *(pattern + 1) == '%') {
 			/* Handle %%(...), which should be filled as %(...). */
 			realloc_n_ncat(&x->filled_buf, pattern, 1);

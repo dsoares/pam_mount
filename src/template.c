@@ -179,7 +179,7 @@ static int _mk_parent_dirs(const char *path)
 	    ptr++;
 	    continue;
 	}
-	*delim = 0x00;
+	*delim = '\0';
 	ptr = delim + 1;
 	if (stat(path_copy, &stat_buf) == -1)
 	    if (mkdir(path_copy, mode) < 0)

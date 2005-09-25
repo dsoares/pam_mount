@@ -81,7 +81,7 @@ void clean_system_authtok(pam_handle_t * pamh, void *data, int errcode)
 /* FIXME: not binary password safe */
 /* FIXME: valgrind does not like -- called previously?
 	if (data) {
-		memset(data, 0x00, strlen(data));
+		memset(data, 0, strlen(data));
 		free(data);
 	}
 */

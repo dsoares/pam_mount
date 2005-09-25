@@ -140,7 +140,7 @@ static int already_mounted(const struct config_t *const config,
 
 	assert(config_t_valid(config));
 
-	memset(match, 0x00, sizeof(match));
+	memset(match, 0, sizeof(match));
 	if (config->volume[vol].type == SMBMOUNT
 	    || config->volume[vol].type == CIFSMOUNT) {
 		strcpy(match, "//");
@@ -214,13 +214,13 @@ static int already_mounted(const struct config_t *const config,
 		/* FIXME: okay to always ignore case (needed for NCP)? */
 		if (!strcasecmp(mnt_fsname, match)) {
 			strncpy(mntpt, mtab_record->mnt_dir, PATH_MAX);
-			mntpt[PATH_MAX] = 0x00;
+			mntpt[PATH_MAX] = '\0';
 			mounted = 1;
 			if(strcmp(mtab_record->mnt_dir,
 				    config->volume[vol].mountpoint) == 0) {
 				strncpy(mntpt, mtab_record->mnt_dir,
 					PATH_MAX);
-				mntpt[PATH_MAX] = 0x00;
+				mntpt[PATH_MAX] = '\0';
 				break;
 			}
 		}
@@ -266,7 +266,7 @@ static int already_mounted(const struct config_t *const config,
 				mounted = -1;	/* parse err */
 				break;
 			}
-			*trash = 0x00;
+			*trash = NULL;
 			mp = strchr(trash + 1, ' ');
 			if (!mp++) {
 				mounted = -1;	/* parse err */
@@ -277,17 +277,17 @@ static int already_mounted(const struct config_t *const config,
 				mounted = -1;	/* parse err */
 				break;
 			}
-			*trash = 0x00;
+			*trash = NULL;
 			/* FIXME: okay to always ignore case (needed for NCP)? */
 			if (!strcasecmp(dev, match)) {
 				strncpy(mntpt, mp, PATH_MAX);
-				mntpt[PATH_MAX] = 0x00;
+				mntpt[PATH_MAX] = NULL;
 				mounted = 1;
 				if(strcmp(mp,
 					    config->volume[vol].
 					    mountpoint) == 0) {
 					strncpy(mntpt, mp, PATH_MAX);
-					mntpt[PATH_MAX] = 0x00;
+					mntpt[PATH_MAX] = NULL;
 					mounted = 1;
 					break;
 				}
@@ -345,7 +345,7 @@ static int mkmountpoint(vol_t * const volume, const char *const d)
 
 	w4rn("pam_mount: creating mount point %s\n", d);
 	strncpy(dcopy, d, PATH_MAX);
-	dcopy[PATH_MAX] = (char) 0x00;
+	dcopy[PATH_MAX] = '\0';
 	parent = g_dirname(dcopy);
 	if (exists(parent) == 0 && mkmountpoint(volume, parent) == 0) {
 		ret = 0;
@@ -758,7 +758,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 			 * MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the standard string 
 			 * MAX_PAR + 1 in this case */
 			strncpy((char *) _password, password, MAX_PAR);
-			_password[MAX_PAR] = 0x00;
+			_password[MAX_PAR] = '\0';
 			_password_len = strlen(password);
 		}
 		w4rn("pam_mount: %s\n",
@@ -803,7 +803,7 @@ do_mount(struct config_t *config, const unsigned int vol,
 	}
 _return:
 	/* Paranoia? */
-	memset(_password, 0x00, MAX_PAR + EVP_MAX_BLOCK_LENGTH);
+	memset(_password, 0, MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 	w4rn("pam_mount: mount errors (should be empty):\n");
 	log_output(cstderr);
 	CLOSE(cstderr);
