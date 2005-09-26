@@ -63,7 +63,7 @@ static void     _read_modifiers(fmt_ptrn_t *, const char **, mystack_t *);
 static int      _stack_contains(const mystack_t, const char *);
 static void     _stack_init(mystack_t *);
 static gboolean _stack_pop(mystack_t *, modifier_t *);
-static gboolean _stack_push(fmt_ptrn_t *, mystack_t *, const modifier_t);
+static gboolean _stack_push(fmt_ptrn_t *, mystack_t *, const modifier_t *);
 static gboolean _stack_t_valid(const mystack_t *);
 
 /* ============================ _fmt_ptrn_t_valid () ======================= */
@@ -170,20 +170,20 @@ static void _stack_init(mystack_t *s)
 
 /* ============================ _stack_push () ============================= */
 static gboolean _stack_push(fmt_ptrn_t *x, mystack_t *s,
-			    const modifier_t data)
+ const modifier_t *data)
 {
 	gboolean fnval = FALSE;
 
 	assert(_fmt_ptrn_t_valid(x));
 	assert(_stack_t_valid(s));
-	assert(_modifier_t_valid(&data));
+	assert(_modifier_t_valid(data));
 	if (s->size == STACK_MAX_ITEMS) {
 		enqueue_parse_errmsg(x, "%s: %ld: more than %d modifiers",
 				     x->template_path, x->line_num,
 				     STACK_MAX_ITEMS);
 		fnval = FALSE;
 	} else {
-		s->data[s->size++] = data;
+		s->data[s->size++] = *data;
 		fnval = TRUE;
 	}
 
@@ -419,7 +419,7 @@ static gboolean _read_modifier(fmt_ptrn_t *x, const char **ptrn,
 				_read_modifier_arg(x, ptrn, &m);
 			else
 				*m.arg = '\0';
-			_stack_push(x, modifier, m);
+			_stack_push(x, modifier, &m);
 			fnval = TRUE;
 			break;
 		}

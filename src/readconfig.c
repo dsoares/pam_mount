@@ -732,7 +732,7 @@ int initconfig(config_t * config)
 /* ============================ freeconfig () ============================== */
 /* PRE:  config is a valid, initialized config_t structure
  * POST: all dynamically allocated memory in config is freed */
-void freeconfig(config_t config)
+void freeconfig(config_t *config)
 {
 	int i = 0, j = 0;
 	/* FIXME: not implemented:
@@ -742,11 +742,11 @@ void freeconfig(config_t config)
 	   for (i = 0; i < config.volcount; i++)
 	   optlist_free(&config.volume[i].options); FIXME: May be NULL!!
 	 */
-	if (config.user != NULL)
-		g_free(config.user);
+        if(config->user != NULL)
+		g_free(config->user);
 	for (i = 0; i < COMMAND_MAX; i++)
-		for (j = 0; config.command[j][i]; j++)
-			g_free(config.command[j][i]);
+		for(j = 0; config->command[j][i]; j++)
+			g_free(config->command[j][i]);
 }
 
 /* ============================ expand_home () ============================= */

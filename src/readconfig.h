@@ -10,7 +10,7 @@ extern "C" {
 #include "private.h"
 
 extern int expandconfig(const config_t *);
-extern void freeconfig(config_t);
+extern void freeconfig(config_t *);
 extern int initconfig(config_t *);
 extern gboolean luserconf_volume_record_sane(const config_t *, int);
 extern int readconfig(const char *, const char *, int, config_t *);

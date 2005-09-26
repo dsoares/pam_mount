@@ -483,7 +483,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 		w4rn(PMPREFIX "%s seems to have other remaining open sessions\n",
                  Config.user);
       _return:
-	freeconfig(Config);
+	freeconfig(&Config);
 	w4rn(PMPREFIX "pam_mount execution complete\n");
 	return ret;
 }
