@@ -498,7 +498,7 @@ static int do_losetup(config_t *config, const unsigned int vol,
 {
 	pid_t pid;
 	GError *err = NULL;
-	int i, ret = 1, child_exit, _argc = 0, cstderr = -1;
+	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	char *_argv[MAX_PAR + 1];
 	const char *cipher =
 	    optlist_value(config->volume[vol].options, "encryption");
@@ -529,25 +529,30 @@ static int do_losetup(config_t *config, const unsigned int vol,
 	log_argv(_argv);
 	if (g_spawn_async_with_pipes
 	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL,
-	     &pid, NULL, NULL, &cstderr, &err) == FALSE) {
+	     &pid, &cstdin, NULL, &cstderr, &err) == FALSE) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
-		ret = 0;
-		goto _return;
+                return 0;
 	}
-	w4rn(PMPREFIX "umount errors (should be empty):\n");
+
+        // note to self: password is decrypted
+        if(pipewrite(cstdin, password, password_len) != password_len) {
+            l0g(PMPREFIX "error sending password to losetup\n");
+            ret = 0;
+        }
+        CLOSE(cstdin);
+        w4rn(PMPREFIX "losetup errors (should be empty):\n");
+
 	log_output(cstderr);
 	CLOSE(cstderr);
 	w4rn(PMPREFIX "waiting for losetup\n");
 	if (waitpid(pid, &child_exit, 0) == -1) {
 		l0g(PMPREFIX "error waiting for child\n");
 		ret = 0;
-		goto _return;
-	} else {
+	} else if(ret > 0) {
 		/* pass on through the result from the losetup process */
 		ret = !WEXITSTATUS(child_exit);
 	}
-      _return:
 	return ret;
 }
 
