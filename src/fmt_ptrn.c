@@ -53,7 +53,7 @@ static void     _handle_fmt_str(fmt_ptrn_t *, const char **);
 static gboolean _is_literal(fmt_ptrn_t *, const char *);
 static gboolean _lookup(const fmt_ptrn_t *, const char *, buffer_t *);
 static char *   _matching_paren(const char *);
-static gboolean _modifier_t_valid(const modifier_t *);
+static inline gboolean _modifier_t_valid(const modifier_t *);
 static void     _read_alternate(fmt_ptrn_t *, const char **, buffer_t *);
 static void     _read_key(fmt_ptrn_t *, char *, const char **);
 static void     _read_literal(fmt_ptrn_t *, char *, buffer_t *);
@@ -61,10 +61,10 @@ static gboolean _read_modifier(fmt_ptrn_t *, const char **, mystack_t *);
 static void     _read_modifier_arg(fmt_ptrn_t *, const char **, modifier_t *);
 static void     _read_modifiers(fmt_ptrn_t *, const char **, mystack_t *);
 static int      _stack_contains(const mystack_t, const char *);
-static void     _stack_init(mystack_t *);
+static inline void _stack_init(mystack_t *);
 static gboolean _stack_pop(mystack_t *, modifier_t *);
 static gboolean _stack_push(fmt_ptrn_t *, mystack_t *, const modifier_t *);
-static gboolean _stack_t_valid(const mystack_t *);
+static inline gboolean _stack_t_valid(const mystack_t *);
 
 /* ============================ _fmt_ptrn_t_valid () ======================= */
 static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t * x)
@@ -133,13 +133,13 @@ void fmt_ptrn_parse_perror(fmt_ptrn_t * x, const char *msg)
 /* ============================ enqueue_parse_errmsg () =================== */
 void enqueue_parse_errmsg(fmt_ptrn_t * x, const char *msg, ...)
 {
+	va_list args;
 	char *err;
 
 	assert(_fmt_ptrn_t_valid(x));
 	assert(msg != NULL);
 
 	err = g_new0(char, PARSE_ERR_LEN + 1);
-	va_list args;
 	va_start(args, msg);
 	vsnprintf(err, PARSE_ERR_LEN, msg, args);
 	va_end(args);
@@ -149,21 +149,18 @@ void enqueue_parse_errmsg(fmt_ptrn_t * x, const char *msg, ...)
 }
 
 /* ============================ _modifier_t_valid () ======================= */
-static gboolean _modifier_t_valid(const modifier_t * m)
-{
+static inline gboolean _modifier_t_valid(const modifier_t * m) {
 	/* FIXME */
 	return TRUE;
 }
 
 /* ============================ _stack_t_valid () ========================== */
-static gboolean _stack_t_valid(const mystack_t *s)
-{
+static inline gboolean _stack_t_valid(const mystack_t *s) {
     return (s == NULL && s->size != 0) ? FALSE : TRUE;
 }
 
 /* ============================ _stack_init () ============================= */
-static void _stack_init(mystack_t *s)
-{
+static inline void _stack_init(mystack_t *s) {
 	s->size = 0;
 	assert(_stack_t_valid(s));
 }

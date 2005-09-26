@@ -17,12 +17,13 @@ extern int exists(const char *);
 extern void l0g(const char *, ...);
 extern void log_argv(const char * const *);
 extern gboolean owns(const char *, const char *);
-extern gboolean pm_command_t_valid(const pm_command_t *);
 extern void set_myuid(void *);
 extern gboolean static_string_valid(const char *, const size_t);
 extern long str_to_long(const char *);
 extern gboolean vol_t_valid(const vol_t *);
 extern void w4rn(const char *, ...);
+
+static inline int pm_command_t_valid(const config_t *x) { return TRUE; }
 
 #ifdef __cplusplus
 } // extern "C"

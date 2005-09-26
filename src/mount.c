@@ -341,26 +341,24 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 static void log_pm_input(const config_t *const config,
  const unsigned int vol)
 {
+        const vol_t *vpt = &config->volume[vol];
 	char options[MAX_PAR + 1];
+
 	w4rn(PMPREFIX "information for mount:\n");
 	w4rn(PMPREFIX "----------------------\n");
 	w4rn(PMPREFIX "%s\n",
-	     (config->volume[vol].globalconf == TRUE) ?
+	     (vpt->globalconf == TRUE) ?
               "(defined by globalconf)" : "(defined by luserconf)");
-	w4rn(PMPREFIX "user:          %s\n", config->volume[vol].user);
-	w4rn(PMPREFIX "server:        %s\n", config->volume[vol].server);
-	w4rn(PMPREFIX "volume:        %s\n", config->volume[vol].volume);
-	w4rn(PMPREFIX "mountpoint:    %s\n",
-	     config->volume[vol].mountpoint);
-	w4rn(PMPREFIX "options:       %s\n",
-	     optlist_to_str(options, config->volume[vol].options));
-	w4rn(PMPREFIX "fs_key_cipher: %s\n",
-	     config->volume[vol].fs_key_cipher);
-	w4rn(PMPREFIX "fs_key_path:   %s\n",
-	     config->volume[vol].fs_key_path);
-	w4rn(PMPREFIX "use_fstab:   %d\n",
-	     config->volume[vol].use_fstab);
+	w4rn(PMPREFIX "user:          %s\n", vpt->user);
+	w4rn(PMPREFIX "server:        %s\n", vpt->server);
+	w4rn(PMPREFIX "volume:        %s\n", vpt->volume);
+	w4rn(PMPREFIX "mountpoint:    %s\n", vpt->mountpoint);
+	w4rn(PMPREFIX "options:       %s\n", optlist_to_str(options, vpt->options));
+	w4rn(PMPREFIX "fs_key_cipher: %s\n", vpt->fs_key_cipher);
+	w4rn(PMPREFIX "fs_key_path:   %s\n", vpt->fs_key_path);
+	w4rn(PMPREFIX "use_fstab:   %d\n", vpt->use_fstab);
 	w4rn(PMPREFIX "----------------------\n");
+        return;
 }
 
 /* ============================ mkmountpoint () ============================ */
@@ -422,11 +420,14 @@ int do_unmount(const config_t *config, const unsigned int vol,
 	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
 	const char *_argv[MAX_PAR + 1];
+        const vol_t *vpt;
         int type;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
+
+        vpt = &config->volume[vol];
 
 	if(Debug == TRUE)
 		/*
@@ -435,7 +436,7 @@ int do_unmount(const config_t *config, const unsigned int vol,
 		 */
 		run_lsof(config, vinfo);
 
-        switch(config->volume[vol].type) {
+        switch(vpt->type) {
             case SMBMOUNT: type = SMBUMOUNT; break;
             case NCPMOUNT: type = NCPUMOUNT; break;
             default:       type = UMOUNT; break;
@@ -449,7 +450,7 @@ int do_unmount(const config_t *config, const unsigned int vol,
 
 	/* FIXME: ugly hack to support umount.crypt script.  I hope that
 	 * util-linux will have native dm_crypt support some day */
-	if (config->volume[vol].type == CRYPTMOUNT) {
+	if(vpt->type == CRYPTMOUNT) {
 		_argc = 0;
 		add_to_argv(_argv, &_argc, "/usr/bin/umount.crypt", vinfo);
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
@@ -475,10 +476,9 @@ int do_unmount(const config_t *config, const unsigned int vol,
 		ret = !WEXITSTATUS(child_exit);
 	}
       _return:
-	if (mkmntpoint != 0 && config->volume[vol].created_mntpt == TRUE) {
-		if (rmdir(config->volume[vol].mountpoint) == -1)	/* non-fatal */
-			w4rn(PMPREFIX "could not remove %s\n",
-			     config->volume[vol].mountpoint);
+	if(mkmntpoint != 0 && vpt->created_mntpt == TRUE) {
+		if(rmdir(vpt->mountpoint) == -1) /* non-fatal */
+			w4rn(PMPREFIX "could not remove %s\n", vpt->mountpoint);
 	}
 	return ret;
 }
@@ -525,16 +525,18 @@ static int do_losetup(const config_t *config, const unsigned int vol,
 	GError *err = NULL;
 	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
-	const char *cipher =
-	    optlist_value(config->volume[vol].options, "encryption");
-	const char *keybits =
-	    optlist_value(config->volume[vol].options, "keybits");
+        const char *cipher, *keybits;
+        const vol_t *vpt;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 	/* password_len is unsigned */
 	assert(password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
+
+        vpt     = &config->volume[vol];
+        cipher  = optlist_value(vpt->options, "encryption");
+        keybits = optlist_value(vpt->options, "keybits");
 
 	if(config->command[0][LOSETUP] == NULL) {
 		l0g(PMPREFIX "losetup not defined in pam_mount.conf\n");
@@ -630,8 +632,8 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 	GError *err = NULL;
 	int i, child_exit, _argc = 0, cstdout = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
-	char *fsck_target =
-	    config->volume[vol].volume, options[MAX_PAR + 1];
+        char *fsck_target, options[MAX_PAR + 1];
+        const vol_t *vpt;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
@@ -639,11 +641,14 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 	assert(password_len >= 0
 	       && password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
+        vpt = &config->volume[vol];
+        fsck_target = vpt->volume;
+
 	if(config->command[0][FSCK] == NULL) {
 		l0g(PMPREFIX "fsck not defined in pam_mount.conf\n");
 		return 0;
 	}
-	if (optlist_exists(config->volume[vol].options, "loop")) {
+	if (optlist_exists(vpt->options, "loop")) {
 		if (!do_losetup
 		    (config, vol, vinfo, password, password_len))
 			return 0;
@@ -651,7 +656,7 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 		fsck_target = config->fsckloop;
 	} else
 		w4rn(PMPREFIX "volume not a loopback (options: %s)\n",
-		     optlist_to_str(options, config->volume[vol].options));
+		     optlist_to_str(options, vpt->options));
 	/* FIXME: NEW */
 	/* FIXME: need to fsck /dev/mapper/whatever... */
 	fmt_ptrn_update_kv(vinfo, "FSCKTARGET", fsck_target);
@@ -670,7 +675,7 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 	CLOSE(cstderr);
 	w4rn(PMPREFIX "waiting for filesystem check\n");
 	waitpid(pid, &child_exit, 0);
-	if (optlist_exists(config->volume[vol].options, "loop"))
+	if(optlist_exists(vpt->options, "loop"))
 		if (!do_unlosetup(config, vinfo))
 			return 0;
 	/* pass on through the result -- okay if 0 (no errors) 
@@ -847,18 +852,20 @@ int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
 	int fnval;
 	fmt_ptrn_t vinfo;
 	char options[MAX_PAR + 1];
+        const vol_t *vpt;
 
 	assert(config_t_valid(config));
 
+        vpt = &config->volume[vol];
+
 	fmt_ptrn_init(&vinfo);
-	fmt_ptrn_update_kv(&vinfo, "MNTPT",
-			   config->volume[vol].mountpoint);
+	fmt_ptrn_update_kv(&vinfo, "MNTPT", vpt->mountpoint);
 	fmt_ptrn_update_kv(&vinfo, "FSCKLOOP", config->fsckloop);
-	fmt_ptrn_update_kv(&vinfo, "VOLUME", config->volume[vol].volume);
-	fmt_ptrn_update_kv(&vinfo, "SERVER", config->volume[vol].server);
-	fmt_ptrn_update_kv(&vinfo, "USER", config->volume[vol].user);
+	fmt_ptrn_update_kv(&vinfo, "VOLUME", vpt->volume);
+	fmt_ptrn_update_kv(&vinfo, "SERVER", vpt->server);
+	fmt_ptrn_update_kv(&vinfo, "USER", vpt->user);
 	/* FIXME: should others remain undefined if == ""? */
-	optlist_to_str(options, config->volume[vol].options);
+	optlist_to_str(options, vpt->options);
 	fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
 
 	if(Debug)

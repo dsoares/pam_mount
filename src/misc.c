@@ -66,34 +66,30 @@ void l0g(const char *format, ...)
  * SIDE EFFECTS: format + args are logged and displayed iff debug == 1
  * NOTE: Used to log informational messages and issues that should not cause
  *       pam_mount to fail. */
-void w4rn(const char *format, ...)
-{
-	assert(format != NULL);
+void w4rn(const char *format, ...) {
+    va_list args;
 
-	if(Debug != 0) {
-		va_list args;
-		va_start(args, format);
-		vfprintf(stderr, format, args);
-		va_end(args);
-		va_start(args, format);
-		vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
-		va_end(args);
-	}
+    assert(format != NULL);
+
+    if(Debug == 0) return;
+
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    va_start(args, format);
+    vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
+    va_end(args);
+    return;
 }
 
 /* ============================ exists () ================================== */
 /* INPUT: file, a file path
  * OUTPUT: 0 if file does not exist or 1 if file exists */
-int exists(const char *file)
-{
-	struct stat filestat;
-
-	assert(file != NULL);
-
-	if (stat(file, &filestat) != 0) {
-		return 0;
-	}
-	return 1;
+int exists(const char *file) {
+    struct stat sb;
+    assert(file != NULL);
+    return stat(file, &sb) == 0;
 }
 
 /* ============================ owns () ==================================== */
@@ -119,9 +115,8 @@ gboolean owns(const char *user, const char *file)
 		return FALSE;
 	}
 
-	if(filestat.st_uid == userinfo->pw_uid && !S_ISLNK(filestat.st_mode))
-		return TRUE;
-	return FALSE;
+    return (filestat.st_uid == userinfo->pw_uid && !S_ISLNK(filestat.st_mode))
+           ? TRUE : FALSE;
 }
 
 /* ============================ str_to_long () ============================= */
@@ -158,13 +153,6 @@ gboolean static_string_valid(const char *s, const size_t len)
 		if(s[i] == '\0')
 			return TRUE;
 	return FALSE;
-}
-
-/* ============================ pm_command_t_valid () ====================== */
-gboolean pm_command_t_valid(const pm_command_t * c)
-{
-	/* FIXME */
-	return TRUE;
 }
 
 /* ============================ vol_t_valid () ============================= */

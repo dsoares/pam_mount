@@ -76,29 +76,29 @@ static void shift_str (char *ptr_0, char *ptr_1)
 /* ============================ middlename () =============================== */
 static char *_middlename(void)
 {
-	char *name, *ptr_0, *ptr_1;
+	char *name, *a, *b;
 	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
-	if((ptr_0 = strchr(name, ' ')) == NULL)
+	if((a = strchr(name, ' ')) == NULL)
 		return NULL;
-	if((ptr_1 = strchr(++ptr_0, ' ')) == NULL)
+	if((b = strchr(++a, ' ')) == NULL)
 		return NULL;
-	*ptr_1 = '\0';
-	shift_str (name, ptr_0);
+	*b = '\0';
+	shift_str(name, a);
         return name;
 }
 
 /* ============================ lastname () =============================== */
 static char *_lastname(void)
 {
-	char *name, *ptr_0, *ptr_1;
+	char *name, *a, *b;
 	if((name = g_strdup(g_get_real_name())) == NULL)
 		return NULL;
-	if((ptr_0 = strchr(name, ' ')) == NULL)
+	if((a = strchr(name, ' ')) == NULL)
 		return NULL;
-	if((ptr_1 = strchr(++ptr_0, ' ')) == NULL)
-		return ptr_0;
-	shift_str (name, ++ptr_1);
+	if((b = strchr(++a, ' ')) == NULL)
+		return a;
+	shift_str(name, ++b);
 	return name;
 }
 

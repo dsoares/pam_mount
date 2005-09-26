@@ -101,7 +101,6 @@ static DOTCONF_CB(read_options_require);
 static int _options_ok(const config_t *, const vol_t *);
 static int options_allow_ok(optlist_t *, optlist_t *);
 static int options_deny_ok(optlist_t *, optlist_t *);
-static int option_in_list(optlist_t *, const char *);
 static int options_required_ok(optlist_t *, optlist_t *);
 
 static const configoption_t legal_config[] = {
@@ -270,18 +269,6 @@ static DOTCONF_CB(read_command)
 	return NULL;
 }
 
-/* ============================ option_in_list () ========================== */
-/* INPUT:  haystack, an optlist_t to search
- *         needle, a key to look for
- * OUTPUT: 1 if haystack[needle] exists, else 0
- */
-static int option_in_list(optlist_t *haystack, const char *needle) {
-	assert(needle != NULL);
-
-	/* FIXME: this fn. is not needed, just call the following directly: */
-	return optlist_exists(haystack, needle);
-}
-
 /* ============================ options_allow_ok () ======================== */
 /* INPUT:  allowed, an optlist of allowed options
  *         options, a list of options
@@ -295,7 +282,7 @@ static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 	if (optlist_exists(allowed, "*") || !optlist_len(options))
 		return 1;
 	for(e = options; e != NULL; e = optlist_next(e))
-		if (!option_in_list(allowed, optlist_key(e))) {
+		if(!optlist_exists(allowed, optlist_key(e))) {
                     l0g(PMPREFIX "option %s not allowed\n", optlist_key(e));
                     return 0;
 		}
@@ -312,7 +299,7 @@ static int options_required_ok(optlist_t * required, optlist_t * options)
 {
 	optlist_t *e;
 	for(e = required; e != NULL; e = optlist_next(e))
-		if (!option_in_list(options, optlist_key(e))) {
+		if(!optlist_exists(options, optlist_key(e))) {
                     l0g(PMPREFIX "option %s required\n", optlist_key(e));
                     return 0;
 		}
@@ -336,7 +323,7 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
 		return 0;
 	}
 	for(e = denied; e != NULL; e = optlist_next(e))
-		if (option_in_list(options, optlist_key(e))) {
+		if(optlist_exists(options, optlist_key(e))) {
 			l0g(PMPREFIX "option %s denied\n", optlist_key(e));
 			return 0;
 		}
@@ -407,20 +394,20 @@ gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 gboolean volume_record_sane(const config_t *config, int vol) {
-	w4rn(PMPREFIX "checking sanity of volume record (%s)\n", config->volume[vol].volume);
-	if (!config->command[0][config->volume[vol].type]) {
+        const vol_t *vpt = &config->volume[vol];
+
+	w4rn(PMPREFIX "checking sanity of volume record (%s)\n", vpt->volume);
+	if(!config->command[0][vpt->type]) {
 		l0g("mount command not defined for this type\n");
 		return FALSE;
 	}
-	if ((config->volume[vol].type == SMBMOUNT
-	     || config->volume[vol].type == NCPMOUNT
-	     || config->volume[vol].type == CIFSMOUNT
-	     || config->volume[vol].type == NFSMOUNT)
-	    && strlen(config->volume[vol].server) == 0) {
+        if((vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT ||
+         vpt->type == NCPMOUNT || vpt->type == NFSMOUNT) &&
+         strlen(vpt->server) == 0) {
 		l0g("remote mount type specified without server\n");
 		return FALSE;
 	}
-	if (config->volume[vol].type == NCPMOUNT && ! optlist_exists(config->volume[vol].options, "user")) {
+        if(vpt->type == NCPMOUNT && !optlist_exists(vpt->options, "user")) {
 		l0g("NCP volume definition missing user option\n");
 		return FALSE;
 	}
@@ -428,13 +415,11 @@ gboolean volume_record_sane(const config_t *config, int vol) {
 		l0g("umount command not defined\n");
 		return FALSE;
 	}
-	if(strlen(config->volume[vol].fs_key_cipher) > 0 &&
-	    strlen(config->volume[vol].fs_key_path) == 0) {
+        if(strlen(vpt->fs_key_cipher) > 0 && strlen(vpt->fs_key_path) == 0) {
 		l0g("fs_key_cipher defined without fs_key_path\n");
 		return FALSE;
 	}
-	if(strlen(config->volume[vol].fs_key_cipher) == 0 &&
-	    strlen(config->volume[vol].fs_key_path) > 0) {
+        if(strlen(vpt->fs_key_cipher) == 0 && strlen(vpt->fs_key_path) > 0) {
 		l0g("fs_key_path defined without fs_key_cipher\n");
 		return FALSE;
 	}
@@ -455,8 +440,7 @@ static DOTCONF_CB(read_luserconf)
 	} else {
 		home_dir = passwd_ent->pw_dir;
 	}
-	if (strlen(home_dir) + strlen("/") + strlen(cmd->data.str) >
-	    PATH_MAX)
+	if(strlen(home_dir) + 1 + strlen(cmd->data.str) > PATH_MAX) // +"/"
 		return "expanded luserconf path too long";
 	strcpy(ICONFIG->luserconf, home_dir);
 	strcat(ICONFIG->luserconf, "/");
@@ -590,6 +574,7 @@ DOTCONF_CB(read_volume)
 {
 #define VOL ICONFIG->volume
 #define VOLCOUNT ICONFIG->volcount
+        vol_t *vpt;
 	int i;
 	if (cmd->arg_count != 8)
 		return "bad number of args for volume";
@@ -611,64 +596,61 @@ DOTCONF_CB(read_volume)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
 	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
-	memset(&VOL[VOLCOUNT], 0, sizeof(vol_t));
-	VOL[VOLCOUNT].globalconf = ICONTEXT ? TRUE : FALSE;
-	strncpy(VOL[VOLCOUNT].user, cmd->data.list[0], MAX_PAR);
-	VOL[VOLCOUNT].type = -1;
+        vpt = &VOL[VOLCOUNT];
+	memset(vpt, 0, sizeof(vol_t));
+	vpt->globalconf = ICONTEXT ? TRUE : FALSE;
+	strncpy(vpt->user, cmd->data.list[0], MAX_PAR);
+	vpt->type = -1;
 	for(i = 0; Command[i].type != -1; ++i)
 		if(Command[i].fs != NULL &&
 		    strcasecmp(cmd->data.list[1], Command[i].fs) == 0) {
-			VOL[VOLCOUNT].type = Command[i].type;
+			vpt->type = Command[i].type;
 			break;
 		}
-	if (VOL[VOLCOUNT].type == -1)
+	if(vpt->type == -1)
 		return "filesystem not supported";
 	if (*cmd->data.list[2] == '-')
-		*VOL[VOLCOUNT].server = '\0';
+		*vpt->server = '\0';
 	else
-		strncpy(VOL[VOLCOUNT].server, cmd->data.list[2], MAX_PAR);
-	strncpy(VOL[VOLCOUNT].volume, cmd->data.list[3], MAX_PAR);
+		strncpy(vpt->server, cmd->data.list[2], MAX_PAR);
+	strncpy(vpt->volume, cmd->data.list[3], MAX_PAR);
 	if (*cmd->data.list[4] == '-') {
-		if (!fstab_value
-		    (VOL[VOLCOUNT].volume, FSTAB_MNTPT,
-		     VOL[VOLCOUNT].mountpoint, PATH_MAX + 1))
+		if(!fstab_value(vpt->volume, FSTAB_MNTPT, vpt->mountpoint, PATH_MAX + 1))
 			return "could not determine mount point";
-		VOL[VOLCOUNT].use_fstab = TRUE;
+		vpt->use_fstab = TRUE;
 	} else
-		strncpy(VOL[VOLCOUNT].mountpoint, cmd->data.list[4],
-			MAX_PAR);
+		strncpy(vpt->mountpoint, cmd->data.list[4], MAX_PAR);
 	if (*cmd->data.list[5] == '-') {
 		/* three options: field defined, field is '-' and fstab 
 		 * should be used (when no mount point was provided either) 
 		 * or field is '-' and this means no options */
-		if (VOL[VOLCOUNT].use_fstab) {
+		if(vpt->use_fstab) {
 			char options[MAX_PAR + 1];
-			if (!fstab_value
-			    (VOL[VOLCOUNT].volume, FSTAB_OPTS, options,
-			     sizeof(options)))
+			if(!fstab_value(vpt->volume, FSTAB_OPTS, options, sizeof(options)))
 				return "could not determine options";
-			if (!str_to_optlist
-			    (&VOL[VOLCOUNT].options, options))
+			if(!str_to_optlist(&vpt->options, options))
 				return "error parsing mount options";
 		} else
-			VOL[VOLCOUNT].options = NULL;
-	} else
-	    if (!str_to_optlist(&VOL[VOLCOUNT].options, cmd->data.list[5]))
+			vpt->options = NULL;
+	} else if(!str_to_optlist(&vpt->options, cmd->data.list[5]))
 		return "error parsing mount options";
-	if (*cmd->data.list[6] == '-')
-		*VOL[VOLCOUNT].fs_key_cipher = '\0';
-	else
-		strncpy(VOL[VOLCOUNT].fs_key_cipher, cmd->data.list[6],
-			MAX_PAR);
-	if (*cmd->data.list[7] == '-')
-		*VOL[VOLCOUNT].fs_key_path = '\0';
-	else
-		strncpy(VOL[VOLCOUNT].fs_key_path, cmd->data.list[7],
-			MAX_PAR);
-	VOL[VOLCOUNT].used_wildcard = FALSE; /* expandconfig() sets this */
-	/* FIXME: these should l0g an error and return NULL so other volumes can continue */
-	VOLCOUNT++;
-	return NULL;
+
+    if(*cmd->data.list[6] == '-') {
+        *vpt->fs_key_cipher = '\0';
+    } else {
+        strncpy(vpt->fs_key_cipher, cmd->data.list[6], MAX_PAR);
+    }
+
+    if(*cmd->data.list[7] == '-') {
+        *vpt->fs_key_path = '\0';
+    } else {
+        strncpy(vpt->fs_key_path, cmd->data.list[7], MAX_PAR);
+    }
+
+    vpt->used_wildcard = FALSE; /* expandconfig() sets this */
+    /* FIXME: these should l0g an error and return NULL so other volumes can continue */
+    VOLCOUNT++;
+    return NULL;
 #undef VOL
 #undef VOLCOUNT
 }
@@ -831,65 +813,53 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
  * POST: any wildcards in config->data are expanded
  * FN VAL: if error 0 else 1, errors are logged */
 int expandconfig(const config_t *config) {
-	int i;
-	for (i = 0; i < config->volcount; i++) {
-		char tmp[MAX_PAR + 1];
-		if (*config->volume[i].mountpoint == '~')
-			if (!expand_home(config->volume[i].
-					 mountpoint,
-					 sizeof(config->volume[i].
-						mountpoint), config->user))
-				return 0;
-		if (*config->volume[i].volume == '~')
-			if (!expand_home(config->volume[i].
-					 volume,
-					 sizeof(config->volume[i].
-						volume), config->user))
-				return 0;
-		if (*config->volume[i].fs_key_path == '~')
-			if (!expand_home(config->volume[i].
-					 fs_key_path,
-					 sizeof(config->volume[i].
-						fs_key_path),
-					 config->user))
-				return 0;
-		if(strcmp(config->volume[i].user, "*") == 0) {
-			optlist_t *e;
-			config->volume[i].used_wildcard = TRUE;
-			strcpy(config->volume[i].user, config->user);
-			if (!expand_wildcard
-			    (config->volume[i].volume,
-			     sizeof(config->volume[i].volume),
-			     config->volume[i].volume, config->user))
-				return 0;
-			if (!expand_wildcard(config->volume[i].
-					     mountpoint,
-					     sizeof(config->volume[i].
-						    mountpoint),
-					     config->volume[i].mountpoint,
-					     config->user))
-				return 0;
-			for (e = config->volume[i].options;
-			     e != NULL; e = optlist_next(e)) {
-				if (!expand_wildcard
-				    (tmp, sizeof(tmp), optlist_key(e),
-				     config->user))
-					return 0;
-				optlist_key(e) = g_strdup(tmp);
-				if (!expand_wildcard
-				    (tmp, sizeof(tmp), optlist_val(e),
-				     config->user))
-					return 0;
-				optlist_val(e) = g_strdup(tmp);
-			}
-			if (!expand_wildcard(config->volume[i].
-					     fs_key_path,
-					     sizeof(config->volume[i].
-						    fs_key_path),
-					     config->volume[i].fs_key_path,
-					     config->user))
-				return 0;
-		}
-	}
-	return 1;
+    vol_t *vpt;
+    int i;
+
+    for(i = 0; i < config->volcount; ++i) {
+        char tmp[MAX_PAR + 1];
+        vpt = &config->volume[i];
+
+        if(*vpt->mountpoint == '~' && !expand_home(vpt->mountpoint,
+         sizeof(vpt->mountpoint), config->user))
+            return 0;
+
+        if(*vpt->volume == '~' && !expand_home(vpt->volume,
+         sizeof(vpt->volume), config->user))
+            return 0;
+
+        if(*vpt->fs_key_path == '~' && !expand_home(vpt->fs_key_path,
+         sizeof(vpt->fs_key_path), config->user))
+            return 0;
+
+        if(strcmp(vpt->user, "*") == 0) {
+            optlist_t *e;
+            vpt->used_wildcard = TRUE;
+            strcpy(vpt->user, config->user);
+
+            if(!expand_wildcard(vpt->volume, sizeof(vpt->volume),
+             vpt->volume, config->user))
+                return 0;
+
+            if(!expand_wildcard(vpt->mountpoint, sizeof(vpt->mountpoint),
+             vpt->mountpoint, config->user))
+                return 0;
+
+            for(e = vpt->options; e != NULL; e = optlist_next(e)) {
+                if(!expand_wildcard(tmp, sizeof(tmp), optlist_key(e), config->user))
+                    return 0;
+
+                optlist_key(e) = g_strdup(tmp);
+                if(!expand_wildcard(tmp, sizeof(tmp), optlist_val(e), config->user))
+                    return 0;
+
+                optlist_val(e) = g_strdup(tmp);
+            }
+
+            if(!expand_wildcard(vpt->fs_key_path, sizeof(vpt->fs_key_path),
+             vpt->fs_key_path, config->user))
+                return 0;
+        }
+    }
+    return 1;
 }

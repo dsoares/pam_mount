@@ -112,12 +112,17 @@ static void parse_args(int argc, const char **argv, settings_t *settings) {
  *         Is utmp portable?  This function is nasty and MAY BE INSECURE.
  */
 static int modify_pm_count(const char *user, long amount) {
+        struct flock lockinfo = {
+            .l_type   = F_WRLCK,
+            .l_whence = SEEK_SET,
+            .l_start  = 0,
+            .l_len    = 0,
+        };
 	char filename[PATH_MAX + 1];
 	int tries = 0;
 	int fd = 0, err;
 	long val;
 	struct stat st;
-	struct flock lockinfo;
 	char *buf = NULL;
         struct passwd *passwd_ent;
 
@@ -213,10 +218,6 @@ static int modify_pm_count(const char *user, long amount) {
               filename, strerror(errno));
             return 0;
 	}
-	lockinfo.l_type = F_WRLCK;
-	lockinfo.l_whence = SEEK_SET;
-	lockinfo.l_start = 0;
-	lockinfo.l_len = 0;
 	alarm(20);
 	err = fcntl(fd, F_SETLKW, &lockinfo);
 	alarm(0);
@@ -294,7 +295,7 @@ static int modify_pm_count(const char *user, long amount) {
                     l0g(PREFIX "could not unlink %s: %s\n",
                       filename, strerror(errno));
 		}
-		g_snprintf(buf, st.st_size + 2, "%ld", val);
+		snprintf(buf, st.st_size + 2, "%ld", val);
 		if (write(fd, buf, strlen(buf)) == -1) {
                     l0g(PREFIX "write error on %s: %s\n",
                       filename, strerror(errno));

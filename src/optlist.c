@@ -159,11 +159,12 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
  */
 static int _compare(gconstpointer x, gconstpointer y)
 {
+        const pair_t *px = x;
 	assert(x != NULL);
-	assert(((pair_t *) x)->key != NULL);
+	assert(px->key != NULL);
 	assert(y != NULL);
 
-	return strcmp(((pair_t *) x)->key, y);
+	return strcmp(px->key, y);
 }
 
 /* ============================ optlist_exists () ========================== */
