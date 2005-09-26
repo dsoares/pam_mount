@@ -49,7 +49,6 @@
 #elif defined(__linux__)
 #    include <mntent.h>
 #    include <sys/ioctl.h>
-#    include <sys/stat.h>
 #    include <fcntl.h>
 #    include <linux/loop.h>
 #    include <linux/major.h>
@@ -67,6 +66,7 @@
 
 static int already_mounted(const config_t * const, const unsigned int,
     char * const, fmt_ptrn_t *);
+static void already_mounted_build_dev(char *, size_t, const vol_t *);
 static int check_filesystem(config_t *, const unsigned int, fmt_ptrn_t *,
     const unsigned char *, size_t);
 static int do_losetup(config_t *, const unsigned int, fmt_ptrn_t *,
@@ -146,8 +146,9 @@ static void run_lsof(const config_t *config, fmt_ptrn_t *vinfo) {
 static int already_mounted(const config_t *const config,
  const unsigned int vol, char *const mntpt, fmt_ptrn_t *vinfo)
 {
-	char match[PATH_MAX + 1];
+	char match[PATH_MAX + 1] = {};
 	int mounted = 0;
+        vol_t *vpt;
 #if defined(__linux__)
 	FILE *mtab;
 	struct mntent *mtab_record;
@@ -156,57 +157,18 @@ static int already_mounted(const config_t *const config,
 	pid_t pid;
 #endif
 
-	assert(config_t_valid(config));
+    assert(config_t_valid(config));
+    vpt = &config->volume[vol];
 
-	memset(match, 0, sizeof(match));
-	if (config->volume[vol].type == SMBMOUNT
-	    || config->volume[vol].type == CIFSMOUNT) {
-		strcpy(match, "//");
-		strncat(match, config->volume[vol].server,
-			sizeof(match) - strlen(match) - 1);
-		strncat(match, "/", sizeof(match) - strlen(match) - 1);
-		strncat(match, config->volume[vol].volume,
-			sizeof(match) - strlen(match) - 1);
-	} else if (config->volume[vol].type == NCPMOUNT) {
-		strncpy(match, config->volume[vol].server,
-			sizeof(match) - strlen(match) - 1);
-		strncat(match, "/", sizeof(match) - strlen(match) - 1);
-		/* FIXME: volume sanity check in readconfig.c ensures optlist_value() will not return NULL for user */
-		strncat(match,
-			optlist_value(config->volume[vol].options, "user"),
-			sizeof(match) - strlen(match) - 1);
-	} else if (config->volume[vol].type == NFSMOUNT) {
-		strncpy(match, config->volume[vol].server,
-			sizeof(match) - strlen(match) - 1);
-		strncat(match, ":", sizeof(match) - strlen(match) - 1);
-		strncat(match, config->volume[vol].volume,
-			sizeof(match) - strlen(match) - 1);
-		/* FIXME: ugly hack to support umount.crypt script.  I hope that
-		 * util-linux will have native dm_crypt support some day */
-	} else if (config->volume[vol].type == CRYPTMOUNT) {
-		int i;
-		char escaped_vol[PATH_MAX + 1];
-		strncpy(match, "/dev/mapper/", sizeof(match) - strlen(match) - 1);
-		/* isn't there a function to do this in libc or glib? */
-		for (i = 0; config->volume[vol].volume && i < sizeof(escaped_vol) - 1;
-		     i++) {
-			if (config->volume[vol].volume[i] == '/')
-				escaped_vol[i] = '_';
-			else
-				escaped_vol[i] =
-				    config->volume[vol].volume[i];
-		}
-		strncat(match, escaped_vol, sizeof(match) - strlen(match) - 1);
-	} else {
-		strncpy(match, config->volume[vol].volume, sizeof(match) - 1);
-	}
+    already_mounted_build_dev(match, sizeof(match), vpt);
+
 #if defined(__linux__)
-	if((mtab = fopen("/etc/mtab", "r")) == NULL) {
-		l0g(PMPREFIX "could not open /etc/mtab\n");
-		return -1;
-	}
-	w4rn(PMPREFIX "checking to see if %s is already mounted at %s\n",
-	     match, config->volume[vol].mountpoint);
+    if((mtab = setmntent("/etc/mtab", "r")) == NULL) {
+        l0g(PMPREFIX "could not open /etc/mtab\n");
+        return -1;
+    }
+    w4rn(PMPREFIX "checking to see if %s is already mounted at %s\n",
+      match, vpt->mountpoint);
 
 	while ((mtab_record = getmntent(mtab)) != NULL) {
             char const *mnt_fsname = mtab_record->mnt_fsname;
@@ -234,7 +196,7 @@ static int already_mounted(const config_t *const config,
 			}
 		}
 	}
-	fclose(mtab);
+        endmntent(mtab);
 	return mounted;
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	{
@@ -270,19 +232,16 @@ static int already_mounted(const config_t *const config,
 			 */
 			char *mp, *trash;
 			w4rn(PMPREFIX "mounted filesystem: %s", dev);	/* dev includes '\n' */
-			trash = strchr(dev, ' ');
-			if(trash == NULL) {
+			if((trash = strchr(dev, ' ')) == NULL) {
 				mounted = -1;	/* parse err */
 				break;
 			}
-			*trash = '\0';
-			mp = strchr(trash + 1, ' ');
-			if(mp++ == NULL) {
+			*trash++ = '\0';
+			if((mp = strchr(trash, ' ')) == NULL) {
 				mounted = -1;	/* parse err */
 				break;
 			}
-			trash = strchr(mp, ' ');
-			if(trash == NULL) {
+			if((trash = strchr(++mp, ' ')) == NULL) {
 				mounted = -1;	/* parse err */
 				break;
 			}
@@ -293,7 +252,7 @@ static int already_mounted(const config_t *const config,
 				mntpt[PATH_MAX] = NULL;
 				mounted = 1;
 				if(strcmp(mp,
-					    config->volume[vol].
+					    vpt->
 					    mountpoint) == 0) {
 					strncpy(mntpt, mp, PATH_MAX);
 					mntpt[PATH_MAX] = NULL;
@@ -309,6 +268,45 @@ static int already_mounted(const config_t *const config,
 	l0g(PMPREFIX "check for previous mount not implemented on arch.\n");
 	return ERROR;
 #endif
+}
+
+static void already_mounted_build_dev(char *match, size_t s,
+ const vol_t *vol)
+{
+    switch(vol->type) {
+        case SMBMOUNT:
+        case CIFSMOUNT:
+            snprintf(match, s, "//%s/%s", vol->server, vol->volume);
+            break;
+
+        case NCPMOUNT:
+            /* FIXME: volume sanity check in readconfig.c ensures
+            optlist_value() will not return NULL for user.
+            [JE] So what to fix? */
+            snprintf(match, s, "%s/%s", vol->server,
+              optlist_value(vol->options, "user"));
+            break;
+
+        case NFSMOUNT:
+            snprintf(match, sizeof(match), "%s:%s", vol->server, vol->volume);
+            break;
+
+        case CRYPTMOUNT: {
+            /* FIXME: ugly hack to support umount.crypt script. I hope that
+            util-linux will have native dm_crypt support some day. */
+            char *wp = match + sizeof("/dev/mapper/")-1;
+            snprintf(match, sizeof(match), "/dev/mapper/%s", vol->volume);
+            while((wp = strchr(wp, '/')) != NULL) {
+                *wp = '_';
+            }
+            break;
+        }
+
+        default:
+            strncpy(match, vol->volume, s-1);
+            break;
+    }
+    return;
 }
 
 /* ============================ log_pm_input () ============================ */
