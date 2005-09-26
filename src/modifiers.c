@@ -150,8 +150,11 @@ static int apply_tex_delim(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
 
 static int _apply_comment(buffer_t *dest, char *c0, char *c1) {
     int i;
-    buffer_t tmp = buffer_init();
+    buffer_t tmp;
+
+    buffer_init(&tmp);
     realloc_n_cat(&tmp, c0);
+
     for (i = 0; i < strlen(dest->data); i++) {
 	if (dest->data[i] == '\n' && c1)
 	    realloc_n_cat(&tmp, c1);
@@ -159,8 +162,9 @@ static int _apply_comment(buffer_t *dest, char *c0, char *c1) {
 	if (dest->data[i] == '\n' && i < strlen(dest->data) - 1)
 	    realloc_n_cat(&tmp, c0);
     }
+
     realloc_n_cpy(dest, tmp.data);
-    buffer_destroy(tmp);
+    buffer_clear(&tmp);
     return 1;
 }
 

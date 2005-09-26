@@ -694,9 +694,9 @@ int fmt_ptrn_init(fmt_ptrn_t * x)
 	x->fillers = g_tree_new(_cmp);
 	x->template_fp = NULL;
 	x->line_num = 1;
-	x->raw_buf = buffer_init();
-	x->filled_buf = buffer_init();
-	x->lookup_buf = buffer_init();
+        buffer_init(&x->raw_buf);
+        buffer_init(&x->filled_buf);
+        buffer_init(&x->lookup_buf);
 	g_strlcpy(x->template_path, "string", sizeof(x->template_path));
 	
 	assert(_fmt_ptrn_t_valid(x));
@@ -782,9 +782,9 @@ int fmt_ptrn_close(fmt_ptrn_t * x)
 	while ((ptr = g_queue_pop_head(x->parse_errmsg)) != NULL)
 		g_free(ptr);
 	g_tree_foreach(x->fillers, _free_tree_node, NULL);
-	buffer_destroy(x->raw_buf);
-	buffer_destroy(x->filled_buf);
-	buffer_destroy(x->lookup_buf);
+	buffer_clear(&x->raw_buf);
+	buffer_clear(&x->filled_buf);
+	buffer_clear(&x->lookup_buf);
 	/* x->template_fp == NULL if fmt_ptrn_init was used instead of 
 	 * fmt_ptrn_open.
 	 */

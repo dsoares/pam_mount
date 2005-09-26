@@ -59,22 +59,6 @@ void buffer_clear(buffer_t *buf)
     assert(buffer_t_valid(buf));
 }
 
-/* ============================ buffer_init () ============================= */
-buffer_t buffer_init(void)
-{
-    buffer_t x = {};
-    return x;
-}
-
-/* ============================ buffer_destroy () ========================== */
-void buffer_destroy(buffer_t b)
-{
-    /* FIXME: this function may need to be combined with buffer_clear() */
-    assert(buffer_t_valid(&b));
-
-    buffer_clear(&b);
-}
-
 /* ============================ buffer_eat () ============================== */
 void buffer_eat(buffer_t buf, size_t n)
 /* Eats n characters off the beginning of buffer. */
