@@ -148,7 +148,7 @@ long str_to_long(const char *n) {
 }
 
 /* ============================ static_string_valid () ===================== */
-gboolean static_string_valid(const char *s, size_t len)
+gboolean static_string_valid(const char *s, const size_t len)
 {
 	size_t i;
 	if (s == NULL)
@@ -228,12 +228,11 @@ gboolean config_t_valid(const config_t * c)
 }
 
 /* ============================ log_argv () ================================ */
-void log_argv(char *const argv[])
+void log_argv(const char *const *argv) {
 /* PRE:  argv[0...n] point to valid strings != NULL
  *       argv[n + 1] is NULL
  * POST: argv[0...n] is logged in a nice manner
  */
-{
 	/* FIXME: UGLY! */
 	int i;
 	char str[MAX_PAR + 1];
@@ -259,7 +258,9 @@ void log_argv(char *const argv[])
  * NOTE: this function exits on an error as an error means a buffer
  *       overflow would otherwise have occured
  */
-void add_to_argv(char **argv, int *argc, char *arg, fmt_ptrn_t *vinfo) {
+void add_to_argv(const char **argv, int *const argc, const char *const arg,
+ fmt_ptrn_t *vinfo)
+{
 	char *filled;
 	char *ptr;
 	int i = 0;

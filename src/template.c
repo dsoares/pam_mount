@@ -39,7 +39,7 @@
 #include "fmt_ptrn.h"
 #include "template.h"
 
-static int _at_path(char *);
+static int _at_path(const char *);
 static void _build_template_dir(char *, const char *, const char *);
 
 /* Globals. */
@@ -60,9 +60,8 @@ static void _build_template_dir(char *path, const char *dir,
 }
 
 /* ============================ _at_path () ================================= */
-static int _at_path(char *template_path)
+static int _at_path(const char *template_path) {
 /* Make sure template_path is big enough to have .gz added to the end! */
-{
     struct stat stat_buf;
     if(stat(template_path, &stat_buf) == 0 && S_ISREG(stat_buf.st_mode))
 	return 1;

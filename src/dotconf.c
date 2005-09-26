@@ -127,25 +127,32 @@ static void copy_word(char **, char **, int, char);
 static DOTCONF_CB(dotconf_cb_include);          // internal 'Include'
 static DOTCONF_CB(dotconf_cb_includepath);      // internal 'IncludePath'
 static int dotconf_continue_line(char *, size_t);
-static int dotconf_find_wild_card(char *, char *, char **, char **, char **);
+static int dotconf_find_wild_card(const char *, char *, char **, char **,
+    const char **);
 static void dotconf_free_command(command_t *);
 static char *dotconf_get_here_document(configfile_t *, const char *);
 static int dotconf_get_next_line(char *, size_t, configfile_t *);
 static const char *dotconf_handle_command(configfile_t *, char *);
-static int dotconf_handle_star(command_t *, char *, char *, char *);
-static int dotconf_handle_question_mark(command_t *, char *, char *, char *);
-static int dotconf_handle_wild_card(command_t *, char, char *, char *, char *);
-static const char *dotconf_invoke_command(configfile_t *, command_t *);
+static int dotconf_handle_star(const command_t *, const char *, const char *,
+    const char *);
+static int dotconf_handle_question_mark(const command_t *, const char *,
+    const char *, const char *);
+static int dotconf_handle_wild_card(const command_t *, char, const char *,
+    const char *, const char *);
+static const char *dotconf_invoke_command(const configfile_t *,
+    const command_t *);
 static int dotconf_is_wild_card(char);
-static int dotconf_question_mark_match(char *, char *, char *);
-static char *dotconf_read_arg(configfile_t *, char **);
+static int dotconf_question_mark_match(const char *, const char *,
+    const char *);
+static char *dotconf_read_arg(const configfile_t *, char **);
 static void dotconf_register_options(configfile_t *, const configoption_t *);
 static void dotconf_set_command(configfile_t *, const configoption_t *,
     char *, command_t *);
-static int dotconf_star_match(char *, char *, char *);
+static int dotconf_star_match(const char *, const char *, const char *);
 static int dotconf_strcmp_from_back(const char *, const char *);
-static char *dotconf_substitute_env(configfile_t *, char *);
-static int dotconf_warning(configfile_t *, int, unsigned long, const char *, ...);
+static char *dotconf_substitute_env(const configfile_t *, char *);
+static int dotconf_warning(const configfile_t *, int, unsigned long,
+    const char *, ...);
 static void dotconf_wild_card_cleanup(char *, char *);
 static void skip_whitespace(char **, int, char);
 static inline long MIN(long, long);
@@ -189,7 +196,10 @@ static const configoption_t *get_argname_fallback(const configoption_t *options)
 	return NULL;
 }
 
-static char *dotconf_substitute_env(configfile_t *configfile, char *str) {
+static char *dotconf_substitute_env(const configfile_t *configfile,
+ char *str)
+{
+        // {{ editor lineup
 	char *cp1, *cp2, *cp3, *eos, *eob;
 	char *env_value;
 	char env_name[CFG_MAX_VALUE + 1];
@@ -260,7 +270,7 @@ static char *dotconf_substitute_env(configfile_t *configfile, char *str) {
 	return strdup(tmp_value);
 }
 
-static int dotconf_warning(configfile_t *configfile, int type,
+static int dotconf_warning(const configfile_t *configfile, int type,
  unsigned long errnum, const char *fmt, ...)
 {
 	va_list args;
@@ -414,13 +424,13 @@ static char *dotconf_get_here_document(configfile_t *configfile,
 	return realloc(here_doc, offset);
 }
 
-static const char *dotconf_invoke_command(configfile_t *configfile,
- command_t *cmd)
+static const char *dotconf_invoke_command(const configfile_t *configfile,
+ const command_t *cmd)
 {
 	return cmd->option->callback(cmd, configfile->context);
 }
 
-static char *dotconf_read_arg(configfile_t *configfile, char **line) {
+static char *dotconf_read_arg(const configfile_t *configfile, char **line) {
 	int sq = 0, dq = 0;							/* single quote, double quote */
 	int done = 0;
 	char *cp1 = *line;
@@ -780,8 +790,8 @@ static int dotconf_is_wild_card(char value) {
 }
 
 /* ------ internal utility function that calls the appropriate routine for the wildcard passed in -- */
-static int dotconf_handle_wild_card(command_t *cmd, char wild_card, char *path,
- char *pre, char *ext)
+static int dotconf_handle_wild_card(const command_t *cmd, char wild_card,
+ const char *path, const char *pre, const char *ext)
 {
 	int retval = 0;
 
@@ -816,13 +826,13 @@ static void dotconf_wild_card_cleanup(char *path, char *pre) {
 
 /* ------ internal utility function to check for wild cards in file path -- */
 /* ------ path and pre must be freed by the developer ( dotconf_wild_card_cleanup) -- */
-static int dotconf_find_wild_card(char *filename, char *wildcard, char **path,
- char **pre, char **ext)
+static int dotconf_find_wild_card(const char *filename, char *wildcard,
+ char **path, char **pre, const char **ext)
 {
 	int retval = -1;
 	int prefix_len = 0;
 	int tmp_count = 0;
-	char *tmp = NULL;
+	const char *tmp = NULL;
 	int found_path = 0;
 
 	int len = strlen(filename);
@@ -894,7 +904,9 @@ static int dotconf_strcmp_from_back(const char *s1, const char *s2) {
 }
 
 /* ------ internal utility function that determins if a string matches the '?' criteria -- */
-static int dotconf_question_mark_match(char *dir_name, char *pre, char *ext) {
+static int dotconf_question_mark_match(const char *dir_name, const char *pre,
+ const char *ext)
+{
 	int retval = -1;
 	int dir_name_len = strlen(dir_name);
 	int pre_len = strlen(pre);
@@ -922,7 +934,9 @@ static int dotconf_question_mark_match(char *dir_name, char *pre, char *ext) {
 }
 
 /* ------ internal utility function that determins if a string matches the '*' criteria -- */
-static int dotconf_star_match(char *dir_name, char *pre, char *ext) {
+static int dotconf_star_match(const char *dir_name, const char *pre,
+ const char *ext)
+{
 	int retval = -1;
 	int dir_name_len = strlen(dir_name);
 	int pre_len = strlen(pre);
@@ -952,8 +966,8 @@ static int dotconf_star_match(char *dir_name, char *pre, char *ext) {
 
 /* ------ internal utility function that determins matches for filenames with   -- */
 /* ------ a '?' in name and calls the Internal Include function on that filename -- */
-static int dotconf_handle_question_mark(command_t *cmd, char *path,
- char *pre, char *ext)
+static int dotconf_handle_question_mark(const command_t *cmd, const char *path,
+ const char *pre, const char *ext)
 {
 	configfile_t *included;
 	DIR *dh = NULL;
@@ -963,7 +977,8 @@ static int dotconf_handle_question_mark(command_t *cmd, char *path,
 	char new_pre[CFG_MAX_FILENAME];
 	char already_matched[CFG_MAX_FILENAME];
 	char wc = '\0';
-        char *new_path = NULL, *wc_path = NULL, *wc_pre = NULL, *wc_ext = NULL;
+        char *new_path = NULL, *wc_path = NULL, *wc_pre = NULL;
+        const char *wc_ext = NULL;
 
 	int pre_len;
 	int new_path_len;
@@ -1079,8 +1094,8 @@ static int dotconf_handle_question_mark(command_t *cmd, char *path,
 
 /* ------ internal utility function that determins matches for filenames with   --- */
 /* ------ a '*' in name and calls the Internal Include function on that filename -- */
-static int dotconf_handle_star(command_t *cmd, char *path,
- char *pre, char *ext)
+static int dotconf_handle_star(const command_t *cmd, const char *path,
+ const char *pre, const char *ext)
 {
 	configfile_t *included;
 	DIR *dh = NULL;
@@ -1090,8 +1105,8 @@ static int dotconf_handle_star(command_t *cmd, char *path,
 	char new_ext[CFG_MAX_FILENAME];
 	char already_matched[CFG_MAX_FILENAME];
 	char wc = '\0';
-        char *new_path = NULL, *s_ext = NULL, *t_ext = NULL, *sub = NULL,
-             *wc_path = NULL, *wc_pre = NULL, *wc_ext = NULL;
+        const char *s_ext = NULL, *t_ext = NULL, *wc_ext = NULL;
+        char *new_path = NULL, *sub = NULL, *wc_path = NULL, *wc_pre = NULL;
 
 	int pre_len;
 	int new_path_len;
@@ -1245,7 +1260,8 @@ static int dotconf_handle_star(command_t *cmd, char *path,
 
 /* ------ callbacks of the internal option (Include, IncludePath) ------------------------------- */
 static DOTCONF_CB(dotconf_cb_include) {
-	char *filename = NULL, *path = NULL, *pre = NULL, *ext = NULL;
+	char *filename = NULL, *path = NULL, *pre = NULL;
+        const char *ext = NULL;
 	configfile_t *included;
 	char wild_card;
 

@@ -98,7 +98,7 @@ static DOTCONF_CB(read_luserconf);
 static DOTCONF_CB(read_options_allow);
 static DOTCONF_CB(read_options_deny);
 static DOTCONF_CB(read_options_require);
-static int _options_ok(config_t *, vol_t *);
+static int _options_ok(const config_t *, const vol_t *);
 static int options_allow_ok(optlist_t *, optlist_t *);
 static int options_deny_ok(optlist_t *, optlist_t *);
 static int option_in_list(optlist_t *, const char *);
@@ -349,8 +349,7 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
  * OUTPUT: if volume checks okay 1, else 0
  * SIDE EFFECTS: error logged
  */
-static int _options_ok(config_t * config, vol_t * volume)
-{
+static int _options_ok(const config_t *config, const vol_t *volume) {
 
 	assert(config != NULL);
 	assert(volume != NULL);
@@ -387,8 +386,7 @@ static int _options_ok(config_t * config, vol_t * volume)
 		vol...
 */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-gboolean luserconf_volume_record_sane(config_t * config, int vol)
-{
+gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
 	/* FIXME: assertions not done */
 	assert(config != NULL);
 	assert(config->volume != NULL);
@@ -408,8 +406,7 @@ gboolean luserconf_volume_record_sane(config_t * config, int vol)
 /* PRE:    config points to a valid config_t structure
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-gboolean volume_record_sane(config_t * config, int vol)
-{
+gboolean volume_record_sane(const config_t *config, int vol) {
 	w4rn(PMPREFIX "checking sanity of volume record (%s)\n", config->volume[vol].volume);
 	if (!config->command[0][config->volume[vol].type]) {
 		l0g("mount command not defined for this type\n");
@@ -684,8 +681,8 @@ DOTCONF_CB(read_volume)
  * POST:   command is an array containing configured mount command lines
  *         config points to a config_t structure containing configuration read
  * FN VAL: if error 0 else 1, errors are logged */
-int
-readconfig(const char *user, char *file, int globalconf, config_t * config)
+int readconfig(const char *user, const char *file, int globalconf,
+ config_t *config)
 {
 	configfile_t *configfile;
 	if(
@@ -833,8 +830,7 @@ static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
 /* PRE:  config points to a valid config_t structure that has been filled
  * POST: any wildcards in config->data are expanded
  * FN VAL: if error 0 else 1, errors are logged */
-int expandconfig(config_t * config)
-{
+int expandconfig(const config_t *config) {
 	int i;
 	for (i = 0; i < config->volcount; i++) {
 		char tmp[MAX_PAR + 1];

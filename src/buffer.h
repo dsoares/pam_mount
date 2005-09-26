@@ -15,7 +15,7 @@ typedef struct buffer_t {
 
 extern void buffer_clear(buffer_t *);
 extern void buffer_eat(buffer_t, size_t);
-extern size_t buffer_len(buffer_t *);
+extern size_t buffer_len(const buffer_t *);
 extern gboolean buffer_t_valid(const buffer_t *);
 extern void realloc_n_cat(buffer_t *, const char *);
 extern void realloc_n_cpy(buffer_t *, const char *);

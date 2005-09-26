@@ -8,7 +8,7 @@ extern "C" {
 #include <sys/types.h>
 #include <stdio.h>
 
-#define DOTCONF_CB(__name) const char *__name(command_t *cmd, context_t *ctx)
+#define DOTCONF_CB(__name) const char *__name(const command_t *cmd, context_t *ctx)
 #define CTX_ALL 0 // context: option can be used anywhere
 #define LAST_OPTION              {"", 0, NULL, NULL}
 #define FUNC_ERRORHANDLER(_name) int _name(configfile_t *configfile, \
@@ -30,8 +30,8 @@ typedef void context_t;
 typedef struct configfile_t configfile_t;
 typedef struct configoption_t configoption_t;
 typedef struct command_t command_t;
-typedef const char *(*dotconf_callback_t)(command_t *, context_t *);
-typedef int (*dotconf_errorhandler_t)(configfile_t *, int, unsigned long, const char *);
+typedef const char *(*dotconf_callback_t)(const command_t *, context_t *);
+typedef int (*dotconf_errorhandler_t)(const configfile_t *, int, unsigned long, const char *);
 typedef const char *(*dotconf_contextchecker_t)(command_t *, unsigned long);
 
 struct command_t {
@@ -47,7 +47,7 @@ struct command_t {
     int arg_count;      // number of arguments (in data.list)
 
     // misc context information
-    configfile_t *configfile;
+    const configfile_t *configfile;
     context_t *context;
 };
 

@@ -76,7 +76,7 @@ void buffer_eat(buffer_t buf, size_t n)
 }
 
 /* ============================ buffer_len () ============================== */
-size_t buffer_len(buffer_t *buf)
+size_t buffer_len(const buffer_t *buf)
 {
     assert(buffer_t_valid(buf));
 

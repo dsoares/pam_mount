@@ -85,9 +85,8 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 		return 0;
 	}
 	md = EVP_md5();
-	if (EVP_BytesToKey
-	    (cipher, md, salt, (unsigned char *) authtok, strlen(authtok), 1,
-	     hash, iv) <= 0) {
+        if(EVP_BytesToKey(cipher, md, salt, (const unsigned char *)authtok,
+         strlen(authtok), 1, hash, iv) <= 0) {
 		l0g(PMPREFIX "failed to hash system password\n");
 		return 0;
 	}
@@ -141,7 +140,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 		ret = 0;
 		goto _return_no_close;
 	}
-	if((cipher = EVP_get_cipherbyname((const char *) fs_key_cipher)) == NULL) {
+	if((cipher = EVP_get_cipherbyname(fs_key_cipher)) == NULL) {
 		l0g(PMPREFIX "error getting cipher \"%s\"\n",
 		    fs_key_cipher);
 		ret = 0;

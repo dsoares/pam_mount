@@ -44,6 +44,7 @@
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
+#include "xprot.h"
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    include <fstab.h>
@@ -67,17 +68,17 @@
 
 static int already_mounted(const config_t * const, const unsigned int,
     char * const, fmt_ptrn_t *);
-static int check_filesystem(config_t *, const unsigned int, fmt_ptrn_t *,
+static int check_filesystem(const config_t *, const unsigned int, fmt_ptrn_t *,
     const unsigned char *, size_t);
-static int do_losetup(config_t *, const unsigned int, fmt_ptrn_t *,
+static int do_losetup(const config_t *, const unsigned int, fmt_ptrn_t *,
     const unsigned char *, size_t);
-static int do_unlosetup(config_t *, fmt_ptrn_t *);
+static int do_unlosetup(const config_t *, fmt_ptrn_t *);
 static void log_output(int);
 static void log_pm_input(const config_t * const, const unsigned int);
 static inline const char *loop_bk(const char *, struct loop_info64 *);
 static int mkmountpoint(vol_t * const, const char * const);
 static int pipewrite(int, const void *, size_t);
-static void run_lsof(const config_t *, fmt_ptrn_t *);
+static void run_lsof(const config_t * const, fmt_ptrn_t *);
 static void vol_to_dev(char *, size_t, const vol_t *);
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -108,9 +109,9 @@ static void log_output(int fd)
  * NOTE: this fn simply runs lsof on a directory and logs its output for
  * debugging purposes
  */
-static void run_lsof(const config_t *config, fmt_ptrn_t *vinfo) {
+static void run_lsof(const config_t *const config, fmt_ptrn_t *vinfo) {
 	int i, _argc = 0, cstdout = -1, child_exit;
-	char *_argv[MAX_PAR + 1];
+	const char *_argv[MAX_PAR + 1];
 	GError *err = NULL;
 	pid_t pid;
 	if(config->command[0][LSOF] == NULL)
@@ -120,8 +121,7 @@ static void run_lsof(const config_t *config, fmt_ptrn_t *vinfo) {
 		add_to_argv(_argv, &_argc, config->command[i][LSOF],
 			    vinfo);
 	log_argv(_argv);
-	if (g_spawn_async_with_pipes
-	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
+        if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	     &pid, NULL, &cstdout, NULL, &err) == FALSE) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
@@ -408,8 +408,8 @@ static int mkmountpoint(vol_t *const volume, const char *const d) {
 	return ret;
 }
 
-int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
- const char *const password, const gboolean mkmntpoint)
+int do_unmount(const config_t *config, const unsigned int vol,
+ fmt_ptrn_t *vinfo, const char *const password, const gboolean mkmntpoint)
 /* PRE:    config points to a valid config_t*
  *         config->volume[vol] is a valid struct vol_t
  *         vinfo is a valid struct fmt_ptrn_t
@@ -421,7 +421,7 @@ int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 	GError *err = NULL;
 	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
-	char *_argv[MAX_PAR + 1];
+	const char *_argv[MAX_PAR + 1];
         int type;
 
 	assert(config_t_valid(config));
@@ -455,9 +455,8 @@ int do_unmount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
 	}
 	log_argv(_argv);
-	if (g_spawn_async_with_pipes
-	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL,
-	     &pid, NULL, NULL, &cstderr, &err) == FALSE) {
+	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
+         NULL, &pid, NULL, NULL, &cstderr, &err) == FALSE) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
 		ret = 0;
@@ -512,7 +511,7 @@ _return:
 	return fnval;
 }
 
-static int do_losetup(config_t *config, const unsigned int vol,
+static int do_losetup(const config_t *config, const unsigned int vol,
  fmt_ptrn_t *vinfo, const unsigned char *password, size_t password_len)
 /* PRE:    config points to a valid config_t*
  *         config->volume[vol] is a valid struct vol_t
@@ -525,7 +524,7 @@ static int do_losetup(config_t *config, const unsigned int vol,
 	pid_t pid;
 	GError *err = NULL;
 	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
-	char *_argv[MAX_PAR + 1];
+	const char *_argv[MAX_PAR + 1];
 	const char *cipher =
 	    optlist_value(config->volume[vol].options, "encryption");
 	const char *keybits =
@@ -553,9 +552,8 @@ static int do_losetup(config_t *config, const unsigned int vol,
 			    config->command[i][LOSETUP], vinfo);
 	}
 	log_argv(_argv);
-	if (g_spawn_async_with_pipes
-	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL,
-	     &pid, &cstdin, NULL, &cstderr, &err) == FALSE) {
+	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
+         NULL, &pid, &cstdin, NULL, &cstderr, &err) == FALSE) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
                 return 0;
@@ -582,7 +580,7 @@ static int do_losetup(config_t *config, const unsigned int vol,
 	return ret;
 }
 
-static int do_unlosetup(config_t *config, fmt_ptrn_t *vinfo) {
+static int do_unlosetup(const config_t *config, fmt_ptrn_t *vinfo) {
 /* PRE:    config points to a valid config_t*
  *         vinfo is a valid struct fmt_ptrn_t
  * POST:   volume has associated with a loopback device
@@ -590,7 +588,7 @@ static int do_unlosetup(config_t *config, fmt_ptrn_t *vinfo) {
  */
 	pid_t pid;
 	GError *err = NULL;
-	char *_argv[MAX_PAR + 1];
+	const char *_argv[MAX_PAR + 1];
 	int i, child_exit, _argc = 0;
 
 	assert(config_t_valid(config));
@@ -606,8 +604,7 @@ static int do_unlosetup(config_t *config, fmt_ptrn_t *vinfo) {
 		add_to_argv(_argv, &_argc,
 			    config->command[i][UNLOSETUP], vinfo);
 	log_argv(_argv);
-	if (g_spawn_async_with_pipes
-	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
+	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	     &pid, NULL, NULL, NULL, &err) == FALSE) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
@@ -619,7 +616,7 @@ static int do_unlosetup(config_t *config, fmt_ptrn_t *vinfo) {
 	return !WEXITSTATUS(child_exit);
 }
 
-static int check_filesystem(config_t *config, const unsigned int vol,
+static int check_filesystem(const config_t *config, const unsigned int vol,
  fmt_ptrn_t * vinfo, const unsigned char *password, size_t password_len)
 /* PRE:    config points to a valid struct config_t*
  *         config->volume[vol] is a valid struct vol_t
@@ -632,7 +629,7 @@ static int check_filesystem(config_t *config, const unsigned int vol,
 	pid_t pid;
 	GError *err = NULL;
 	int i, child_exit, _argc = 0, cstdout = -1, cstderr = -1;
-	char *_argv[MAX_PAR + 1];
+	const char *_argv[MAX_PAR + 1];
 	char *fsck_target =
 	    config->volume[vol].volume, options[MAX_PAR + 1];
 
@@ -650,6 +647,7 @@ static int check_filesystem(config_t *config, const unsigned int vol,
 		if (!do_losetup
 		    (config, vol, vinfo, password, password_len))
 			return 0;
+                // GCC 4.0.2 throws a warning below, dunno why.
 		fsck_target = config->fsckloop;
 	} else
 		w4rn(PMPREFIX "volume not a loopback (options: %s)\n",
@@ -661,8 +659,7 @@ static int check_filesystem(config_t *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, config->command[i][FSCK],
 			    vinfo);
 	log_argv(_argv);
-	if (g_spawn_async_with_pipes
-	    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
+	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	     &pid, NULL, &cstdout, &cstderr, &err) == FALSE) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
@@ -686,7 +683,7 @@ static int check_filesystem(config_t *config, const unsigned int vol,
 #endif
 }
 
-int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
+int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
  const char *password, const gboolean mkmntpoint)
 /* PRE:    config points to a valid struct config_t*
  *         config->volume[vol] is a valid struct vol_t
@@ -697,7 +694,7 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
  * FN VAL: if error 0 else 1, errors are logged
  */
 {
-	char *_argv[MAX_PAR + 1];
+	const char *_argv[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];
 	size_t _password_len;
 	int i, mount_again = 0;
@@ -749,8 +746,7 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTAGAIN], vinfo);
 		log_argv(_argv);
-		if (g_spawn_async_with_pipes
-		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
+		if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
 		     set_myuid, NULL, &pid, NULL, NULL, &cstderr,
 		     &err) == FALSE) {
 			l0g(PMPREFIX "%s\n", err->message);
@@ -799,8 +795,7 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		/* send password down pipe to mount process */
                 if(vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT)
 			setenv("PASSWD_FD", "0", 1);
-		if (g_spawn_async_with_pipes
-		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
+		if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
 		     set_myuid, NULL, &pid, &cstdin, NULL, &cstderr,
 		     &err) == FALSE) {
 			l0g(PMPREFIX "%s\n", err->message);
@@ -845,8 +840,8 @@ int do_mount(config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
  * NOTE:   * checked by volume_record_sane
  *         ** checked by read_volume()
  */
-int mount_op(int (*mnt)(config_t *, const unsigned int, fmt_ptrn_t *,
- const char *, const int), config_t *config, const unsigned int vol,
+int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
+ const char *, const int), const config_t *config, const unsigned int vol,
  const char *password, const int mkmntpoint)
 {
 	int fnval;

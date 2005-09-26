@@ -49,12 +49,12 @@ typedef struct settings_t {
 } settings_t;
 
 static int modify_pm_count(const char *, long);
-static void parse_args(int, char **, settings_t *);
+static void parse_args(const int, const char **, settings_t *);
 static void set_defaults(settings_t *);
 static void usage(int, const char *, const char *);
 
 /* ============================ usage () ==================================== */
-static void usage(int exitcode, const char *error, const char *more) {
+static void usage(const int exitcode, const char *error, const char *more) {
 	fprintf(stderr, "%s\n", usage_pmvarrun);
 	if(error != NULL)
 		fprintf(stderr, "%s: %s.\n\n", error, more);
@@ -69,7 +69,7 @@ static void set_defaults(settings_t *settings) {
 }
 
 /* ============================ parse_args () =============================== */
-static void parse_args(int argc, char **argv, settings_t *settings) {
+static void parse_args(int argc, const char **argv, settings_t *settings) {
 	int c;
 	int opt_index = 0;
 	struct option opts[] = {
@@ -78,9 +78,9 @@ static void parse_args(int argc, char **argv, settings_t *settings) {
 		{"operation", 1, 0, 'o'},
 		{0, 0, 0, 0}
 	};
-	while ((c = getopt_long(argc, argv, "hdo:u:", opts, &opt_index))
-	       >= 0) {
-		switch (c) {
+        while((c = getopt_long(argc, (char * const *)argv,
+         "hdo:u:", opts, &opt_index)) >= 0) {
+	    switch (c) {
 		case 'h':
 			usage(EXIT_SUCCESS, NULL, NULL);
 		case 'd':
@@ -98,7 +98,7 @@ static void parse_args(int argc, char **argv, settings_t *settings) {
 			break;
 		default:
 			usage(EXIT_FAILURE, NULL, NULL);
-		}
+	    }
 	}
 }
 
@@ -312,7 +312,7 @@ static int modify_pm_count(const char *user, long amount) {
 }
 
 /* ============================ main () ===================================== */
-int main(int argc, char **argv) {
+int main(int argc, const char **argv) {
 	int pm_count;
 	settings_t settings;
 

@@ -9,12 +9,12 @@ extern "C" {
 #include "fmt_ptrn.h"
 #include "private.h"
 
-extern int do_mount(config_t *, const unsigned int, fmt_ptrn_t *,
+extern int do_mount(const config_t *, const unsigned int, fmt_ptrn_t *,
     const char *, const gboolean);
-extern int do_unmount(config_t *, const unsigned int, fmt_ptrn_t *,
+extern int do_unmount(const config_t *, const unsigned int, fmt_ptrn_t *,
     const char * const, const gboolean);
-extern int mount_op(int (*)(config_t *, const unsigned int, fmt_ptrn_t *,
-    const char *, const int), config_t *, const unsigned int,
+extern int mount_op(int (*)(const config_t *, const unsigned int, fmt_ptrn_t *,
+    const char *, const int), const config_t *, const unsigned int,
     const char *, const int);
 
 #ifdef __cplusplus

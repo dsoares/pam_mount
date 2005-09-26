@@ -264,7 +264,7 @@ static int modify_pm_count(config_t *config, char *user, char *operation) {
 	GError *err;
 	fmt_ptrn_t vinfo;
 	int _argc = 0, child_exit, cstdout = -1, fnval = -1, i;
-	char *_argv[MAX_PAR + 1];
+	const char *_argv[MAX_PAR + 1];
 	pid_t pid;
 	struct sigaction sact, oldsact;
 
@@ -283,7 +283,7 @@ static int modify_pm_count(config_t *config, char *user, char *operation) {
 	fmt_ptrn_close(&vinfo);
 	log_argv(_argv);
 
-	if(g_spawn_async_with_pipes(NULL, _argv, NULL,
+	if(g_spawn_async_with_pipes(NULL, (char **)_argv, NULL,
          G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL, &pid, NULL, &cstdout,
          NULL, &err) == FALSE) {
 		l0g(PMPREFIX "error executing /usr/sbin/pmvarrun\n");
