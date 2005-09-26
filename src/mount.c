@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <glib.h>
 #include <limits.h>
@@ -66,7 +67,6 @@
 
 static int already_mounted(const config_t * const, const unsigned int,
     char * const, fmt_ptrn_t *);
-static void already_mounted_build_dev(char *, size_t, const vol_t *);
 static int check_filesystem(config_t *, const unsigned int, fmt_ptrn_t *,
     const unsigned char *, size_t);
 static int do_losetup(config_t *, const unsigned int, fmt_ptrn_t *,
@@ -74,10 +74,15 @@ static int do_losetup(config_t *, const unsigned int, fmt_ptrn_t *,
 static int do_unlosetup(config_t *, fmt_ptrn_t *);
 static void log_output(int);
 static void log_pm_input(const config_t * const, const unsigned int);
+static inline const char *loop_bk(const char *, struct loop_info64 *);
 static int mkmountpoint(vol_t * const, const char * const);
 static int pipewrite(int, const void *, size_t);
 static void run_lsof(const config_t *, fmt_ptrn_t *);
-static inline const char *loop_bk(const char *, struct loop_info64 *);
+static void vol_to_dev(char *, size_t, const vol_t *);
+
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+static int split_bsd_mount(char *, const char **, const char **, const char **);
+#endif
 
 /* ============================ log_output () ============================== */
 /* INPUT: fd, a valid file descriptor
@@ -145,134 +150,129 @@ static void run_lsof(const config_t *config, fmt_ptrn_t *vinfo) {
  */
 static int already_mounted(const config_t *const config,
  const unsigned int vol, char *const mntpt, fmt_ptrn_t *vinfo)
-{
-	char match[PATH_MAX + 1] = {};
-	int mounted = 0;
-        vol_t *vpt;
 #if defined(__linux__)
-	FILE *mtab;
-	struct mntent *mtab_record;
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-	int fds[2];
-	pid_t pid;
-#endif
-
+{
+    char dev[PATH_MAX+1] = {}, real_mpt[PATH_MAX+1];
+    struct mntent *mtab_record;
+    int mounted = 0;
+    FILE *mtab;
+    vol_t *vpt;
+ 
     assert(config_t_valid(config));
     vpt = &config->volume[vol];
+    vol_to_dev(dev, sizeof(dev), vpt);
 
-    already_mounted_build_dev(match, sizeof(match), vpt);
-
-#if defined(__linux__)
     if((mtab = setmntent("/etc/mtab", "r")) == NULL) {
         l0g(PMPREFIX "could not open /etc/mtab\n");
         return -1;
     }
     w4rn(PMPREFIX "checking to see if %s is already mounted at %s\n",
-      match, vpt->mountpoint);
+      dev, vpt->mountpoint);
 
-	while ((mtab_record = getmntent(mtab)) != NULL) {
-            char const *mnt_fsname = mtab_record->mnt_fsname;
-            struct loop_info64 loopdev;
-            struct stat statbuf;
+    while((mtab_record = getmntent(mtab)) != NULL) {
+        const char *fsname = mtab_record->mnt_fsname;
+        const char *fstype = mtab_record->mnt_type;
+        const char *fspt   = mtab_record->mnt_dir;
+        int (*xcmp)(const char *, const char *);
+        struct loop_info64 loopdev;
+        struct stat statbuf;
 
-            if(stat(mnt_fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
-             major(statbuf.st_rdev) == LOOP_MAJOR) {
-                /* If /etc/mtab is a link to /proc/mounts then the loop device
-                instead of the real device will be listed -- resolve it. */
-                mnt_fsname = loop_bk(mnt_fsname, &loopdev);
-            }
+        if(stat(fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
+         major(statbuf.st_rdev) == LOOP_MAJOR) {
+            /* If /etc/mtab is a link to /proc/mounts then the loop device
+            instead of the real device will be listed -- resolve it. */
+            fsname = loop_bk(fsname, &loopdev);
+        }
 
-		/* FIXME: okay to always ignore case (needed for NCP)? */
-		if(strcasecmp(mnt_fsname, match) == 0) {
-			strncpy(mntpt, mtab_record->mnt_dir, PATH_MAX);
-			mntpt[PATH_MAX] = '\0';
-			mounted = 1;
-			if(strcmp(mtab_record->mnt_dir,
-				    config->volume[vol].mountpoint) == 0) {
-				strncpy(mntpt, mtab_record->mnt_dir,
-					PATH_MAX);
-				mntpt[PATH_MAX] = '\0';
-				break;
-			}
-		}
-	}
-        endmntent(mtab);
-	return mounted;
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-	{
-		FILE *fp;
-		GError *err = NULL;
-		int i, _argc = 0, cstdout = -1;
-		char *_argv[MAX_PAR + 1], dev[BUFSIZ + 1];
-		/*
-		 * FIXME: I'm not overly fond of using mount, but BSD has no
-		 * /etc/mtab?
-		 */
-		if(config->command[0][MNTCHECK] == NULL) {
-			l0g(PMPREFIX "mntcheck not defined in pam_mount.conf\n");
-			return -1;
-		}
-		/* FIXME: NEW */
-		for(i = 0; config->command[i][MNTCHECK] != NULL; i++)
-			add_to_argv(_argv, &_argc,
-				    config->command[i][MNTCHECK], vinfo);
-		log_argv(_argv);
-		if (g_spawn_async_with_pipes
-		    (NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
-		     NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
-			l0g(PMPREFIX "%s\n", err->message);
-			g_error_free(err);
-			return -1;
-		}
-		fp = fdopen(cstdout, "r");
-		while(fgets(dev, BUFSIZ, fp) != NULL) {
-			/*
-			 * FIXME: A bit ugly but
-			 * works.
-			 */
-			char *mp, *trash;
-			w4rn(PMPREFIX "mounted filesystem: %s", dev);	/* dev includes '\n' */
-			if((trash = strchr(dev, ' ')) == NULL) {
-				mounted = -1;	/* parse err */
-				break;
-			}
-			*trash++ = '\0';
-			if((mp = strchr(trash, ' ')) == NULL) {
-				mounted = -1;	/* parse err */
-				break;
-			}
-			if((trash = strchr(++mp, ' ')) == NULL) {
-				mounted = -1;	/* parse err */
-				break;
-			}
-			*trash = '\0';
-			/* FIXME: okay to always ignore case (needed for NCP)? */
-			if(strcasecmp(dev, match) == 0) {
-				strncpy(mntpt, mp, PATH_MAX);
-				mntpt[PATH_MAX] = NULL;
-				mounted = 1;
-				if(strcmp(mp,
-					    vpt->
-					    mountpoint) == 0) {
-					strncpy(mntpt, mp, PATH_MAX);
-					mntpt[PATH_MAX] = NULL;
-					mounted = 1;
-					break;
-				}
-			}
-		}
-		return mounted;
-	}
-#else
-	/* FIXME */
-	l0g(PMPREFIX "check for previous mount not implemented on arch.\n");
-	return ERROR;
-#endif
+        xcmp = (strcmp(fstype, "smbfs") == 0 || strcmp(fstype, "cifs") == 0 ||
+                strcmp(fstype, "ncpfs") == 0) ? strcasecmp : strcmp;
+
+        if(xcmp(fsname, dev) == 0 && (strcmp(fspt, vpt->mountpoint) == 0 ||
+         strcmp(fspt, real_mpt) == 0)) {
+            mounted = 1;
+            strncpy(mntpt, fspt, PATH_MAX);
+            mntpt[PATH_MAX] = '\0';
+            break;
+        }
+    }
+
+    endmntent(mtab);
+    return mounted;
 }
-
-static void already_mounted_build_dev(char *match, size_t s,
- const vol_t *vol)
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 {
+    char *_argv[MAX_PAR + 1], dev[PATH_MAX+1] = {}, mte[BUFSIZ + 1];
+    int i, _argc = 0, cstdout = -1, mounted = 0;
+    GError *err = NULL;
+    vol_t *vpt;
+    pid_t pid;
+    FILE *fp;
+
+    assert(config_t_valid(config));
+    vpt = &config->volume[vol];
+    vol_to_dev(dev, sizeof(dev), vpt);
+
+    // FIXME: I am not overly fond of using mount, but BSD has no /etc/mtab?
+    // "WONTFIX" I would say, eh?
+    if(config->command[0][MNTCHECK] == NULL) {
+        l0g(PMPREFIX "mntcheck not defined in pam_mount.conf\n");
+        return -1;
+    }
+
+    for(i = 0; config->command[i][MNTCHECK] != NULL; ++i) {
+        add_to_argv(_argv, &_argc, config->command[i][MNTCHECK], vinfo);
+    }
+    log_argv(_argv);
+
+    // FIXME: replace by popen() if available on BSD
+    if(g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
+     NULL, NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
+        l0g(PMPREFIX "%s\n", err->message);
+        g_error_free(err);
+        return -1;
+    }
+
+    fp = fdopen(cstdout, "r");
+    while(fgets(mte, sizeof(mte), fp) != NULL) {
+        // FIXME: Test it.
+        int (*xcmp)(const char *, const char *);
+        const char *fsname, *fstype, *fspt;
+
+        w4rn(PMPREFIX "mounted filesystem: %s", mte); // MTE includes '\n'
+        if(!split_bsd_mount(mte, &fsname, &fspt, &fstype)) {
+            mounted = -1;
+            break;
+        }
+
+        // Use case-insensitive for SMB, etc.
+        // FIXME: Is it called "smbfs" under BSD too?
+        xcmp = (fstype != NULL && *fstype != '\0' &&
+               (strcmp(fstype, "smbfs") == 0 || strcmp(fstype, "cifs") == 0 ||
+               strcmp(fstype, "ncpfs") == 0)) ? strcasecmp : strcmp;
+
+        /* FIXME: Does BSD also turn "symlink mountpoints" into
+        "real mountpoints"? */
+        if(xcmp(fsname, dev) == 0 && strcmp(fspt, vpt->mountpoint) == 0) {
+            mounted = 1;
+            strncpy(mntpt, fspt, PATH_MAX);
+            mntpt[PATH_MAX] = '\0';
+            break;
+        }
+    }
+
+    fclose(fp); // automatically closes cstdout, too
+    waitpid(pid, NULL, 0);
+    return mounted;
+}
+#else
+{
+    // FIXME
+    l0g(PMPREFIX "check for previous mount not implemented on arch.\n");
+    return -1;
+}
+#endif
+
+static void vol_to_dev(char *match, size_t s, const vol_t *vol) {
     switch(vol->type) {
         case SMBMOUNT:
         case CIFSMOUNT:
@@ -308,6 +308,34 @@ static void already_mounted_build_dev(char *match, size_t s,
     }
     return;
 }
+
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
+ const char **fstype)
+{
+    /* mntcheck is currently defined as "/bin/mount" in pam_mount.conf so
+    a line is like "/dev/ad0s1 on / (ufs, local)". */
+
+    *fsname = wp;
+    if((wp = strchr(wp, ' ')) == NULL) return 0; // parse error
+
+    // wp now at " on ..."
+    *wp++ = '\0';
+    if((wp = strchr(wp, ' ')) == NULL) return 0;
+
+    // wp now at " fspt"
+    *fspt = ++wp;
+    if((wp = strchr(wp, ' ')) == NULL) return 0;
+
+    // wp now at " (fstype, local?, options)"
+    *wp++ = '\0';
+    *fstype = ++wp;
+    while(isalnum(*wp)) ++wp;
+    *wp = '\0';
+
+    return 1;
+}
+#endif
 
 /* ============================ log_pm_input () ============================ */
 static void log_pm_input(const config_t *const config,
