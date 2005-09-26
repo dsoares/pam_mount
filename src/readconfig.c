@@ -397,34 +397,6 @@ gboolean luserconf_volume_record_sane(config_t * config, int vol)
 		l0g(PMPREFIX "wildcard used in user-defined volume\n");
 		return FALSE;
 	}
-	if (config->volume[vol].type == LCLMOUNT
-	    && owns(config->user, config->volume[vol].volume) == FALSE) {
-		l0g(PMPREFIX "user-defined volume, volume not owned by user\n");
-		return FALSE;
-	}
-	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	if (config->volume[vol].type == CRYPTMOUNT
-	    && owns(config->user, config->volume[vol].volume) == FALSE) {
-		l0g(PMPREFIX "user-defined volume, volume not owned by user\n");
-		return FALSE;
-	}
-	/*
-	 * If it does not already exist then its okay, pam_mount will mkdir
-	 * it (if configured to do so)
-	 */
-	if (config->volume[vol].type == LCLMOUNT
-	    && exists(config->volume[vol].mountpoint)
-	    && owns(config->user, config->volume[vol].mountpoint) == FALSE) {
-		l0g(PMPREFIX "user-defined volume, mountpoint not owned by user\n");
-		return FALSE;
-	}
-	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	if (config->volume[vol].type == CRYPTMOUNT
-	    && exists(config->volume[vol].mountpoint)
-	    && owns(config->user, config->volume[vol].mountpoint) == FALSE) {
-		l0g(PMPREFIX "user-defined volume, mountpoint not owned by user\n");
-		return FALSE;
-	}
 	if (!_options_ok(config, &config->volume[vol])) {
 		l0g(PMPREFIX "illegal option specified by user\n");
 		return FALSE;
