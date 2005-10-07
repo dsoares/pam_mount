@@ -271,6 +271,7 @@ static int modify_pm_count(config_t *config, char *user, char *operation) {
 	/* avoid bomb on command exiting before count read */
 	sact.sa_handler = SIG_DFL;
 	sact.sa_flags = 0;
+        sigemptyset(&sact.sa_mask);
 	if (sigaction(SIGPIPE, &sact, &oldsact) == -1) {
 		fnval = -1;
 		goto _nosigact_return;

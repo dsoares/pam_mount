@@ -497,6 +497,7 @@ static int pipewrite(int fd, const void *buf, size_t count) {
 	assert(count >= 0);
 
 	/* avoid bomb on command exiting before data written */
+        sigemptyset(&ignoresact.sa_mask);
 	if(sigaction(SIGPIPE, &ignoresact, &oldsact) == -1) {
 		fnval = -1;
 		goto _return;
