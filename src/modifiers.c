@@ -81,12 +81,16 @@ const modifier_fns_t mod_fn[] = {
 };
 
 static int apply_upper(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
-    g_strup(dest->data);
+    char *newdata = g_ascii_strup(dest->data, -1);
+    free(dest->data);
+    dest->data = newdata;
     return 1;
 }
 
 static int apply_lower(buffer_t *dest, fmt_ptrn_t *x, char *arg) {
-    g_strdown(dest->data);
+    char *newdata = g_ascii_strdown(dest->data, -1);
+    free(dest->data);
+    dest->data = newdata;
     return 1;
 }
 
