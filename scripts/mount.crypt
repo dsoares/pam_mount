@@ -143,8 +143,15 @@ esac;
 # FIXME: blind replacement of / with _ may be a bad idea.
 DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
 
-"$CRYPTSETUP" -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
-  -s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
+# Check for LUKS
+if "$CRYPTSETUP" isLuks "$DEVICE" 2>/dev/null; then
+    LUKS=true;
+    "$CRYPTSETUP" luksOpen "$DEVICE" "$DMDEVICE";
+else
+    LUKS=false;
+    "$CRYPTSETUP" -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
+      -s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
+fi;
 
 if [ $? -ne 0 ]; then
 	echo "${0##*/}: error creating $DMDEVICE" >&2
@@ -156,7 +163,11 @@ if [ "$DOFSCK" == "true" ]; then
     "$FSCK" -p "/dev/mapper/$DMDEVICE";
     if [ $? -gt 1 ]; then
         echo "${0##*/}: filesystem $DMDEVICE has errors" >&2;
-        "$CRYPTSETUP" remove "$DMDEVICE";
+        if [ "$LUKS" == true ]; then
+            "$CRYPTSETUP" luksClose "$DMDEVICE";
+        else
+            "$CRYPTSETUP" remove "$DMDEVICE";
+        fi;
         [ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
         exit 1;
     fi;
@@ -167,7 +178,11 @@ fi;
  "/dev/mapper/$DMDEVICE" "$MOUNT_POINT";
 if [ $? -ne 0 ]; then
     echo "${0##*/}: error mounting $DMDEVICE" >&2;
-    "$CRYPTSETUP" remove "$DMDEVICE";
+    if [ "$LUKS" == true ]; then
+        "$CRYPTSETUP" luksClose "$DMDEVICE";
+    else
+        "$CRYPTSETUP" remove "$DMDEVICE";
+    fi;
     [ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
     exit 1;
 fi;

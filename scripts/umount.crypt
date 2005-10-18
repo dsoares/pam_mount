@@ -55,7 +55,13 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-"$CRYPTSETUP" remove "$DMDEVICE";
+# Check for LUKS
+if "$CRYPTSETUP" isLuks "$DEVICE" 2>/dev/null; then
+    "$CRYPTSETUP" luksClose "$DMDEVICE";
+else
+    "$CRYPTSETUP" remove "$DMDEVICE";
+fi;
+
 if [ $? -ne 0 ]; then
 	echo "${0##*/}: error removing $DMDEVICE" >&2
 	exit 1
