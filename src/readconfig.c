@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <glib.h>
+#include <grp.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -579,7 +580,7 @@ DOTCONF_CB(read_volume)
 	if (cmd->arg_count != 8)
 		return "bad number of args for volume";
 	else if(ICONTEXT && strcmp(cmd->data.list[0], ICONFIG->user) != 0 &&
-	    strcmp(cmd->data.list[0], "*") != 0) {
+	  strcmp(cmd->data.list[0], "*") != 0 && **cmd->data.list != '@') {
 		/*
 		 * user may use other usernames to mount volumes using
 		 * luserconf
@@ -591,15 +592,43 @@ DOTCONF_CB(read_volume)
 		/* FIXME: should use uid == 0, not "root" */
 		w4rn(PMPREFIX "volume wildcard ignored for root\n");
 		return NULL;
-	}
+        } else if(**cmd->data.list == '@') {
+            struct passwd *pent;
+            struct group *gent;
+            if((pent = getpwnam(Config.user)) == NULL) {
+                w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
+                 Config.user, strerror(errno));
+                return NULL;
+            }
+            if(strcmp(Config.user, "root") == 0 || pent->pw_uid == 0) {
+                w4rn(PMPREFIX "volume group ignored for root\n");
+                return NULL;
+            }
+            if((gent = getgrgid(pent->pw_gid)) == NULL) {
+                w4rn(PMPREFIX "getgrgid(%ld) failed: %s\n",
+                 (long)pent->pw_gid, strerror(errno));
+                return NULL;
+            }
+            if(strcmp(cmd->data.list[0] + 1, gent->gr_name) != 0) {
+                w4rn(PMPREFIX "ignoring volume record (not for me)\n");
+                return NULL;
+            }
+        }
+
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
 	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
         vpt = &VOL[VOLCOUNT];
 	memset(vpt, 0, sizeof(vol_t));
+
 	vpt->globalconf = ICONTEXT ? TRUE : FALSE;
-	strncpy(vpt->user, cmd->data.list[0], MAX_PAR);
+        if(**cmd->data.list == '@') {
+            strncpy(vpt->user, Config.user, MAX_PAR);
+        } else {
+            strncpy(vpt->user, *cmd->data.list, MAX_PAR);
+        }
+
 	vpt->type = -1;
 	for(i = 0; Command[i].type != -1; ++i)
 		if(Command[i].fs != NULL &&
