@@ -56,7 +56,7 @@ pam_mount.conf. On most platforms this file is read from
 configuration file from /etc/pam_mount.conf. Pam_mount.conf contains many 
 comments documenting its use.
 
-In addition, you must include two entries in the system's applicable 
+In addition, you must include an entry in the system's applicable 
 /etc/pam.d/SERVICE config files, as the following example shows:
 
 
