@@ -267,6 +267,8 @@ static DOTCONF_CB(read_command)
                     return PMPREFIX "command line configured to be too long";
 		COMMAND(i) = g_strdup(cmd->data.list[i]);
 	}
+        if(i <= MAX_PAR)
+            COMMAND(i) = NULL;
 	return NULL;
 }
 
