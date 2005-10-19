@@ -298,14 +298,14 @@ static void vol_to_dev(char *match, size_t s, const vol_t *vol) {
             break;
 
         case NFSMOUNT:
-            snprintf(match, sizeof(match), "%s:%s", vol->server, vol->volume);
+            snprintf(match, s, "%s:%s", vol->server, vol->volume);
             break;
 
         case CRYPTMOUNT: {
             /* FIXME: ugly hack to support umount.crypt script. I hope that
             util-linux will have native dm_crypt support some day. */
             char *wp = match + sizeof("/dev/mapper/")-1;
-            snprintf(match, sizeof(match), "/dev/mapper/%s", vol->volume);
+            snprintf(match, s, "/dev/mapper/%s", vol->volume);
             while((wp = strchr(wp, '/')) != NULL) {
                 *wp = '_';
             }
