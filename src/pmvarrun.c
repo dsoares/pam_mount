@@ -268,13 +268,13 @@ static int modify_pm_count(const char *user, long amount) {
 					 * more than one */
 	if(st.st_size > 0) {
 		if (read(fd, buf, st.st_size) == -1) {
-                    w4rn(PREFIX "read error on %s: %s\n",
+                    l0g(PREFIX "read error on %s: %s\n",
                       filename, strerror(errno));
                     err = -1;
                     goto return_error;
 		}
 		if (lseek(fd, 0, SEEK_SET) == -1) {
-                    w4rn(PREFIX "lseek error on %s: %s\n",
+                    l0g(PREFIX "lseek error on %s: %s\n",
                       filename, strerror(errno));
                     err = -1;
                     goto return_error;
@@ -288,7 +288,8 @@ static int modify_pm_count(const char *user, long amount) {
 		}
 	} else {
 		val = 0;
-	}
+        }
+        w4rn(PREFIX "parsed count value %ld\n", val);
 	if(amount != 0) {		/* amount == 0 implies query */
 		val += amount;
                 if(val <= 0 && unlink(filename) != 0) {
