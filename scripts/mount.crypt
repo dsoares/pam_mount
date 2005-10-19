@@ -174,7 +174,7 @@ if [ "$DOFSCK" == "true" ]; then
 fi;
 
 # $MOUNT_POINT might not exist as mount can try to read it from /etc/fstab
-"$MOUNT" "${FSTYPE:+-t $FSTYPE}" "${MOUNTOPTIONS:+-o $MOUNTOPTIONS}" \
+"$MOUNT" ${FSTYPE:+-t "$FSTYPE"} ${MOUNTOPTIONS:+-o "$MOUNTOPTIONS"} \
  "/dev/mapper/$DMDEVICE" "$MOUNT_POINT";
 if [ $? -ne 0 ]; then
     echo "${0##*/}: error mounting $DMDEVICE" >&2;
