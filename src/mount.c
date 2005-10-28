@@ -166,6 +166,16 @@ static int already_mounted(const config_t *const config,
         l0g(PMPREFIX "could not open /etc/mtab\n");
         return -1;
     }
+    if(realpath(vpt->mountpoint, real_mpt) == NULL) {
+        w4rn(PMPREFIX "can't get realpath of volume %s: %s\n",
+          vpt->mountpoint, strerror(errno));
+        strncpy(real_mpt, vpt->mountpoint, PATH_MAX - 1);
+        real_mpt[sizeof(real_mpt)] = '\0';
+    } else {
+        real_mpt[sizeof(real_mpt)] = '\0';
+        l0g(PMPREFIX "realpath of volume \"%s\" is \"%s\"\n",
+          vpt->mountpoint, real_mpt);
+    }
     w4rn(PMPREFIX "checking to see if %s is already mounted at %s\n",
       dev, vpt->mountpoint);
 
