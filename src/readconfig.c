@@ -68,7 +68,7 @@ static pm_command_t Command[] = {
         {NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
 	{NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
-	{LCLMOUNT, "local", "lclmount", {"/bin/mount", "-p0", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
+	{LCLMOUNT, NULL, "lclmount", {"/bin/mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
 	{CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{UMOUNT, NULL, "umount", {"/bin/umount", "%(MNTPT)", NULL}},
@@ -235,7 +235,7 @@ get_command_index(const pm_command_t *command, const char *name)
  *       execv anything so don't worry about missing configurations */
 static DOTCONF_CB(read_command)
 {
-#define COMMAND(n) ICONFIG->command[(n)][command_index]
+#define COMMAND(n) ICONFIG->command[n][command_index]
 	int i;
 	command_type_t command_index;
 
@@ -264,7 +264,7 @@ static DOTCONF_CB(read_command)
 	COMMAND(0) = g_strdup(cmd->data.list[0]);
 	for (i = 1; i < cmd->arg_count; i++) {
 		if (i > MAX_PAR)
-                    return PMPREFIX "command line configured to be too long";
+                    return PMPREFIX "configured command line too long";
 		COMMAND(i) = g_strdup(cmd->data.list[i]);
 	}
         if(i <= MAX_PAR)
@@ -631,15 +631,20 @@ DOTCONF_CB(read_volume)
             strncpy(vpt->user, *cmd->data.list, MAX_PAR);
         }
 
-	vpt->type = -1;
+        vpt->type = LCLMOUNT;
+        strncpy(vpt->fstype, cmd->data.list[1], sizeof(vpt->fstype));
+
+        if(strcasecmp(vpt->fstype, "smb") == 0 ||
+         strcasecmp(vpt->fstype, "ncp") == 0)
+            w4rn(PMPREFIX "You are using the obsolete \"%s\" type\n", vpt->fstype);
+
 	for(i = 0; Command[i].type != -1; ++i)
 		if(Command[i].fs != NULL &&
 		    strcasecmp(cmd->data.list[1], Command[i].fs) == 0) {
 			vpt->type = Command[i].type;
 			break;
 		}
-	if(vpt->type == -1)
-		return "filesystem not supported";
+
 	if (*cmd->data.list[2] == '-')
 		*vpt->server = '\0';
 	else

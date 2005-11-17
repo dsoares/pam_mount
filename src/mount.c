@@ -73,6 +73,7 @@ static int check_filesystem(const config_t *, const unsigned int, fmt_ptrn_t *,
 static int do_losetup(const config_t *, const unsigned int, fmt_ptrn_t *,
     const unsigned char *, size_t);
 static int do_unlosetup(const config_t *, fmt_ptrn_t *);
+static int fstype_nodev(const char *);
 static void log_output(int);
 static void log_pm_input(const config_t * const, const unsigned int);
 static inline const char *loop_bk(const char *, struct loop_info64 *);
@@ -169,10 +170,10 @@ static int already_mounted(const config_t *const config,
     if(realpath(vpt->mountpoint, real_mpt) == NULL) {
         w4rn(PMPREFIX "can't get realpath of volume %s: %s\n",
           vpt->mountpoint, strerror(errno));
-        strncpy(real_mpt, vpt->mountpoint, PATH_MAX - 1);
-        real_mpt[sizeof(real_mpt)] = '\0';
+        strncpy(real_mpt, vpt->mountpoint, PATH_MAX);
+        real_mpt[PATH_MAX] = '\0';
     } else {
-        real_mpt[sizeof(real_mpt)] = '\0';
+        real_mpt[PATH_MAX] = '\0';
         l0g(PMPREFIX "realpath of volume \"%s\" is \"%s\"\n",
           vpt->mountpoint, real_mpt);
     }
@@ -659,6 +660,12 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 		l0g(PMPREFIX "fsck not defined in pam_mount.conf\n");
 		return 0;
 	}
+
+        if(optlist_exists(vpt->options, "bind") ||
+         optlist_exists(vpt->options, "move") ||
+         fstype_nodev(vpt->fstype) != 0)
+            return 1;
+
 	if (optlist_exists(vpt->options, "loop")) {
 		if (!do_losetup
 		    (config, vol, vinfo, password, password_len))
@@ -836,10 +843,13 @@ int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 	if (waitpid(pid, &child_exit, 0) == -1) {
 		l0g(PMPREFIX "error waiting for child\n");
 		return 0;
-	} else {
-		/* pass on through the result from the umount process */
-		return !WEXITSTATUS(child_exit);
 	}
+
+        if(Debug)
+            system("df");
+
+        /* pass on through the result from the umount process */
+        return !WEXITSTATUS(child_exit);
 }
 
 /* ============================ mount_op () ================================ */
@@ -872,6 +882,7 @@ int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
 	fmt_ptrn_init(&vinfo);
 	fmt_ptrn_update_kv(&vinfo, "MNTPT", vpt->mountpoint);
 	fmt_ptrn_update_kv(&vinfo, "FSCKLOOP", config->fsckloop);
+        fmt_ptrn_update_kv(&vinfo, "FSTYPE", vpt->fstype);
 	fmt_ptrn_update_kv(&vinfo, "VOLUME", vpt->volume);
 	fmt_ptrn_update_kv(&vinfo, "SERVER", vpt->server);
 	fmt_ptrn_update_kv(&vinfo, "USER", vpt->user);
@@ -885,6 +896,31 @@ int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
 	fnval = mnt(config, vol, &vinfo, password, mkmntpoint);
 	fmt_ptrn_close(&vinfo);
 	return fnval;
+}
+
+static int fstype_nodev(const char *name) {
+    /* Returns 1 if the filesystem does not require a block device,
+    0 if it does require a block device,
+    -1 if we could not find out. */
+
+    char buf[MAX_PAR];
+    FILE *fp;
+
+    if((fp = fopen("/proc/filesystems", "r")) == NULL)
+        return -1;
+
+    while(fgets(buf, sizeof(buf), fp) != NULL) {
+        char *bp = buf;
+        while(isalpha(*bp)) ++bp;
+        while(isspace(*bp)) ++bp;
+        if(strcasecmp(name, bp) == 0) {
+            fclose(fp);
+            return strncasecmp(buf, "nodev", 5) == 0;
+        }
+    }
+
+    fclose(fp);
+    return -1;
 }
 
 static inline const char *loop_bk(const char *filename,
@@ -901,3 +937,5 @@ static inline const char *loop_bk(const char *filename,
     close(fd);
     return (char *)i->lo_file_name; // signed_cast<>
 }
+
+//=============================================================================

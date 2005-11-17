@@ -60,6 +60,7 @@ typedef struct vol_t {
     char fs_key_path[PATH_MAX + 1];
     char server[MAX_PAR + 1];
     char user[MAX_PAR + 1];     // user field in a single volume config record; can be "*"
+    char fstype[MAX_PAR + 1];
     char volume[MAX_PAR + 1];   // FIXME: PATH_MAX
     optlist_t *options;         // may be NULL if no options
     char mountpoint[PATH_MAX + 1];
