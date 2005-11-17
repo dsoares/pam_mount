@@ -64,8 +64,6 @@
 #    define EVP_MAX_BLOCK_LENGTH 0 // FIXME: this is ugly, but needed
 #endif
 
-#define PMPREFIX "pam_mount: "
-
 static int already_mounted(const config_t * const, const unsigned int,
     char * const, fmt_ptrn_t *);
 static int check_filesystem(const config_t *, const unsigned int, fmt_ptrn_t *,

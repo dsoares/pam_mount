@@ -47,8 +47,6 @@
 #    define CONFIGFILE "/etc/security/pam_mount.conf"
 #endif
 
-#define PMPREFIX "pam_mount: "
-
 static void clean_system_authtok(pam_handle_t *, void *, int);
 static int converse(pam_handle_t *, int, const struct pam_message **,
     struct pam_response **);

@@ -13,6 +13,7 @@ extern "C" {
     exit(EXIT_FAILURE); \
 }
 #define MAX_PAR 127
+#define PMPREFIX "pam_mount: "
 
 typedef enum command_type_t {
     SMBMOUNT,

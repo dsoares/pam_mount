@@ -39,8 +39,6 @@
 #include "crypto.h"
 #include "misc.h"
 
-#define PMPREFIX "pam_mount: "
-
 #ifdef HAVE_LIBCRYPTO
 static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,
   unsigned char *, unsigned char *);

@@ -46,7 +46,6 @@
 #define DEBUG_DEFAULT           FALSE
 #define MKMOUNTPOINT_DEFAULT    FALSE
 #define FSCKLOOP_DEFAULT        "/dev/loop7"
-#define PMPREFIX                "pam_mount: "
 
 #define ICONTEXT (*(int *)cmd->context)
 #define ICONFIG ((config_t *)cmd->option->info)

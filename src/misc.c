@@ -41,8 +41,6 @@
 #include "private.h"
 #include "readconfig.h"
 
-#define PMPREFIX "pam_mount: "
-
 /* ============================ l0g () ===================================== */
 /* INPUT: similar to printf; all args are valid strings != NULL
  * SIDE EFFECTS: format + args are logged and displayed */
