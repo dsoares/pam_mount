@@ -2,16 +2,17 @@ Q.  I want to ask for help.  What information should I provide?
 
 A.  You need to provide us the following:
 
-o Your complete pam_mount.conf.
 o A full log of a failed session with debugging on in pam_mount.conf.
 o The version of pam_mount that you are using.
 o /etc/pam.d/* as relevant.
+o pam_mount.conf as relevant, preferably completely
 
 =======================================================================
 
 Q.  Is there a pam_mount mailing list?
 
-A.  No.  Please contact the author directly.
+A.  At the moment, no.  Please contact the author directly.
+    It is planned to open one.
 
 =======================================================================
 
@@ -119,7 +120,7 @@ pam_mount can operate without root privileges.  Specifying volumes using
 option may help pam_mount to perform without root privileges:
 
 # /etc/security/pam_mount.conf:
-volume user local - /home/user.img - - - -
+volume user auto - /home/user.img - - - -
 
 # /etc/fstab:
 /home/user.img /home/user ext2 user,loop,encryption=aes,keybits=256,noauto 0 0
@@ -196,7 +197,7 @@ module) on all systems.
 
 =======================================================================
 
-Q.  I want to use an NCP share as my home directory by X does not seem
+Q.  I want to use an NCP share as my home directory but X does not seem
 to like this.  Why?
 
 A.  The X authentication utility xauth uses file system facilities not

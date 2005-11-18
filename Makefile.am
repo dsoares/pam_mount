@@ -29,7 +29,7 @@ AUTOMAKE_OPTIONS = gnu
 
 EXTRA_DIST = autogen.sh FAQ
 
-SUBDIRS = src include include-fmt_ptrn config scripts dry debian 
+SUBDIRS = src config scripts dry
 
 if FLYN
 # For local development use only.

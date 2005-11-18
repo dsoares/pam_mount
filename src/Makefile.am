@@ -34,16 +34,8 @@ if FLYN
 noinst_PROGRAMS = check
 endif
 
-# Use -lfmt_ptrn if it exists else compile locally (see also configure.in).
-# ../include-fmt_ptrn should contain libfmt_ptrn's headers for use if
-# -lfmt_ptrn does not exist.
-if SYSTEM_LIBFMT_PTRN
-pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c readconfig.c dotconf.c mount.c optlist.c
-pam_mount_la_LDFLAGS = -module -avoid-version -lfmt_ptrn -ltemplate -lz $(GLIB_LIBS)
-else
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c common.c buffer.c
 pam_mount_la_LDFLAGS = -module -avoid-version -lz $(GLIB_LIBS)
-endif
 
 # FIXME: misc.c needs to be compiled both with and without libtool
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c
@@ -56,7 +48,7 @@ check_LDADD = @CHECK_LIBS@
 check_LDFLAGS = -lz $(GLIB_LIBS)
 endif
 
-INCLUDES = -I$(srcdir)/../include @LOCAL_FMT_PTRN_INCLUDES@
+INCLUDES = -I$(srcdir)/../include
 
 AM_CFLAGS = $(GLIB_CFLAGS) -DG_DISABLE_DEPRECATED -D_LARGEFILE_SOURCE=1 -D_LARGE_FILES -D_FILE_OFFSET_BITS=64 -D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations -Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes -Winline -pipe
 

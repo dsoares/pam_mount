@@ -1,14 +1,15 @@
-= For Next Fedora Release =====================================================
 
-o see RELEASE_CHECKLIST
 
-= For 1.0 =====================================================================
+=== ADDED 2005-11-17 ===
 
-o gid symbol like uid's &?
+- the sshfs fuse daemon kills itself for some reason, but other than
+  that, it seems to work. Should not happen with different fuse modules
+  anyway.
+
+
+=== ADDED 2005-09-xx ===
 
 o unit tests
-
-o see emails
 
 o already_mounted() needs to handle /etc/mtab entries for dm-crypt volumes
 mounted with patched util-linux.
@@ -26,23 +27,7 @@ o passwdehd needs work.
 o make a test system that takes XML and creates  pam_mount.conf, images,
 efsk's, mnt points and check script.
 
-%if %{?WITH_SELINUX:0}%{!?WITH_SELINUX:1}
-%define WITH_SELINUX 1
-%endif
-Summary: The GNU core utilities: a set of tools commonly used in shell scripts
-Name:    coreutils
-Version: 5.2.1
-Release: 6
-License: GPL
-Group:   System Environment/Base
-Url:     ftp://alpha.gnu.org/gnu/coreutils/
-%if %{WITH_SELINUX}
-BuildRequires: libselinux-devel
-%endif
-
 o scrub pam_mount.conf
-
-o add shfs support
 
 o finish .*_valid invariants.
 
@@ -50,49 +35,19 @@ o finish using struct invariants throghout code.
 
 o write class invariant function for assertions
 
-o int to gboolean and 1/0 to TRUE/FALSE
-
-o Migrate to glib functions.
-
 o replace PRE, POST and FN VAL conditions with asserts in code where applicable
 	- Document fns with INPUT, SIDE EFFECTS and OUTPUT
 	- assert that side effects happen if OUTPUT is not an error code
-	- only one return statement per function so assertions may be made
-
-	- readconfig.c (started -- see last INPUT)
-	- pam_mount.c
-	- mount.c
-	- pmvarrun.c
-
-- Description is a bit longish - certainly not showstopper but it might be
-better to give a brief description there and perhaps refer to some README in the
-docs dir
 
 o help test new mount/cryptsetup patch.
 	- does not umount right
 	- configure needs to -lselinux with -lcryptsetup
-	- need to update selinux policy
 
 o how can I determine target user name when root su's to another user
 or when I ssh using public key?
 
 o pam_mount should chdir("/") right before unmounting, not earlier
 (for Brandon).
-
-o remove include/new from CVS
-
-o splint -I. -I.. -I../include -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include +posixlib mount.c | less
-
-o ensure include/new/* and include/new are cvs rm'ed (should be)
-
-o scrub code on Savannah after break in?
-	The following files were committed after system restore (and should not need scrubbing):
-		buffer.c
-		common.c
-		modifiers.c
-		template.c
-		fmt_ptrn.c
-		<all include-fmt_ptrn except pair.h and Makefile.am>
 
 o need progress feedback from fsck, especially for gdm.
 
@@ -121,16 +76,13 @@ o fix detecting of previously mounted volumes that used --bind.
 o test new "no --bind with remote mount" code.  (and ensure --bind is
 used for local mounts)
 
-o Test/scrub glib code in optlist.c, etc.
-
 o Should -N go in pam_mount.conf like it is now?  Shall I put this in
 conf/pam_mount.conf?  How does hashing/not hashing effect scripts?
 
-o ensure const's are used (see esp. hash argument to hash_authtok).
-
-o ensure NULL-termination is guarenteed everytime strlen is used.
+o ensure '\0'-termination is guarenteed everytime strlen is used.
 
 o fix gconfd-2 blocking umount problem (gconfd-2).
+JE: Can't fix, this is a gconf problem, not pam_mount.
 		ALSO:
 		bonobo-ac	/home/test (bonobo-activation-server)
 		gnome-set	/home/test (gnome-settings-daemon)
@@ -140,12 +92,11 @@ o fix gconfd-2 blocking umount problem (gconfd-2).
 
 o If losetup does not regain -k option, modify scripts.
 
-o Scrub code one last time and allow people to test for a few weeks.
-
 o Get rid of FIXMEs.
 
 o Perhaps /var/run/pam_mount/* should be owned by root so users can not
 edit it (see related FIXMEs)?  Currently testing.
+JE: chmod +t it.
 
 = OpenBSD =====================================================================
 
@@ -169,8 +120,6 @@ continues to try and unmount volumes after a user logs out.  pam_mount
 would pass the daemon volumes to unmount and cancel things if the user
 logs back in.  HOW WOULD ALL OF THIS BE AUTHENTICATED?
 
-o use libgcrypt instead of openssl?
-
 o share configuration reading and sanity checks with authconfig using
 a shared library.
 
@@ -185,16 +134,15 @@ o Break into multiple (root priveleged and user priv.) processes?
   - OR -
 	- split into multiple pam modules, pam_fsck, etc.
 
-o Get umount -l to release loop device when appropriate and possible?
+JE: Third option preferably; AFAICS, there is already a pam_fsck.
+However, in case of loop/LVM mounts, pam_fsck might not know the device...
 
-o Ensure util-linux-2.11z-mountpoint.patch is in mail util-linux.
+o Get umount -l to release loop device when appropriate and possible?
 
 o Make pam_mount.c and mount.c completely binary passwd safe.
 
 o Does auth code still work with null password?
-
-o Debian-guy security flaw?  If changed, update luserconf info in
-pam_mount.conf and pam_mount.xml.
+JE: Currently not :(
 
 o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
 	I HAVE REPORTS THAT IT WORKS NOW.  DOES IT?
@@ -206,17 +154,12 @@ unstable.  In Red Hat bugzilla.
 o Deamon to unmount volume after all processes finally exit after a user logs
 out?  What if a user uses nohup?
 
-o Change & config syntax to allow groups to be used.
-
 o Remove pmhelper code completely from readconfig.c.
 
 o Get smbmount and ncpmount to support mount-like -p0 option to simplify
 pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
 
-o Fix Debian: see README_DEBIAN.
-
-o Ensure that NFS shares are working.  Document NFS use.  Get TCFS
-working.  Get SSLed NFS shares working.
+o Ensure that NFS shares are working. Document NFS use.
 
 o Add the ability to create an encrypted loopback filesystem to useradd.
 This should also create a README file in, for example, /home/mike that
@@ -249,13 +192,3 @@ pam_ldap might be a great solution.
 	PAM_SET_DATA.  WILL ALSO NEED TO IMPLEMNT A HACK TO ALLOW THIS
 	INFO TO BE REFERENCED IN VOLUME DEFINITIONS UNTIL NICE, NEW
 	VOLUME DEF. CODE IS IMPLEENTED.
-
-o Write a nice GNOME control center applet to configre mounts.
-
-o Tie in to xscreensaver?
-
-= Personal ====================================================================
-
-o Figure out better way to handle ~/.gnome/photo and move
-/home/mike-nocrypt/.gnome back into ~.  Linux does not support union
-mounting?

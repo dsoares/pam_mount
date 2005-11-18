@@ -24,8 +24,8 @@ AC_INIT(src/pam_mount.c)
 AM_CONFIG_HEADER(config.h)
 
 MAJOR_VERSION=0
-MINOR_VERSION=9
-MICRO_VERSION=25
+MINOR_VERSION=10
+MICRO_VERSION=0
 AM_INIT_AUTOMAKE(pam_mount, $MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION)
 
 VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -47,19 +47,6 @@ AC_CHECK_LIB(crypto, EVP_DecryptInit_ex) # RH 8.0's OpenSSL does not have?
 AC_CHECK_LIB(ssl, SSL_load_error_strings)
 AC_CHECK_FUNCS(setfsuid)
 
-AM_CONDITIONAL(SYSTEM_LIBFMT_PTRN, false)
-AH_TEMPLATE([USE_SYSTEM_FMT_PTRN],
-            [Use system -lfmt_ptrn.])
-# Use -lfmt_ptrn if it exists else compile locally (see also src/Makefile.am).
-# ./include-fmt_ptrn should contain libfmt_ptrn's headers for use if
-# -lfmt_ptrn does not exist.
-AC_ARG_ENABLE(system-fmt_ptrn,
-              AC_HELP_STRING([--enable-system-fmt_ptrn],
-                             [use system -lfmt_ptrn]),
-              AM_CONDITIONAL(SYSTEM_LIBFMT_PTRN, true), 
-              LOCAL_FMT_PTRN_INCLUDES="-I\$(srcdir)/../include-fmt_ptrn")
-AC_SUBST(LOCAL_FMT_PTRN_INCLUDES)
-
 AC_CHECK_HEADER(security/pam_modules.h,[have_pamheader="yes"],)
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
 AC_CHECK_HEADER(pam/pam_modules.h,[have_pamheader="yes"],)
@@ -67,10 +54,10 @@ if test x"$have_pamheader" != x"yes"; then
 	AC_MSG_ERROR(You are missing PAM headers)
 fi
 
-AM_PATH_CHECK(,[have_check="yes"],
-  AC_MSG_WARN([Check not found; cannot run unit tests!])
-      [have_check="no"])
-          AM_CONDITIONAL(HAVE_CHECK, test x"$have_check" = "xyes")
+#AM_PATH_CHECK(,[have_check="yes"],
+#  AC_MSG_WARN([Check not found; cannot run unit tests!])
+#      [have_check="no"])
+#          AM_CONDITIONAL(HAVE_CHECK, test x"$have_check" = "xyes")
 
 case "$host" in
   *-*-linux*)
@@ -86,4 +73,4 @@ case "$host" in
 esac
 AC_SUBST(PAM_MODDIR)
 
-AC_OUTPUT(Makefile config/Makefile dry/Makefile debian/Makefile include/Makefile include-fmt_ptrn/Makefile include-fmt_ptrn/new/Makefile src/Makefile scripts/Makefile)
+AC_OUTPUT(Makefile config/Makefile dry/Makefile src/Makefile scripts/Makefile)
