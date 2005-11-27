@@ -25,6 +25,9 @@ This program is Copyright (C) 2000 Conectiva SA
 Sep 2005:   Jan Engelhardt <jengelh@linux01.gwdg.de> became new
             maintainer of the project.
             Incorporated patches from Debian, SUSE and others, authors are:
-            Bastian Kleineidam <calvin@debian.org>, Jörg Sommer
-            <joerg@alea.gnuu.de>, <brianr@xandros.com>, Sören Köpping,
-            Florian Frank and Julien Soula.
+            Bastian Kleineidam <calvin@debian.org>,
+            Jörg Sommer <joerg@alea.gnuu.de>,
+            <brianr@xandros.com>,
+            Sören Köpping,
+            Florian Frank and
+            Julien Soula.

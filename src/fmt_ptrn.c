@@ -1,25 +1,25 @@
-/*   FILE: fmt_ptrn.c --
- * AUTHOR: W. Michael Petullo <new@flyn.org>
- *   DATE: 08 January 2000
- *
- * Copyright (c) 1999 W. Michael Petullo <new@flyn.org>
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+/*=============================================================================
+fmt_ptrn.c
+  Copyright (C) W. Michael Putello <new@flyn.org>, 1999 - 2000
+  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
 
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as
+  published by the Free Software Foundation; either version 2.1 of
+  the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this program; if not, write to:
+  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  Boston, MA  02110-1301  USA
+
+  -- For details, see the file named "LICENSE.LGPL2"
+=============================================================================*/
 #include <assert.h>
 #include <glib.h>
 #include <stdarg.h>
@@ -27,11 +27,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
-
 #include "buffer.h"
 #include "modifiers.h"
 #include "fmt_ptrn.h"
-
 #define KEY_LEN         80
 #define PARSE_ERR_LEN   BUFSIZ
 #define STACK_MAX_ITEMS 10

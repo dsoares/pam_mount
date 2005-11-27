@@ -1,25 +1,26 @@
-/*   FILE: readconfig.c
- * AUTHOR: Elvis Pf?tzenreuter <epx@conectiva.com>
- *   DATE: 2000
- *
- * Copyright (C) 2000 Elvis Pf?tzenreuter <epx@conectiva.com>
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as 
- * published by the Free Software Foundation; either version 2.1 of the 
- * License
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+/*=============================================================================
+readconfig.c
+  Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
+  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as
+  published by the Free Software Foundation; either version 2.1 of
+  the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this program; if not, write to:
+  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  Boston, MA  02110-1301  USA
+
+  -- For details, see the file named "LICENSE.LGPL2"
+=============================================================================*/
 #include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
@@ -29,24 +30,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <pwd.h>
-
 #include "dotconf.h"
 #include "misc.h"
 #include "optlist.h"
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
-
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    include <fstab.h>
 #elif defined(__linux__)
 #    include <mntent.h>
 #endif
-
 #define DEBUG_DEFAULT           FALSE
 #define MKMOUNTPOINT_DEFAULT    FALSE
 #define FSCKLOOP_DEFAULT        "/dev/loop7"
-
 #define ICONTEXT (*(int *)cmd->context)
 #define ICONFIG ((config_t *)cmd->option->info)
 
@@ -131,7 +128,7 @@ static const configoption_t legal_config[] = {
 	{"options_allow", ARG_STR, read_options_allow, &Config, CTX_ALL},
 	{"options_deny", ARG_STR, read_options_deny, &Config, CTX_ALL},
 	{"volume", ARG_LIST, read_volume, &Config, CTX_ALL},
-	LAST_OPTION
+	LAST_OPTION,
 };
 
 /* ============================ log_error () =============================== */

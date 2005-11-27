@@ -1,25 +1,26 @@
-/*   FILE: mount.c
- * AUTHOR: Elvis Pf?tzenreuter <epx@conectiva.com>
- *   DATE: 2000
- *
- * Copyright (C) 2000 Elvis Pf?tzenreuter <epx@conectiva.com>
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as 
- * published by the Free Software Foundation; either version 2.1 of the 
- * License
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+/*=============================================================================
+mount.c
+  Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
+  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as
+  published by the Free Software Foundation; either version 2.1 of
+  the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this program; if not, write to:
+  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  Boston, MA  02110-1301  USA
+
+  -- For details, see the file named "LICENSE.LGPL2"
+=============================================================================*/
 #include <config.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -35,7 +36,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
-
 #include "crypto.h"
 #include "fmt_ptrn.h"
 #include "misc.h"
@@ -45,7 +45,6 @@
 #include "private.h"
 #include "readconfig.h"
 #include "xprot.h"
-
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    include <fstab.h>
 #elif defined(__linux__)
@@ -55,7 +54,6 @@
 #    include <linux/loop.h>
 #    include <linux/major.h>
 #endif
-
 #ifdef HAVE_LIBCRYPTO
 #    ifndef EVP_MAX_BLOCK_LENGTH
 #        define EVP_MAX_BLOCK_LENGTH 32 // some older openssl versions need this
