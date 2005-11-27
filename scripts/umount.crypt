@@ -31,6 +31,7 @@ LOSETUP=/sbin/losetup
 CRYPTSETUP=/sbin/cryptsetup
 MOUNT=/bin/mount
 UMOUNT=/bin/umount
+REALPATH="/usr/bin/realpath";
 
 OPTIONS=""
 
@@ -45,7 +46,11 @@ if [ ! -d "$1" ]; then
 	exit 1
 fi
 
-DEVICEDIR` "$REALPATH" $1`;
+if [ -x "$REALPATH" ]; then
+    DEVICEDIR=` "$REALPATH" $1`;
+else
+    DEVICEDIR="$1";
+fi;
 DMDEVICE=` "$MOUNT" | grep " $DEVICEDIR " | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`;
 
 # ask cryptsetup about the underlying device
