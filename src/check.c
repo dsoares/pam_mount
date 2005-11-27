@@ -38,15 +38,15 @@ START_TEST(test_static_string_valid)
 {
 	char str[2];
 
-	fail_unless(static_string_valid(NULL, 2) == FALSE, 
+        fail_unless(!static_string_valid(NULL, 2),
 	            "static_string_valid test failed");
 
 	str[0] = 'a'; str[1] = 'a';
-	fail_unless(static_string_valid(str, 2) == FALSE,
+        fail_unless(!static_string_valid(str, 2),
 	            "static_string_valid test failed");
 
 	str[0] = 'a'; str[1] = '\0';
-	fail_unless(static_string_valid(str, 2) == TRUE,
+        fail_unless(static_string_valid(str, 2),
 	            "static_string_valid test failed");
 }
 END_TEST 

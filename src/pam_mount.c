@@ -40,6 +40,7 @@ pam_mount.c
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
+#include "xprot.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    define CONFIGFILE "/etc/pam_mount.conf"
 #else
@@ -296,9 +297,8 @@ static int modify_pm_count(config_t *config, char *user, char *operation) {
 	fmt_ptrn_close(&vinfo);
 	log_argv(_argv);
 
-	if(g_spawn_async_with_pipes(NULL, (char **)_argv, NULL,
-         G_SPAWN_DO_NOT_REAP_CHILD, set_myuid, NULL, &pid, NULL, &cstdout,
-         NULL, &err) == FALSE) {
+        if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
+         NULL, &pid, NULL, &cstdout, NULL, &err)) {
 		l0g(PMPREFIX "error executing /usr/sbin/pmvarrun\n");
 		fnval = -1;
 		goto _return;
@@ -395,8 +395,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	w4rn(PMPREFIX "back from global readconfig\n");
 	if(strlen(Config.luserconf) == 0)
 		w4rn(PMPREFIX "per-user configurations not allowed by pam_mount.conf\n");
-	else if(exists(Config.luserconf) &&
-	    owns(Config.user, Config.luserconf) == TRUE) {
+        else if(exists(Config.luserconf) && !owns(Config.user, Config.luserconf)) {
 		w4rn(PMPREFIX "going to readconfig user\n");
 		if(!readconfig(Config.user, Config.luserconf, 0, &Config)) {
 			ret = PAM_SERVICE_ERR;
@@ -422,10 +421,10 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		 * a user can nest loopback images. otherwise ownership
 		 * tests will fail if parent loopback image not yet 
 		 * mounted.  volume_record_sane() is here to be consistent */
-		if(volume_record_sane(&Config, vol) != TRUE)
+                if(!volume_record_sane(&Config, vol))
 			continue;
-		if(Config.volume[vol].globalconf != TRUE &&
-		    luserconf_volume_record_sane(&Config, vol) != TRUE)
+                if(!Config.volume[vol].globalconf &&
+                  !luserconf_volume_record_sane(&Config, vol))
 			continue;
 		w4rn(PMPREFIX "about to perform mount operations\n");
 

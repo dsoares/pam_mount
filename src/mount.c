@@ -118,8 +118,8 @@ static void run_lsof(const config_t *const config, fmt_ptrn_t *vinfo) {
 		add_to_argv(_argv, &_argc, config->command[i][LSOF],
 			    vinfo);
 	log_argv(_argv);
-        if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
-	     &pid, NULL, &cstdout, NULL, &err) == FALSE) {
+        if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
+	  &pid, NULL, &cstdout, NULL, &err)) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
 		return;
@@ -232,8 +232,8 @@ static int already_mounted(const config_t *const config,
     log_argv(_argv);
 
     // FIXME: replace by popen() if available on BSD
-    if(g_spawn_async_with_pipes(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-     NULL, NULL, &pid, NULL, &cstdout, NULL, &err) == FALSE) {
+    if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
+     &pid, NULL, &cstdout, NULL, &err)) {
         l0g(PMPREFIX "%s\n", err->message);
         g_error_free(err);
         return -1;
@@ -354,8 +354,8 @@ static void log_pm_input(const config_t *const config,
 	w4rn(PMPREFIX "information for mount:\n");
 	w4rn(PMPREFIX "----------------------\n");
 	w4rn(PMPREFIX "%s\n",
-	     (vpt->globalconf == TRUE) ?
-              "(defined by globalconf)" : "(defined by luserconf)");
+             vpt->globalconf ? "(defined by globalconf)"
+                             : "(defined by luserconf)");
 	w4rn(PMPREFIX "user:          %s\n", vpt->user);
 	w4rn(PMPREFIX "server:        %s\n", vpt->server);
 	w4rn(PMPREFIX "volume:        %s\n", vpt->volume);
@@ -436,7 +436,7 @@ int do_unmount(const config_t *config, const unsigned int vol,
 
         vpt = &config->volume[vol];
 
-	if(Debug == TRUE)
+        if(Debug)
 		/*
 		 * Often, a process still exists with ~ as its pwd after
 		 * logging out.  Running lsof helps debug this.
@@ -463,8 +463,8 @@ int do_unmount(const config_t *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
 	}
 	log_argv(_argv);
-	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
-         NULL, &pid, NULL, NULL, &cstderr, &err) == FALSE) {
+        if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
+          NULL, &pid, NULL, NULL, &cstderr, &err)) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
 		ret = 0;
@@ -483,10 +483,9 @@ int do_unmount(const config_t *config, const unsigned int vol,
 		ret = !WEXITSTATUS(child_exit);
 	}
       _return:
-	if(mkmntpoint != 0 && vpt->created_mntpt == TRUE) {
-		if(rmdir(vpt->mountpoint) == -1) /* non-fatal */
-			w4rn(PMPREFIX "could not remove %s\n", vpt->mountpoint);
-	}
+        if(mkmntpoint != 0 && vpt->created_mntpt &&
+          rmdir(vpt->mountpoint) == -1) /* non-fatal */
+		w4rn(PMPREFIX "could not remove %s\n", vpt->mountpoint);
 	return ret;
 }
 
@@ -562,8 +561,8 @@ static int do_losetup(const config_t *config, const unsigned int vol,
 			    config->command[i][LOSETUP], vinfo);
 	}
 	log_argv(_argv);
-	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
-         NULL, &pid, &cstdin, NULL, &cstderr, &err) == FALSE) {
+        if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
+          NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
                 return 0;
@@ -614,8 +613,8 @@ static int do_unlosetup(const config_t *config, fmt_ptrn_t *vinfo) {
 		add_to_argv(_argv, &_argc,
 			    config->command[i][UNLOSETUP], vinfo);
 	log_argv(_argv);
-	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
-	     &pid, NULL, NULL, NULL, &err) == FALSE) {
+        if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
+          &pid, NULL, NULL, NULL, &err)) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
 		return 0;
@@ -678,8 +677,8 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, config->command[i][FSCK],
 			    vinfo);
 	log_argv(_argv);
-	if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
-	     &pid, NULL, &cstdout, &cstderr, &err) == FALSE) {
+        if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
+          &pid, NULL, &cstdout, &cstderr, &err)) {
 		l0g(PMPREFIX "%s\n", err->message);
 		g_error_free(err);
 		return 0;
@@ -765,9 +764,8 @@ int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 			add_to_argv(_argv, &_argc,
 				    config->command[i][MNTAGAIN], vinfo);
 		log_argv(_argv);
-		if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-		     set_myuid, NULL, &pid, NULL, NULL, &cstderr,
-		     &err) == FALSE) {
+                if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
+                  set_myuid, NULL, &pid, NULL, NULL, &cstderr, &err)) {
 			l0g(PMPREFIX "%s\n", err->message);
 			g_error_free(err);
 			return 0;
@@ -814,9 +812,8 @@ int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 		/* send password down pipe to mount process */
                 if(vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT)
 			setenv("PASSWD_FD", "0", 1);
-		if(spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-		     set_myuid, NULL, &pid, &cstdin, NULL, &cstderr,
-		     &err) == FALSE) {
+                if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
+                  set_myuid, NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
 			l0g(PMPREFIX "%s\n", err->message);
 			g_error_free(err);
 			return 0;

@@ -26,7 +26,7 @@ xprot.h
 extern "C" {
 #endif
 
-// The most ugliest file.
+// xprot.h - The most ugliest file.
 
 #include <glib.h>
 

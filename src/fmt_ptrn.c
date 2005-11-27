@@ -73,11 +73,8 @@ static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t * x)
 	/* gzFile template_fp; */
 	/* char template_path[PATH_MAX + 1]; */
 	/* long line_num; */
-	if (buffer_t_valid(&x->raw_buf) == FALSE)
-		return FALSE;
-	if (buffer_t_valid(&x->filled_buf) == FALSE)
-		return FALSE;
-	if (buffer_t_valid(&x->lookup_buf) == FALSE)
+        if(!buffer_t_valid(&x->raw_buf) || !buffer_t_valid(&x->filled_buf) ||
+         !buffer_t_valid(&x->lookup_buf))
 		return FALSE;
 	/* char errmsg[BUFSIZ + 1]; */
 	/* GQueue *parse_errmsg; */

@@ -167,21 +167,18 @@ gboolean vol_t_valid(const vol_t * v)
 		return FALSE;
 	/* gboolean globalconf; */
 	/* gboolean created_mntpt; */
-	if (static_string_valid(v->fs_key_cipher, MAX_PAR + 1) == FALSE)
-		return FALSE;
-	if (static_string_valid(v->fs_key_path, PATH_MAX + 1) == FALSE)
+	if(!static_string_valid(v->fs_key_cipher, MAX_PAR + 1) ||
+	 !static_string_valid(v->fs_key_path, PATH_MAX + 1))
 		return FALSE;
 	/* should be guaranteed by volume_record_sane(): */
 	if (!(strlen(v->fs_key_cipher) == 0 || strlen(v->fs_key_path) > 0))
 		return FALSE;
-	if (static_string_valid(v->server, MAX_PAR + 1) == FALSE)
-		return FALSE;
-	if (static_string_valid(v->user, MAX_PAR + 1) == FALSE)
-		return FALSE;
-	if (static_string_valid(v->volume, MAX_PAR + 1) == FALSE)
+        if(!static_string_valid(v->server, MAX_PAR + 1) ||
+         !static_string_valid(v->user, MAX_PAR + 1) ||
+         !static_string_valid(v->volume, MAX_PAR + 1))
 		return FALSE;
 	/* optlist_t * options */
-	if (static_string_valid(v->mountpoint, PATH_MAX + 1) == FALSE)
+        if(!static_string_valid(v->mountpoint, PATH_MAX + 1))
 		return FALSE;
 	/* gboolean use_fstab */
 	return TRUE;
@@ -191,23 +188,20 @@ gboolean vol_t_valid(const vol_t * v)
 gboolean config_t_valid(const config_t * c)
 {
 	int i;
-	if (c == NULL)
-		return FALSE;
-	if (c->user == NULL)
+        if(c == NULL || c->user == NULL)
 		return FALSE;
 	/* gboolean debug */
 	/* gboolean mkmountpoint */
 	/* unsigned int volcount */
-	if (static_string_valid(c->luserconf, PATH_MAX + 1) == FALSE)
-		return FALSE;
-	if (static_string_valid(c->fsckloop, PATH_MAX + 1) == FALSE)
+        if(!static_string_valid(c->luserconf, PATH_MAX + 1) ||
+         !static_string_valid(c->fsckloop, PATH_MAX + 1))
 		return FALSE;
 	/* FIXME: test char *command[MAX_PAR + 1][COMMAND_MAX]; */
 	/* optlist_t *options_require; */
 	/* optlist_t *options_allow; */
 	/* optlist_t *options_deny; */
 	for (i = 0; i < c->volcount; i++) {
-		if (vol_t_valid(c->volume) == FALSE)
+                if(!vol_t_valid(c->volume))
 			return FALSE;
 	}
 	return TRUE;
@@ -222,7 +216,7 @@ void log_argv(const char *const *argv) {
 	/* FIXME: UGLY! */
 	int i;
 	char str[MAX_PAR + 1];
-	if(Debug == FALSE)
+        if(!Debug)
 		return;
 	g_strlcpy(str, argv[0], sizeof(str));
 	g_strlcat(str, " ", sizeof(str));

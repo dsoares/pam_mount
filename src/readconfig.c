@@ -345,7 +345,7 @@ static int _options_ok(const config_t *config, const vol_t *volume) {
 		l0g(PMPREFIX "possible conflicting option settings (use allow OR deny)\n");
 		return 0;
 	}
-	if (volume->use_fstab == FALSE) {
+        if(!volume->use_fstab) {
 		if (!options_required_ok
 		    (config->options_require, volume->options))
 			return 0;
@@ -377,7 +377,7 @@ gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
 	assert(config != NULL);
 	assert(config->volume != NULL);
 
-	if (config->volume[vol].used_wildcard == TRUE) {
+        if(config->volume[vol].used_wildcard) {
 		l0g(PMPREFIX "wildcard used in user-defined volume\n");
 		return FALSE;
 	}
