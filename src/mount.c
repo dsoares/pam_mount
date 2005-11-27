@@ -642,7 +642,8 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 	GError *err = NULL;
 	int i, child_exit, _argc = 0, cstdout = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
-        char *fsck_target, options[MAX_PAR + 1];
+        char options[MAX_PAR + 1];
+        const char *fsck_target;
         const vol_t *vpt;
 
 	assert(config_t_valid(config));
@@ -668,7 +669,6 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 		if (!do_losetup
 		    (config, vol, vinfo, password, password_len))
 			return 0;
-                // GCC 4.0.2 throws a warning below, dunno why.
 		fsck_target = config->fsckloop;
 	} else
 		w4rn(PMPREFIX "volume not a loopback (options: %s)\n",

@@ -195,7 +195,8 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 		 * to su to other users */
 		goto _return;
 	}
-	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
+        /* FIXME: free me! the dup is required because result of pam_get_user
+        disappears (valgrind) */
 	Config.user = g_strdup(pam_user);
 	w4rn(PMPREFIX "user is %s\n", Config.user);
 	if(Args.auth_type != GET_PASS) {	/* get password from PAM system */
