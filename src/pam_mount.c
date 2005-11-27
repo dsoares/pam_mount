@@ -55,7 +55,7 @@ static int modify_pm_count(config_t *, char *, char *);
 static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
-gboolean Debug;
+__attribute__((weak)) gboolean Debug;
 config_t Config;
 pam_args_t Args;
 
