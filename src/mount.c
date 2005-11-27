@@ -303,14 +303,14 @@ static void vol_to_dev(char *match, size_t s, const vol_t *vol) {
             util-linux will have native dm_crypt support some day. */
             char *wp = match + sizeof("/dev/mapper/")-1;
             snprintf(match, s, "/dev/mapper/%s", vol->volume);
-            while((wp = strchr(wp, '/')) != NULL) {
+            while((wp = strchr(wp, '/')) != NULL)
                 *wp = '_';
-            }
             break;
         }
 
         default:
             strncpy(match, vol->volume, s-1);
+            match[s-1] = '\0';
             break;
     }
     return;
