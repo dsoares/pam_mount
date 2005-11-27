@@ -47,6 +47,7 @@
 #    define CONFIGFILE "/etc/security/pam_mount.conf"
 #endif
 
+static void clean_config(pam_handle_t *, void *, int);
 static void clean_system_authtok(pam_handle_t *, void *, int);
 static int converse(pam_handle_t *, int, const struct pam_message **,
     struct pam_response **);
@@ -79,6 +80,19 @@ static void parse_pam_args(int argc, const char **argv) {
 		else
 			w4rn(PMPREFIX "bad pam_mount option\n");
 	}
+}
+
+/*
+FUNCTION <clean_config>
+INPUT:        pamh; data; errcode
+SIDE EFFECTS: Data from a config_t variable is freed.
+NOTE:         This is registered as a PAM callback function and
+              called directly.
+*/
+static void clean_config(pam_handle_t *pamh, void *data, int err) {
+    w4rn(PMPREFIX "Clean global config (%d)\n", err);
+    freeconfig(data);
+    return;
 }
 
 /* ============================ clean_system_authtok () ==================== */
@@ -331,6 +345,8 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	int ret = PAM_SUCCESS;
 	char *system_authtok;
 	const char *pam_user = NULL;
+        const void *tmp;
+        int getval;
 
 	assert(pamh != NULL);
 
@@ -368,6 +384,15 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		ret = PAM_SERVICE_ERR;
 		goto _return;
 	}
+
+        // Store initialized config as PAM data
+        if((getval = pam_get_data(pamh, "pam_mount_config",
+         &tmp)) == PAM_NO_MODULE_DATA && (ret = pam_set_data(pamh,
+         "pam_mount_config", &Config, clean_config)) != PAM_SUCCESS) {
+            l0g(PMPREFIX "error trying to save config structure\n");
+            goto _return;
+        }
+
 	w4rn(PMPREFIX "back from global readconfig\n");
 	if(strlen(Config.luserconf) == 0)
 		w4rn(PMPREFIX "per-user configurations not allowed by pam_mount.conf\n");
@@ -483,7 +508,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 		w4rn(PMPREFIX "%s seems to have other remaining open sessions\n",
                  Config.user);
       _return:
-	freeconfig(&Config);
+        // Note that PMConfig is automatically freed later in clean_config().
 	w4rn(PMPREFIX "pam_mount execution complete\n");
 	return ret;
 }

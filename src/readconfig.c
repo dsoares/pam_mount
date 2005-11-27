@@ -759,11 +759,14 @@ void freeconfig(config_t *config)
 	   for (i = 0; i < config.volcount; i++)
 	   optlist_free(&config.volume[i].options); FIXME: May be NULL!!
 	 */
-        if(config->user != NULL)
-		g_free(config->user);
-	for (i = 0; i < COMMAND_MAX; i++)
-		for(j = 0; config->command[j][i]; j++)
-			g_free(config->command[j][i]);
+        g_free(config->user);
+        for(i = 0; i < COMMAND_MAX; ++i) {
+            for(j = 0; config->command[j][i] != NULL; ++j) {
+                g_free(config->command[j][i]);
+                config->command[j][i] = NULL;
+            }
+        }
+        return;
 }
 
 /* ============================ expand_home () ============================= */
