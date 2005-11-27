@@ -428,11 +428,13 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		    luserconf_volume_record_sane(&Config, vol) != TRUE)
 			continue;
 		w4rn(PMPREFIX "about to perform mount operations\n");
-		if (!mount_op
-		    (do_mount, &Config, vol, system_authtok,
-		     Config.mkmntpoint))
-			l0g(PMPREFIX "mount of %s failed\n",
-			    Config.volume[vol].volume);
+
+                if(!mount_op(do_mount, &Config, vol, system_authtok,
+                  Config.mkmntpoint)) {
+                        l0g(PMPREFIX "mount of %s failed\n",
+                          Config.volume[vol].volume);
+                        ret = PAM_SERVICE_ERR;
+                }
 	}
 /* end root priv. */
 	/* Paranoia? */
