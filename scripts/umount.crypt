@@ -51,7 +51,13 @@ if [ -x "$REALPATH" ]; then
 else
     DEVICEDIR="$1";
 fi;
+DEVICEDIR="${DEVICEDIR%/}";
 DMDEVICE=` "$MOUNT" | grep " $DEVICEDIR " | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`;
+
+if [ -z "$DMDEVICE" ]; then
+    echo "Could not map $DEVICEDIR to a DM device";
+    exit 1;
+fi;
 
 # ask cryptsetup about the underlying device
 REALDEVICE=` "$CRYPTSETUP" status "$DMDEVICE" | sed -n '/device/s/[ ]*device:[ ]*//p'`;
