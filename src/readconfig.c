@@ -891,7 +891,7 @@ int expandconfig(const config_t *config) {
          config->user, vpt->fs_key_path, sizeof(vpt->fs_key_path)))
             return 0;
 
-        if(strcmp(vpt->user, "*") == 0) {
+        if(strcmp(vpt->user, "*") == 0 || *vpt->user == '@') {
             optlist_t *e;
             vpt->used_wildcard = TRUE;
             strcpy(vpt->user, config->user);
