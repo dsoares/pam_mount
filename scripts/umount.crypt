@@ -31,10 +31,8 @@ LOSETUP=/sbin/losetup
 CRYPTSETUP=/sbin/cryptsetup
 MOUNT=/bin/mount
 UMOUNT=/bin/umount
-REALPATH="/usr/bin/realpath";
-
+READLINK="/usr/bin/readlink";
 OPTIONS=""
-
 USAGE="dir"
 
 if [ -z "$1" ]; then
@@ -46,8 +44,8 @@ if [ ! -d "$1" ]; then
 	exit 1
 fi
 
-if [ -x "$REALPATH" ]; then
-    DEVICEDIR=` "$REALPATH" $1`;
+if [ -x "$READLINK" ]; then
+    DEVICEDIR=` "$READLINK" -f "$1"`;
 else
     DEVICEDIR="$1";
 fi;
@@ -60,6 +58,7 @@ if [ -z "$DMDEVICE" ]; then
 fi;
 
 # ask cryptsetup about the underlying device
+#
 REALDEVICE=` "$CRYPTSETUP" status "$DMDEVICE" | sed -n '/device/s/[ ]*device:[ ]*//p'`;
 
 "$UMOUNT" "$1";
@@ -69,6 +68,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check for LUKS
+#
 if "$CRYPTSETUP" isLuks "$DEVICE" 2>/dev/null; then
     "$CRYPTSETUP" luksClose "$DMDEVICE";
 else
