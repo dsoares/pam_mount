@@ -1,78 +1,79 @@
+=======================================================================
+
 Q.  I want to ask for help.  What information should I provide?
 
 A.  You need to provide us the following:
 
-o A full log of a failed session with debugging on in pam_mount.conf.
-o The version of pam_mount that you are using.
-o /etc/pam.d/* as relevant.
-o pam_mount.conf as relevant, preferably completely
+    * A full log of a failed session with debugging on in pam_mount.conf
+    * The version of pam_mount that you are using
+    * /etc/pam.d/* as relevant
+    * pam_mount.conf as relevant, preferably completely
 
 =======================================================================
 
 Q.  Is there a pam_mount mailing list?
 
-A.  At the moment, no.  Please contact the author directly.
-    It is planned to open one.
+A.  Yes, http://sourceforge.net/mail/?group_id=41452
 
 =======================================================================
 
 Q.  What does the following error mean: pam_mount: error trying to
-retrieve authtok from session code?
+    retrieve authtok from session code?
 
-A.  This often means that the pam_mount module was not executed as
-an auth type module.  This error is usually due to a misconfigured auth
-PAM stack (/etc/pam.d/<service>).  For example, if you use an auth PAM
-module configured with the control flag of sufficient, then pam_mount
-needs to be executed before it.
+A.  This often means that the pam_mount module was not executed as an
+    auth type module. This error is usually due to a misconfigured auth
+    PAM stack (/etc/pam.d/<service>). For example, if you use an auth
+    PAM module configured with the control flag of sufficient, then
+    pam_mount needs to be executed before it.
 
 =======================================================================
 
 Q.  What does the following error mean: Error reading password from file
-descriptor 0: empty password?"
+    descriptor 0: empty password?"
 
 A.  This often means that pam_mount was not run as an auth type module,
-so it did not receive a password (file descriptor 0 is stdin and that
-is how pam_mount transmits passwords to mount).  A module above pam_mount
-in the PAM configuration stack that is configured as sufficient can
-cause this.  As the README file states, do this:
+    so it did not receive a password (file descriptor 0 is stdin and
+    that is how pam_mount transmits passwords to mount). A module
+    above pam_mount in the PAM configuration stack that is configured
+    as sufficient can cause this. As the README file states, do this:
 
-auth    required    pam_mount.so
-auth    sufficient  pam_ldap.so use_first_pass
+        auth    required    pam_mount.so
+        auth    sufficient  pam_ldap.so use_first_pass
 
-NOT THIS:
+    NOT THIS:
 
-auth sufficient pam_ldap.so
-auth required   pam_mount.so use_first_pass
+        auth sufficient pam_ldap.so
+        auth required   pam_mount.so use_first_pass
 
 =======================================================================
 
 Q.  Why am I prompted for a password twice after installing pam_mount?
 
 A.  Like most PAM modules, pam_mount prompts the user for a password.
-When used with another auth type module, such as pam_unix, this may
-result in both modules prompting for a password.  In order to get a
-more desirable behavior, instruct the second module to use the first
-password entered by using the use_first_pass option.
+    When used with another auth type module, such as pam_unix2, this
+    may result in both modules prompting for a password. In order to
+    get a more desirable behavior, instruct the second module to use
+    the first password entered by using the use_first_pass option.
 
 =======================================================================
 
-Q.  Why am I having trouble logging in with KDE while using an SMB share
-as my home directory?
+Q.  Why am I having trouble logging in with KDE while using an SMB
+    share as my home directory?
 
-A.  SMB (and some other non-UNIX-native network filesystems) does not
-support special file types needed by KDE.  Either mount your SMB share
-as a subdirectory of your home directory or instruct KDE to use /tmp
-for its special files.
+A.  SMB (and some other non-UNIX-native network filesystems) do not
+    support special file types needed by KDE. Either mount your SMB
+    share as a subdirectory of your home directory or instruct KDE to
+    use /tmp for its special files.
 
 =======================================================================
 
 Q.  Why are my volumes not being unmounted when I log out?
 
 A.  Often this is because processes remaining after logging out are
-holding open files in your home directory.  For example, some versions
-of gconf do this.  The best way to figure out what programs are guilty
-is to enable debugging in your pam_mount.conf, configure lsof and watch
-for lsof's output in your logs.
+    holding open files in your home directory. For example, some
+    versions of gconf do this. The best way to figure out what programs
+    are guilty is to enable debugging in your pam_mount.conf, configure
+    lsof and watch for lsof's output in your logs.
 
 =======================================================================
 
@@ -80,163 +81,176 @@ Q.  Why are my smbmounts hanging when using Red Hat Linux 9?
 
 A.  See https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=103200.
 
-Try creating /sbin/mount.smbfs_no_nptl with this content:
+    Try creating /sbin/mount.smbfs_no_nptl with this content:
 
-#!/bin/sh
-export LD_ASSUME_KERNEL=2.4.1
-exec smbmount "$@"
+        #!/bin/sh
+        export LD_ASSUME_KERNEL=2.4.1
+        exec smbmount "$@"
                                                                                 
-Then configure pam_mount with the following in pam_mount.conf:
+    Then configure pam_mount with the following in pam_mount.conf:
                                                                                 
-smbmount /bin/mount -t smbfs_no_nptl
+        smbmount /bin/mount -t smbfs_no_nptl
 
 =======================================================================
 
 Q.  Will pam_mount work with my ftpd?
 
-A.  I don't know.  I know that vsftpd works fine with pam_mount.
-You need to specify "session_support=YES" in your vsftpd.conf.  You also
-need to be careful about pam_mount sending debugging information down the
-FTP connection.
+A.  I do not know. I know that vsftpd works fine with pam_mount. You
+    need to specify "session_support=YES" in your vsftpd.conf. You also
+    need to be careful about pam_mount sending debugging information
+    down the FTP connection.
 
 =======================================================================
 
 Q.  Why does pam_mount not work right with OpenSSH?
 
 A.  As of version 3.3, sshd has a feature called privilege separation
-that is incompatible with PAM modules needing root privileges.
-In addition, OpenSSH does not use PAM by default.  Read the OpenSSH
-documentation on privilege separation because messing with it may have
-security implications.
+    that is incompatible with PAM modules needing root privileges. In
+    addition, OpenSSH does not use PAM by default. Read the OpenSSH
+    documentation on privilege separation because messing with it may
+    have security implications.
 
-In order to cause sshd to use PAM, add the following to sshd_config:
+    In order to cause sshd to use PAM, add the following to sshd_config:
 
-PAMAuthenticationViaKbdInt yes
+        PAMAuthenticationViaKbdInt yes
 
-If you wish to use sshd with pam_mount either turn of privelege separation
-in /etc/ssh/sshd_config (UsePrivilegeSeparation no) or ensure that
-pam_mount can operate without root privileges.  Specifying volumes using
-/etc/fstab and allowing users to mount and unmount them using the user
-option may help pam_mount to perform without root privileges:
+    If you wish to use sshd with pam_mount either turn of privelege
+    separation in /etc/ssh/sshd_config (UsePrivilegeSeparation no) or
+    ensure that pam_mount can operate without root privileges.
+    Specifying volumes using /etc/fstab and allowing users to mount and
+    unmount them using the user option may help pam_mount to perform
+    without root privileges:
 
-# /etc/security/pam_mount.conf:
-volume user auto - /home/user.img - - - -
+        # /etc/security/pam_mount.conf:
+        volume user auto - /home/user.img - - - -
 
-# /etc/fstab:
-/home/user.img /home/user ext2 user,loop,encryption=aes,keybits=256,noauto 0 0
+        # /etc/fstab:
+        /home/user.img /home/user ext2 user,loop,encryption=aes,keybits=256,noauto 0 0
 
-Please let me know if you have a better idea allowing pam_mount to work
-with privilege separation.
+    Please let me know if you have a better idea allowing pam_mount to
+    work with privilege separation.
 
-In addition, Peter Astrand says:
+    In addition, Peter Astrand says:
                                                                                 
-RedHat uses a patched version of OpenSSH, which always starts off
-with calling PAM with bogus auth info. The idea is that successful
-logins should take the same amount of time as unsuccessful logins. See
-https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=101157. The problem
-is that pam_mount catches the first (empty) password, and not the real
-one. Thus, the mount fails.
+        RedHat uses a patched version of OpenSSH, which always starts
+        off with calling PAM with bogus auth info. The idea is that
+        successful logins should take the same amount of time as
+        unsuccessful logins. See
+        https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=101157.
+        The problem is that pam_mount catches the first (empty)
+        password, and not the real one. Thus, the mount fails.
 
-I've found a solution to this problem: I've rearranged my system-auth
-file like this:
+    I have found a solution to this problem: I have rearranged my
+    system-auth file like this:
 
-auth  optional    /lib/security/pam_mount.so
-auth  required    /lib/security/pam_env.so
-auth  sufficient  /lib/security/pam_unix.so likeauth nullok use_first_pass
-auth  required    /lib/security/pam_deny.so
+        auth optional   /lib/security/pam_mount.so
+        auth required   /lib/security/pam_env.so
+        auth sufficient /lib/security/pam_unix.so likeauth nullok use_first_pass
+        auth required   /lib/security/pam_deny.so
 
-Finally, Darren Tucker has explained:
+    Finally, Darren Tucker has explained:
 
-OK, here's what's happening: sshd forks when doing challenge-response
-authentication, and the pam_authenticate call happens in the child (the
-authentication "thread", although it's normally a process).
+        OK, here is what is happening: sshd forks when doing
+        challenge-response authentication, and the pam_authenticate
+        call happens in the child (the authentication "thread",
+        although it is normally a process).
 
-This, BTW, is because pam_authenticate blocks while waiting for
-responses from the conversation function.  In sshd this blocking means
-that the dispatch loop (which is needed to communicate with the user)
-isn't running until pam_authenticate completes, but it can't complete
-until because the dispatch loop isn't running.  Another process is used
-to prevent this deadlock.
+        This, BTW, is because pam_authenticate blocks while waiting for
+        responses from the conversation function. In sshd this blocking
+        means that the dispatch loop (which is needed to communicate
+        with the user) is not running until pam_authenticate completes,
+        but it cannot complete until because the dispatch loop is not
+        running. Another process is used to prevent this deadlock.
 
-It would appear that pam_mount relies on either module-private data set
-during the pam_authenticate or the PAM_AUTHTOK item, both of which are
-lost when the the authentication "thread" exits.  pam_mount goes looking
-for them during session initialization in order to authenticate to the
-SMB server, can't get them and fails.
+        It would appear that pam_mount relies on either module-private
+        data set during the pam_authenticate or the PAM_AUTHTOK item,
+        both of which are lost when the the authentication "thread"
+        exits. pam_mount goes looking for them during session
+        initialization in order to authenticate to the SMB server,
+        cannot get them and fails.
 
-Since you have OpenSSH 3.9p1, you can set
-"ChallengeResponseAuthentication no" and "PasswordAuthentication yes" in
-sshd_config and it ought to work (with or without privsep).
+        Since you have OpenSSH 3.9p1, you can set
+        "ChallengeResponseAuthentication no" and
+        "PasswordAuthentication yes" in sshd_config and it ought to
+        work (with or without privsep).
 
-If you absolutely *must* have challenge-response authentication then you
-can build OpenSSH with the pthread hack, but this it not recommended.
+        If you absolutely *must* have challenge-response authentication
+        then you can build OpenSSH with the pthread hack, but this it
+        not recommended.
 
-If you have trouble with it not dismounting then you'll need to apply
-the patch in this bug (this one only works with privsep=no, and I can't
-see a good way to fix this for the general case):
-http://bugzilla.mindrot.org/show_bug.cgi?id=926
+        If you have trouble with it not dismounting then you will need
+        to apply the patch in this bug (this one only works with
+        privsep=no, and I cannot see a good way to fix this for the
+        general case): http://bugzilla.mindrot.org/show_bug.cgi?id=926
 
 =======================================================================
 
 Q.  Why are my volumes not being unmounted by pam_mount?  I use Debian.
 
 A.  Ensure that CLOSE_SESSIONS is set to yes in /etc/login.defs,
-otherwise your volume will not be unmounted upon logging out.  I believe
-this default behavior is a bug and have filed it as Debian bug #163635.
-The maintainer is Karl Ramm <kcr@debian.org>.
+    otherwise your volume will not be unmounted upon logging out. I
+    believe this default behavior is a bug and have filed it as Debian
+    bug #163635. The maintainer is Karl Ramm <kcr@debian.org>.
+    (Note December 2005: Current maintainer of pam_mount for Debian is
+    Bastian Kleineidam <calvin@debian.org>)
 
 =======================================================================
 
-Q.  What is with the auth requirement for pam_mount?  Shouldn't this be
-a session module only?
+Q.  What is with the auth requirement for pam_mount?  Should not this be
+    a session module only?
 
 A.  Debian's (and some others) PAM distribution does not allow session
-modules to retrieve a user's password from the PAM subsystem.  This is
-why pam_mount must be used as an auth module (in addition to a session
-module) on all systems.
+    modules to retrieve a user's password from the PAM subsystem. This
+    is why pam_mount must be used as an auth module (in addition to a
+    session module) on all systems.
 
 =======================================================================
 
 Q.  I want to use an NCP share as my home directory but X does not seem
-to like this.  Why?
+    to like this. Why?
 
 A.  The X authentication utility xauth uses file system facilities not
-supported by the Linux ncpfs driver.  In order to work around this, try
-adding something like the following to your shell's configuration file:
+    supported by the Linux ncpfs driver. In order to work around this,
+    try adding something like the following to your shell's
+    configuration file:
 
-export XAUTHORITY=/tmp/.Xauthority
-export ICEAUTHORITY=/tmp/.ICEauthority
+        export XAUTHORITY=/tmp/.Xauthority
+        export ICEAUTHORITY=/tmp/.ICEauthority
 
-If you use gdm then you may want to modify gdm.conf's UserAuthDir instead
-of setting XAUTHORITY.
+    If you use gdm then you may want to modify gdm.conf's UserAuthDir
+    instead of setting XAUTHORITY.
 
-If you also wish to allow OpenSSH to tunnel X out of the same computer,
-then ensure /etc/ssh/sshd_config is configured with PermitUserEnvironment
-enabled and add the following to ~/.ssh/environment:
+    If you also wish to allow OpenSSH to tunnel X out of the same
+    computer, then ensure /etc/ssh/sshd_config is configured with
+    PermitUserEnvironment enabled and add the following to
+    ~/.ssh/environment:
 
-XAUTHORITY=/tmp/.Xauthority
+        XAUTHORITY=/tmp/.Xauthority
 
 =======================================================================
 
 Q.  Can I use pam_mount on an SELinux-enabled system?
 
-A.  I would not recommend it right now on a production system.  However,
-until pam_mount nicely integrates, you can take a look at the included
-pam_mount_macros.te.
+A.  I would not recommend it right now on a production system. However,
+    until pam_mount nicely integrates, you can take a look at the
+    included pam_mount_macros.te.
 
-Any filesystem that is mounted on $HOME must have the context of its
-root directory set to user_home_dir_t.
+    Any filesystem that is mounted on $HOME must have the context of
+    its root directory set to user_home_dir_t.
 
-Encrypted filesystems keys should generally have the context of user_home_t.
+    Encrypted filesystems keys should generally have the context of
+    user_home_t.
 
-If you wish to mount user-owned loopback filesystem images then these
-images must have their file context set to user_home_t.
+    If you wish to mount user-owned loopback filesystem images then
+    these images must have their file context set to user_home_t.
 
-Because it changes the context of child processes of things like login
-and su, pam_selinux must be invoked after pam_mount on login.  Because
-this effect on contexts must be reversed before pam_mount, pam_selinux
-must be invoked before pam_mount on logout:
+    Because it changes the context of child processes of things like
+    login and su, pam_selinux must be invoked after pam_mount on login.
+    Because this effect on contexts must be reversed before pam_mount,
+    pam_selinux must be invoked before pam_mount on logout:
 
-session    required     /lib/security/$ISA/pam_selinux.so close
-session    required     /lib/security/$ISA/pam_mount.so
-session    required     /lib/security/$ISA/pam_selinux.so open multiple
+        session required /lib/security/$ISA/pam_selinux.so close
+        session required /lib/security/$ISA/pam_mount.so
+        session required /lib/security/$ISA/pam_selinux.so open multiple
+
+=======================================================================

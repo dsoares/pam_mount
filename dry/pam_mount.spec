@@ -1,14 +1,14 @@
 
 %define wname pam-mount
 Name:     pam_mount
-Version:  0.10.0
+Version:  0.11.0
 Release:  0
 Group:    System/Libraries
 URL:      http://pam-mount.sf.net/
 Summary:  A PAM module that can mount volumes for a user session
 
 Source:   http://heanet.dl.sf.net/sourceforge/%wname/%name-%version.tbz2
-License:  LGPL
+License:  LGPL2
 Requires: pam
 BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel
 BuildRoot: %_tmppath/%name-%version-build
@@ -96,5 +96,7 @@ rm -Rf "$b";
 %doc AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ TODO
 
 %changelog
+* Wed Dec 28 2005 - jengelh
+- to 0.11.0
 * Thu Nov 17 2005 - jengelh
 - update to 0.10.0

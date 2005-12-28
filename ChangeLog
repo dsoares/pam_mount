@@ -8,6 +8,15 @@
   * [yellow] changed
   - [red] removed or really important
 
+>> To 0.11.0 (December 28 2005)
+>> ============================
+
+  * fix some memory leaks, unterminated strings, extra trailing slashes, \
+    double frees
+  * fixed: wildcards were not expanded for "@group"s
+  * account for trailing slashes and path resolution in umount.crypt
+  
+
 >> From 0.9.25 to 0.10.0 (November 17 2005)
 >> ========================================
 
