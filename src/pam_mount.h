@@ -29,7 +29,7 @@ extern "C" {
 #include <glib.h>
 #include "private.h"
 
-extern gboolean Debug;
+extern int Debug;
 extern config_t Config;
 extern pam_args_t Args;
 

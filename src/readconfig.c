@@ -22,12 +22,14 @@ readconfig.c
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
 #include <sys/types.h>
+#include <alloca.h>
 #include <assert.h>
 #include <errno.h>
 #include <glib.h>
 #include <grp.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
 #include "dotconf.h"
@@ -53,6 +55,24 @@ typedef enum fstab_field_t {
 	FSTAB_FSTYPE,
 	FSTAB_OPTS
 } fstab_field_t;
+
+static char *expand_home(const char *, const char *, char *, size_t);
+static char *expand_user_wildcard(const char *, const char *, char *, size_t);
+static int fstab_value(const char *, const fstab_field_t, char *, const int);
+static command_type_t get_command_index(const pm_command_t *, const char *);
+static FUNC_ERRORHANDLER(log_error);
+static DOTCONF_CB(read_command);
+static DOTCONF_CB(read_debug);
+static DOTCONF_CB(read_fsckloop);
+static DOTCONF_CB(read_int_param);
+static DOTCONF_CB(read_luserconf);
+static DOTCONF_CB(read_options_allow);
+static DOTCONF_CB(read_options_deny);
+static DOTCONF_CB(read_options_require);
+static int _options_ok(const config_t *, const vol_t *);
+static int options_allow_ok(optlist_t *, optlist_t *);
+static int options_deny_ok(optlist_t *, optlist_t *);
+static int options_required_ok(optlist_t *, optlist_t *);
 
 /* defaults are included here but these are overridden by pam_mount.conf */
 static pm_command_t Command[] = {
@@ -81,24 +101,6 @@ static pm_command_t Command[] = {
 	{PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
 	{-1, NULL, NULL, {NULL}}
 };
-
-static char *expand_home(char *, size_t, const char *);
-static char *expand_wildcard(char *, size_t, const char *, const char *);
-static int fstab_value(const char *, const fstab_field_t, char *, const int);
-static command_type_t get_command_index(const pm_command_t *, const char *);
-static FUNC_ERRORHANDLER(log_error);
-static DOTCONF_CB(read_command);
-static DOTCONF_CB(read_debug);
-static DOTCONF_CB(read_fsckloop);
-static DOTCONF_CB(read_int_param);
-static DOTCONF_CB(read_luserconf);
-static DOTCONF_CB(read_options_allow);
-static DOTCONF_CB(read_options_deny);
-static DOTCONF_CB(read_options_require);
-static int _options_ok(const config_t *, const vol_t *);
-static int options_allow_ok(optlist_t *, optlist_t *);
-static int options_deny_ok(optlist_t *, optlist_t *);
-static int options_required_ok(optlist_t *, optlist_t *);
 
 static const configoption_t legal_config[] = {
 	{"debug", ARG_TOGGLE, read_debug, &Config.debug, CTX_ALL},
@@ -766,87 +768,109 @@ void freeconfig(config_t *config)
         return;
 }
 
-/* ============================ expand_home () ============================= */
-/* PRE:    path points to the path to expand (ie: ~/foo)
- *         path_size = sizeof(path)
- *         user points to a valid string != NULL
- * FN VAL: expanded path (ie: /home/usr/foo) or NULL on error */
-static char *expand_home(char *path, size_t path_size, const char *user)
-{
-	size_t seg_len;
-	struct passwd *p = getpwnam(user);
-	char *src;
-	src = g_strdup(path);
-	if(p != NULL) {
-		/* - 1 because ~ is dropped from str */
-		if ((seg_len =
-		     strlen(p->pw_dir) + strlen(src) - 1) < path_size) {
-			strcpy(path, p->pw_dir);
-			strcat(path, src + 1);	/* skip leading '~' */
-		} else {
-			l0g(PMPREFIX "destination string to short\n");
-			g_free(src);
-			return NULL;
-		}
-	} else {
-            l0g(PMPREFIX "could not look up account information for %s\n", user);
-            g_free(src);
-            return NULL;
-	}
-	g_free(src);
-	return path;
+/*@@@ Currently copied from libHX @@@*/
+
+/* noproto */
+static inline char *HX_strlcat(char *dest, const char *src, size_t len) {
+    return strncat(dest, src, len - strlen(dest));
 }
 
-/* ============================ expand_wildcard () ========================= */
-/* PRE:    dest points to a valid string
- *         dest_size = sizeof(dest)
- *         str points to the string to expand (must contain at least one &)
- *         user is the username to expand to
- * FN VAL: str with any &s expanded into user or NULL on error */
-static char *expand_wildcard(char *dest, size_t dest_size, const char *str,
-			     const char *user)
-/* FIXME: this strdup/free is silly; req. dest and str point to diff. arrays? */
-{
-	char *pos, *src;
-	w4rn(PMPREFIX "expand_wildcard for %s\n", str);
-	if (str == NULL) {
-		l0g(PMPREFIX "tried to expand a NULL\n");
-		return NULL;
-	}
-	src = g_strdup(str);
-	pos = strchr(src, '&');
-	if(pos != NULL) {
-		size_t seg_len;
-		/* - 1 because & is dropped from str */
-		if (strlen(src) + strlen(user) - 1 < dest_size) {
-			seg_len = pos - src;
-			strcpy(dest, src);
-			strcpy(dest + seg_len, user);
-			if (!expand_wildcard
-			    (dest + seg_len + strlen(user),
-			     dest_size - seg_len - strlen(user),
-			     src + seg_len + 1, user)) {
-				g_free(src);
-				return NULL;
-			}
-		} else {
-			l0g("pam_mount %s\n",
-			    "destination string to short");
-			g_free(src);
-			return NULL;
-		}
-	} else {
-		strncpy(dest, src, dest_size);
-		dest[dest_size - 1] = '\0';
-	}
-	g_free(src);
-	return dest;
+/* noproto */ static inline
+char *HX_strlncat(char *dest, const char *src, size_t dlen, size_t slen) {
+    size_t r = dlen - strlen(dest);
+    r = (slen < r) ? slen : r;
+    return strncat(dest, src, r);
 }
 
-/* ============================ expandconfig () ============================ */
-/* PRE:  config points to a valid config_t structure that has been filled
- * POST: any wildcards in config->data are expanded
- * FN VAL: if error 0 else 1, errors are logged */
+/* noproto */ static
+char *HX_strclone(char **pa, const char *pb) {
+    if(*pa == pb)
+        return *pa;
+    if(*pa != NULL) {
+        free(*pa);
+        *pa = NULL;
+    }
+    if(pb == NULL)
+        return NULL;
+    if((*pa = malloc(strlen(pb) + 1)) == NULL)
+        return NULL;
+    strcpy(*pa, pb);
+    return *pa;
+}
+
+/*
+FUNCTION <expand_home>
+INPUT:   A pathname like "~" or "~/foo" (PATH) and the username (USER)
+         First char must be '~'. DEST and STR may overlap.
+ACTION:  Expands the pathname
+OUTPUT:  Result is put into DEST, of size SIZE
+RETURNS: NULL on failure, otherwise DEST
+*/
+static char *expand_home(const char *path, const char *user, char *dest,
+ size_t size)
+{
+    struct passwd *pe;
+    char *buf;
+
+    if(*path != '~') {
+        l0g(PMPREFIX "expand_home(path=%s); path does not begin with ~\n", path);
+        return NULL;
+    }
+
+    if((pe = getpwnam(user)) == NULL) {
+        l0g(PMPREFIX "Could not lookup account information for %s\n", user);
+        return NULL;
+    }
+
+    buf = alloca(size);
+    if(snprintf(buf, size, "%s%s", pe->pw_dir, path + 1) >= size)
+        l0g(PMPREFIX "Warning: Not enough buffer space in expand_home()\n");
+
+    strncpy(dest, buf, size);
+    return dest;
+}
+
+/*
+FUNCTION <expand_user_wildcard>
+INPUT:   Username (USER) and string to process (STR)
+         DEST and STR may overlap.
+ACTION:  Substitues all occurrences of & by the username
+OUTPUT:  Writes the result into DEST, which is of size SIZE.
+RETURNS: NULL on failure, otherwise DEST.
+*/
+static char *expand_user_wildcard(const char *str, const char *user,
+ char *dest, size_t size)
+{
+    const char *w_begin = str, *w_end;
+    char *buf;
+
+    if(str == NULL) {
+        l0g(PMPREFIX "expand_user_wildcard(str=NULL)\n");
+        return NULL;
+    }
+    if(dest == NULL)
+        l0g(PMPREFIX "expand_user_wildcard(dest=NULL), please fix\n");
+
+    buf  = alloca(size);
+    *buf = '\0';
+    while((w_end = strchr(w_begin, '&')) != NULL) {
+        HX_strlncat(buf, w_begin, size, w_end - w_begin);
+        HX_strlcat(buf, user, size);
+        w_begin = w_end + 1;
+    }
+    if(*w_begin != '\0')
+        HX_strlcat(buf, w_begin, size);
+
+    strncpy(dest, buf, size);
+    return dest;
+}
+
+/*
+FUNCTION <expand_config>
+INPUT:   Filled and valid config_t structure
+ACTION:  Expands all wildcards in the structure
+RETURNS: (boolean) false on error
+*/
 int expandconfig(const config_t *config) {
     vol_t *vpt;
     int i;
@@ -856,15 +880,15 @@ int expandconfig(const config_t *config) {
         vpt = &config->volume[i];
 
         if(*vpt->mountpoint == '~' && !expand_home(vpt->mountpoint,
-         sizeof(vpt->mountpoint), config->user))
+         config->user, vpt->mountpoint, sizeof(vpt->mountpoint)))
             return 0;
 
-        if(*vpt->volume == '~' && !expand_home(vpt->volume,
-         sizeof(vpt->volume), config->user))
+        if(*vpt->volume == '~' && !expand_home(vpt->volume, config->user,
+         vpt->volume, sizeof(vpt->volume)))
             return 0;
 
         if(*vpt->fs_key_path == '~' && !expand_home(vpt->fs_key_path,
-         sizeof(vpt->fs_key_path), config->user))
+         config->user, vpt->fs_key_path, sizeof(vpt->fs_key_path)))
             return 0;
 
         if(strcmp(vpt->user, "*") == 0) {
@@ -872,29 +896,33 @@ int expandconfig(const config_t *config) {
             vpt->used_wildcard = TRUE;
             strcpy(vpt->user, config->user);
 
-            if(!expand_wildcard(vpt->volume, sizeof(vpt->volume),
-             vpt->volume, config->user))
+            if(!expand_user_wildcard(vpt->volume, config->user,
+             vpt->volume, sizeof(vpt->volume)))
                 return 0;
 
-            if(!expand_wildcard(vpt->mountpoint, sizeof(vpt->mountpoint),
-             vpt->mountpoint, config->user))
+            if(!expand_user_wildcard(vpt->mountpoint, config->user,
+             vpt->mountpoint, sizeof(vpt->mountpoint)))
                 return 0;
 
             for(e = vpt->options; e != NULL; e = optlist_next(e)) {
-                if(!expand_wildcard(tmp, sizeof(tmp), optlist_key(e), config->user))
+                if(!expand_user_wildcard(optlist_key(e), config->user,
+                 tmp, sizeof(tmp)))
                     return 0;
+                HX_strclone((char **)&optlist_key(e), tmp);
 
-                optlist_key(e) = g_strdup(tmp);
-                if(!expand_wildcard(tmp, sizeof(tmp), optlist_val(e), config->user))
+
+                if(!expand_user_wildcard(optlist_val(e), config->user,
+                 tmp, sizeof(tmp)))
                     return 0;
-
-                optlist_val(e) = g_strdup(tmp);
+                HX_strclone((char **)&optlist_val(e), tmp);
             }
 
-            if(!expand_wildcard(vpt->fs_key_path, sizeof(vpt->fs_key_path),
-             vpt->fs_key_path, config->user))
+            if(!expand_user_wildcard(vpt->fs_key_path, config->user,
+             vpt->fs_key_path, sizeof(vpt->fs_key_path)))
                 return 0;
         }
     }
     return 1;
 }
+
+//=============================================================================

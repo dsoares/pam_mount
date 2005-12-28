@@ -55,9 +55,9 @@ static int modify_pm_count(config_t *, char *, char *);
 static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
-__attribute__((weak)) gboolean Debug;
-config_t Config;
-pam_args_t Args;
+__attribute__((weak)) int Debug = 0;
+config_t Config = {};
+pam_args_t Args = {};
 
 /* ============================ parse_pam_args () ========================== */
 /* INPUT: argc and argv, standard main()-type arguments
@@ -84,10 +84,9 @@ static void parse_pam_args(int argc, const char **argv) {
 
 /*
 FUNCTION <clean_config>
-INPUT:        pamh; data; errcode
-SIDE EFFECTS: Data from a config_t variable is freed.
-NOTE:         This is registered as a PAM callback function and
-              called directly.
+INPUT:   pamh; data; errcode
+ACTION:  Data from a config_t variable is freed.
+NOTES:   This is registered as a PAM callback function and called directly.
 */
 static void clean_config(pam_handle_t *pamh, void *data, int err) {
     w4rn(PMPREFIX "Clean global config (%d)\n", err);
@@ -212,7 +211,6 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
         /* FIXME: free me! the dup is required because result of pam_get_user
         disappears (valgrind) */
 	Config.user = g_strdup(pam_user);
-	w4rn(PMPREFIX "user is %s\n", Config.user);
 	if(Args.auth_type != GET_PASS) {	/* get password from PAM system */
 		char *ptr = NULL;
 		if ((ret =
@@ -361,7 +359,6 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	}
 	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
 	Config.user = g_strdup(pam_user);
-	w4rn(PMPREFIX "user is %s\n", Config.user);
 	if(strlen(Config.user) > MAX_PAR) {
 		l0g(PMPREFIX "username %s is too long\n", Config.user);
 		ret = PAM_SERVICE_ERR;
@@ -487,7 +484,6 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 	}
 	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
 	Config.user = g_strdup(pam_user);
-	w4rn(PMPREFIX "user is %s\n", Config.user);
 	/* if our CWD is in the home directory, it might not get umounted */
 	if(chdir("/") != 0)
 		l0g(PMPREFIX "could not chdir\n");
