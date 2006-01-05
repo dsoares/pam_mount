@@ -805,13 +805,13 @@ int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
                 for(i = 0; config->command[i][vpt->type] != NULL; ++i) {
                     add_to_argv(_argv, &_argc, config->command[i][vpt->type], vinfo);
                 }
-		log_argv(_argv);
                 if(vpt->type == LCLMOUNT &&
                   !check_filesystem(config, vol, vinfo, _password, _password_len))
 			l0g(PMPREFIX "error checking filesystem but will continue\n");
 		/* send password down pipe to mount process */
                 if(vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT)
 			setenv("PASSWD_FD", "0", 1);
+		log_argv(_argv);
                 if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
                   set_myuid, NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
 			l0g(PMPREFIX "%s\n", err->message);
