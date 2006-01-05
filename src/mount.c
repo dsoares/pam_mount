@@ -823,9 +823,8 @@ int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
 			    _password_len)
 				/* FIXME: clean: returns value of exit below */
 				l0g(PMPREFIX "error sending password to mount\n");
-			CLOSE(cstdin);
 		}
-
+                close(cstdin);
 	}
 	/* Paranoia? */
 	memset(_password, 0, sizeof(_password));
