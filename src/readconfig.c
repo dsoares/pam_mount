@@ -375,9 +375,10 @@ static int _options_ok(const config_t *config, const vol_t *volume) {
 */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
-	/* FIXME: assertions not done */
+        const vol_t *vpt;
 	assert(config != NULL);
 	assert(config->volume != NULL);
+        vpt = &config->volume[vol];
 
         if(config->volume[vol].used_wildcard) {
 		l0g(PMPREFIX "wildcard used in user-defined volume\n");
@@ -395,7 +396,11 @@ gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 gboolean volume_record_sane(const config_t *config, int vol) {
-        const vol_t *vpt = &config->volume[vol];
+        const vol_t *vpt;
+
+        assert(config != NULL);
+        assert(config->volume != NULL);
+        vpt = &config->volume[vol];
 
 	w4rn(PMPREFIX "checking sanity of volume record (%s)\n", vpt->volume);
 	if(!config->command[0][vpt->type]) {
