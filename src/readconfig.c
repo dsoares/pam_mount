@@ -628,18 +628,13 @@ DOTCONF_CB(read_volume)
 	memset(vpt, 0, sizeof(vol_t));
 
 	vpt->globalconf = ICONTEXT ? TRUE : FALSE;
-        if(**cmd->data.list == '@') {
-            strncpy(vpt->user, Config.user, MAX_PAR);
-        } else {
-            strncpy(vpt->user, *cmd->data.list, MAX_PAR);
-        }
-
+        strncpy(vpt->user, *cmd->data.list, MAX_PAR);
         vpt->type = LCLMOUNT;
         strncpy(vpt->fstype, cmd->data.list[1], sizeof(vpt->fstype));
 
         if(strcasecmp(vpt->fstype, "smb") == 0 ||
          strcasecmp(vpt->fstype, "ncp") == 0)
-            w4rn(PMPREFIX "You are using the obsolete \"%s\" type\n", vpt->fstype);
+            l0g(PMPREFIX "You are using the obsolete \"%s\" type\n", vpt->fstype);
 
 	for(i = 0; Command[i].type != -1; ++i)
 		if(Command[i].fs != NULL &&
