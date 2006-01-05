@@ -891,6 +891,19 @@ int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
 	return fnval;
 }
 
+/* copied from libHX */
+/* noproto */ static
+char *HX_chomp(char *s) {
+    size_t len = strlen(s);
+    char *p = s + len - 1;
+    while(p >= s) {
+        if(*p != '\n' && *p != '\r')
+            break;
+        *p-- = '\0';
+    }
+    return s;
+}
+
 static int fstype_nodev(const char *name) {
     /* Returns 1 if the filesystem does not require a block device,
     0 if it does require a block device,
@@ -904,9 +917,10 @@ static int fstype_nodev(const char *name) {
 
     while(fgets(buf, sizeof(buf), fp) != NULL) {
         char *bp = buf;
+        HX_chomp(buf);
         while(isalpha(*bp)) ++bp;
         while(isspace(*bp)) ++bp;
-        if(strcasecmp(name, bp) == 0) {
+        if(strcasecmp(bp, name) == 0) {
             fclose(fp);
             return strncasecmp(buf, "nodev", 5) == 0;
         }
