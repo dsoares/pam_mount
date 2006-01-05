@@ -381,7 +381,7 @@ gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
         vpt = &config->volume[vol];
 
         if(config->volume[vol].used_wildcard) {
-		l0g(PMPREFIX "wildcard used in user-defined volume\n");
+		l0g(PMPREFIX "You may not use wildcards in user-defined volumes\n");
 		return FALSE;
 	}
 	if (!_options_ok(config, &config->volume[vol])) {

@@ -392,7 +392,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 	w4rn(PMPREFIX "back from global readconfig\n");
 	if(strlen(Config.luserconf) == 0)
 		w4rn(PMPREFIX "per-user configurations not allowed by pam_mount.conf\n");
-        else if(exists(Config.luserconf) && !owns(Config.user, Config.luserconf)) {
+        else if(exists(Config.luserconf) && owns(Config.user, Config.luserconf)) {
 		w4rn(PMPREFIX "going to readconfig user\n");
 		if(!readconfig(Config.user, Config.luserconf, 0, &Config)) {
 			ret = PAM_SERVICE_ERR;
