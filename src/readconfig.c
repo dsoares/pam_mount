@@ -73,6 +73,7 @@ static int _options_ok(const config_t *, const vol_t *);
 static int options_allow_ok(optlist_t *, optlist_t *);
 static int options_deny_ok(optlist_t *, optlist_t *);
 static int options_required_ok(optlist_t *, optlist_t *);
+static int user_in_sgrp(const char *, const char *);
 
 /* defaults are included here but these are overridden by pam_mount.conf */
 static pm_command_t Command[] = {
@@ -578,46 +579,54 @@ DOTCONF_CB(read_volume)
 {
 #define VOL ICONFIG->volume
 #define VOLCOUNT ICONFIG->volcount
+    enum wildcard_type {
+        WC_NONE = 0,
+        WC_ANYUSER,
+        WC_PGRP,
+        WC_SGRP,
+    } wildcard = WC_NONE;
+    struct passwd *pent;
         vol_t *vpt;
 	int i;
 
 	if (cmd->arg_count != 8)
 		return "bad number of args for volume";
-	else if(ICONTEXT && strcmp(cmd->data.list[0], ICONFIG->user) != 0 &&
-	  strcmp(cmd->data.list[0], "*") != 0 && **cmd->data.list != '@') {
-		/*
-		 * user may use other usernames to mount volumes using
-		 * luserconf
-		 */
-		w4rn(PMPREFIX "ignoring volume record (not for me)\n");
-		return NULL;
-	} else if(strcmp(cmd->data.list[0], "*") == 0 &&
-            strcmp(Config.user, "root") == 0) {
-		/* FIXME: should use uid == 0, not "root" */
-		w4rn(PMPREFIX "volume wildcard ignored for root\n");
-		return NULL;
-        } else if(**cmd->data.list == '@') {
-            struct passwd *pent;
-            struct group *gent;
-            if((pent = getpwnam(Config.user)) == NULL) {
-                w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
-                 Config.user, strerror(errno));
-                return NULL;
-            }
-            if(strcmp(Config.user, "root") == 0 || pent->pw_uid == 0) {
-                w4rn(PMPREFIX "volume group ignored for root\n");
-                return NULL;
-            }
-            if((gent = getgrgid(pent->pw_gid)) == NULL) {
-                w4rn(PMPREFIX "getgrgid(%ld) failed: %s\n",
-                 (long)pent->pw_gid, strerror(errno));
-                return NULL;
-            }
-            if(strcmp(cmd->data.list[0] + 1, gent->gr_name) != 0) {
-                w4rn(PMPREFIX "ignoring volume record (not for me)\n");
-                return NULL;
-            }
+
+    if((pent = getpwnam(Config.user)) == NULL) {
+        w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
+         Config.user, strerror(errno));
+        return NULL;
+    }
+
+    if(strcmp(*cmd->data.list, "*") == 0)
+        wildcard = WC_ANYUSER;
+    else if(strncmp(*cmd->data.list, "@@", 2) == 0)
+        wildcard = WC_SGRP;
+    else if(**cmd->data.list == '@')
+        wildcard = WC_PGRP;
+
+    if(wildcard != WC_NONE && (strcmp(Config.user, "root") == 0 ||
+     pent->pw_uid == 0)) {
+        w4rn(PMPREFIX "volume wildcards ignored for root\n");
+        return NULL;
+    }
+
+    if(wildcard == WC_NONE && strcmp(Config.user, *cmd->data.list) != 0)
+        goto notforme;
+
+    if(wildcard == WC_PGRP || wildcard == WC_SGRP) {
+        const char *gname = *cmd->data.list + strspn(*cmd->data.list, "@");
+        struct group *gent;
+
+        if((gent = getgrgid(pent->pw_gid)) == NULL) {
+            w4rn(PMPREFIX "getgrgid(%ld) failed: %s\n",
+             (long)pent->pw_gid, strerror(errno));
+            return NULL;
         }
+        if(strcmp(gname, gent->gr_name) != 0 &&
+         !(wildcard == WC_SGRP && user_in_sgrp(Config.user, gname)))
+            goto notforme;
+    }
 
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
@@ -683,6 +692,10 @@ DOTCONF_CB(read_volume)
     return NULL;
 #undef VOL
 #undef VOLCOUNT
+
+ notforme:
+    w4rn(PMPREFIX "ignoring volume record %.20s... (not for me)\n", *cmd->data.list);
+    return NULL;
 }
 
 /* ============================ readconfig () ============================== */
@@ -919,6 +932,35 @@ int expandconfig(const config_t *config) {
         }
     }
     return 1;
+}
+
+//-----------------------------------------------------------------------------
+/*
+FUNCTION <user_in_sgrp>
+INPUT:   Username (USER) and group (GRP).
+ACTION:  Checks whether the user has GRP as one of its _secondary_
+         group memberships.
+OUTPUT:  -
+RETURNS: positive non-zero if user is in GRP, zero if not,
+         negative non-zero on failure
+*/
+static int user_in_sgrp(const char *user, const char *grp) {
+    /* const */ char **wp;
+    struct group *gent;
+
+    if((gent = getgrnam(grp)) == NULL) {
+        w4rn(PMPREFIX "getgrnam(\"%s\") failed: %s\n", grp, strerror(errno));
+        return -1;
+    }
+
+    wp = gent->gr_mem;
+    while(wp != NULL && *wp != NULL) {
+        if(strcmp(*wp, user) == 0)
+            return 1;
+        ++wp;
+    }
+
+    return 0;
 }
 
 //=============================================================================
