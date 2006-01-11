@@ -1,7 +1,7 @@
 
 %define wname pam-mount
 Name:     pam_mount
-Version:  0.11.0
+Version:  0.12.0
 Release:  0
 Group:    System/Libraries
 URL:      http://pam-mount.sf.net/
@@ -94,9 +94,3 @@ rm -Rf "$b";
 #%policy %_sysconfdir/selinux/strict/src/policy/macros/%{name}_macros.te
 #%policy %_sysconfdir/selinux/strict/src/policy/file_contexts/misc/%name.fc
 %doc AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ TODO
-
-%changelog
-* Wed Dec 28 2005 - jengelh
-- to 0.11.0
-* Thu Nov 17 2005 - jengelh
-- update to 0.10.0
