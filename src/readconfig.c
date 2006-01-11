@@ -76,11 +76,9 @@ static int options_required_ok(optlist_t *, optlist_t *);
 
 /* defaults are included here but these are overridden by pam_mount.conf */
 static pm_command_t Command[] = {
-        {SMBMOUNT, "smb", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
         {SMBMOUNT, "smbfs", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
         {SMBUMOUNT, "smbfs", "smbumount", {"/usr/bin/smbumount", "%(MNTPT)", NULL}},
 	{CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER)%(before=\",\" OPTIONS)", NULL}},
-        {NCPMOUNT, "ncp", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
         {NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
@@ -582,6 +580,7 @@ DOTCONF_CB(read_volume)
 #define VOLCOUNT ICONFIG->volcount
         vol_t *vpt;
 	int i;
+
 	if (cmd->arg_count != 8)
 		return "bad number of args for volume";
 	else if(ICONTEXT && strcmp(cmd->data.list[0], ICONFIG->user) != 0 &&
@@ -623,6 +622,7 @@ DOTCONF_CB(read_volume)
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
+
 	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
         vpt = &VOL[VOLCOUNT];
 	memset(vpt, 0, sizeof(vol_t));
@@ -631,10 +631,6 @@ DOTCONF_CB(read_volume)
         strncpy(vpt->user, *cmd->data.list, MAX_PAR);
         vpt->type = LCLMOUNT;
         strncpy(vpt->fstype, cmd->data.list[1], sizeof(vpt->fstype));
-
-        if(strcasecmp(vpt->fstype, "smb") == 0 ||
-         strcasecmp(vpt->fstype, "ncp") == 0)
-            l0g(PMPREFIX "You are using the obsolete \"%s\" type\n", vpt->fstype);
 
 	for(i = 0; Command[i].type != -1; ++i)
 		if(Command[i].fs != NULL &&
