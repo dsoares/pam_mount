@@ -87,7 +87,7 @@ static pm_command_t Command[] = {
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
 	{CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{UMOUNT, NULL, "umount", {"/bin/umount", "%(MNTPT)", NULL}},
-	{LSOF, NULL, "lsof", {"/usr/sbin/lsof", "%(MNTPT)", NULL}},
+	{LSOF, NULL, "lsof", {"/usr/bin/lsof", "%(MNTPT)", NULL}},
 	{MNTAGAIN, NULL, "mntagain", {"/bin/mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
 	/*
 	 * Leave mntcheck available on GNU/Linux so I can ship one config file
