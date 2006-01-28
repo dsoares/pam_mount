@@ -864,8 +864,9 @@ int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
 {
 	int fnval;
 	fmt_ptrn_t vinfo;
-	char options[MAX_PAR + 1];
+	char options[MAX_PAR + 1], uuid[16], ugid[16];
         const vol_t *vpt;
+        struct passwd *pe;
 
 	assert(config_t_valid(config));
 
@@ -878,6 +879,16 @@ int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
 	fmt_ptrn_update_kv(&vinfo, "VOLUME", vpt->volume);
 	fmt_ptrn_update_kv(&vinfo, "SERVER", vpt->server);
 	fmt_ptrn_update_kv(&vinfo, "USER", vpt->user);
+        if((pe = getpwnam(vpt->user)) == NULL) {
+            w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
+             Config.user, strerror(errno));
+        } else {
+            snprintf(uuid, sizeof(uuid), "%ld", (long)pe->pw_uid);
+            snprintf(ugid, sizeof(ugid), "%ld", (long)pe->pw_gid);
+            fmt_ptrn_update_kv(&vinfo, "USERUID", uuid);
+            fmt_ptrn_update_kv(&vinfo, "USERGID", ugid);
+        }
+
 	/* FIXME: should others remain undefined if == ""? */
 	optlist_to_str(options, vpt->options);
 	fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
@@ -933,9 +944,15 @@ static inline const char *loop_bk(const char *filename,
  struct loop_info64 *i)
 {
     int fd;
-    if((fd = open(filename, O_RDONLY)) < 0) {
+    if((fd = open(filename, O_RDONLY)) < 0)
         return filename;
-    }
+
+#ifndef LOOP_GET_STATUS64
+#    error -------------------------------------------------------------------
+#    error Your userspace kernel headers (/usr/include/linux/) are out of date
+#    error This is NOT a pam-mount bug, but one of your distribution.
+#    error -------------------------------------------------------------------
+#endif
     if(ioctl(fd, LOOP_GET_STATUS64, i) != 0) {
         close(fd);
         return filename;

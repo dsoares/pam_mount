@@ -220,6 +220,7 @@ void fmt_ptrn_update_kv_p(fmt_ptrn_t * x, const pair_t * p)
 	assert(pair_t_valid(p));
 	/* [MP] FIXME: this strdups here but other fn requires malloced strs!
            [JE] No problem here, strdup uses malloc. */
+        // string duplicated but not freed? also see below
 	g_tree_insert(x->fillers, strdup(p->key), strdup(p->val));
 	assert(_fmt_ptrn_t_valid(x));
 }
@@ -231,6 +232,7 @@ void fmt_ptrn_update_kv(fmt_ptrn_t * x, const char *key, const char *val)
 	assert(key != NULL);
 	assert(val != NULL);
 	/* FIXME: getting rid of the const is silly, but I didn't write g_tree_insert */
+        // string not duplicated but freed? see above
 	g_tree_insert(x->fillers, (char *) key, (char *) val);
 	assert(_fmt_ptrn_t_valid(x));
 }
