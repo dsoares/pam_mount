@@ -64,15 +64,7 @@ make -i install DESTDIR="$b";
 mkdir -p "$b/%_sysconfdir/security";
 install -m0644 config/pam_mount.conf "$b/%_sysconfdir/security/";
 find "$b" -type f -perm +111 -print0 | xargs -0 strip -s &>/dev/null || :;
-
-#mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
-#mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/macros
-#mkdir -p ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/file_contexts/misc
-#install --owner=root --group=root --mode=0644 config/pam_mount.conf ${RPM_BUILD_ROOT}/%{_sysconfdir}/security
-#install --owner=root --group=root --mode=0644 config/pam_mount_macros.te ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/macros
-#install --owner=root --group=root --mode=0644 config/pam_mount.fc ${RPM_BUILD_ROOT}/%{_sysconfdir}/selinux/strict/src/policy/file_contexts/misc
-#rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.a
-#rm -f ${RPM_BUILD_ROOT}/%{_lib}/security/pam_mount.la
+rm -f "$b/%_lib/security/"*.{la,a};
 
 %clean
 b="$RPM_BUILD_ROOT";
@@ -82,7 +74,7 @@ rm -Rf "$b";
 %files
 %defattr(-,root,root)
 %config(noreplace) %_sysconfdir/security/%name.conf
-/%_lib/security/%name.so
+/%_lib/security/%{name}*.so
 %_sbindir/pmvarrun
 %_bindir/mkehd
 %_bindir/autoehd
