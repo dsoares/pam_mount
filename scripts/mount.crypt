@@ -136,7 +136,7 @@ fi
 # if loop device, make device mapper name based on file pointed to
 case "$DEVICE" in
     /dev/loop*)
-        DMDEVICE=` "$LOSETUP" "$DEVICE" 2>/dev/null | sed -n '/(.+)/ { s/.*(//; s/).*//; p;}'`;
+        DMDEVICE=` "$LOSETUP" "$DEVICE" 2>/dev/null | sed 's/.*(\(.\+\)).*/\1/'`;
 esac;
 # if not a loop device or previous command fails use $DEVICE
 : ${DMDEVICE:=$DEVICE}
