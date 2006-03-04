@@ -951,6 +951,8 @@ static inline const char *loop_bk(const char *filename,
 #    error -------------------------------------------------------------------
 #    error Your userspace kernel headers (/usr/include/linux/) are out of date
 #    error This is NOT a pam-mount bug, but one of your distribution.
+#    error See http://sf.net/mailarchive/message.php?msg_id=13974728
+#    error for details.
 #    error -------------------------------------------------------------------
 #endif
     if(ioctl(fd, LOOP_GET_STATUS64, i) != 0) {
