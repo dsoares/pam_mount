@@ -1,6 +1,6 @@
 /*=============================================================================
 crypto.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,11 +22,11 @@ crypto.h
 #ifndef PMT_CRYPTO_H
 #define PMT_CRYPTO_H 1
 
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <sys/types.h>
 
 int decrypted_key(unsigned char *, size_t *, const char *, const char *,
     const char *);

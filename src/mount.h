@@ -1,6 +1,6 @@
 /*=============================================================================
 mount.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,13 +22,13 @@ mount.h
 #ifndef PMT_MOUNT_H
 #define PMT_MONUT_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <glib.h>
 #include "fmt_ptrn.h"
 #include "private.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int do_mount(const config_t *, const unsigned int, fmt_ptrn_t *,
     const char *, const gboolean);

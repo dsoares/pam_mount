@@ -1,6 +1,6 @@
 /*=============================================================================
 private.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,11 +22,11 @@ private.h
 #ifndef PMT_PRIVATE_H
 #define PMT_PRIVATE_H 1
 
+#include "optlist.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "optlist.h"
 
 #define CLOSE(a) if(close(a) == -1) { \
     l0g("pam_mount: could not close fd: %s\n", strerror(errno)); \

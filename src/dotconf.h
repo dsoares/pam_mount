@@ -1,6 +1,6 @@
 /*=============================================================================
 dotconf.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,12 +22,12 @@ dotconf.h
 #ifndef PMT_DOTCONF_H
 #define PMT_DOTCONF_H 1
 
+#include <sys/types.h>
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <sys/types.h>
-#include <stdio.h>
 
 #define DOTCONF_CB(__name) const char *__name(const command_t *cmd, context_t *ctx)
 #define CTX_ALL 0 // context: option can be used anywhere

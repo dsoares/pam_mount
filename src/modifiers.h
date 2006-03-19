@@ -1,6 +1,6 @@
 /*=============================================================================
 modifiers.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,12 +22,12 @@ modifiers.h
 #ifndef PMT_MODIFIERS_H
 #define PMT_MODIFIERS_H 1
 
+#include "buffer.h"
+#include "fmt_ptrn.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "buffer.h"
-#include "fmt_ptrn.h"
 
 #define MODIFIER_ARG_LEN 80
 

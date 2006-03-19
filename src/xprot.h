@@ -1,6 +1,6 @@
 /*=============================================================================
 xprot.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,13 +22,11 @@ xprot.h
 #ifndef PMT_XPROT_H
 #define PMT_XPROT_H 1
 
+#include <glib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// xprot.h - The most ugliest file.
-
-#include <glib.h>
 
 static inline gboolean spawn_ap0(const char *wd, const char *const *argv,
  const char *const *envp, GSpawnFlags flags, GSpawnChildSetupFunc cs,

@@ -1,6 +1,6 @@
 /*=============================================================================
 optlist.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,11 +22,11 @@ optlist.h
 #ifndef PMT_OPTLIST_H
 #define PMT_OPTLIST_H 1
 
+#include <glib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <glib.h>
 
 #define optlist_next(element) g_list_next(element)
 #define optlist_key(element) (((pair_t *)(element)->data)->key)

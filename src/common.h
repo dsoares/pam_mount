@@ -1,6 +1,6 @@
 /*=============================================================================
-buffer.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+common.h
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,12 +22,12 @@ buffer.h
 #ifndef PMT_COMMON_H
 #define PMT_COMMON_H 1
 
+#include <dirent.h>
+#include "fmt_ptrn.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <dirent.h>
-#include "fmt_ptrn.h"
 
 extern void initialize_fillers(fmt_ptrn_t *);
 extern void initialize_fillers_from_file(fmt_ptrn_t *, char *);

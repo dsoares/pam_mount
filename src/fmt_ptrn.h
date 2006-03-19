@@ -1,6 +1,6 @@
 /*=============================================================================
 fmt_ptrn.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,10 +22,6 @@ fmt_ptrn.h
 #ifndef PMT_FMT_PTRN_H
 #define PMT_FMT_PTRN_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <sys/types.h>
 #include <limits.h>
 #include <glib.h>
@@ -33,6 +29,10 @@ extern "C" {
 #include <zlib.h>
 #include "buffer.h"
 #include "pair.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct fmt_ptrn_t {
     gzFile template_fp;

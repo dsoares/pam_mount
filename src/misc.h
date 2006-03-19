@@ -1,6 +1,6 @@
 /*=============================================================================
 misc.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,14 +22,14 @@ misc.h
 #ifndef PMT_MISC_H
 #define PMT_MISC_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <sys/types.h>
 #include <glib.h>
 #include "fmt_ptrn.h"
 #include "private.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern void add_to_argv(const char **, int * const, const char * const,
     fmt_ptrn_t *);

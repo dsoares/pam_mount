@@ -1,6 +1,6 @@
 /*=============================================================================
 readconfig.h
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
@@ -22,13 +22,13 @@ readconfig.h
 #ifndef PMT_READCONFIG_H
 #define PMT_READCONFIG_H 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <glib.h>
 #include "dotconf.h"
 #include "private.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern int expandconfig(const config_t *);
 extern void freeconfig(config_t *);
