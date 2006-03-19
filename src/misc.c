@@ -1,7 +1,7 @@
 /*=============================================================================
 misc.c
   Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
   This program is free software; you can redistribute it and/or modify
@@ -309,3 +309,20 @@ void set_myuid(void *data) {
       getuid(), getgid(), geteuid(), getegid());
     return;
 }
+
+/*  relookup_user
+    @user:      The user to retrieve
+
+    Relookup the user. This is done to account for case-insensitivity of
+    usernames with LDAP. Returns a copy of the real username (as stored in
+    the user database).
+*/
+char *relookup_user(const char *user) {
+    struct passwd *pe;
+    if((pe = getpwnam(user)) == NULL)
+        return strdup(user);
+    else
+        return strdup(pe->pw_name);
+}
+
+//=============================================================================

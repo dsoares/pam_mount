@@ -1,7 +1,7 @@
 /*=============================================================================
 pam_mount.c
   Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
   This program is free software; you can redistribute it and/or modify
@@ -210,7 +210,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 	}
         /* FIXME: free me! the dup is required because result of pam_get_user
         disappears (valgrind) */
-	Config.user = g_strdup(pam_user);
+	Config.user = relookup_user(pam_user);
 	if(Args.auth_type != GET_PASS) {	/* get password from PAM system */
 		char *ptr = NULL;
 		if ((ret =
@@ -358,7 +358,7 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
                 goto _return;
 	}
 	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
-	Config.user = g_strdup(pam_user);
+	Config.user = relookup_user(pam_user);
 	if(strlen(Config.user) > MAX_PAR) {
 		l0g(PMPREFIX "username %s is too long\n", Config.user);
 		ret = PAM_SERVICE_ERR;
@@ -483,7 +483,7 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 		goto _return;
 	}
 	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
-	Config.user = g_strdup(pam_user);
+	Config.user = relookup_user(pam_user);
 	/* if our CWD is in the home directory, it might not get umounted */
 	if(chdir("/") != 0)
 		l0g(PMPREFIX "could not chdir\n");

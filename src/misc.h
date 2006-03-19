@@ -38,6 +38,7 @@ extern int exists(const char *);
 extern void l0g(const char *, ...);
 extern void log_argv(const char * const *);
 extern gboolean owns(const char *, const char *);
+extern char *relookup_user(const char *);
 extern void set_myuid(void *);
 extern gboolean static_string_valid(const char *, const size_t);
 extern long str_to_long(const char *);
