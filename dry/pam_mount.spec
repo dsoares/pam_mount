@@ -1,14 +1,14 @@
 
 %define wname pam-mount
 Name:     pam_mount
-Version:  0.12.0
+Version:  0.13.0
 Release:  0
 Group:    System/Libraries
 URL:      http://pam-mount.sf.net/
 Summary:  A PAM module that can mount volumes for a user session
 
 Source:   http://heanet.dl.sf.net/sourceforge/%wname/%name-%version.tbz2
-License:  LGPL2
+License:  LGPL
 Requires: pam
 BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel
 BuildRoot: %_tmppath/%name-%version-build
@@ -35,7 +35,7 @@ work on several flavors of BSD.
    volume in /etc/fstab or in an automount/supermount config file. This 
    is also necessary for securing encrypted filesystems.
 
-Pam_mount "understands" SMB, NCP, and any type of filesystem that can 
+Pam_mount supports SMB, NCP, and any type of filesystem that can 
 be mounted using the standard mount command. If someone has a 
 particular need for a different filesystem, feel free to ask me to 
 include it and send me patches.
