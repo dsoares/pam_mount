@@ -62,7 +62,7 @@ fi
 case "$host" in
   *-*-linux*)
     # See also <configure-flags> in pam_mount.xml.
-    PAM_MODDIR="\$(prefix)/../\$(libdir)/security"
+    PAM_MODDIR="/\$(libdir)/security"
     ;;
   *-*-darwin*)
     PAM_MODDIR="/usr/lib/pam"
