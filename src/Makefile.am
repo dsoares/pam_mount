@@ -34,7 +34,7 @@ if FLYN
 noinst_PROGRAMS = check
 endif
 
-pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c common.c buffer.c
+pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c common.c buffer.c spawn.c
 pam_mount_la_LDFLAGS = -module -avoid-version -lz $(GLIB_LIBS)
 
 # FIXME: misc.c needs to be compiled both with and without libtool

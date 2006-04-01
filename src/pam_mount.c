@@ -40,7 +40,7 @@ pam_mount.c
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
-#include "xprot.h"
+#include "spawn.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    define CONFIGFILE "/etc/pam_mount.conf"
 #else
@@ -295,6 +295,7 @@ static int modify_pm_count(config_t *config, char *user, char *operation) {
 	fmt_ptrn_close(&vinfo);
 	log_argv(_argv);
 
+        spawn_set_sigchld();
         if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
          NULL, &pid, NULL, &cstdout, NULL, &err)) {
 		l0g(PMPREFIX "error executing /usr/sbin/pmvarrun\n");
@@ -316,6 +317,7 @@ static int modify_pm_count(config_t *config, char *user, char *operation) {
 		fnval = -1;
 		goto _return;
 	}
+        spawn_restore_sigchld();
 	if (WEXITSTATUS(child_exit)) {
 		l0g(PMPREFIX "pmvarrun failed\n");
 		fnval = -1;

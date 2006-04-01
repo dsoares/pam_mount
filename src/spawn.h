@@ -1,5 +1,5 @@
 /*=============================================================================
-xprot.h
+spawn.h
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@ xprot.h
 
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
-#ifndef PMT_XPROT_H
-#define PMT_XPROT_H 1
+#ifndef PMT_SPAWN_H
+#define PMT_SPAWN_H 1
 
 #include <glib.h>
 
@@ -28,6 +28,15 @@ xprot.h
 extern "C" {
 #endif
 
+/*
+ *      SPAWN.C
+ */
+extern int spawn_set_sigchld(void);
+extern int spawn_restore_sigchld(void);
+
+/*
+ *      INLINE FUNCTIONS
+ */
 static inline gboolean spawn_ap0(const char *wd, const char *const *argv,
  const char *const *envp, GSpawnFlags flags, GSpawnChildSetupFunc cs,
  void *data, int *pid, int *istdin, int *istdout, int *istderr, GError **err)
@@ -40,6 +49,6 @@ static inline gboolean spawn_ap0(const char *wd, const char *const *argv,
 } // extern "C"
 #endif
 
-#endif // PMT_XPROT_H
+#endif // PMT_SPAWN_H
 
 //=============================================================================

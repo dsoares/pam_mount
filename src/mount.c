@@ -44,7 +44,7 @@ mount.c
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
-#include "xprot.h"
+#include "spawn.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    include <fstab.h>
 #elif defined(__linux__)
@@ -118,6 +118,8 @@ static void run_lsof(const config_t *const config, fmt_ptrn_t *vinfo) {
 		add_to_argv(_argv, &_argc, config->command[i][LSOF],
 			    vinfo);
 	log_argv(_argv);
+
+        spawn_set_sigchld();
         if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	  &pid, NULL, &cstdout, NULL, &err)) {
 		l0g(PMPREFIX "%s\n", err->message);
@@ -129,6 +131,7 @@ static void run_lsof(const config_t *const config, fmt_ptrn_t *vinfo) {
 	w4rn(PMPREFIX "waiting for lsof\n");
 	if (waitpid(pid, &child_exit, 0) == -1)
 		l0g(PMPREFIX "error waiting for child\n");
+        spawn_restore_sigchld();
 	CLOSE(cstdout);
 }
 
@@ -232,8 +235,10 @@ static int already_mounted(const config_t *const config,
     log_argv(_argv);
 
     // FIXME: replace by popen() if available on BSD
+    spawn_set_sigchld();
     if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
      &pid, NULL, &cstdout, NULL, &err)) {
+        spawn_restore_sigchld();
         l0g(PMPREFIX "%s\n", err->message);
         g_error_free(err);
         return -1;
@@ -269,6 +274,7 @@ static int already_mounted(const config_t *const config,
 
     fclose(fp); // automatically closes cstdout, too
     waitpid(pid, NULL, 0);
+    spawn_restore_sigchld();
     return mounted;
 }
 #else
