@@ -383,6 +383,11 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 		goto _return;
 	}
 
+        /* Get the Kerberos CCNAME so we can make it available to the
+        mount command later on. */
+        if(setenv("KRB5CCNAME", pam_getenv(pamh, "KRB5CCNAME"), 1) < 0)
+            l0g(PMPREFIX "KRB5CCNAME setenv failed\n");
+
         // Store initialized config as PAM data
         if((getval = pam_get_data(pamh, "pam_mount_config",
          &tmp)) == PAM_NO_MODULE_DATA && (ret = pam_set_data(pamh,
