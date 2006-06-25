@@ -1,1 +1,1 @@
-readconfig.c
+#include "readconfig.c"

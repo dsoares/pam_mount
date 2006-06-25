@@ -1,1 +1,1 @@
-template.c
+#include "template.c"

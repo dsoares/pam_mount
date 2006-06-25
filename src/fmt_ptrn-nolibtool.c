@@ -1,1 +1,1 @@
-fmt_ptrn.c
+#include "fmt_ptrn.c"

@@ -1,1 +1,1 @@
-common.c
+#include "common.c"

@@ -1,1 +1,1 @@
-dotconf.c
+#include "dotconf.c"

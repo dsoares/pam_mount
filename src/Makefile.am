@@ -19,20 +19,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-if FLYN
-# For local development use only.
-include /etc/fctk/config.mk
-endif
-
 AUTOMAKE_OPTIONS = gnu
 
 moduledir = @PAM_MODDIR@
 module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
-
-if FLYN
-noinst_PROGRAMS = check
-endif
 
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c common.c buffer.c spawn.c
 pam_mount_la_LDFLAGS = -module -avoid-version -lz $(GLIB_LIBS)
@@ -40,13 +31,6 @@ pam_mount_la_LDFLAGS = -module -avoid-version -lz $(GLIB_LIBS)
 # FIXME: misc.c needs to be compiled both with and without libtool
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c
 pmvarrun_LDFLAGS = -lz $(GLIB_LIBS)
-
-if FLYN
-check_SOURCES = check.c dotconf-nolibtool.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c optlist-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c readconfig-nolibtool.c
-check_INCLUDES = @CHECK_CFLAGS@
-check_LDADD = @CHECK_LIBS@
-check_LDFLAGS = -lz $(GLIB_LIBS)
-endif
 
 INCLUDES = -I$(srcdir)/../include
 
@@ -62,9 +46,3 @@ install-data-hook:
 uninstall-hook:
 	rm -f $(DESTDIR)$(libdir)/pam_mount_auth.so
 	rm -f $(DESTDIR)$(libdir)/pam_mount_session.so
-
-if FLYN
-# For local development use only.
-lint:
-	$(LINT)
-endif
