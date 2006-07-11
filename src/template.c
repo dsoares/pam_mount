@@ -1,7 +1,7 @@
 /*=============================================================================
 template.c
   Copyright (C) W. Michael Putello <new@flyn.org>, 1999
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as

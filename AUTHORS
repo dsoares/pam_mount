@@ -22,7 +22,7 @@ This program is Copyright (C) 2000 Conectiva SA
 2002:       Mike Petullo <pam_mount@flyn.org> became the primary maintainer of
             pam_mount.
 
-Sep 2005:   Jan Engelhardt <jengelh@linux01.gwdg.de> became new
+Sep 2005:   Jan Engelhardt <jengelh [at] gmx de> became new
             maintainer of the project.
             Incorporated patches from Debian, SUSE and others, authors are:
             Bastian Kleineidam <calvin@debian.org>,

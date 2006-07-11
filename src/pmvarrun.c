@@ -1,7 +1,7 @@
 /*=============================================================================
 pmvarrun.c
   Copyright (C) W. Michael Putello <mike@flyn.org>, 2004
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
   This program is free software; you can redistribute it and/or modify

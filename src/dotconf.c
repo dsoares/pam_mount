@@ -1,7 +1,7 @@
 /*=============================================================================
 dotconf.c
   Copyright (C) Lukas Schroeder <lukas@azzit.de>, 1999 - 2002
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
   and others
 
   This program is free software; you can redistribute it and/or modify

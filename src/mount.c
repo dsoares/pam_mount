@@ -1,7 +1,7 @@
 /*=============================================================================
 mount.c
   Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
-  Copyright © Jan Engelhardt <jengelh [at] linux01 gwdg de>, 2005
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
   This program is free software; you can redistribute it and/or modify
