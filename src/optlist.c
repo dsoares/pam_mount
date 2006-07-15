@@ -43,7 +43,7 @@ static int _parse_string_opt(const char *str, size_t len,
 			     optlist_t ** optlist)
 {
 	int ret = 1;
-	pair_t *pair;
+	struct pair *pair;
 	char *delim, *key, *val;
 
 	assert(str != NULL);
@@ -60,7 +60,7 @@ static int _parse_string_opt(const char *str, size_t len,
 		ret = 0;
 		goto _return;
 	}
-	pair = g_new0(pair_t, 1);
+	pair = g_new0(struct pair, 1);
 	key = g_new0(char, delim - str + 1);
 	val = g_new0(char, len - (delim - str));	/* '=' is +1 */
 	strncpy(key, str, delim - str);
@@ -86,7 +86,7 @@ static int _parse_string_opt(const char *str, size_t len,
 static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 {
 	int ret = 1;
-	pair_t *pair;
+	struct pair *pair;
 	char *key, *val;
 
 	assert(str != NULL);
@@ -98,7 +98,7 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
 	assert(optlist != NULL);
 
-	pair = g_new0(pair_t, 1);
+	pair = g_new0(struct pair, 1);
 	key = g_new0(char, len + 1);
 	val = g_new0(char, 1);
 	strncpy(key, str, len);
@@ -158,7 +158,7 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
  */
 static int _compare(gconstpointer x, gconstpointer y)
 {
-        const pair_t *px = x;
+        const struct pair *px = x;
 	assert(x != NULL);
 	assert(px->key != NULL);
 	assert(y != NULL);
@@ -195,7 +195,7 @@ const char *optlist_value(optlist_t * optlist, const char *str)
 
 	assert(ptr != NULL || !optlist_exists(optlist, str));
 
-	return (ptr != NULL) ? ((pair_t *) ptr->data)->val : NULL;
+	return (ptr != NULL) ? ((struct pair *)ptr->data)->val : NULL;
 }
 
 /* ============================ optlist_to_str () ========================== */
@@ -212,7 +212,7 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 	*str = '\0';
 	if(optlist != NULL)
 		do {
-                        pair_t *pair = ptr->data;
+                        struct pair *pair = ptr->data;
 			strncat(str, pair->key, MAX_PAR - strlen(str));
 			if(strlen(pair->val) > 0) {
 				strncat(str, "=", MAX_PAR - strlen(str));

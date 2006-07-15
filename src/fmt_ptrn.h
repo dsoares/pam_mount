@@ -58,7 +58,7 @@ extern void fmt_ptrn_parse_perror(struct fmt_ptrn *, const char *);
 extern void fmt_ptrn_perror(const struct fmt_ptrn *, const char *);
 extern char *fmt_ptrn_parse_strerror(struct fmt_ptrn *);
 extern const char *fmt_ptrn_strerror(const struct fmt_ptrn *);
-extern void fmt_ptrn_update_kv_p(struct fmt_ptrn *, const pair_t *);
+extern void fmt_ptrn_update_kv_p(struct fmt_ptrn *, const struct pair *);
 extern void fmt_ptrn_update_kv(struct fmt_ptrn *, const char *, const char *);
 
 #ifdef __cplusplus

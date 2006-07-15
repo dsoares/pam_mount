@@ -28,17 +28,17 @@ pair.h
 extern "C" {
 #endif
 
-typedef struct pair {
+struct pair {
     void *key;
     void *val;
     void (*destroy_k)(void *);
     void (*destroy_v)(void *);
-} pair_t;
+};
 
-extern void pair_destroy(pair_t *);
-extern void pair_init(pair_t *, void *, void *,
+extern void pair_destroy(struct pair *);
+extern void pair_init(struct pair *, void *, void *,
     void (*)(void *), void (*)(void *));
-extern gboolean pair_t_valid(const pair_t *);
+extern gboolean pair_t_valid(const struct pair *);
 
 #ifdef __cplusplus
 } // extern "C"

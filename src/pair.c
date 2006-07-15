@@ -26,14 +26,13 @@ pair.c
 #include "pair.h"
 
 /* ========================== pair_t_valid () =============================== */
-gboolean pair_t_valid(const pair_t *p)
-{
+gboolean pair_t_valid(const struct pair *p) {
     return (p == NULL || p->key == NULL || p->val == NULL) ? FALSE : TRUE;
 }
 
 
 /* ========================== pair_init () ================================== */
-void pair_init(pair_t * pair, void *key, void *val,
+void pair_init(struct pair *pair, void *key, void *val,
 	       void (*destroy_k)(void *), void (*destroy_v)(void *))
 {
     pair->key = key;
@@ -43,12 +42,12 @@ void pair_init(pair_t * pair, void *key, void *val,
 }
 
 /* ========================== pair_destroy () =============================== */
-void pair_destroy(pair_t *pair) {
+void pair_destroy(struct pair *pair) {
     if(pair->destroy_k != NULL)
         pair->destroy_k(pair->key);
     if(pair->destroy_v != NULL)
         pair->destroy_v(pair->val);
 
-    memset(pair, 0, sizeof(pair_t));
+    memset(pair, 0, sizeof(struct pair));
     g_free(pair);
 }

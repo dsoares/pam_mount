@@ -208,7 +208,7 @@ static int _stack_contains(const mystack_t s, const char *n)
 }
 
 /* ============================ fmt_ptrn_update_kv_p () ==================== */
-void fmt_ptrn_update_kv_p(struct fmt_ptrn *x, const pair_t * p) {
+void fmt_ptrn_update_kv_p(struct fmt_ptrn *x, const struct pair *p) {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(pair_t_valid(p));
 	/* [MP] FIXME: this strdups here but other fn requires malloced strs!
