@@ -36,7 +36,7 @@ extern "C" {
 #define MAX_PAR 127
 #define PMPREFIX "pam_mount: "
 
-typedef enum command_type_t {
+typedef enum command_type {
     SMBMOUNT,
     SMBUMOUNT,
     CIFSMOUNT,
@@ -57,24 +57,24 @@ typedef enum command_type_t {
     COMMAND_MAX,
 } command_type_t;
 
-typedef enum auth_type_t {
+typedef enum auth_type {
     GET_PASS,
     USE_FIRST_PASS,
     TRY_FIRST_PASS
 } auth_type_t;
 
-typedef struct pam_args_t {
+typedef struct pam_args {
     auth_type_t auth_type;
 } pam_args_t;
 
-typedef struct pm_command_t {
+typedef struct pm_command {
     command_type_t type;
     char *fs;
     char *command_name;
     char *def[MAX_PAR + 1];
 } pm_command_t;
 
-typedef struct vol_t {
+typedef struct vol {
     command_type_t type;
     gboolean globalconf;        // TRUE if config. from global config, FALSE if luserconf
     gboolean created_mntpt;     // set so umount knows to rm it
@@ -90,7 +90,7 @@ typedef struct vol_t {
     gboolean used_wildcard;
 } vol_t;
 
-typedef struct config_t {
+typedef struct config {
     char *user;	/* user logging in */
     gboolean debug;
     gboolean mkmntpoint;

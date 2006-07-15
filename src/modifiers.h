@@ -31,13 +31,13 @@ extern "C" {
 
 #define MODIFIER_ARG_LEN 80
 
-typedef struct modifier_fns_t {
+typedef struct modifier_fns {
     char *id;
     int (*fn)(buffer_t *, fmt_ptrn_t *, char *);
     int has_arg;
 } modifier_fns_t;
 
-typedef struct modifier_t {
+typedef struct modifier {
     modifier_fns_t fn;
     char arg[MODIFIER_ARG_LEN + 1];
 } modifier_t;

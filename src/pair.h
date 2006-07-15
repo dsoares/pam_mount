@@ -28,7 +28,7 @@ pair.h
 extern "C" {
 #endif
 
-typedef struct pair_t {
+typedef struct pair {
     void *key;
     void *val;
     void (*destroy_k)(void *);

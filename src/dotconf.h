@@ -48,14 +48,14 @@ enum {
 
 typedef void info_t;
 typedef void context_t;
-typedef struct configfile_t configfile_t;
-typedef struct configoption_t configoption_t;
-typedef struct command_t command_t;
+typedef struct configfile configfile_t;
+typedef struct configoption configoption_t;
+typedef struct command command_t;
 typedef const char *(*dotconf_callback_t)(const command_t *, context_t *);
 typedef int (*dotconf_errorhandler_t)(const configfile_t *, int, unsigned long, const char *);
 typedef const char *(*dotconf_contextchecker_t)(command_t *, unsigned long);
 
-struct command_t {
+struct command {
     const char *name;             		/* name of the command */
     configoption_t *option;		/* the option as given in the app; READ ONLY */
 
@@ -72,7 +72,7 @@ struct command_t {
     context_t *context;
 };
 
-struct configfile_t {
+struct configfile {
     /* ------ the fields in configfile_t are provided to the app
     via command_t's ; READ ONLY! --- */
 
@@ -98,7 +98,7 @@ struct configfile_t {
     int (*cmp_func)(const char *, const char *, size_t);
 };
 
-struct configoption_t {
+struct configoption {
     const char *name;								/* name of configuration option */
     int type;										/* for possible values, see above */
     dotconf_callback_t callback;        // callback function

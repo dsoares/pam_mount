@@ -34,7 +34,7 @@ fmt_ptrn.h
 extern "C" {
 #endif
 
-typedef struct fmt_ptrn_t {
+typedef struct fmt_ptrn {
     gzFile template_fp;
     char template_path[PATH_MAX + 1];
     long line_num;
