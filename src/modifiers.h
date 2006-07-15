@@ -32,7 +32,7 @@ struct buffer;
 struct fmt_ptrn;
 
 struct modifier_info {
-    char *id;
+    const char *id;
     int (*fn)(struct buffer *, struct fmt_ptrn *, char *);
     int has_arg;
 };
