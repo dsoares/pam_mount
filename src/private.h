@@ -28,11 +28,11 @@ private.h
 extern "C" {
 #endif
 
-#define CLOSE(a) if(close(a) == -1) { \
+#define CLOSE(a) do { if(close(a) == -1) { \
     l0g("pam_mount: could not close fd: %s\n", strerror(errno)); \
     l0g("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
     exit(EXIT_FAILURE); \
-}
+} } while(0)
 #define MAX_PAR 127
 #define PMPREFIX "pam_mount: "
 
