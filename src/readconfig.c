@@ -59,7 +59,7 @@ typedef enum fstab_field_t {
 static char *expand_home(const char *, const char *, char *, size_t);
 static char *expand_user_wildcard(const char *, const char *, char *, size_t);
 static int fstab_value(const char *, const fstab_field_t, char *, const int);
-static command_type_t get_command_index(const pm_command_t *, const char *);
+static enum command_type get_command_index(const pm_command_t *, const char *);
 static FUNC_ERRORHANDLER(log_error);
 static DOTCONF_CB(read_command);
 static DOTCONF_CB(read_debug);
@@ -207,8 +207,8 @@ static DOTCONF_CB(read_options_deny)
  *         name, the name of the command that is being looked for
  * OUTPUT: the index into the pm_command_t cooresponding to name
  */
-static command_type_t
-get_command_index(const pm_command_t *command, const char *name)
+static enum command_type get_command_index(const pm_command_t *command,
+ const char *name)
 {
 	int i;
 
@@ -234,7 +234,7 @@ static DOTCONF_CB(read_command)
 {
 #define COMMAND(n) ICONFIG->command[n][command_index]
 	int i;
-	command_type_t command_index;
+	enum command_type command_index;
 
 	assert(cmd != NULL);
 	assert(cmd->name != NULL);
