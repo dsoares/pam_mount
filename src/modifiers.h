@@ -38,10 +38,10 @@ struct modifier_info {
     int has_arg;
 };
 
-typedef struct modifier {
+struct modifier {
     struct modifier_info fn;
     char arg[MODIFIER_ARG_LEN + 1];
-} modifier_t;
+};
 
 extern const struct modifier_info mod_fn[];
 

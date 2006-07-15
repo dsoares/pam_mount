@@ -35,8 +35,8 @@ fmt_ptrn.c
 #define STACK_MAX_ITEMS 10
 
 typedef struct mystack_t {
-	modifier_t data[STACK_MAX_ITEMS];
-	int size;
+    struct modifier data[STACK_MAX_ITEMS];
+    int size;
 } mystack_t;
 
 static void     _apply_modifiers(struct fmt_ptrn *, struct buffer *, mystack_t *);
@@ -51,17 +51,17 @@ static void     _handle_fmt_str(struct fmt_ptrn *, const char **);
 static gboolean _is_literal(struct fmt_ptrn *, const char *);
 static gboolean _lookup(const struct fmt_ptrn *, const char *, struct buffer *);
 static char *   _matching_paren(const char *);
-static inline gboolean _modifier_t_valid(const modifier_t *);
+static inline gboolean _modifier_t_valid(const struct modifier *);
 static void     _read_alternate(struct fmt_ptrn *, const char **, struct buffer *);
 static void     _read_key(struct fmt_ptrn *, char *, const char **);
 static void     _read_literal(struct fmt_ptrn *, char *, struct buffer *);
 static gboolean _read_modifier(struct fmt_ptrn *, const char **, mystack_t *);
-static void     _read_modifier_arg(struct fmt_ptrn *, const char **, modifier_t *);
+static void     _read_modifier_arg(struct fmt_ptrn *, const char **, struct modifier *);
 static void     _read_modifiers(struct fmt_ptrn *, const char **, mystack_t *);
 static int      _stack_contains(const mystack_t, const char *);
 static inline void _stack_init(mystack_t *);
-static gboolean _stack_pop(mystack_t *, modifier_t *);
-static gboolean _stack_push(struct fmt_ptrn *, mystack_t *, const modifier_t *);
+static gboolean _stack_pop(mystack_t *, struct modifier *);
+static gboolean _stack_push(struct fmt_ptrn *, mystack_t *, const struct modifier *);
 static inline gboolean _stack_t_valid(const mystack_t *);
 
 /* ============================ _fmt_ptrn_t_valid () ======================= */
@@ -139,7 +139,7 @@ void enqueue_parse_errmsg(struct fmt_ptrn *x, const char *msg, ...) {
 }
 
 /* ============================ _modifier_t_valid () ======================= */
-static inline gboolean _modifier_t_valid(const modifier_t * m) {
+static inline gboolean _modifier_t_valid(const struct modifier *m) {
 	/* FIXME */
 	return TRUE;
 }
@@ -157,7 +157,7 @@ static inline void _stack_init(mystack_t *s) {
 
 /* ============================ _stack_push () ============================= */
 static gboolean _stack_push(struct fmt_ptrn *x, mystack_t *s,
- const modifier_t *data)
+ const struct modifier *data)
 {
 	gboolean fnval = FALSE;
 
@@ -180,8 +180,7 @@ static gboolean _stack_push(struct fmt_ptrn *x, mystack_t *s,
 }
 
 /* ============================ _stack_pop () ============================== */
-static gboolean _stack_pop(mystack_t *s, modifier_t *data)
-{
+static gboolean _stack_pop(mystack_t *s, struct modifier *data) {
 	gboolean fnval = FALSE;
 	assert(_stack_t_valid(s));
 	assert(_modifier_t_valid(data));
@@ -346,7 +345,7 @@ static void _eat_alternate(struct fmt_ptrn *x, const char **pattern) {
 
 /* ============================ _read_modifier_arg () ====================== */
 static void _read_modifier_arg(struct fmt_ptrn *x, const char **pattern,
- modifier_t *i)
+ struct modifier *i)
 {
 	size_t arg_len;
 	char *end_quote, *end_paren;
@@ -390,7 +389,7 @@ static gboolean _read_modifier(struct fmt_ptrn *x, const char **ptrn,
  mystack_t *modifier)
 {
 	int i = 0;
-	modifier_t m;
+	struct modifier m;
 	gboolean fnval = FALSE;
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -476,7 +475,7 @@ static void _read_key(struct fmt_ptrn *x, char *key, const char **p) {
 static void _apply_modifiers(struct fmt_ptrn *x, struct buffer *str,
  mystack_t *modifier)
 {
-	modifier_t m;
+	struct modifier m;
 
 	assert(_fmt_ptrn_t_valid(x));
 	assert(buffer_t_valid(str));
