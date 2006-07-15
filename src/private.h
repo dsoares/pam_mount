@@ -74,7 +74,7 @@ struct pm_command {
     char *def[MAX_PAR + 1];
 };
 
-typedef struct vol {
+struct vol {
     enum command_type type;
     gboolean globalconf;        // TRUE if config. from global config, FALSE if luserconf
     gboolean created_mntpt;     // set so umount knows to rm it
@@ -88,7 +88,7 @@ typedef struct vol {
     char mountpoint[PATH_MAX + 1];
     gboolean use_fstab;
     gboolean used_wildcard;
-} vol_t;
+};
 
 typedef struct config {
     char *user;	/* user logging in */
@@ -101,7 +101,7 @@ typedef struct config {
     optlist_t *options_require;
     optlist_t *options_allow;
     optlist_t *options_deny;
-    vol_t *volume;
+    struct vol *volume;
 } config_t;
 
 #ifdef __cplusplus

@@ -42,7 +42,7 @@ extern char *relookup_user(const char *);
 extern void set_myuid(void *);
 extern gboolean static_string_valid(const char *, const size_t);
 extern long str_to_long(const char *);
-extern gboolean vol_t_valid(const vol_t *);
+extern gboolean vol_t_valid(const struct vol *);
 extern void w4rn(const char *, ...);
 
 static inline int pm_command_t_valid(const config_t *x) { return TRUE; }

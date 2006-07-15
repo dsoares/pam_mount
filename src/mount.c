@@ -70,10 +70,10 @@ static int fstype_nodev(const char *);
 static void log_output(int);
 static void log_pm_input(const config_t * const, const unsigned int);
 static inline const char *loop_bk(const char *, struct loop_info64 *);
-static int mkmountpoint(vol_t * const, const char * const);
+static int mkmountpoint(struct vol * const, const char * const);
 static int pipewrite(int, const void *, size_t);
 static void run_lsof(const config_t * const, struct fmt_ptrn *);
-static void vol_to_dev(char *, size_t, const vol_t *);
+static void vol_to_dev(char *, size_t, const struct vol *);
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 static int split_bsd_mount(char *, const char **, const char **, const char **);
@@ -153,7 +153,7 @@ static int already_mounted(const config_t *const config,
     struct mntent *mtab_record;
     int mounted = 0;
     FILE *mtab;
-    vol_t *vpt;
+    struct vol *vpt;
  
     assert(config_t_valid(config));
     vpt = &config->volume[vol];
@@ -211,7 +211,7 @@ static int already_mounted(const config_t *const config,
     char *_argv[MAX_PAR + 1], dev[PATH_MAX+1] = {}, mte[BUFSIZ + 1];
     int i, _argc = 0, cstdout = -1, mounted = 0;
     GError *err = NULL;
-    vol_t *vpt;
+    struct vol *vpt;
     pid_t pid;
     FILE *fp;
 
@@ -282,7 +282,7 @@ static int already_mounted(const config_t *const config,
 }
 #endif
 
-static void vol_to_dev(char *match, size_t s, const vol_t *vol) {
+static void vol_to_dev(char *match, size_t s, const struct vol *vol) {
     switch(vol->type) {
         case SMBMOUNT:
         case CIFSMOUNT:
@@ -351,7 +351,7 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 static void log_pm_input(const config_t *const config,
  const unsigned int vol)
 {
-        const vol_t *vpt = &config->volume[vol];
+        const struct vol *vpt = &config->volume[vol];
 	char options[MAX_PAR + 1];
 
 	w4rn(PMPREFIX "information for mount:\n");
@@ -375,7 +375,7 @@ static void log_pm_input(const config_t *const config,
 /* POST:   the directory named d exists && volume->created_mntpt = TRUE
  * FN VAL: if error 0 else 1, errors are logged
  */
-static int mkmountpoint(vol_t *const volume, const char *const d) {
+static int mkmountpoint(struct vol *const volume, const char *const d) {
 	int ret = 1;
 	struct passwd *passwd_ent;
 	char dcopy[PATH_MAX + 1], *parent;
@@ -420,7 +420,7 @@ int do_unmount(const config_t *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const char *const password, const gboolean mkmntpoint)
 {
 /* PRE:    config points to a valid config_t*
- *         config->volume[vol] is a valid struct vol_t
+ *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  *         mkmntpoint is true if mount point should be rmdir'ed
  * POST:   volume is unmounted
@@ -430,7 +430,7 @@ int do_unmount(const config_t *config, const unsigned int vol,
 	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
 	const char *_argv[MAX_PAR + 1];
-        const vol_t *vpt;
+        const struct vol *vpt;
         int type;
 
 	assert(config_t_valid(config));
@@ -525,7 +525,7 @@ static int do_losetup(const config_t *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
 {
 /* PRE:    config points to a valid config_t*
- *         config->volume[vol] is a valid struct vol_t
+ *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  *         config->volume[vol].options is valid
  * POST:   volume has associated with a loopback device
@@ -536,7 +536,7 @@ static int do_losetup(const config_t *config, const unsigned int vol,
 	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
         const char *cipher, *keybits;
-        const vol_t *vpt;
+        const struct vol *vpt;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
@@ -632,7 +632,7 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
 {
 /* PRE:    config points to a valid struct config_t*
- *         config->volume[vol] is a valid struct vol_t
+ *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  * POST:   integrity of volume has been checked
  * FN VAL: if error 0 else 1, errors are logged
@@ -644,7 +644,7 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 	const char *_argv[MAX_PAR + 1];
         char options[MAX_PAR + 1];
         const char *fsck_target;
-        const vol_t *vpt;
+        const struct vol *vpt;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
@@ -708,7 +708,7 @@ int do_mount(const config_t *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const char *password, const gboolean mkmntpoint)
 {
 /* PRE:    config points to a valid struct config_t*
- *         config->volume[vol] is a valid struct vol_t
+ *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  *         mkmntpoint is true if mount point should be mkdir'ed
  *         false if mount point was received from pam_mount
@@ -722,7 +722,7 @@ int do_mount(const config_t *config, const unsigned int vol,
 	unsigned char _password[MAX_PAR + EVP_MAX_BLOCK_LENGTH];
 	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
 	pid_t pid = -1;
-        vol_t *vpt;
+        struct vol *vpt;
 
 	assert(config_t_valid(config));
 	assert(vinfo != NULL);
@@ -852,7 +852,7 @@ int do_mount(const config_t *config, const unsigned int vol,
  * PRE:    mnt is function to execute mount operations: do_mount or do_unmount
  *         vol > 0
  *         config points to a valid struct config_t
- *         config->volume[vol] is a valid struct vol_t
+ *         config->volume[vol] is a valid struct vol
  *         password points to a valid string (can be NULL if UNmounting)
  *         mkmntpoint is true if mount point should be created when it does
  *         not already exist
@@ -868,7 +868,7 @@ int mount_op(int (*mnt)(const config_t *, const unsigned int, struct fmt_ptrn *,
 	int fnval;
 	struct fmt_ptrn vinfo;
 	char options[MAX_PAR + 1], uuid[16], ugid[16];
-        const vol_t *vpt;
+        const struct vol *vpt;
         struct passwd *pe;
 
 	assert(config_t_valid(config));

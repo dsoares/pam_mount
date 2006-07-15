@@ -154,8 +154,7 @@ gboolean static_string_valid(const char *s, const size_t len)
 }
 
 /* ============================ vol_t_valid () ============================= */
-gboolean vol_t_valid(const vol_t * v)
-{
+gboolean vol_t_valid(const struct vol *v) {
 	if (v == NULL)
 		return FALSE;
 	if (!(v->type >= 0 && v->type < COMMAND_MAX))

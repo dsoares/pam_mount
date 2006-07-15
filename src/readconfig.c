@@ -69,7 +69,7 @@ static DOTCONF_CB(read_luserconf);
 static DOTCONF_CB(read_options_allow);
 static DOTCONF_CB(read_options_deny);
 static DOTCONF_CB(read_options_require);
-static int _options_ok(const config_t *, const vol_t *);
+static int _options_ok(const config_t *, const struct vol *);
 static int options_allow_ok(optlist_t *, optlist_t *);
 static int options_deny_ok(optlist_t *, optlist_t *);
 static int options_required_ok(optlist_t *, optlist_t *);
@@ -336,7 +336,7 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
  * OUTPUT: if volume checks okay 1, else 0
  * SIDE EFFECTS: error logged
  */
-static int _options_ok(const config_t *config, const vol_t *volume) {
+static int _options_ok(const config_t *config, const struct vol *volume) {
 
 	assert(config != NULL);
 	assert(volume != NULL);
@@ -374,7 +374,7 @@ static int _options_ok(const config_t *config, const vol_t *volume) {
 */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
-        const vol_t *vpt;
+        const struct vol *vpt;
 	assert(config != NULL);
 	assert(config->volume != NULL);
         vpt = &config->volume[vol];
@@ -395,7 +395,7 @@ gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 gboolean volume_record_sane(const config_t *config, int vol) {
-        const vol_t *vpt;
+        const struct vol *vpt;
 
         assert(config != NULL);
         assert(config->volume != NULL);
@@ -586,7 +586,7 @@ DOTCONF_CB(read_volume)
         WC_SGRP,
     } wildcard = WC_NONE;
     struct passwd *pent;
-        vol_t *vpt;
+        struct vol *vpt;
 	int i;
 
 	if (cmd->arg_count != 8)
@@ -632,9 +632,9 @@ DOTCONF_CB(read_volume)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
 
-	VOL = g_realloc(VOL, sizeof(vol_t) * (VOLCOUNT + 1));
+	VOL = g_realloc(VOL, sizeof(struct vol) * (VOLCOUNT + 1));
         vpt = &VOL[VOLCOUNT];
-	memset(vpt, 0, sizeof(vol_t));
+	memset(vpt, 0, sizeof(struct vol));
 
 	vpt->globalconf = ICONTEXT ? TRUE : FALSE;
         strncpy(vpt->user, *cmd->data.list, MAX_PAR);
@@ -881,7 +881,7 @@ ACTION:  Expands all wildcards in the structure
 RETURNS: (boolean) false on error
 */
 int expandconfig(const config_t *config) {
-    vol_t *vpt;
+    struct vol *vpt;
     int i;
 
     for(i = 0; i < config->volcount; ++i) {
