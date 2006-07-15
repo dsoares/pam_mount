@@ -135,23 +135,23 @@ static int modify_pm_count(const char *user, long amount) {
 	assert(user != NULL);
 
         if((passwd_ent = getpwnam(user)) == NULL) {
+            err = errno;
             l0g(PREFIX "could not resolve uid for %s\n", user);
-            err = -1;
             goto return_error;
         }
 
 	if (stat("/var/run/pam_mount", &st) == -1) {
                 w4rn(PREFIX "creating /var/run/pam_mount");
 		if (mkdir("/var/run/pam_mount", 0000) == -1) {
+                    err = errno;
                     l0g(PREFIX "unable to create /var/run/pam_mount: %s\n",
                       strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		if (chown("/var/run/pam_mount", 0, 0) == -1) {
+                    err = errno;
                     l0g(PREFIX "unable to chown /var/run/pam_mount: %s\n",
                       strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		/*
@@ -165,9 +165,9 @@ static int modify_pm_count(const char *user, long amount) {
 		 * str_to_long.
 		 */
 		if (chmod("/var/run/pam_mount", 0755) == -1) {
+                    err = errno;
                     l0g(PREFIX "unable to chmod /var/run/pam_mount: %s\n",
                       strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 	}
@@ -176,9 +176,9 @@ static int modify_pm_count(const char *user, long amount) {
 	tries++;
 	if (stat(filename, &st) == -1) {
 		if ((fd = open(filename, O_RDWR | O_CREAT, 0000)) == -1) {
+                    err = errno;
                     l0g(PREFIX "unable to open %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		/*
@@ -188,35 +188,35 @@ static int modify_pm_count(const char *user, long amount) {
             if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
 		/* FIXME: permission denied */
 		if (fchown(fd, 0, 0) == -1) {
+                    err = errno;
                     l0g(PREFIX "unable to chown %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		if (fchmod(fd, 0600) == -1) {
+                    err = errno;
                     l0g(PREFIX "unable to chmod %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		if (write(fd, "0", 1) == -1) {
+                    err = errno;
                     l0g(PREFIX "write error on %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		if (lseek(fd, SEEK_SET, 0) == -1) {
+                    err = errno;
                     l0g(PREFIX "seek error on %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 	} else
 		fd = open(filename, O_RDWR);
 
 	if (stat(filename, &st) == -1) {
+            err = errno;
             l0g(PREFIX "unable to stat %s: %s\n", filename, strerror(errno));
-            err = -1;
             goto return_error;
 	}
 	if (fd < 0) {
@@ -264,9 +264,9 @@ static int modify_pm_count(const char *user, long amount) {
                     CLOSE(fd);
                     goto top;
 		} else {
+                    err = errno;
                     l0g(PREFIX "could not access %s in 10s, quitting\n",
                       filename);
-                    err = -1;
                     goto return_error;
 		}
 	}
@@ -274,15 +274,15 @@ static int modify_pm_count(const char *user, long amount) {
 					 * more than one */
 	if(st.st_size > 0) {
 		if (read(fd, buf, st.st_size) == -1) {
+                    err = errno;
                     l0g(PREFIX "read error on %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		if (lseek(fd, 0, SEEK_SET) == -1) {
+                    err = errno;
                     l0g(PREFIX "lseek error on %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
 		buf[st.st_size] = '\0';
@@ -304,9 +304,9 @@ static int modify_pm_count(const char *user, long amount) {
 		}
 		snprintf(buf, st.st_size + 2, "%ld", val);
 		if (write(fd, buf, strlen(buf)) == -1) {
+                    err = errno;
                     l0g(PREFIX "write error on %s: %s\n",
                       filename, strerror(errno));
-                    err = -1;
                     goto return_error;
 		}
                 if((size = lseek(fd, 0, SEEK_CUR)) < 0) {
