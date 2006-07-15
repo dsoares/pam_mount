@@ -79,7 +79,7 @@ START_TEST(test_read_volume)
 		(void *) &config,
 		0
 	};
-	command_t cmd = {
+	struct command cmd = {
 		"name",
 		&option,
 		{ 0, NULL, volume_config },

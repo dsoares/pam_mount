@@ -130,26 +130,21 @@ static DOTCONF_CB(dotconf_cb_includepath);      // internal 'IncludePath'
 static int dotconf_continue_line(char *, size_t);
 static int dotconf_find_wild_card(const char *, char *, char **, char **,
     const char **);
-static void dotconf_free_command(command_t *);
+static void dotconf_free_command(struct command *);
 static char *dotconf_get_here_document(struct configfile *, const char *);
 static int dotconf_get_next_line(char *, size_t, struct configfile *);
 static const char *dotconf_handle_command(struct configfile *, char *);
-static int dotconf_handle_star(const command_t *, const char *, const char *,
-    const char *);
-static int dotconf_handle_question_mark(const command_t *, const char *,
-    const char *, const char *);
-static int dotconf_handle_wild_card(const command_t *, char, const char *,
-    const char *, const char *);
-static const char *dotconf_invoke_command(const struct configfile *,
-    const command_t *);
+static int dotconf_handle_star(const struct command *, const char *, const char *, const char *);
+static int dotconf_handle_question_mark(const struct command *, const char *, const char *, const char *);
+static int dotconf_handle_wild_card(const struct command *, char, const char *, const char *, const char *);
+static const char *dotconf_invoke_command(const struct configfile *, const struct command *);
 static int dotconf_is_wild_card(char);
 static int dotconf_question_mark_match(const char *, const char *,
     const char *);
 static char *dotconf_read_arg(const struct configfile *, char **);
 static void dotconf_register_options(struct configfile *,
     const struct configoption *);
-static void dotconf_set_command(struct configfile *,
-    const struct configoption *, char *, command_t *);
+static void dotconf_set_command(struct configfile *, const struct configoption *, char *, struct command *);
 static int dotconf_star_match(const char *, const char *, const char *);
 static int dotconf_strcmp_from_back(const char *, const char *);
 static char *dotconf_substitute_env(const struct configfile *, char *);
@@ -429,7 +424,7 @@ static char *dotconf_get_here_document(struct configfile *configfile,
 }
 
 static const char *dotconf_invoke_command(const struct configfile *configfile,
- const command_t *cmd)
+ const struct command *cmd)
 {
 	return cmd->option->callback(cmd, configfile->context);
 }
@@ -522,11 +517,11 @@ static char *dotconf_read_arg(const struct configfile *configfile,
 }
 
 static void dotconf_set_command(struct configfile *configfile,
- const struct configoption *option, char *args, command_t *cmd)
+ const struct configoption *option, char *args, struct command *cmd)
 {
 	char *eob = args + strlen(args);
 
-	/* fill in the command_t structure with values we already know */
+	/* fill in the command structure with values we already know */
 	cmd->name = (option->type == ARG_NAME) ? name : option->name;
 	cmd->option = (struct configoption *)option;
 	cmd->context = configfile->context;
@@ -614,7 +609,7 @@ static void dotconf_set_command(struct configfile *configfile,
 	}
 }
 
-static void dotconf_free_command(command_t *command) {
+static void dotconf_free_command(struct command *command) {
 	int i;
 
 	free(command->data.str);
@@ -632,7 +627,7 @@ static const char *dotconf_handle_command(struct configfile *configfile,
 	char *eob;									/* end of buffer; end of string  */
 	const char *error = NULL;         /* error message we'll return */
 	const char *context_error = NULL; /* error message returned by contextchecker */
-	command_t command;							/* command structure */
+	struct command command;							/* command structure */
 	int mod = 0;
 	int next_opt_idx = 0;
 
@@ -795,7 +790,7 @@ static int dotconf_is_wild_card(char value) {
 }
 
 /* ------ internal utility function that calls the appropriate routine for the wildcard passed in -- */
-static int dotconf_handle_wild_card(const command_t *cmd, char wild_card,
+static int dotconf_handle_wild_card(const struct command *cmd, char wild_card,
  const char *path, const char *pre, const char *ext)
 {
 	int retval = 0;
@@ -971,8 +966,8 @@ static int dotconf_star_match(const char *dir_name, const char *pre,
 
 /* ------ internal utility function that determins matches for filenames with   -- */
 /* ------ a '?' in name and calls the Internal Include function on that filename -- */
-static int dotconf_handle_question_mark(const command_t *cmd, const char *path,
- const char *pre, const char *ext)
+static int dotconf_handle_question_mark(const struct command *cmd,
+ const char *path, const char *pre, const char *ext)
 {
 	struct configfile *included;
 	DIR *dh = NULL;
@@ -1099,7 +1094,7 @@ static int dotconf_handle_question_mark(const command_t *cmd, const char *path,
 
 /* ------ internal utility function that determins matches for filenames with   --- */
 /* ------ a '*' in name and calls the Internal Include function on that filename -- */
-static int dotconf_handle_star(const command_t *cmd, const char *path,
+static int dotconf_handle_star(const struct command *cmd, const char *path,
  const char *pre, const char *ext)
 {
 	struct configfile *included;
