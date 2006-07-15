@@ -98,7 +98,7 @@ static struct pm_command Command[] = {
 	{LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
 	{UNLOSETUP, NULL, "unlosetup", {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
 	{PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
-	{-1, NULL, NULL, {NULL}}
+	{-1, NULL, NULL, {NULL}},
 };
 
 static const struct configoption legal_config[] = {

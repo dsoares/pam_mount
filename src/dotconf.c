@@ -70,7 +70,7 @@ dotconf.c
 )
 
 // for convenience of terminating the dotconf_options list
-#define LAST_CONTEXT_OPTION     {"", 0, NULL, NULL, 0}
+#define LAST_CONTEXT_OPTION     {""}
 
 // some flags that change the runtime behaviour of dotconf
 #define NONE                   0
@@ -158,7 +158,7 @@ static struct configoption dotconf_options[] =
 {
 	{ "Include", ARG_STR, dotconf_cb_include, NULL, CTX_ALL },
 	{ "IncludePath", ARG_STR, dotconf_cb_includepath, NULL, CTX_ALL },
-	LAST_CONTEXT_OPTION
+	LAST_CONTEXT_OPTION,
 };
 
 static char name[CFG_MAX_OPTION + 1]; // option name

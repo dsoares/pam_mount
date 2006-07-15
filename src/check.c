@@ -75,19 +75,23 @@ START_TEST(test_read_volume)
 	char *volume_config[] = { some_user, "local", server, volume, mountpoint,
 			   options, fs_key_cipher, fs_key_path };
 	struct configoption option = {
-		"name",
-		0,
-		0,
-		(void *) &config,
-		0
+		.name     = "name",
+		.type     = 0,
+		.callback = NULL,
+		.info     = &config,
+		.context  = 0,
 	};
 	struct command cmd = {
-		"name",
-		&option,
-		{ 0, NULL, volume_config },
-		8,
-		NULL,
-		(void *) &ctx
+		.name   = "name",
+		.option = &option,
+		.data   = {
+                    .value = 0,
+                    .str   = NULL,
+                    .list  = volume_config,
+                },
+		.arg_count  = 8,
+		.configfile = NULL,
+		.context    = &ctx,
 	};
 
 	config.user = some_user;
