@@ -31,9 +31,12 @@ misc.h
 extern "C" {
 #endif
 
+/*
+ *      MISC.C
+ */
 extern void add_to_argv(const char **, int * const, const char * const,
     struct fmt_ptrn *);
-extern gboolean config_t_valid(const config_t *);
+extern gboolean config_t_valid(const struct config *);
 extern int exists(const char *);
 extern void l0g(const char *, ...);
 extern void log_argv(const char * const *);
@@ -45,7 +48,12 @@ extern long str_to_long(const char *);
 extern gboolean vol_t_valid(const struct vol *);
 extern void w4rn(const char *, ...);
 
-static inline int pm_command_t_valid(const config_t *x) { return TRUE; }
+/*
+ *      INLINE FUNCTIONS
+ */
+static inline int pm_command_t_valid(const struct config *x) {
+    return TRUE;
+}
 
 #ifdef __cplusplus
 } // extern "C"

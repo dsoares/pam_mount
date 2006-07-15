@@ -51,12 +51,12 @@ static void clean_config(pam_handle_t *, void *, int);
 static void clean_system_authtok(pam_handle_t *, void *, int);
 static int converse(pam_handle_t *, int, const struct pam_message **,
     struct pam_response **);
-static int modify_pm_count(config_t *, char *, char *);
+static int modify_pm_count(struct config *, char *, char *);
 static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
 __attribute__((weak)) int Debug = 0;
-config_t Config = {};
+struct config Config = {};
 struct pam_args Args = {};
 
 /* ============================ parse_pam_args () ========================== */
@@ -85,7 +85,7 @@ static void parse_pam_args(int argc, const char **argv) {
 /*
 FUNCTION <clean_config>
 INPUT:   pamh; data; errcode
-ACTION:  Data from a config_t variable is freed.
+ACTION:  Data from a struct config variable is freed.
 NOTES:   This is registered as a PAM callback function and called directly.
 */
 static void clean_config(pam_handle_t *pamh, void *data, int err) {
@@ -270,7 +270,9 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
  * FIXME:  should this be replaced with utmp (man utmp) usage?
  *         Is utmp portable?  This function is nasty and MAY BE INSECURE.
  */
-static int modify_pm_count(config_t *config, char *user, char *operation) {
+static int modify_pm_count(struct config *config, char *user,
+ char *operation)
+{
 	FILE *fp;
 	GError *err;
 	struct fmt_ptrn vinfo;

@@ -47,7 +47,7 @@ readconfig.c
 #define MKMOUNTPOINT_DEFAULT    FALSE
 #define FSCKLOOP_DEFAULT        "/dev/loop7"
 #define ICONTEXT (*(int *)cmd->context)
-#define ICONFIG ((config_t *)cmd->option->info)
+#define ICONFIG ((struct config *)cmd->option->info)
 
 typedef enum fstab_field_t {
 	FSTAB_VOLUME,
@@ -69,7 +69,7 @@ static DOTCONF_CB(read_luserconf);
 static DOTCONF_CB(read_options_allow);
 static DOTCONF_CB(read_options_deny);
 static DOTCONF_CB(read_options_require);
-static int _options_ok(const config_t *, const struct vol *);
+static int _options_ok(const struct config *, const struct vol *);
 static int options_allow_ok(optlist_t *, optlist_t *);
 static int options_deny_ok(optlist_t *, optlist_t *);
 static int options_required_ok(optlist_t *, optlist_t *);
@@ -336,7 +336,7 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
  * OUTPUT: if volume checks okay 1, else 0
  * SIDE EFFECTS: error logged
  */
-static int _options_ok(const config_t *config, const struct vol *volume) {
+static int _options_ok(const struct config *config, const struct vol *volume) {
 
 	assert(config != NULL);
 	assert(volume != NULL);
@@ -369,11 +369,11 @@ static int _options_ok(const config_t *config, const struct vol *volume) {
 }
 
 /* ============================ luserconf_volume_record_sane () ============ */
-/* PRE:    config points to a valid config_t structure
+/* PRE:    config points to a valid struct config
 		vol...
 */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
+gboolean luserconf_volume_record_sane(const struct config *config, int vol) {
         const struct vol *vpt;
 	assert(config != NULL);
 	assert(config->volume != NULL);
@@ -391,10 +391,10 @@ gboolean luserconf_volume_record_sane(const config_t * config, int vol) {
 }
 
 /* ============================ volume_record_sane () ====================== */
-/* PRE:    config points to a valid config_t structure
+/* PRE:    config points to a valid struct config
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-gboolean volume_record_sane(const config_t *config, int vol) {
+gboolean volume_record_sane(const struct config *config, int vol) {
         const struct vol *vpt;
 
         assert(config != NULL);
@@ -702,12 +702,12 @@ DOTCONF_CB(read_volume)
 /* PRE:    user is a valid string != NULL
  *         file is the path of config file to read
  *         globalconf == TRUE if file is a global config, else FALSE
- *         config points to a valid config_t structure
+ *         config points to a valid struct config
  * POST:   command is an array containing configured mount command lines
- *         config points to a config_t structure containing configuration read
+ *         config points to a struct config containing configuration read
  * FN VAL: if error 0 else 1, errors are logged */
 int readconfig(const char *user, const char *file, int globalconf,
- config_t *config)
+ struct config *config)
 {
 	struct configfile *configfile;
 	if(
@@ -726,10 +726,9 @@ int readconfig(const char *user, const char *file, int globalconf,
 }
 
 /* ============================ initconfig () ============================== */
-/* PRE:  config points to a valid config_t structure
+/* PRE:  config points to a valid struct config
  * POST: config is initialized (ie: config.volcount == 0) */
-int initconfig(config_t * config)
-{
+int initconfig(struct config *config) {
 	int i, j;
 	config->user = NULL;
 	config->debug = DEBUG_DEFAULT;
@@ -755,10 +754,9 @@ int initconfig(config_t * config)
 }
 
 /* ============================ freeconfig () ============================== */
-/* PRE:  config is a valid, initialized config_t structure
+/* PRE:  config is a valid, initialized struct config
  * POST: all dynamically allocated memory in config is freed */
-void freeconfig(config_t *config)
-{
+void freeconfig(struct config *config) {
 	int i = 0, j = 0;
 	/* FIXME: not implemented:
 	   optlist_free(&config.options_require);
@@ -876,11 +874,11 @@ static char *expand_user_wildcard(const char *str, const char *user,
 
 /*
 FUNCTION <expand_config>
-INPUT:   Filled and valid config_t structure
+INPUT:   Filled and valid struct config
 ACTION:  Expands all wildcards in the structure
 RETURNS: (boolean) false on error
 */
-int expandconfig(const config_t *config) {
+int expandconfig(const struct config *config) {
     struct vol *vpt;
     int i;
 

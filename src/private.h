@@ -90,7 +90,7 @@ struct vol {
     gboolean used_wildcard;
 };
 
-typedef struct config {
+struct config {
     char *user;	/* user logging in */
     gboolean debug;
     gboolean mkmntpoint;
@@ -102,7 +102,7 @@ typedef struct config {
     optlist_t *options_allow;
     optlist_t *options_deny;
     struct vol *volume;
-} config_t;
+};
 
 #ifdef __cplusplus
 } // extern "C"

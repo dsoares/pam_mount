@@ -30,14 +30,11 @@ mount.h
 extern "C" {
 #endif
 
-extern int do_mount(const config_t *, const unsigned int, struct fmt_ptrn *,
-    const char *, const gboolean);
-extern int do_unmount(const config_t *, const unsigned int, struct fmt_ptrn *,
-    const char * const, const gboolean);
-extern int mount_op(int (*)(const config_t *, const unsigned int,
-    struct fmt_ptrn *,
-    const char *, const int), const config_t *, const unsigned int,
-    const char *, const int);
+extern int do_mount(const struct config *, const unsigned int, struct fmt_ptrn *, const char *, const gboolean);
+extern int do_unmount(const struct config *, const unsigned int, struct fmt_ptrn *, const char * const, const gboolean);
+extern int mount_op(int (*)(const struct config *, const unsigned int,
+    struct fmt_ptrn *, const char *, const int), const struct config *,
+    const unsigned int, const char *, const int);
 
 #ifdef __cplusplus
 } // extern "C"

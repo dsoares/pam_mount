@@ -7,7 +7,7 @@
 #include <pam_mount_private.h>
 
 gboolean debug;
-config_t config;
+struct config config;
 
 START_TEST(test_exists)
 {
@@ -68,7 +68,7 @@ START_TEST(test_read_volume)
 
 	char str[MAX_PAR + 1];
 
-	/* argument 1 (some_user) must match user in config_t. */
+	/* argument 1 (some_user) must match user in struct config. */
 	/* argument 2 (local) must be a valid volume type. */
 	char *volume_config[] = { some_user, "local", server, volume, mountpoint,
 			   options, fs_key_cipher, fs_key_path };

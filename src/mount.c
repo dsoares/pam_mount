@@ -62,17 +62,17 @@ mount.c
 #    define EVP_MAX_BLOCK_LENGTH 0 // FIXME: this is ugly, but needed
 #endif
 
-static int already_mounted(const config_t * const, const unsigned int, char * const, struct fmt_ptrn *);
-static int check_filesystem(const config_t *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
-static int do_losetup(const config_t *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
-static int do_unlosetup(const config_t *, struct fmt_ptrn *);
+static int already_mounted(const struct config * const, const unsigned int, char * const, struct fmt_ptrn *);
+static int check_filesystem(const struct config *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
+static int do_losetup(const struct config *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
+static int do_unlosetup(const struct config *, struct fmt_ptrn *);
 static int fstype_nodev(const char *);
 static void log_output(int);
-static void log_pm_input(const config_t * const, const unsigned int);
+static void log_pm_input(const struct config * const, const unsigned int);
 static inline const char *loop_bk(const char *, struct loop_info64 *);
 static int mkmountpoint(struct vol * const, const char * const);
 static int pipewrite(int, const void *, size_t);
-static void run_lsof(const config_t * const, struct fmt_ptrn *);
+static void run_lsof(const struct config * const, struct fmt_ptrn *);
 static void vol_to_dev(char *, size_t, const struct vol *);
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -103,7 +103,9 @@ static void log_output(int fd)
  * NOTE: this fn simply runs lsof on a directory and logs its output for
  * debugging purposes
  */
-static void run_lsof(const config_t *const config, struct fmt_ptrn *vinfo) {
+static void run_lsof(const struct config *const config,
+ struct fmt_ptrn *vinfo)
+{
 	int i, _argc = 0, cstdout = -1, child_exit;
 	const char *_argv[MAX_PAR + 1];
 	GError *err = NULL;
@@ -145,7 +147,7 @@ static void run_lsof(const config_t *const config, struct fmt_ptrn *vinfo) {
  * FN VAL: 1 if config->volume[vol].volume is mounted, 0 if not, -1 on error
  *         errors are logged
  */
-static int already_mounted(const config_t *const config,
+static int already_mounted(const struct config *const config,
  const unsigned int vol, char *const mntpt, struct fmt_ptrn *vinfo)
 #if defined(__linux__)
 {
@@ -348,7 +350,7 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 #endif
 
 /* ============================ log_pm_input () ============================ */
-static void log_pm_input(const config_t *const config,
+static void log_pm_input(const struct config *const config,
  const unsigned int vol)
 {
         const struct vol *vpt = &config->volume[vol];
@@ -416,10 +418,10 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 	return ret;
 }
 
-int do_unmount(const config_t *config, const unsigned int vol,
+int do_unmount(const struct config *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const char *const password, const gboolean mkmntpoint)
 {
-/* PRE:    config points to a valid config_t*
+/* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  *         mkmntpoint is true if mount point should be rmdir'ed
@@ -521,10 +523,10 @@ _return:
 	return fnval;
 }
 
-static int do_losetup(const config_t *config, const unsigned int vol,
+static int do_losetup(const struct config *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
 {
-/* PRE:    config points to a valid config_t*
+/* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  *         config->volume[vol].options is valid
@@ -592,8 +594,8 @@ static int do_losetup(const config_t *config, const unsigned int vol,
 	return ret;
 }
 
-static int do_unlosetup(const config_t *config, struct fmt_ptrn *vinfo) {
-/* PRE:    config points to a valid config_t*
+static int do_unlosetup(const struct config *config, struct fmt_ptrn *vinfo) {
+/* PRE:    config points to a valid struct config
  *         vinfo is a valid struct fmt_ptrn
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
@@ -628,10 +630,10 @@ static int do_unlosetup(const config_t *config, struct fmt_ptrn *vinfo) {
 	return !WEXITSTATUS(child_exit);
 }
 
-static int check_filesystem(const config_t *config, const unsigned int vol,
+static int check_filesystem(const struct config *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
 {
-/* PRE:    config points to a valid struct config_t*
+/* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  * POST:   integrity of volume has been checked
@@ -704,10 +706,10 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 #endif
 }
 
-int do_mount(const config_t *config, const unsigned int vol,
+int do_mount(const struct config *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const char *password, const gboolean mkmntpoint)
 {
-/* PRE:    config points to a valid struct config_t*
+/* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
  *         vinfo is a valid struct fmt_ptrn
  *         mkmntpoint is true if mount point should be mkdir'ed
@@ -861,9 +863,9 @@ int do_mount(const config_t *config, const unsigned int vol,
  * NOTE:   * checked by volume_record_sane
  *         ** checked by read_volume()
  */
-int mount_op(int (*mnt)(const config_t *, const unsigned int, struct fmt_ptrn *,
- const char *, const int), const config_t *config, const unsigned int vol,
- const char *password, const int mkmntpoint)
+int mount_op(int (*mnt)(const struct config *, const unsigned int,
+ struct fmt_ptrn *, const char *, const int), const struct config *config,
+ const unsigned int vol, const char *password, const int mkmntpoint)
 {
 	int fnval;
 	struct fmt_ptrn vinfo;

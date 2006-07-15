@@ -184,8 +184,7 @@ gboolean vol_t_valid(const struct vol *v) {
 }
 
 /* ============================ config_t_valid () ========================== */
-gboolean config_t_valid(const config_t * c)
-{
+gboolean config_t_valid(const struct config *c) {
 	int i;
         if(c == NULL || c->user == NULL)
 		return FALSE;
