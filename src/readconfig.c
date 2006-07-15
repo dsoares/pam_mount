@@ -914,13 +914,13 @@ int expandconfig(const struct config *config) {
                 if(!expand_user_wildcard(optlist_key(e), config->user,
                  tmp, sizeof(tmp)))
                     return 0;
-                HX_strclone((char **)&optlist_key(e), tmp);
+                HX_strclone((void *)&optlist_key(e), tmp);
 
 
                 if(!expand_user_wildcard(optlist_val(e), config->user,
                  tmp, sizeof(tmp)))
                     return 0;
-                HX_strclone((char **)&optlist_val(e), tmp);
+                HX_strclone((void *)&optlist_val(e), tmp);
             }
 
             if(!expand_user_wildcard(vpt->fs_key_path, config->user,

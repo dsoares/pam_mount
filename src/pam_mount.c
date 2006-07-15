@@ -128,7 +128,7 @@ converse(pam_handle_t * pamh, int nargs,
 	assert(resp != NULL);
 
 	*resp = NULL;
-	retval = pam_get_item(pamh, PAM_CONV, (const void **) &conv);
+	retval = pam_get_item(pamh, PAM_CONV, (void *)&conv);
 
         if(retval == PAM_SUCCESS) {
             retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
@@ -214,10 +214,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	Config.user = relookup_user(pam_user);
 	if(Args.auth_type != GET_PASS) {	/* get password from PAM system */
 		char *ptr = NULL;
-		if ((ret =
-		     pam_get_item(pamh, PAM_AUTHTOK,
-				  (const void **) &ptr)) != PAM_SUCCESS
-                    || ptr == NULL) {
+                ret = pam_get_item(pamh, PAM_AUTHTOK, (void *)&ptr);
+                if(ret != PAM_SUCCESS || ptr == NULL) {
                         if (ret == PAM_SUCCESS && ptr == NULL)
                                 ret = PAM_AUTHINFO_UNAVAIL;
 			l0g(PMPREFIX "could not get password from PAM system\n");
@@ -368,10 +366,10 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		ret = PAM_SERVICE_ERR;
 		goto _return;
 	}
-	if ((ret =
-	     pam_get_data(pamh, "pam_mount_system_authtok",
-			  (const void **) &system_authtok)) != PAM_SUCCESS)
-	{
+
+        ret = pam_get_data(pamh, "pam_mount_system_authtok",
+                           (void *)&system_authtok);
+        if(ret != PAM_SUCCESS) {
 		l0g(PMPREFIX "error trying to retrieve authtok from auth code\n");
 		if ((ret = read_password(pamh, "reenter password:",
                                         &system_authtok)) != PAM_SUCCESS) {
