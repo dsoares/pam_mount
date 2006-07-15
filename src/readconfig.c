@@ -56,6 +56,13 @@ enum fstab_field {
 	FSTAB_OPTS,
 };
 
+struct pm_command {
+    enum command_type type;
+    char *fs;
+    char *command_name;
+    char *def[MAX_PAR + 1];
+};
+
 static char *expand_home(const char *, const char *, char *, size_t);
 static char *expand_user_wildcard(const char *, const char *, char *, size_t);
 static int fstab_value(const char *, const enum fstab_field, char *, const int);

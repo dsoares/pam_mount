@@ -31,6 +31,19 @@ extern "C" {
 struct config;
 struct pam_args;
 
+enum auth_type {
+    GET_PASS,
+    USE_FIRST_PASS,
+    TRY_FIRST_PASS
+};
+
+struct pam_args {
+    enum auth_type auth_type;
+};
+
+/*
+ *      PAM_MOUNT.C
+ */
 extern int Debug;
 extern struct config Config;
 extern struct pam_args Args;

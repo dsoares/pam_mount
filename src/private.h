@@ -57,23 +57,6 @@ enum command_type {
     COMMAND_MAX,
 };
 
-enum auth_type {
-    GET_PASS,
-    USE_FIRST_PASS,
-    TRY_FIRST_PASS
-};
-
-struct pam_args {
-    enum auth_type auth_type;
-};
-
-struct pm_command {
-    enum command_type type;
-    char *fs;
-    char *command_name;
-    char *def[MAX_PAR + 1];
-};
-
 struct vol {
     enum command_type type;
     gboolean globalconf;        // TRUE if config. from global config, FALSE if luserconf
