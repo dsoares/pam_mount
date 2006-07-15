@@ -277,7 +277,8 @@ void set_myuid(void *data) {
     const char *user = data;
 
     if(user == NULL) {
-        w4rn(PMPREFIX "setting uid to 0\n");
+        w4rn(PMPREFIX "setting uid to 0 (previous [e]uid: %d[%d])\n",
+             getuid(), geteuid());
         if(setuid(0) == -1) {
             l0g(PMPREFIX "error setting uid to 0\n");
             return;
