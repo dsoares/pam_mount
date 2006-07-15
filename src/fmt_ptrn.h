@@ -28,11 +28,12 @@ fmt_ptrn.h
 #include <stdio.h> // BUFSIZ
 #include <zlib.h>
 #include "buffer.h"
-#include "pair.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct pair;
 
 struct fmt_ptrn {
     gzFile template_fp;
@@ -46,6 +47,9 @@ struct fmt_ptrn {
     GTree *fillers;             // Format pattern / value pairs
 };
 
+/*
+ *      FMT_PTRN.C
+ */
 extern int fmt_ptrn_close(struct fmt_ptrn *);
 extern gboolean fmt_ptrn_parse_err(const struct fmt_ptrn *);
 extern void enqueue_parse_errmsg(struct fmt_ptrn *, const char *, ...);

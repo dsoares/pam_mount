@@ -23,6 +23,7 @@ optlist.h
 #define PMT_OPTLIST_H 1
 
 #include <glib.h>
+#include "pair.h"
 
 #ifdef __cplusplus
 extern "C" {

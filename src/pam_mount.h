@@ -23,11 +23,13 @@ pam_mount.h
 #define PMT_PAM_MOUNT_H 1
 
 #include <glib.h>
-#include "private.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct config;
+struct pam_args;
 
 extern int Debug;
 extern struct config Config;

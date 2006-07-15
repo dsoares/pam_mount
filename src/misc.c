@@ -36,6 +36,7 @@ misc.c
 #include <syslog.h>
 #include <unistd.h>
 #include <pwd.h>
+#include "fmt_ptrn.h"
 #include "misc.h"
 #include "pam_mount.h"
 #include "private.h"

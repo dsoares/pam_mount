@@ -30,6 +30,7 @@ fmt_ptrn.c
 #include "buffer.h"
 #include "modifiers.h"
 #include "fmt_ptrn.h"
+#include "pair.h"
 #define KEY_LEN         80
 #define PARSE_ERR_LEN   BUFSIZ
 #define STACK_MAX_ITEMS 10

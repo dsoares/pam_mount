@@ -1,10 +1,12 @@
-#include <stdlib.h>
 #include <check.h>
+#include <glib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <dotconf.h>
-#include <optlist.h>
-#include <pam_mount.h>
-#include <pam_mount_private.h>
+#include "dotconf.h"
+#include "optlist.h"
+#include "pam_mount.h"
+#include "private.h"
 
 gboolean debug;
 struct config config;

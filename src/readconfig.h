@@ -24,12 +24,16 @@ readconfig.h
 
 #include <glib.h>
 #include "dotconf.h"
-#include "private.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct config;
+
+/*
+ *      READCONFIG.C
+ */
 extern int expandconfig(const struct config *);
 extern void freeconfig(struct config *);
 extern int initconfig(struct config *);

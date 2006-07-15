@@ -22,8 +22,6 @@ modifiers.h
 #ifndef PMT_MODIFIERS_H
 #define PMT_MODIFIERS_H 1
 
-#include "fmt_ptrn.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +29,7 @@ extern "C" {
 #define MODIFIER_ARG_LEN 80
 
 struct buffer;
+struct fmt_ptrn;
 
 struct modifier_info {
     char *id;
@@ -43,6 +42,9 @@ struct modifier {
     char arg[MODIFIER_ARG_LEN + 1];
 };
 
+/*
+ *      MODIFIERS.C
+ */
 extern const struct modifier_info mod_fn[];
 
 #ifdef __cplusplus

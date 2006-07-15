@@ -37,6 +37,7 @@ crypto.c
 #endif
 #include "crypto.h"
 #include "misc.h"
+#include "private.h"
 
 #ifdef HAVE_LIBCRYPTO
 static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,

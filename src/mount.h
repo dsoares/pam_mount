@@ -30,6 +30,12 @@ mount.h
 extern "C" {
 #endif
 
+struct config;
+struct fmt_ptrn;
+
+/*
+ *      MOUNT.C
+ */
 extern int do_mount(const struct config *, const unsigned int, struct fmt_ptrn *, const char *, const gboolean);
 extern int do_unmount(const struct config *, const unsigned int, struct fmt_ptrn *, const char * const, const gboolean);
 extern int mount_op(int (*)(const struct config *, const unsigned int,

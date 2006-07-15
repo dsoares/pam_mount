@@ -23,12 +23,16 @@ common.h
 #define PMT_COMMON_H 1
 
 #include <dirent.h>
-#include "fmt_ptrn.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct fmt_ptrn;
+
+/*
+ *      COMMON.C
+ */
 extern void initialize_fillers(struct fmt_ptrn *);
 extern void initialize_fillers_from_file(struct fmt_ptrn *, char *);
 extern void print_dir(DIR *);

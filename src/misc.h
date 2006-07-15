@@ -24,12 +24,14 @@ misc.h
 
 #include <sys/types.h>
 #include <glib.h>
-#include "fmt_ptrn.h"
-#include "private.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct config;
+struct fmt_ptrn;
+struct vol;
 
 /*
  *      MISC.C
