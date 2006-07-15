@@ -123,7 +123,7 @@ enum callback_types
 
 typedef enum callback_types callback_types;
 
-static const configoption_t *get_argname_fallback(const configoption_t *);
+static const struct configoption *get_argname_fallback(const struct configoption *);
 static void copy_word(char **, char **, int, char);
 static DOTCONF_CB(dotconf_cb_include);          // internal 'Include'
 static DOTCONF_CB(dotconf_cb_includepath);      // internal 'IncludePath'
@@ -147,9 +147,9 @@ static int dotconf_question_mark_match(const char *, const char *,
     const char *);
 static char *dotconf_read_arg(const struct configfile *, char **);
 static void dotconf_register_options(struct configfile *,
-    const configoption_t *);
+    const struct configoption *);
 static void dotconf_set_command(struct configfile *,
-    const configoption_t *, char *, command_t *);
+    const struct configoption *, char *, command_t *);
 static int dotconf_star_match(const char *, const char *, const char *);
 static int dotconf_strcmp_from_back(const char *, const char *);
 static char *dotconf_substitute_env(const struct configfile *, char *);
@@ -159,7 +159,7 @@ static void dotconf_wild_card_cleanup(char *, char *);
 static void skip_whitespace(char **, int, char);
 static inline long MIN(long, long);
 
-static configoption_t dotconf_options[] =
+static struct configoption dotconf_options[] =
 {
 	{ "Include", ARG_STR, dotconf_cb_include, NULL, CTX_ALL },
 	{ "IncludePath", ARG_STR, dotconf_cb_includepath, NULL, CTX_ALL },
@@ -189,7 +189,8 @@ static void copy_word(char **dest, char **src, int max, char term)
 	*dest = cp2;
 }
 
-static const configoption_t *get_argname_fallback(const configoption_t *options)
+static const struct configoption *
+get_argname_fallback(const struct configoption *options)
 {
 	int i;
 
@@ -298,7 +299,7 @@ static int dotconf_warning(const struct configfile *configfile, int type,
 }
 
 static void dotconf_register_options(struct configfile *configfile,
- const configoption_t * options)
+ const struct configoption *options)
 {
 	int num = configfile->config_option_count;
 
@@ -521,13 +522,13 @@ static char *dotconf_read_arg(const struct configfile *configfile,
 }
 
 static void dotconf_set_command(struct configfile *configfile,
- const configoption_t *option, char *args, command_t *cmd)
+ const struct configoption *option, char *args, command_t *cmd)
 {
 	char *eob = args + strlen(args);
 
 	/* fill in the command_t structure with values we already know */
 	cmd->name = (option->type == ARG_NAME) ? name : option->name;
-	cmd->option = (configoption_t *)option;
+	cmd->option = (struct configoption *)option;
 	cmd->context = configfile->context;
 	cmd->configfile = configfile;
 	cmd->data.list = (char **)calloc(CFG_VALUES, sizeof(char *));
@@ -656,7 +657,7 @@ static const char *dotconf_handle_command(struct configfile *configfile,
 	copy_word(&cp2, &cp1, MIN(eob - cp1, CFG_MAX_OPTION), '\0');
 
 	while (1) {
-		const configoption_t *option;
+		const struct configoption *option;
 		int done = 0;
 		int opt_idx = 0;
 
@@ -664,7 +665,7 @@ static const char *dotconf_handle_command(struct configfile *configfile,
 			for(opt_idx = next_opt_idx; configfile->config_options[mod][opt_idx].name[0] != '\0'; opt_idx++) {
 				if(configfile->cmp_func(name, configfile->config_options[mod][opt_idx].name, CFG_MAX_OPTION) == 0) {
 					/* TODO: this could be flagged: option overwriting by modules */
-					option = (configoption_t *) &configfile->config_options[mod][opt_idx];
+					option = (struct configoption *)&configfile->config_options[mod][opt_idx];
 					done = 1;
 					break;		/* found one; break out */
 				}
@@ -725,7 +726,7 @@ int dotconf_command_loop(struct configfile *configfile) {
 }
 
 struct configfile *dotconf_create(const char *fname,
- const configoption_t *options, context_t *context, unsigned long flags)
+ const struct configoption *options, context_t *context, unsigned long flags)
 {
 	struct configfile *new = NULL;
 	char *dc_env;

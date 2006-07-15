@@ -101,7 +101,7 @@ static pm_command_t Command[] = {
 	{-1, NULL, NULL, {NULL}}
 };
 
-static const configoption_t legal_config[] = {
+static const struct configoption legal_config[] = {
 	{"debug", ARG_TOGGLE, read_debug, &Config.debug, CTX_ALL},
 	{"mkmountpoint", ARG_TOGGLE, read_int_param, &Config.mkmntpoint,
 	 CTX_ALL},

@@ -72,7 +72,7 @@ START_TEST(test_read_volume)
 	/* argument 2 (local) must be a valid volume type. */
 	char *volume_config[] = { some_user, "local", server, volume, mountpoint,
 			   options, fs_key_cipher, fs_key_path };
-	configoption_t option = {
+	struct configoption option = {
 		"name",
 		0,
 		0,

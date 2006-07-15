@@ -50,7 +50,6 @@ struct configfile;
 
 typedef void info_t;
 typedef void context_t;
-typedef struct configoption configoption_t;
 typedef struct command command_t;
 typedef const char *(*dotconf_callback_t)(const command_t *, context_t *);
 typedef int (*dotconf_errorhandler_t)(const struct configfile *, int, unsigned long, const char *);
@@ -58,7 +57,7 @@ typedef const char *(*dotconf_contextchecker_t)(command_t *, unsigned long);
 
 struct command {
     const char *name;             		/* name of the command */
-    configoption_t *option;		/* the option as given in the app; READ ONLY */
+    struct configoption *option;		/* the option as given in the app; READ ONLY */
 
     // argument data filled in for each line / command
     struct {
@@ -83,7 +82,7 @@ struct configfile {
 
     context_t *context;
 
-    const configoption_t **config_options;
+    const struct configoption **config_options;
     int config_option_count;
 
     // misc read-only fields
@@ -110,7 +109,7 @@ struct configoption {
 extern void dotconf_cleanup(struct configfile *);
 extern int dotconf_command_loop(struct configfile *);
 extern struct configfile *dotconf_create(const char *,
-    const configoption_t *, context_t *, unsigned long);
+    const struct configoption *, context_t *, unsigned long);
 
 #ifdef __cplusplus
 } // extern "C"
