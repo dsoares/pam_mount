@@ -56,6 +56,7 @@ struct settings {
 // Functions
 static int create_var_run(void);
 static int modify_pm_count(const char *, long);
+static int open_and_lock(const char *, long);
 static void parse_args(const int, const char **, struct settings *);
 static void set_defaults(struct settings *);
 static void usage(int, const char *, const char *);
@@ -125,14 +126,7 @@ static void parse_args(int argc, const char **argv,
  *         Is utmp portable?  This function is nasty and MAY BE INSECURE.
  */
 static int modify_pm_count(const char *user, long amount) {
-        struct flock lockinfo = {
-            .l_type   = F_WRLCK,
-            .l_whence = SEEK_SET,
-            .l_start  = 0,
-            .l_len    = 0,
-        };
 	char filename[PATH_MAX + 1];
-	int tries = 0;
 	int fd = 0, err;
     int ret;
 	long val;
@@ -158,105 +152,12 @@ static int modify_pm_count(const char *user, long amount) {
             return ret;
     }
 
-	g_snprintf(filename, sizeof(filename), "/var/run/pam_mount/%s", user);
-      top:
-	tries++;
-	if (stat(filename, &st) == -1) {
-		if ((fd = open(filename, O_RDWR | O_CREAT, 0000)) == -1) {
-                    err = errno;
-                    l0g(PREFIX "unable to open %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-		/*
-		 * su creates file group owned by user and then releases root
-		 * perms.  User needs to be able to access file on logout.
-		 */
-            if (fchown (fd, passwd_ent->pw_uid, passwd_ent->pw_gid) == -1)
-		/* FIXME: permission denied */
-		if (fchown(fd, 0, 0) == -1) {
-                    err = errno;
-                    l0g(PREFIX "unable to chown %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-		if (fchmod(fd, 0600) == -1) {
-                    err = errno;
-                    l0g(PREFIX "unable to chmod %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-		if (write(fd, "0", 1) == -1) {
-                    err = errno;
-                    l0g(PREFIX "write error on %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-		if (lseek(fd, SEEK_SET, 0) == -1) {
-                    err = errno;
-                    l0g(PREFIX "seek error on %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-	} else
-		fd = open(filename, O_RDWR);
+    snprintf(filename, sizeof(filename), VAR_RUN_PMT "/%s", user);
+    while((ret = fd = open_and_lock(filename, passwd_ent->pw_uid)) == -EAGAIN)
+        /* noop */;
+    if(ret < 0)
+        return ret;
 
-	if (stat(filename, &st) == -1) {
-            err = errno;
-            l0g(PREFIX "unable to stat %s: %s\n", filename, strerror(errno));
-            goto return_error;
-	}
-	if (fd < 0) {
-            l0g(PREFIX "could not open count file %s: %s\n",
-              filename, strerror(errno));
-            return 0;
-	}
-	alarm(20);
-	err = fcntl(fd, F_SETLKW, &lockinfo);
-	alarm(0);
-	if (err == EAGAIN) {
-		/*
-		 * if someone has locked the file and not written to it in at
-		 * least 20 seconds, we assume they either forgot to unlock
-		 * it or are catatonic -- chances are slim that they are in
-		 * the middle of a read-write cycle and I don't want to make
-		 * us lock users out.  Perhaps I should just return
-		 * PAM_SUCCESS instead and log the event?  Kill the process
-		 * holding the lock?  Options abound...  For now, we ignore
-		 * it.
-		 */
-		fcntl(fd, F_GETLK, &lockinfo);
-		/*
-		 * now lockinfo.l_pid == 0 implies that the lock was released
-		 * by the other process between returning from the 20 second
-		 * wait and calling fcntl again, not likely to ever happen,
-		 * and not a problem other than cosmetics even if it does.
-		 */
-                w4rn(PREFIX "ignoring stale lock on file %s\n", filename);
-	}
-	/*
-	 * it is possible at this point that the file has been removed by a
-	 * previous login; if this happens, we need to start over.
-	 * Unfortunately, the only way to do this without potential stack
-	 * trashing is a goto.
-	 */
-	if(access(filename, F_OK) == -1) {
-		if (tries < 10) {
-                    l0g(PREFIX "could not access %s: %s; trying again\n",
-                      filename, strerror(errno));
-                    /* Waiting too long might interfere with
-                    /etc/login.defs:LOGIN_TIMEOUT and /bin/login itself may
-                    prematurely kill the session. */
-                    sleep(1);
-                    CLOSE(fd);
-                    goto top;
-		} else {
-                    err = errno;
-                    l0g(PREFIX "could not access %s in 10s, quitting\n",
-                      filename);
-                    goto return_error;
-		}
-	}
 	buf = g_malloc(st.st_size + 2);	/* size will never grow by
 					 * more than one */
 	if(st.st_size > 0) {
@@ -318,7 +219,7 @@ static int modify_pm_count(const char *user, long amount) {
 
 /* ============================ main () ===================================== */
 int main(int argc, const char **argv) {
-	int pm_count;
+    int ret;
 	struct settings settings;
 
 	set_defaults(&settings);
@@ -327,13 +228,17 @@ int main(int argc, const char **argv) {
 	if (strlen(settings.user) == 0)
 		usage(EXIT_FAILURE, NULL, NULL);
 
-	if((pm_count = modify_pm_count(settings.user, settings.operation)) <= 0)
-		exit(EXIT_FAILURE);
+    ret = modify_pm_count(settings.user, settings.operation);
+    if(ret == -ESTALE) {
+        printf("0\n");
+        return EXIT_SUCCESS;
+    } else if(ret < 0) {
+        return EXIT_FAILURE;
+    }
 
-	/* print current count so pam_mount module may read it */
-	printf("%d\n", pm_count);
-
-	exit(EXIT_SUCCESS);
+    // print current count so pam_mount module may read it
+    printf("%d\n", ret);
+    return EXIT_SUCCESS;
 }
 
 //-----------------------------------------------------------------------------
@@ -370,6 +275,73 @@ static int create_var_run(void) {
     }
 
     return 1;
+}
+
+/*  open_and_lock
+    @filename:  file to open
+
+    Creates if necessary, opens and chown()s @filename, and locks it.
+    Returns the fd if all of that succeeded, -EAGAIN if the file was unlinked
+    during operation (see below), -ESTALE if the lock could not be obtained,
+    and <0 otherwise to indicate errno.
+*/
+static int open_and_lock(const char *filename, long uid) {
+    struct flock lockinfo = {
+        .l_type   = F_WRLCK,
+        .l_whence = SEEK_SET,
+        .l_start  = 0,
+        .l_len    = 0,
+    };
+    struct stat sb;
+    int fd, ret;
+
+    if((fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0) {
+        ret = errno;
+        l0g(PREFIX "unable to open %s: %s\n", filename, strerror(errno));
+        return ret;
+    }
+    if((fchown(fd, uid, 0)) != 0) {
+        ret = errno;
+        l0g(PREFIX "unable to chown %s: %s\n", filename, strerror(errno));
+        return ret;
+    }
+
+    /* Note: Waiting too long might interfere with LOGIN_TIMEOUT from
+    /etc/login.defs, and /bin/login itself may prematurely kill the session. */
+    alarm(20);
+    ret = fcntl(fd, F_SETLKW, &lockinfo);
+    alarm(0);
+    if(ret == EAGAIN) {
+        /* [Flyn] If someone has locked the file and not written to it in at
+        least 20 seconds, we assume they either forgot to unlock it or are
+        catatonic -- chances are slim that they are in the middle of a
+        read-write cycle and I do not want to make us lock users out. Perhaps
+        I should just return PAM_SUCCESS instead and log the event? Kill the
+        process holding the lock? Options abound... For now, we ignore it. */
+
+        /* [Jen] pmvarrun is the only one ever writing to that file, and we
+        keep the lock as short as possible. So if there is no response within
+        the time limit, something is fouled up (e.g. NFS server not
+        responding - though /var/run should at best not be on an NFS mount).
+        Continue, let user log in, do not change anything. */
+
+        w4rn(PREFIX "stale lock on file %s - continuing without increasing"
+             "pam_mount reference count\n", filename);
+        close(fd);
+        return -ESTALE;
+    }
+
+    /* It is possible at this point that the file has been removed by a
+    previous login; if this happens, we need to start over. */
+    if(stat(filename, &sb) != 0) {
+        ret = errno;
+        close(fd);
+        if(ret == ENOENT)
+            return -EAGAIN;
+        return -ret;
+    }
+
+    return fd;
 }
 
 //=============================================================================
