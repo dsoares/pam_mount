@@ -119,31 +119,31 @@ static void parse_args(int argc, const char **argv,
 	}
 }
 
-/* ============================ modify_pm_count () ========================= */
-/* FIXME: use INPUT, SIDE EFFECTS and OUTPUT */
-/* POST:   amount is added to /var/run/pam_mount/<user>'s value
- *         if value == 0, then file is removed. 
- * FN VAL: new value else -1 on error, errors are logged 
- * NOTE:   code is modified version of pam_console.c's use_count 
- * FIXME:  should this be replaced with utmp (man utmp) usage?  
- *         Is utmp portable?  This function is nasty and MAY BE INSECURE.
- */
+/*  modify_pm_count
+    @user:      user to poke on
+    @amount:    increment (usually -1, 0 or +1)
+
+    Adjusts /var/run/pam_mount/@user by @amount, or deletes the file if the
+    resulting value (current + @amount) is <= 0. Returns >0 on success or else
+    to indicate errno. -ESTALE and -EOVERFLOW are passed up from subfunctions
+    and must be handled in the caller.
+*/
 static int modify_pm_count(const char *user, long amount) {
-	char filename[PATH_MAX + 1];
+    char filename[PATH_MAX + 1];
+    struct passwd *pent;
     int fd = 0, ret;
+    struct stat sb;
     long val;
-	struct stat st;
-        struct passwd *passwd_ent;
 
-	assert(user != NULL);
+    assert(user != NULL);
 
-        if((passwd_ent = getpwnam(user)) == NULL) {
-            ret = errno;
-            l0g(PREFIX "could not resolve uid for %s\n", user);
-            return ret;
-        }
+    if((pent = getpwnam(user)) == NULL) {
+        ret = errno;
+        l0g(PREFIX "could not resolve uid for %s\n", user);
+        return ret;
+    }
 
-    if(stat(VAR_RUN_PMT, &st) != 0) {
+    if(stat(VAR_RUN_PMT, &sb) != 0) {
         if(errno != ENOENT) {
             ret = errno;
             l0g(PREFIX "unable to stat" VAR_RUN_PMT ": %s\n", strerror(errno));
@@ -154,7 +154,7 @@ static int modify_pm_count(const char *user, long amount) {
     }
 
     snprintf(filename, sizeof(filename), VAR_RUN_PMT "/%s", user);
-    while((ret = fd = open_and_lock(filename, passwd_ent->pw_uid)) == -EAGAIN)
+    while((ret = fd = open_and_lock(filename, pent->pw_uid)) == -EAGAIN)
         /* noop */;
     if(ret < 0)
         return ret;
@@ -176,14 +176,14 @@ static int modify_pm_count(const char *user, long amount) {
 
 /* ============================ main () ===================================== */
 int main(int argc, const char **argv) {
+    struct settings settings;
     int ret;
-	struct settings settings;
 
-	set_defaults(&settings);
-	parse_args(argc, argv, &settings);
+    set_defaults(&settings);
+    parse_args(argc, argv, &settings);
 
-	if (strlen(settings.user) == 0)
-		usage(EXIT_FAILURE, NULL, NULL);
+    if(strlen(settings.user) == 0)
+        usage(EXIT_FAILURE, NULL, NULL);
 
     ret = modify_pm_count(settings.user, settings.operation);
     if(ret == -ESTALE) {
@@ -348,7 +348,7 @@ static int write_count(int fd, long nv, const char *filename) {
 
     if(nv <= 0 && unlink(filename) != 0) {
         l0g(PREFIX "could not unlink %s: %s\n", filename, strerror(errno));
-        return 1;
+        return 1; // let user log in
     }
 
     if((ret = lseek(fd, 0, SEEK_SET)) != 0) {
