@@ -107,6 +107,9 @@ struct configoption {
     unsigned long context;              // context sensitivity flags
 };
 
+/*
+ *      DOTCONF.C
+ */
 extern void dotconf_cleanup(struct configfile *);
 extern int dotconf_command_loop(struct configfile *);
 extern struct configfile *dotconf_create(const char *,

@@ -858,8 +858,7 @@ int do_mount(const struct config *config, const unsigned int vol,
  * NOTE:   * checked by volume_record_sane
  *         ** checked by read_volume()
  */
-int mount_op(int (*mnt)(const struct config *, const unsigned int,
- struct fmt_ptrn *, const char *, const int), const struct config *config,
+int mount_op(mount_op_fn_t *mnt, const struct config *config,
  const unsigned int vol, const char *password, const int mkmntpoint)
 {
 	int fnval;

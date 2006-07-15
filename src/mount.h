@@ -33,14 +33,15 @@ extern "C" {
 struct config;
 struct fmt_ptrn;
 
+typedef int (mount_op_fn_t)(const struct config *, const unsigned int,
+    struct fmt_ptrn *, const char *, const gboolean);
+
 /*
  *      MOUNT.C
  */
-extern int do_mount(const struct config *, const unsigned int, struct fmt_ptrn *, const char *, const gboolean);
-extern int do_unmount(const struct config *, const unsigned int, struct fmt_ptrn *, const char * const, const gboolean);
-extern int mount_op(int (*)(const struct config *, const unsigned int,
-    struct fmt_ptrn *, const char *, const int), const struct config *,
-    const unsigned int, const char *, const int);
+extern mount_op_fn_t do_mount, do_unmount;
+extern int mount_op(mount_op_fn_t *, const struct config *, const unsigned int,
+    const char *, const int);
 
 #ifdef __cplusplus
 } // extern "C"

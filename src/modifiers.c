@@ -30,51 +30,40 @@ modifiers.c
 #include "fmt_ptrn.h"
 #include "template.h"
 
+typedef int (apply_fn_t)(struct buffer *, struct fmt_ptrn *, char *);
+
 static int _apply_comment(struct buffer *, char *, char *);
 static int _apply_delim(struct buffer *, const char *, const char *);
-static int apply_after(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_basename(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_before(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_c_comment(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_c_delim(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_cpp_comment(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_cpp_delim(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_file(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_fn(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_lower(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_newlines(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_no_newlines(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_remove_underscore(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_sh_comment(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_sh_delim(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_template(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_tex_comment(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_tex_delim(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_upper(struct buffer *, struct fmt_ptrn *, char *);
-static int apply_xml_comment(struct buffer *, struct fmt_ptrn *, char *);
+static apply_fn_t
+    apply_after, apply_basename, apply_before, apply_c_comment, apply_c_delim,
+    apply_cpp_comment, apply_cpp_delim, apply_file, apply_fn, apply_lower,
+    apply_newlines, apply_no_newlines, apply_remove_underscore,
+    apply_sh_comment, apply_sh_delim, apply_template, apply_tex_comment,
+    apply_tex_delim, apply_upper, apply_xml_comment;
 
 const struct modifier_info mod_fn[] = {
-    {"upper", apply_upper, 0},
-    {"lower", apply_lower, 0},
-    {"basename", apply_basename, 0},
-    {"before=\"", apply_before, 1},
-    {"after=\"", apply_after, 1},
-    {"fn", apply_fn, 0},
-    {"c_delim", apply_c_delim, 0},
-    {"cpp_delim", apply_cpp_delim, 0},
-    {"sh_delim", apply_sh_delim, 0},
-    {"tex_delim", apply_tex_delim, 0},
-    {"c_comment", apply_c_comment, 0},
-    {"cpp_comment", apply_cpp_comment, 0},
-    {"sh_comment", apply_sh_comment, 0},
-    {"tex_comment", apply_tex_comment, 0},
-    {"xml_comment", apply_xml_comment, 0},
-    {"sgml_comment", apply_xml_comment, 0},
-    {"newlines", apply_newlines, 0},
-    {"no_newlines", apply_no_newlines, 0},
-    {"template", apply_template, 0},
-    {"file", apply_file, 0},
-    {"#", NULL, 0},		/* FIXME: This is handled as a special case. */
+    {"upper",             apply_upper,             0},
+    {"lower",             apply_lower,             0},
+    {"basename",          apply_basename,          0},
+    {"before=\"",         apply_before,            1},
+    {"after=\"",          apply_after,             1},
+    {"fn",                apply_fn,                0},
+    {"c_delim",           apply_c_delim,           0},
+    {"cpp_delim",         apply_cpp_delim,         0},
+    {"sh_delim",          apply_sh_delim,          0},
+    {"tex_delim",         apply_tex_delim,         0},
+    {"c_comment",         apply_c_comment,         0},
+    {"cpp_comment",       apply_cpp_comment,       0},
+    {"sh_comment",        apply_sh_comment,        0},
+    {"tex_comment",       apply_tex_comment,       0},
+    {"xml_comment",       apply_xml_comment,       0},
+    {"sgml_comment",      apply_xml_comment,       0},
+    {"newlines",          apply_newlines,          0},
+    {"no_newlines",       apply_no_newlines,       0},
+    {"template",          apply_template,          0},
+    {"file",              apply_file,              0},
+    /* FIXME: The following is handled as a special case. */
+    {"#",                 NULL,                    0},
     {"remove_underscore", apply_remove_underscore, 0},
     {NULL, NULL, 0},
 };
