@@ -25,7 +25,7 @@ fmt_ptrn.h
 #include <sys/types.h>
 #include <limits.h>
 #include <glib.h>
-#include <stdio.h>
+#include <stdio.h> // BUFSIZ
 #include <zlib.h>
 #include "buffer.h"
 #include "pair.h"
