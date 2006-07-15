@@ -62,6 +62,7 @@ static void parse_args(const int, const char **, struct settings *);
 static long read_current_count(int, const char *);
 static void set_defaults(struct settings *);
 static void usage(int, const char *, const char *);
+static int write_count(int, long, const char *);
 
 // Variables
 int Debug;
@@ -129,11 +130,9 @@ static void parse_args(int argc, const char **argv,
  */
 static int modify_pm_count(const char *user, long amount) {
 	char filename[PATH_MAX + 1];
-	int fd = 0, err;
+    int fd = 0, ret;
     long val;
-    int ret;
 	struct stat st;
-	char *buf = NULL;
         struct passwd *passwd_ent;
 
 	assert(user != NULL);
@@ -166,35 +165,13 @@ static int modify_pm_count(const char *user, long amount) {
     }
 
     w4rn(PREFIX "parsed count value %ld\n", val);
-	if(amount != 0) {		/* amount == 0 implies query */
-                int size;
-		val += amount;
-                if(val <= 0 && unlink(filename) != 0) {
-                    l0g(PREFIX "could not unlink %s: %s\n",
-                      filename, strerror(errno));
-		}
-		snprintf(buf, st.st_size + 2, "%ld", val);
-		if (write(fd, buf, strlen(buf)) == -1) {
-                    err = errno;
-                    l0g(PREFIX "write error on %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-                if((size = lseek(fd, 0, SEEK_CUR)) < 0) {
-                    l0g(PREFIX "lseek: %s\n", strerror(errno));
-                    err = errno;
-                    goto return_error;
-                }
-                write(fd, " ", 1);
-                ftruncate(fd, size);
-	}
-	err = val;
-      return_error:
-	if (fd > 0)
-		CLOSE(fd);
-	if (buf)
-		g_free(buf);
-	return err;
+    /* amount == 0 implies query */
+    ret = 1;
+    if(amount != 0)
+        ret = write_count(fd, val + amount, filename);
+
+    close(fd);
+    return ret;
 }
 
 /* ============================ main () ===================================== */
@@ -337,7 +314,7 @@ static long read_current_count(int fd, const char *filename) {
 
     if((ret = read(fd, buf, sizeof(buf))) < 0) {
         ret = errno;
-        l0g(PREFIX "read error on fd: %s\n", filename, strerror(errno));
+        l0g(PREFIX "read error on %s: %s\n", filename, strerror(errno));
         close(fd);
         return -ret;
     } else if(ret == 0) {
@@ -355,6 +332,42 @@ static long read_current_count(int fd, const char *filename) {
     }
 
     return ret;
+}
+
+/*  write_count
+    @fd:        file descriptor to write to
+    @nv:        new value to write
+    @filename:  filename, only used for l0g()
+
+    Writes @nv as a number in hexadecimal to the start of the file @fd and
+    truncates the file to the written length.
+*/
+static int write_count(int fd, long nv, const char *filename) {
+    char buf[ASCIIZ_LLX];
+    int wrt, len, ret;
+
+    if(nv <= 0 && unlink(filename) != 0) {
+        l0g(PREFIX "could not unlink %s: %s\n", filename, strerror(errno));
+        return 1;
+    }
+
+    if((ret = lseek(fd, 0, SEEK_SET)) != 0) {
+        ret = errno;
+        l0g(PREFIX, "failed to seek in %s: %s\n", filename, strerror(errno));
+        return -errno;
+    }
+
+    len = snprintf(buf, sizeof(buf), "0x%lX", nv);
+    if((wrt = write(fd, buf, len)) != len) {
+        ret = errno;
+        l0g(PREFIX "wrote %d of %d bytes; write error on %s: %s\n",
+            (wrt < 0) ? 0 : wrt, len, filename, strerror(errno));
+        close(fd);
+        return ret;
+    }
+
+    ftruncate(fd, ret);
+    return 1;
 }
 
 //=============================================================================
