@@ -717,7 +717,7 @@ int readconfig(const char *user, const char *file, int globalconf,
 		l0g(PMPREFIX "error opening %s: %s\n", file, strerror(errno));
 		return 0;
 	}
-	configfile->errorhandler = (dotconf_errorhandler_t) log_error;
+	configfile->errorhandler = log_error;
         if(!dotconf_command_loop(configfile)) {
             // may not be fatal
             l0g(PMPREFIX "error reading %s: %s\n", file, strerror(errno));

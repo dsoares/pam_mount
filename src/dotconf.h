@@ -33,8 +33,9 @@ extern "C" {
     const char *__name(const struct command *cmd, context_t *ctx)
 #define CTX_ALL 0 // context: option can be used anywhere
 #define LAST_OPTION              {"", 0, NULL, NULL}
-#define FUNC_ERRORHANDLER(_name) int _name(struct configfile *configfile, \
-                                 int type, long dc_errno, const char *msg)
+#define FUNC_ERRORHANDLER(_name) \
+    int _name(const struct configfile *configfile, int type, \
+    long dc_errno, const char *msg)
 
 // constants for type of option
 enum {
@@ -53,7 +54,7 @@ struct command;
 typedef void info_t;
 typedef void context_t;
 typedef const char *(*dotconf_callback_t)(const struct command *, context_t *);
-typedef int (*dotconf_errorhandler_t)(const struct configfile *, int, unsigned long, const char *);
+typedef int (*dotconf_errorhandler_t)(const struct configfile *, int, long, const char *);
 typedef const char *(*dotconf_contextchecker_t)(struct command *, unsigned long);
 
 struct command {
