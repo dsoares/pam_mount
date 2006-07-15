@@ -32,18 +32,18 @@ extern "C" {
 
 struct buffer;
 
-typedef struct modifier_fns {
+struct modifier_info {
     char *id;
     int (*fn)(struct buffer *, struct fmt_ptrn *, char *);
     int has_arg;
-} modifier_fns_t;
+};
 
 typedef struct modifier {
-    modifier_fns_t fn;
+    struct modifier_info fn;
     char arg[MODIFIER_ARG_LEN + 1];
 } modifier_t;
 
-extern const modifier_fns_t mod_fn[];
+extern const struct modifier_info mod_fn[];
 
 #ifdef __cplusplus
 } // extern "C"

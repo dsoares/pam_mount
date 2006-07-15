@@ -53,7 +53,7 @@ static int apply_tex_delim(struct buffer *, struct fmt_ptrn *, char *);
 static int apply_upper(struct buffer *, struct fmt_ptrn *, char *);
 static int apply_xml_comment(struct buffer *, struct fmt_ptrn *, char *);
 
-const modifier_fns_t mod_fn[] = {
+const struct modifier_info mod_fn[] = {
     {"upper", apply_upper, 0},
     {"lower", apply_lower, 0},
     {"basename", apply_basename, 0},
