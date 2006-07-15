@@ -199,10 +199,9 @@ gboolean config_t_valid(const struct config *c) {
 	/* optlist_t *options_require; */
 	/* optlist_t *options_allow; */
 	/* optlist_t *options_deny; */
-	for (i = 0; i < c->volcount; i++) {
+	for(i = 0; i < c->volcount; ++i)
                 if(!vol_t_valid(c->volume))
 			return FALSE;
-	}
 	return TRUE;
 }
 

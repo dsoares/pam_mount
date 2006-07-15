@@ -132,10 +132,8 @@ converse(pam_handle_t * pamh, int nargs,
 
         if(retval == PAM_SUCCESS) {
             retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
-            if(retval != PAM_SUCCESS) {
-                l0g(PMPREFIX "conv->conv(...): %s\n",
-                 pam_strerror(pamh, retval));
-            }
+            if(retval != PAM_SUCCESS)
+                l0g(PMPREFIX "conv->conv(...): %s\n", pam_strerror(pamh, retval));
         } else {
             l0g(PMPREFIX "pam_get_item: %s\n", pam_strerror(pamh, retval));
         }
@@ -225,15 +223,12 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			authtok = strdup(ptr);
 	}
 	if (!authtok) {		/* get password directly */
-		if ((ret = read_password(pamh, "password:",
-					 &authtok)) != PAM_SUCCESS) {
+		if((ret = read_password(pamh, "password:", &authtok)) != PAM_SUCCESS) {
 			l0g(PMPREFIX "error trying to read password\n");
 			goto _return;
 		}
 		/* p_s_i copies to PAM-internal memory */
-		if ((ret =
-		     pam_set_item(pamh, PAM_AUTHTOK,
-				  authtok)) != PAM_SUCCESS) {
+		if((ret = pam_set_item(pamh, PAM_AUTHTOK, authtok)) != PAM_SUCCESS) {
 			l0g(PMPREFIX "error trying to export password\n");
 			goto _return;
 		}
@@ -244,9 +239,9 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		goto _return;
 	}
 	w4rn(PMPREFIX "saving authtok for session code\n");
-	if ((ret =
-	     pam_set_data(pamh, "pam_mount_system_authtok", authtok,
-			  clean_system_authtok)) != PAM_SUCCESS) {
+        ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
+                           clean_system_authtok);
+        if(ret != PAM_SUCCESS) {
 		l0g(PMPREFIX "error trying to save authtok for session code\n");
 		goto _return;
 	}
@@ -371,11 +366,11 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
                            (void *)&system_authtok);
         if(ret != PAM_SUCCESS) {
 		l0g(PMPREFIX "error trying to retrieve authtok from auth code\n");
-		if ((ret = read_password(pamh, "reenter password:",
-                                        &system_authtok)) != PAM_SUCCESS) {
+                ret = read_password(pamh, "reenter password:", &system_authtok);
+                if(ret != PAM_SUCCESS) {
                        l0g(PMPREFIX "error trying to read password\n");
                        goto _return;
-               }
+                }
 
 	}
 	if(!readconfig(Config.user, CONFIGFILE, 1, &Config)) {
@@ -409,9 +404,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	} else
 		w4rn(PMPREFIX "%s does not exist or is not owned by user\n",
                  Config.luserconf);
-	if(Config.volcount <= 0) {
+	if(Config.volcount <= 0)
 		w4rn(PMPREFIX "no volumes to mount\n");
-	}
 	if(!expandconfig(&Config)) {
 		l0g(PMPREFIX "error expanding configuration\n");
 		ret = PAM_SERVICE_ERR;
@@ -499,11 +493,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		/* Unmount in reverse order to facilitate nested mounting. */
 		for(vol = Config.volcount - 1; vol >= 0; vol--) {
 			w4rn(PMPREFIX "going to unmount\n");
-			if (!mount_op
-			    (do_unmount, &Config, vol, NULL,
-			     Config.mkmntpoint))
-				l0g(PMPREFIX "unmount of %s failed\n",
-				    Config.volume[vol].volume);
+			if(!mount_op(do_unmount, &Config, vol, NULL, Config.mkmntpoint))
+				l0g(PMPREFIX "unmount of %s failed\n", Config.volume[vol].volume);
 /* end root priv. */
 	} else
 		w4rn(PMPREFIX "%s seems to have other remaining open sessions\n",

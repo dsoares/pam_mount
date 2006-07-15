@@ -228,9 +228,9 @@ static int already_mounted(const struct config *const config,
         return -1;
     }
 
-    for(i = 0; config->command[i][MNTCHECK] != NULL; ++i) {
+    for(i = 0; config->command[i][MNTCHECK] != NULL; ++i)
         add_to_argv(_argv, &_argc, config->command[i][MNTCHECK], vinfo);
-    }
+
     log_argv(_argv);
 
     // FIXME: replace by popen() if available on BSD
@@ -400,8 +400,7 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 			ret = 0;
 			goto _return;
 		}
-		if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid)
-		    != 0) {
+		if(chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid) != 0) {
 			l0g(PMPREFIX "could not chown %s to %s\n",
 			    d, volume->user);
 			ret = 0;
@@ -561,10 +560,9 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 		if(keybits != NULL)
 			fmt_ptrn_update_kv(vinfo, "KEYBITS", keybits);
 	}
-	for(i = 0; config->command[i][LOSETUP] != NULL; i++) {
-		add_to_argv(_argv, &_argc,
-			    config->command[i][LOSETUP], vinfo);
-	}
+	for(i = 0; config->command[i][LOSETUP] != NULL; ++i)
+            add_to_argv(_argv, &_argc, config->command[i][LOSETUP], vinfo);
+
 	log_argv(_argv);
         if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
           NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
@@ -665,11 +663,10 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
         if(optlist_exists(vpt->options, "bind") ||
          optlist_exists(vpt->options, "move") ||
          fstype_nodev(vpt->fstype) != 0)
-            return 1;
+                return 1;
 
 	if (optlist_exists(vpt->options, "loop")) {
-		if (!do_losetup
-		    (config, vol, vinfo, password, password_len))
+		if(!do_losetup(config, vol, vinfo, password, password_len))
 			return 0;
 		fsck_target = config->fsckloop;
 	} else
@@ -679,8 +676,8 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	/* FIXME: need to fsck /dev/mapper/whatever... */
 	fmt_ptrn_update_kv(vinfo, "FSCKTARGET", fsck_target);
 	for (i = 0; config->command[i][FSCK]; i++)
-		add_to_argv(_argv, &_argc, config->command[i][FSCK],
-			    vinfo);
+            add_to_argv(_argv, &_argc, config->command[i][FSCK], vinfo);
+
 	log_argv(_argv);
         if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
           &pid, NULL, &cstdout, &cstderr, &err)) {
@@ -698,8 +695,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 			return 0;
 	/* pass on through the result -- okay if 0 (no errors) 
 	 * or 1 (errors corrected) */
-	return (WEXITSTATUS(child_exit) == 0
-		|| WEXITSTATUS(child_exit) == 1);
+	return WEXITSTATUS(child_exit) == 0 || WEXITSTATUS(child_exit) == 1;
 #else
 	l0g(PMPREFIX "checking filesystem not implemented on arch.\n");
 	return 1;
@@ -807,9 +803,9 @@ int do_mount(const struct config *config, const unsigned int vol,
 		   l0g(PMPREFIX "volume type (%d) is unknown\n", vpt->type);
 		   return 0;
 		 */
-                for(i = 0; config->command[i][vpt->type] != NULL; ++i) {
+                for(i = 0; config->command[i][vpt->type] != NULL; ++i)
                     add_to_argv(_argv, &_argc, config->command[i][vpt->type], vinfo);
-                }
+
                 if(vpt->type == LCLMOUNT &&
                   !check_filesystem(config, vol, vinfo, _password, _password_len))
 			l0g(PMPREFIX "error checking filesystem but will continue\n");
@@ -824,8 +820,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 			return 0;
 		}
                 if(vpt->type != NFSMOUNT) {
-			if (pipewrite(cstdin, _password, _password_len) !=
-			    _password_len)
+			if(pipewrite(cstdin, _password, _password_len) != _password_len)
 				/* FIXME: clean: returns value of exit below */
 				l0g(PMPREFIX "error sending password to mount\n");
 		}

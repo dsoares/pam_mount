@@ -299,17 +299,12 @@ static void dotconf_register_options(struct configfile *configfile,
 	int num = configfile->config_option_count;
 
 #define GROW_BY   10
-
 	/* resize memoryblock for options blockwise */
 	if (configfile->config_options == NULL)
 		configfile->config_options = malloc(sizeof(void *) * (GROW_BY + 1));
-	else
-	{
-		if((num % GROW_BY) == 0)
-			configfile->config_options = realloc(configfile->config_options,
-											 sizeof(void *) * (num + GROW_BY + 1));
-	}
-
+        else if((num % GROW_BY) == 0)
+	    configfile->config_options = realloc(configfile->config_options,
+                sizeof(void *) * (num + GROW_BY + 1));
 #undef GROW_BY
 
 	/* append new options */
@@ -552,10 +547,10 @@ static void dotconf_set_command(struct configfile *configfile,
 		skip_whitespace(&args, eob - args, '\0');
 
 		cmd->arg_count = 0;
-		while ( cmd->arg_count < (CFG_VALUES - 1)
-				&& (cmd->data.list[cmd->arg_count] = dotconf_read_arg(configfile, &args)) != NULL) {
+                while(cmd->arg_count < CFG_VALUES - 1 &&
+                  (cmd->data.list[cmd->arg_count] =
+                  dotconf_read_arg(configfile, &args)) != NULL)
 			cmd->arg_count++;
-		}
 
 		skip_whitespace(&args, eob - args, '\0');
 
@@ -686,20 +681,16 @@ static const char *dotconf_handle_command(struct configfile *configfile,
 
 		if(context_error == NULL)
 			error = dotconf_invoke_command(configfile, &command);
-		else {
-			if(error == NULL) {
-				/* avoid returning another error then the first. This makes it easier to
-                   reproduce problems. */
-				error = context_error;
-			}
-		}
+                else if(error == NULL)
+                    /* Avoid returning another error then the first. This makes
+                    it easier to reproduce problems. */
+                    error = context_error;
 
 		dotconf_free_command(&command);
 
-		if(context_error == NULL || !(configfile->flags & DUPLICATE_OPTION_NAMES)) {
+		if(context_error == NULL || !(configfile->flags & DUPLICATE_OPTION_NAMES))
 			/* don't try more, just quit now. */
 			break;
-		}
 	}
 
 	return error;
@@ -712,10 +703,8 @@ int dotconf_command_loop(struct configfile *configfile) {
 	while(!(dotconf_get_next_line(buffer, sizeof(buffer), configfile))) {
 		const char *error = dotconf_handle_command(configfile, buffer);
 		if ( error != NULL )
-		{
 			if ( dotconf_warning(configfile, DCLOG_ERR, 0, error) )
 				return 0;
-		}
 	}
 	return 1;
 }
@@ -872,7 +861,7 @@ static int dotconf_find_wild_card(const char *filename, char *wildcard,
 
 				*ext = filename + prefix_len;
 				*wildcard = **ext;
-				(*ext)++;
+				++*ext;
 
 				retval = prefix_len;
 
@@ -913,22 +902,13 @@ static int dotconf_question_mark_match(const char *dir_name, const char *pre,
 	int ext_len = strlen(ext);
 	int w_card_check = strcspn(ext,WILDCARDS);
 
-	if(w_card_check < ext_len && strncmp(dir_name, pre, pre_len) == 0 &&
-	    strcmp(dir_name, ".") != 0 && strcmp(dir_name, "..") != 0)
-	{
-		retval = 1;    /* Another wildcard found */
+    if(w_card_check < ext_len && strncmp(dir_name, pre, pre_len) == 0 &&
+      strcmp(dir_name, ".") != 0 && strcmp(dir_name, "..") != 0)
+            retval = 1; /* Another wildcard found */
 
-	} else {
-
-		if(dir_name_len >= pre_len &&
-			 strncmp(dir_name, pre, pre_len) == 0 &&
-			 strcmp(dir_name, ".") != 0 &&
-			 strcmp(dir_name, "..") != 0)
-		{
-			retval = 0; /* Matches no other wildcards */
-		}
-
-	}
+    else if(dir_name_len >= pre_len && strncmp(dir_name, pre, pre_len) == 0 &&
+      strcmp(dir_name, ".") != 0 && strcmp(dir_name, "..") != 0)
+            retval = 0; /* Matches no other wildcards */
 
 	return retval;
 }
@@ -943,23 +923,15 @@ static int dotconf_star_match(const char *dir_name, const char *pre,
 	int ext_len = strlen(ext);
 	int w_card_check = strcspn(ext,WILDCARDS);
 
-	if(w_card_check < ext_len && strncmp(dir_name, pre, pre_len) == 0 &&
-	    strcmp(dir_name, ".") != 0 && strcmp(dir_name, "..") != 0)
-	{
-		retval = 1;    /* Another wildcard found */
+    if(w_card_check < ext_len && strncmp(dir_name, pre, pre_len) == 0 &&
+      strcmp(dir_name, ".") != 0 && strcmp(dir_name, "..") != 0)
+            retval = 1; /* Another wildcard found */
 
-	} else {
-
-		if(dir_name_len >= ext_len + pre_len &&
-			dotconf_strcmp_from_back(dir_name, ext) == 0 &&
-			strncmp(dir_name, pre, pre_len) == 0 &&
-			strcmp(dir_name, ".") != 0 &&
-			strcmp(dir_name, "..") != 0)
-		{
-			retval = 0; /* Matches no other wildcards */
-		}
-
-	}
+    else if(dir_name_len >= ext_len + pre_len &&
+      dotconf_strcmp_from_back(dir_name, ext) == 0 &&
+      strncmp(dir_name, pre, pre_len) == 0 && strcmp(dir_name, ".") != 0 &&
+      strcmp(dir_name, "..") != 0)
+            retval = 0; /* Matches no other wildcards */
 
 	return retval;
 }
@@ -1002,24 +974,14 @@ static int dotconf_handle_question_mark(const struct command *cmd,
 				if ( !alloced )
 				{
 					if((new_path = malloc(new_path_len)) == NULL)
-					{
 						return -1;
-					}
 
 					alloced = new_path_len;
 
-				} else {
-
-						if ( new_path_len > alloced )
-						{
-							if ( realloc(new_path,new_path_len) == NULL )
-							{
-								free(new_path);
-								return -1;
-							}
-
-						}
-
+                                } else if(new_path_len > alloced &&
+                                  realloc(new_path,new_path_len) == NULL) {
+                                        free(new_path);
+                                        return -1;
 				}
 
 				if (match_state == 1)
@@ -1031,14 +993,9 @@ static int dotconf_handle_question_mark(const struct command *cmd,
 					sprintf(new_path,"%s%s%s",path,new_pre,ext);
 
 					if (strcmp(new_path,already_matched) == 0)
-					{
 						continue; /* Already searched this expression */
-
-					} else {
-
+					else
 						strcpy(already_matched,new_path);
-
-					}
 
 					if (dotconf_find_wild_card(new_path,&wc,&wc_path,&wc_pre,&wc_ext) >= 0)
 					{
@@ -1121,9 +1078,7 @@ static int dotconf_handle_star(const struct command *cmd, const char *path,
 	s_ext = ext;
 
 	while (dotconf_is_wild_card(*s_ext)) /* remove trailing wild-cards proceeded by * */
-	{
 		s_ext++;
-	}
 
 	t_ext = s_ext;
 
@@ -1153,24 +1108,14 @@ static int dotconf_handle_star(const struct command *cmd, const char *path,
 				if ( !alloced )
 				{
 					if((new_path = malloc(new_path_len)) == NULL)
-					{
 						return -1;
-					}
 
 					alloced = new_path_len;
 
-				} else {
-
-						if ( new_path_len > alloced )
-						{
-							if ( realloc(new_path,new_path_len) == NULL )
-							{
-								free(new_path);
-								return -1;
-							}
-
-						}
-
+                                } else if(new_path_len > alloced &&
+                                  realloc(new_path,new_path_len) == NULL) {
+                                        free(new_path);
+                                        return -1;
 				}
 
 				if (match_state == 1)
@@ -1188,9 +1133,7 @@ static int dotconf_handle_star(const struct command *cmd, const char *path,
 					}
 
 					if (sub_count + t_ext_count > name_len)
-					{
 						continue;
-					}
 
 					strncpy(new_pre, dirptr->d_name, sub_count + t_ext_count);
 					new_pre[sub_count+t_ext_count] = '\0';
@@ -1199,14 +1142,9 @@ static int dotconf_handle_star(const struct command *cmd, const char *path,
 					sprintf(new_path,"%s%s%s",path,new_pre,t_ext);
 
 					if (strcmp(new_path,already_matched) == 0)
-					{
 						continue; /* Already searched this expression */
-
-					} else {
-
+					else
 						strcpy(already_matched,new_path);
-
-					}
 
 					if (dotconf_find_wild_card(new_path,&wc,&wc_path,&wc_pre,&wc_ext) >= 0)
 					{

@@ -51,9 +51,8 @@ static void sslerror(const char *);
 static void sslerror(const char *msg)
 {
 	unsigned long err = ERR_get_error();
-	if (err != 0) {
+	if(err != 0)
 		l0g(PMPREFIX "%s: %s", msg, ERR_error_string(err, NULL));
-	}
 }
 
 /* ============================ hash_authtok () ============================ */
@@ -147,8 +146,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 		ret = 0;
 		goto _return;
 	}
-	if (hash_authtok(fs_key_fp, cipher, authtok, hashed_authtok, iv) ==
-	    0) {
+        if(hash_authtok(fs_key_fp, cipher, authtok, hashed_authtok, iv) == 0) {
 		ret = 0;
 		goto _return;
 	}
@@ -157,24 +155,22 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 		ret = 0;
 		goto _return;
 	}
-	if (EVP_DecryptInit_ex(&ctx, cipher, NULL, hashed_authtok, iv) ==
-	    0) {
+        if(EVP_DecryptInit_ex(&ctx, cipher, NULL, hashed_authtok, iv) == 0) {
 		sslerror("failed to initialize decryption code");
 		ret = 0;
 		goto _return;
 	}
 	/* assumes plaintexts is always <= ciphertext + EVP_MAX_BLOCK_LEN in length
 	 * OpenSSL's documentation seems to promise this */
-	if (EVP_DecryptUpdate
-	    (&ctx, pt_fs_key, &segment_len, ct_fs_key,
-	     ct_fs_key_len) == 0) {
+        if(EVP_DecryptUpdate(&ctx, pt_fs_key, &segment_len, ct_fs_key,
+          ct_fs_key_len) == 0) {
 		sslerror("failed to decrypt key");
 		ret = 0;
 		goto _return;
 	}
 	*pt_fs_key_len = segment_len;
-	if (EVP_DecryptFinal_ex
-	    (&ctx, &pt_fs_key[*pt_fs_key_len], &segment_len) == 0) {
+        if(EVP_DecryptFinal_ex(&ctx, &pt_fs_key[*pt_fs_key_len],
+          &segment_len) == 0) {
 		sslerror
 		    ("bad pad on end of encrypted file (wrong algorithm or key size?)");
 		ret = 0;
@@ -194,8 +190,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 
 	ERR_free_strings();
 	/* pt_fs_key_len is unsigned */
-	assert(ret == 0
-	       || *pt_fs_key_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
+        assert(ret == 0 || *pt_fs_key_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	return ret;
 #else

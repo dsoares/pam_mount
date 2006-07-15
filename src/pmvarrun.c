@@ -286,8 +286,7 @@ static int modify_pm_count(const char *user, long amount) {
                     goto return_error;
 		}
 		buf[st.st_size] = '\0';
-		if ((val = str_to_long(buf)) == LONG_MAX
-		    || val == LONG_MIN) {
+		if((val = str_to_long(buf)) == LONG_MAX || val == LONG_MIN) {
                         l0g(PREFIX "session count corrupt (overflow)\n");
 			err = -1;
 			goto return_error;
@@ -330,8 +329,7 @@ int main(int argc, const char **argv) {
 	if (strlen(settings.user) == 0)
 		usage(EXIT_FAILURE, NULL, NULL);
 
-	if ((pm_count =
-	     modify_pm_count(settings.user, settings.operation)) < 0)
+	if((pm_count = modify_pm_count(settings.user, settings.operation)) < 0)
 		exit(EXIT_FAILURE);
 
 	/* print current count so pam_mount module may read it */

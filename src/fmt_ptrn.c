@@ -290,7 +290,7 @@ static void _read_alternate(struct fmt_ptrn *x, const char **p,
 	if(**p == '\0')		/* Already queued error, hopefully. */
 		return;
 	if (**p == ':') {
-		(*p)++;
+		++*p;
 		if((alt_end = _matching_paren(*p)) != NULL) {
 			/* FIXME: clean up? */
 			struct fmt_ptrn y;
@@ -432,9 +432,7 @@ static void _read_modifiers(struct fmt_ptrn *x, const char **ptrn,
 	assert(*ptrn != NULL);
 	assert(_stack_t_valid(modifier));
 
-	while (_read_modifier(x, ptrn, modifier)) {
-		/* NOOP. */
-	}
+	while(_read_modifier(x, ptrn, modifier)) /* noop */;
 
 	assert(_fmt_ptrn_t_valid(x));
 	assert(ptrn != NULL);
@@ -459,7 +457,7 @@ static void _read_key(struct fmt_ptrn *x, char *key, const char **p) {
 	if(**p != '\0' && strchr(":)", **p) == NULL) {
 		/* Uh oh, key is too many characters, eat the rest. */
 		while(**p != '\0' && **p != ':' && **p != ')')
-			(*p)++;
+			++*p;
 		enqueue_parse_errmsg(x, "%s: %ld: key too long",
 				     x->template_path, x->line_num);
 	}
@@ -483,16 +481,10 @@ static void _apply_modifiers(struct fmt_ptrn *x, struct buffer *str,
 	assert(_stack_t_valid(modifier));
 
 	if (buffer_len(str) > 0)	/* error should have been queued elsewhere */
-		while (_stack_pop(modifier, &m))
-			if(m.fn.fn != NULL)
-				if (!m.fn.fn(str, x, m.arg))
-					enqueue_parse_errmsg(x,
-							     "%s: %ld: error applying %s modifier to %s",
-							     x->
-							     template_path,
-							     x->line_num,
-							     m.fn.id,
-							     str->data);
+            while(_stack_pop(modifier, &m))
+                if(m.fn.fn != NULL && !m.fn.fn(str, x, m.arg))
+                    enqueue_parse_errmsg(x, "%s: %ld: error applying %s modifier to %s",
+                      x->template_path, x->line_num, m.fn.id, str->data);
 
 	assert(_fmt_ptrn_t_valid(x));
 	assert(buffer_t_valid(str));
@@ -595,7 +587,7 @@ static void _handle_fmt_str(struct fmt_ptrn *x, const char **p) {
 			realloc_n_cat(&x->filled_buf, x->lookup_buf.data);
 	}
 	if(**p != '\0')
-		(*p)++;		/* Skip ')'. */
+		++*p; /* Skip ')'. */
 
 	assert(_fmt_ptrn_t_valid(x));
 	assert(p != NULL);
@@ -616,9 +608,9 @@ static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
 			/* Handle %%(...), which should be filled as %(...). */
 			realloc_n_ncat(&x->filled_buf, pattern, 1);
 			pattern += 2;
-		} else if (*pattern == '%' && *(pattern + 1) == '(')
+		} else if(*pattern == '%' && *(pattern + 1) == '(') {
 			_handle_fmt_str(x, &pattern);
-		else {
+		} else {
 			if (*pattern == '\n')
 				x->line_num++;
 			realloc_n_ncat(&x->filled_buf, pattern++, 1);

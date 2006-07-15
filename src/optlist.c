@@ -133,18 +133,18 @@ gboolean str_to_optlist(optlist_t ** optlist, const char *str)
 		goto _return;
 	}
 	while ((ptr = strchr(str, ',')) != NULL) {
-		if (!_parse_string_opt(str, ptr - str, optlist))
-			if (!_parse_opt(str, ptr - str, optlist)) {
-				ret = 0;
-				goto _return;
-			}
-		str = ptr + 1;
+            if(!_parse_string_opt(str, ptr - str, optlist) &&
+              !_parse_opt(str, ptr - str, optlist)) {
+                    ret = 0;
+                    goto _return;
+            }
+            str = ptr + 1;
 	}
-	if (!_parse_string_opt(str, strlen(str), optlist))
-		if (!_parse_opt(str, strlen(str), optlist)) {
-			ret = 0;
-			goto _return;
-		}
+        if(!_parse_string_opt(str, strlen(str), optlist) &&
+          !_parse_opt(str, strlen(str), optlist)) {
+                ret = 0;
+                goto _return;
+        }
       _return:
 
 	assert(!ret || ((strlen(str) == 0 && *optlist == '\0') || *optlist != '\0'));

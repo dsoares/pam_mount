@@ -53,7 +53,7 @@ enum fstab_field {
 	FSTAB_VOLUME,
 	FSTAB_MNTPT,
 	FSTAB_FSTYPE,
-	FSTAB_OPTS
+	FSTAB_OPTS,
 };
 
 static char *expand_home(const char *, const char *, char *, size_t);
@@ -103,8 +103,7 @@ static struct pm_command Command[] = {
 
 static const struct configoption legal_config[] = {
 	{"debug", ARG_TOGGLE, read_debug, &Config.debug, CTX_ALL},
-	{"mkmountpoint", ARG_TOGGLE, read_int_param, &Config.mkmntpoint,
-	 CTX_ALL},
+	{"mkmountpoint", ARG_TOGGLE, read_int_param, &Config.mkmntpoint, CTX_ALL},
 	{"luserconf", ARG_STR, read_luserconf, &Config, CTX_ALL},
 	{"fsckloop", ARG_STR, read_fsckloop, &Config, CTX_ALL},
 	{"smbmount", ARG_LIST, read_command, &Config, CTX_ALL},
@@ -124,8 +123,7 @@ static const struct configoption legal_config[] = {
 	{"losetup", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"unlosetup", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"pmvarrun", ARG_LIST, read_command, &Config, CTX_ALL},
-	{"options_require", ARG_STR, read_options_require, &Config,
-	 CTX_ALL},
+	{"options_require", ARG_STR, read_options_require, &Config, CTX_ALL},
 	{"options_allow", ARG_STR, read_options_allow, &Config, CTX_ALL},
 	{"options_deny", ARG_STR, read_options_deny, &Config, CTX_ALL},
 	{"volume", ARG_LIST, read_volume, &Config, CTX_ALL},
@@ -213,9 +211,8 @@ static enum command_type get_command_index(const struct pm_command *command,
 	int i;
 
 	/* FIXME: need to assert(command[i])? */
-	for (i = 0; command[i].type != -1; i++) {
+	for (i = 0; command[i].type != -1; i++)
 		assert(command[i].command_name != NULL);
-	}
 	assert(name != NULL);
 
 	for (i = 0; command[i].type != -1; i++)
@@ -243,10 +240,10 @@ static DOTCONF_CB(read_command)
 	assert(cmd->option != NULL);
 	assert(ICONFIG != NULL);
 	assert(ICONFIG->command != NULL);
-	for (i = 0; i < cmd->arg_count; i++) {
+	for (i = 0; i < cmd->arg_count; i++)
 		/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
 		assert(cmd->data.list[i] != NULL);
-	}
+
 	/* FIXME: causes seg. fault, command_index not set: assert(COMMAND(i) == NULL); */
 
 	if(!ICONTEXT)
@@ -440,11 +437,11 @@ static DOTCONF_CB(read_luserconf)
 	if(!ICONTEXT)
 		return "tried to set luserconf from user config";
 	passwd_ent = getpwnam(ICONFIG->user);
-	if(passwd_ent == NULL) {
+	if(passwd_ent == NULL)
 		home_dir = "~";
-	} else {
+	else
 		home_dir = passwd_ent->pw_dir;
-	}
+
 	if(strlen(home_dir) + 1 + strlen(cmd->data.str) > PATH_MAX) // +"/"
 		return "expanded luserconf path too long";
 	strcpy(ICONFIG->luserconf, home_dir);
@@ -673,17 +670,15 @@ DOTCONF_CB(read_volume)
 	} else if(!str_to_optlist(&vpt->options, cmd->data.list[5]))
 		return "error parsing mount options";
 
-    if(*cmd->data.list[6] == '-') {
+    if(*cmd->data.list[6] == '-')
         *vpt->fs_key_cipher = '\0';
-    } else {
+    else
         strncpy(vpt->fs_key_cipher, cmd->data.list[6], MAX_PAR);
-    }
 
-    if(*cmd->data.list[7] == '-') {
+    if(*cmd->data.list[7] == '-')
         *vpt->fs_key_path = '\0';
-    } else {
+    else
         strncpy(vpt->fs_key_path, cmd->data.list[7], MAX_PAR);
-    }
 
     vpt->used_wildcard = FALSE; /* expandconfig() sets this */
     /* FIXME: these should l0g an error and return NULL so other volumes can continue */
@@ -739,9 +734,8 @@ int initconfig(struct config *config) {
 	/* set commands to defaults */
 	for(i = 0; Command[i].type != -1; i++) {
 		config->command[0][Command[i].type] = g_strdup(Command[i].def[0]);
-		for(j = 1; Command[i].def[j] != NULL; j++) {
+		for(j = 1; Command[i].def[j] != NULL; ++j)
 			config->command[j][Command[i].type] = g_strdup(Command[i].def[j]);
-		}
 		config->command[j + 1][Command[i].type] = NULL;
 	}
 
