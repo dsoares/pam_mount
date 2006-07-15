@@ -59,7 +59,7 @@ typedef enum fstab_field_t {
 static char *expand_home(const char *, const char *, char *, size_t);
 static char *expand_user_wildcard(const char *, const char *, char *, size_t);
 static int fstab_value(const char *, const fstab_field_t, char *, const int);
-static enum command_type get_command_index(const pm_command_t *, const char *);
+static enum command_type get_command_index(const struct pm_command *, const char *);
 static FUNC_ERRORHANDLER(log_error);
 static DOTCONF_CB(read_command);
 static DOTCONF_CB(read_debug);
@@ -76,7 +76,7 @@ static int options_required_ok(optlist_t *, optlist_t *);
 static int user_in_sgrp(const char *, const char *);
 
 /* defaults are included here but these are overridden by pam_mount.conf */
-static pm_command_t Command[] = {
+static struct pm_command Command[] = {
         {SMBMOUNT, "smbfs", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
         {SMBUMOUNT, "smbfs", "smbumount", {"/usr/bin/smbumount", "%(MNTPT)", NULL}},
         {CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
@@ -203,11 +203,11 @@ static DOTCONF_CB(read_options_deny)
 }
 
 /* ============================ get_command_index () ======================= */
-/* INPUT:  command, a pm_command_t array full of commands
+/* INPUT:  command, a struct pm_command array full of commands
  *         name, the name of the command that is being looked for
- * OUTPUT: the index into the pm_command_t cooresponding to name
+ * OUTPUT: the index into the struct pm_command cooresponding to name
  */
-static enum command_type get_command_index(const pm_command_t *command,
+static enum command_type get_command_index(const struct pm_command *command,
  const char *name)
 {
 	int i;

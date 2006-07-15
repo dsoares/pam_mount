@@ -67,12 +67,12 @@ struct pam_args {
     enum auth_type auth_type;
 };
 
-typedef struct pm_command {
+struct pm_command {
     enum command_type type;
     char *fs;
     char *command_name;
     char *def[MAX_PAR + 1];
-} pm_command_t;
+};
 
 typedef struct vol {
     enum command_type type;
