@@ -35,6 +35,18 @@ extern "C" {
 } } while(0)
 #define MAX_PAR 127
 #define PMPREFIX "pam_mount: "
+#ifndef S_IRUGO
+#    define S_IRUGO (S_IRUSR | S_IRGRP | S_IROTH)
+#endif
+#ifndef S_IRWXU
+#    define S_IRWXU (S_IRUSR | S_IWUSR | S_IWOTH)
+#endif
+#ifndef S_IRXG
+#    define S_IRXG (S_IRGRP | S_IXGRP)
+#endif
+#ifndef S_IRXO
+#    define S_IRXO (S_IROTH | S_IXOTH)
+#endif
 
 enum command_type {
     SMBMOUNT,

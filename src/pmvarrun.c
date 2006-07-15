@@ -42,20 +42,27 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <pwd.h>
 #include "misc.h"
 #include "private.h"
-#define PREFIX "pmvarrun: "
 
-int Debug;
-static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
+// Definitions
+#define PREFIX          "pmvarrun: "
+#define VAR_RUN         "/var/run"
+#define VAR_RUN_PMT     VAR_RUN "/pam_mount"
 
 struct settings {
 	char user[MAX_PAR + 1];
 	long operation;
 };
 
+// Functions
+static int create_var_run(void);
 static int modify_pm_count(const char *, long);
 static void parse_args(const int, const char **, struct settings *);
 static void set_defaults(struct settings *);
 static void usage(int, const char *, const char *);
+
+// Variables
+int Debug;
+static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
 /* ============================ usage () ==================================== */
 static void usage(const int exitcode, const char *error, const char *more) {
@@ -127,6 +134,7 @@ static int modify_pm_count(const char *user, long amount) {
 	char filename[PATH_MAX + 1];
 	int tries = 0;
 	int fd = 0, err;
+    int ret;
 	long val;
 	struct stat st;
 	char *buf = NULL;
@@ -135,42 +143,21 @@ static int modify_pm_count(const char *user, long amount) {
 	assert(user != NULL);
 
         if((passwd_ent = getpwnam(user)) == NULL) {
-            err = errno;
+            ret = errno;
             l0g(PREFIX "could not resolve uid for %s\n", user);
-            goto return_error;
+            return ret;
         }
 
-	if (stat("/var/run/pam_mount", &st) == -1) {
-                w4rn(PREFIX "creating /var/run/pam_mount");
-		if (mkdir("/var/run/pam_mount", 0000) == -1) {
-                    err = errno;
-                    l0g(PREFIX "unable to create /var/run/pam_mount: %s\n",
-                      strerror(errno));
-                    goto return_error;
-		}
-		if (chown("/var/run/pam_mount", 0, 0) == -1) {
-                    err = errno;
-                    l0g(PREFIX "unable to chown /var/run/pam_mount: %s\n",
-                      strerror(errno));
-                    goto return_error;
-		}
-		/*
-		 * 0755: su creates file group owned by user and the releases
-		 * root perms.  User needs to be able to access file on
-		 * logout.
-		 */
-		/*
-		 * FIXME: user can modify /var/.../<user> at will; security
-		 * problem?  Note that this file's contents is checked by 
-		 * str_to_long.
-		 */
-		if (chmod("/var/run/pam_mount", 0755) == -1) {
-                    err = errno;
-                    l0g(PREFIX "unable to chmod /var/run/pam_mount: %s\n",
-                      strerror(errno));
-                    goto return_error;
-		}
-	}
+    if(stat(VAR_RUN_PMT, &st) != 0) {
+        if(errno != ENOENT) {
+            ret = errno;
+            l0g(PREFIX "unable to stat" VAR_RUN_PMT ": %s\n", strerror(errno));
+            return ret;
+        }
+        if((ret = create_var_run()) < 0)
+            return ret;
+    }
+
 	g_snprintf(filename, sizeof(filename), "/var/run/pam_mount/%s", user);
       top:
 	tries++;
@@ -273,6 +260,9 @@ static int modify_pm_count(const char *user, long amount) {
 	buf = g_malloc(st.st_size + 2);	/* size will never grow by
 					 * more than one */
 	if(st.st_size > 0) {
+                /* FIXME: user can modify /var/.../<user> at will; security
+                problem?  Note that this file's contents is checked by
+                str_to_long. */
 		if (read(fd, buf, st.st_size) == -1) {
                     err = errno;
                     l0g(PREFIX "read error on %s: %s\n",
@@ -337,7 +327,7 @@ int main(int argc, const char **argv) {
 	if (strlen(settings.user) == 0)
 		usage(EXIT_FAILURE, NULL, NULL);
 
-	if((pm_count = modify_pm_count(settings.user, settings.operation)) < 0)
+	if((pm_count = modify_pm_count(settings.user, settings.operation)) <= 0)
 		exit(EXIT_FAILURE);
 
 	/* print current count so pam_mount module may read it */
@@ -345,3 +335,41 @@ int main(int argc, const char **argv) {
 
 	exit(EXIT_SUCCESS);
 }
+
+//-----------------------------------------------------------------------------
+/*  create_var_run
+
+    Creates the /var/run/pam_mount directory required by pmvarrun and sets
+    proper permissions on it.
+
+    Returns >0 for success or <=0 to indicate errno.
+*/
+static int create_var_run(void) {
+    int ret;
+
+    w4rn(PREFIX "creating " VAR_RUN_PMT);
+    if(mkdir(VAR_RUN_PMT, 0000) != 0) {
+        ret = errno;
+        l0g(PREFIX "unable to create " VAR_RUN_PMT ": %s\n", strerror(errno));
+        return ret;
+    }
+
+    if(chown(VAR_RUN_PMT, 0, 0) != 0) {
+        ret = errno;
+        l0g(PREFIX "unable to chown " VAR_RUN_PMT ": %s\n", strerror(errno));
+        return ret;
+    }
+
+    /* 0755: `su` creates file group owned by user and the releases root
+    permissions. User needs to be able to access file on logout. */
+
+    if(chmod(VAR_RUN_PMT, S_IRWXU | S_IRXG | S_IRXO) != 0) {
+        ret = errno;
+        l0g(PREFIX "unable to chmod " VAR_RUN_PMT ": %s\n", strerror(errno));
+        return ret;
+    }
+
+    return 1;
+}
+
+//=============================================================================
