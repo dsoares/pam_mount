@@ -39,34 +39,33 @@ typedef struct mystack_t {
 	int size;
 } mystack_t;
 
-static void     _apply_modifiers(fmt_ptrn_t *, struct buffer *, mystack_t *);
+static void     _apply_modifiers(struct fmt_ptrn *, struct buffer *, mystack_t *);
 static gint     _cmp(gconstpointer, gconstpointer);
 static gboolean _copy_fillers(gpointer, gpointer, gpointer);
-static void     _eat_alternate(fmt_ptrn_t *, const char **);
-static gboolean _fill_it(fmt_ptrn_t *, const char *);
-static int      _fmt_ptrn_copy_fillers(fmt_ptrn_t *, fmt_ptrn_t *);
-static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t *);
+static void     _eat_alternate(struct fmt_ptrn *, const char **);
+static gboolean _fill_it(struct fmt_ptrn *, const char *);
+static int      _fmt_ptrn_copy_fillers(struct fmt_ptrn *, struct fmt_ptrn *);
+static gboolean _fmt_ptrn_t_valid(const struct fmt_ptrn *);
 static gboolean _free_tree_node(gpointer, gpointer, gpointer);
-static void     _handle_fmt_str(fmt_ptrn_t *, const char **);
-static gboolean _is_literal(fmt_ptrn_t *, const char *);
-static gboolean _lookup(const fmt_ptrn_t *, const char *, struct buffer *);
+static void     _handle_fmt_str(struct fmt_ptrn *, const char **);
+static gboolean _is_literal(struct fmt_ptrn *, const char *);
+static gboolean _lookup(const struct fmt_ptrn *, const char *, struct buffer *);
 static char *   _matching_paren(const char *);
 static inline gboolean _modifier_t_valid(const modifier_t *);
-static void     _read_alternate(fmt_ptrn_t *, const char **, struct buffer *);
-static void     _read_key(fmt_ptrn_t *, char *, const char **);
-static void     _read_literal(fmt_ptrn_t *, char *, struct buffer *);
-static gboolean _read_modifier(fmt_ptrn_t *, const char **, mystack_t *);
-static void     _read_modifier_arg(fmt_ptrn_t *, const char **, modifier_t *);
-static void     _read_modifiers(fmt_ptrn_t *, const char **, mystack_t *);
+static void     _read_alternate(struct fmt_ptrn *, const char **, struct buffer *);
+static void     _read_key(struct fmt_ptrn *, char *, const char **);
+static void     _read_literal(struct fmt_ptrn *, char *, struct buffer *);
+static gboolean _read_modifier(struct fmt_ptrn *, const char **, mystack_t *);
+static void     _read_modifier_arg(struct fmt_ptrn *, const char **, modifier_t *);
+static void     _read_modifiers(struct fmt_ptrn *, const char **, mystack_t *);
 static int      _stack_contains(const mystack_t, const char *);
 static inline void _stack_init(mystack_t *);
 static gboolean _stack_pop(mystack_t *, modifier_t *);
-static gboolean _stack_push(fmt_ptrn_t *, mystack_t *, const modifier_t *);
+static gboolean _stack_push(struct fmt_ptrn *, mystack_t *, const modifier_t *);
 static inline gboolean _stack_t_valid(const mystack_t *);
 
 /* ============================ _fmt_ptrn_t_valid () ======================= */
-static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t * x)
-{
+static gboolean _fmt_ptrn_t_valid(const struct fmt_ptrn *x) {
 	if (x == NULL)
 		return FALSE;
 	/* FIXME */
@@ -83,15 +82,13 @@ static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t * x)
 }
 
 /* ============================ fmt_ptrn_parse_err () ====================== */
-gboolean fmt_ptrn_parse_err(const fmt_ptrn_t * x)
-{
+gboolean fmt_ptrn_parse_err(const struct fmt_ptrn *x) {
 	assert(_fmt_ptrn_t_valid(x));
 	return !g_queue_is_empty(x->parse_errmsg);
 }
 
 /* ============================ fmt_ptrn_parse_strerror () ================= */
-char *fmt_ptrn_parse_strerror(fmt_ptrn_t * x)
-{
+char *fmt_ptrn_parse_strerror(struct fmt_ptrn *x) {
 	char *errmsg;
 	char *fnval;
 
@@ -109,8 +106,7 @@ char *fmt_ptrn_parse_strerror(fmt_ptrn_t * x)
 }
 
 /* ============================ fmt_ptrn_parse_perror () =================== */
-void fmt_ptrn_parse_perror(fmt_ptrn_t * x, const char *msg)
-{
+void fmt_ptrn_parse_perror(struct fmt_ptrn *x, const char *msg) {
 	char *errmsg;
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -126,8 +122,7 @@ void fmt_ptrn_parse_perror(fmt_ptrn_t * x, const char *msg)
 }
 
 /* ============================ enqueue_parse_errmsg () =================== */
-void enqueue_parse_errmsg(fmt_ptrn_t * x, const char *msg, ...)
-{
+void enqueue_parse_errmsg(struct fmt_ptrn *x, const char *msg, ...) {
 	va_list args;
 	char *err;
 
@@ -161,7 +156,7 @@ static inline void _stack_init(mystack_t *s) {
 }
 
 /* ============================ _stack_push () ============================= */
-static gboolean _stack_push(fmt_ptrn_t *x, mystack_t *s,
+static gboolean _stack_push(struct fmt_ptrn *x, mystack_t *s,
  const modifier_t *data)
 {
 	gboolean fnval = FALSE;
@@ -214,8 +209,7 @@ static int _stack_contains(const mystack_t s, const char *n)
 }
 
 /* ============================ fmt_ptrn_update_kv_p () ==================== */
-void fmt_ptrn_update_kv_p(fmt_ptrn_t * x, const pair_t * p)
-{
+void fmt_ptrn_update_kv_p(struct fmt_ptrn *x, const pair_t * p) {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(pair_t_valid(p));
 	/* [MP] FIXME: this strdups here but other fn requires malloced strs!
@@ -226,8 +220,7 @@ void fmt_ptrn_update_kv_p(fmt_ptrn_t * x, const pair_t * p)
 }
 
 /* ============================ fmt_ptrn_update_kv () ====================== */
-void fmt_ptrn_update_kv(fmt_ptrn_t * x, const char *key, const char *val)
-{
+void fmt_ptrn_update_kv(struct fmt_ptrn *x, const char *key, const char *val) {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(key != NULL);
 	assert(val != NULL);
@@ -262,7 +255,7 @@ static gboolean _copy_fillers(gpointer key, gpointer val, gpointer data) {
 	assert(val != NULL);
 	assert(_fmt_ptrn_t_valid(data));
 
-	g_tree_insert(((fmt_ptrn_t *) data)->fillers,
+	g_tree_insert(((struct fmt_ptrn *)data)->fillers,
 		      strdup(key), strdup(val));
 
 	assert(_fmt_ptrn_t_valid(data));
@@ -271,7 +264,7 @@ static gboolean _copy_fillers(gpointer key, gpointer val, gpointer data) {
 }
 
 /* ============================ _fmt_ptrn_copy_fillers () ================== */
-static int _fmt_ptrn_copy_fillers(fmt_ptrn_t *x, fmt_ptrn_t *y) {
+static int _fmt_ptrn_copy_fillers(struct fmt_ptrn *x, struct fmt_ptrn *y) {
 /* Copies fillers from one fmt_ptrn to another. */
 	assert(_fmt_ptrn_t_valid(x));
 	assert(_fmt_ptrn_t_valid(y));
@@ -286,7 +279,7 @@ static int _fmt_ptrn_copy_fillers(fmt_ptrn_t *x, fmt_ptrn_t *y) {
 }
 
 /* ============================ _read_alternate () ========================= */
-static void _read_alternate(fmt_ptrn_t * x, const char **p,
+static void _read_alternate(struct fmt_ptrn *x, const char **p,
  struct buffer *buf)
 {
 	char *alt_end;
@@ -300,7 +293,7 @@ static void _read_alternate(fmt_ptrn_t * x, const char **p,
 		(*p)++;
 		if((alt_end = _matching_paren(*p)) != NULL) {
 			/* FIXME: clean up? */
-			fmt_ptrn_t y;
+			struct fmt_ptrn y;
 			char *alt, *filled_alt;
 			alt = g_strndup(*p, (alt_end - *p));
 			fmt_ptrn_init(&y);
@@ -333,7 +326,7 @@ static void _read_alternate(fmt_ptrn_t * x, const char **p,
 }
 
 /* ============================ _eat_alternate () ========================== */
-static void _eat_alternate(fmt_ptrn_t *x, const char **pattern) {
+static void _eat_alternate(struct fmt_ptrn *x, const char **pattern) {
 	char *alt_end;
 	assert(_fmt_ptrn_t_valid(x));
 	assert(pattern != NULL);
@@ -352,7 +345,7 @@ static void _eat_alternate(fmt_ptrn_t *x, const char **pattern) {
 }
 
 /* ============================ _read_modifier_arg () ====================== */
-static void _read_modifier_arg(fmt_ptrn_t *x, const char **pattern,
+static void _read_modifier_arg(struct fmt_ptrn *x, const char **pattern,
  modifier_t *i)
 {
 	size_t arg_len;
@@ -393,7 +386,7 @@ static void _read_modifier_arg(fmt_ptrn_t *x, const char **pattern,
 }
 
 /* ============================ _read_modifier () ========================== */
-static gboolean _read_modifier(fmt_ptrn_t *x, const char **ptrn,
+static gboolean _read_modifier(struct fmt_ptrn *x, const char **ptrn,
  mystack_t *modifier)
 {
 	int i = 0;
@@ -431,7 +424,7 @@ static gboolean _read_modifier(fmt_ptrn_t *x, const char **ptrn,
 }
 
 /* ============================ _read_modifiers () ========================= */
-static void _read_modifiers(fmt_ptrn_t *x, const char **ptrn,
+static void _read_modifiers(struct fmt_ptrn *x, const char **ptrn,
  mystack_t *modifier)
 {
 	assert(_fmt_ptrn_t_valid(x));
@@ -452,7 +445,7 @@ static void _read_modifiers(fmt_ptrn_t *x, const char **ptrn,
 }
 
 /* ============================ _read_key () =============================== */
-static void _read_key(fmt_ptrn_t *x, char *key, const char **p) {
+static void _read_key(struct fmt_ptrn *x, char *key, const char **p) {
 	int i;
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -480,7 +473,7 @@ static void _read_key(fmt_ptrn_t *x, char *key, const char **p) {
 }
 
 /* ============================ _apply_modifiers () ======================== */
-static void _apply_modifiers(fmt_ptrn_t *x, struct buffer *str,
+static void _apply_modifiers(struct fmt_ptrn *x, struct buffer *str,
  mystack_t *modifier)
 {
 	modifier_t m;
@@ -507,7 +500,7 @@ static void _apply_modifiers(fmt_ptrn_t *x, struct buffer *str,
 }
 
 /* ============================ _lookup () ================================= */
-static gboolean _lookup(const fmt_ptrn_t *x, const char *key,
+static gboolean _lookup(const struct fmt_ptrn *x, const char *key,
  struct buffer *value)
 {
 	char *tmp;
@@ -533,7 +526,7 @@ static gboolean _lookup(const fmt_ptrn_t *x, const char *key,
 }
 
 /* ============================ _is_literal () ============================= */
-static gboolean _is_literal(fmt_ptrn_t *x, const char *str) {
+static gboolean _is_literal(struct fmt_ptrn *x, const char *str) {
 	gboolean fnval = FALSE;
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -554,7 +547,7 @@ static gboolean _is_literal(fmt_ptrn_t *x, const char *str) {
 
 /* ============================ _read_literal () =========================== */
 /* FIXME: is this right?  it does not seem to look for closing '"' */
-static void _read_literal(fmt_ptrn_t *x, char *str, struct buffer *buf) {
+static void _read_literal(struct fmt_ptrn *x, char *str, struct buffer *buf) {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(str != NULL);
 	assert(buffer_t_valid(buf));
@@ -573,7 +566,7 @@ static void _read_literal(fmt_ptrn_t *x, char *str, struct buffer *buf) {
 }
 
 /* ============================ _handle_fmt_str () ========================= */
-static void _handle_fmt_str(fmt_ptrn_t *x, const char **p) {
+static void _handle_fmt_str(struct fmt_ptrn *x, const char **p) {
 	/* format string -> %(<modifier_0> ... <modifier_n> <key>:<alt>) */
 	mystack_t modifier;
 	char key[KEY_LEN + 1];
@@ -610,7 +603,7 @@ static void _handle_fmt_str(fmt_ptrn_t *x, const char **p) {
 }
 
 /* ============================ _fill_it () ================================ */
-static gboolean _fill_it(fmt_ptrn_t *x, const char *p) {
+static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
 	const char *pattern, *orig_ptr;
 	gboolean fnval = TRUE;
 
@@ -639,8 +632,7 @@ static gboolean _fill_it(fmt_ptrn_t *x, const char *p) {
 }
 
 /* ============================ fmt_ptrn_filled () ========================= */
-char *fmt_ptrn_filled(fmt_ptrn_t * x, const char *p)
-{
+char *fmt_ptrn_filled(struct fmt_ptrn *x, const char *p) {
 	char *fnval = NULL;
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -672,11 +664,10 @@ static gint _cmp(gconstpointer a, gconstpointer b) {
 }
 
 /* ============================ fmt_ptrn_init () =========================== */
-int fmt_ptrn_init(fmt_ptrn_t * x)
+int fmt_ptrn_init(struct fmt_ptrn *x) {
 /* Alternative to open; does everything but open the file.  This 
  * should be used when filling strings instead of files.
  */
-{
 	g_strlcpy(x->errmsg, "no error", sizeof(x->errmsg));
 	x->parse_errmsg = g_queue_new();
 	x->fillers = g_tree_new(_cmp);
@@ -693,8 +684,7 @@ int fmt_ptrn_init(fmt_ptrn_t * x)
 }
 
 /* ============================ fmt_ptrn_open () =========================== */
-gboolean fmt_ptrn_open(const char *path, fmt_ptrn_t * x)
-{
+gboolean fmt_ptrn_open(const char *path, struct fmt_ptrn *x) {
 	gzFile in_file;
 	gboolean fnval = TRUE;
 
@@ -718,8 +708,7 @@ _return:
 }
 
 /* ============================ fmt_ptrn_gets () =========================== */
-char *fmt_ptrn_gets(char *buf, size_t size, fmt_ptrn_t * x)
-{
+char *fmt_ptrn_gets(char *buf, size_t size, struct fmt_ptrn *x) {
 	char *fnval = NULL;
 
 	assert(buf != NULL);
@@ -761,8 +750,7 @@ static gboolean _free_tree_node(gpointer key, gpointer val, gpointer data) {
 }
 
 /* ============================ fmt_ptrn_close () ========================== */
-int fmt_ptrn_close(fmt_ptrn_t * x)
-{
+int fmt_ptrn_close(struct fmt_ptrn *x) {
 	gpointer ptr;
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -781,7 +769,7 @@ int fmt_ptrn_close(fmt_ptrn_t * x)
 }
 
 /* ============================ fmt_ptrn_perror () ========================= */
-void fmt_ptrn_perror(const fmt_ptrn_t *x, const char *msg) {
+void fmt_ptrn_perror(const struct fmt_ptrn *x, const char *msg) {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(msg != NULL);
 
@@ -789,7 +777,7 @@ void fmt_ptrn_perror(const fmt_ptrn_t *x, const char *msg) {
 }
 
 /* ============================ fmt_ptrn_strerror () ======================= */
-const char *fmt_ptrn_strerror(const fmt_ptrn_t *x) {
+const char *fmt_ptrn_strerror(const struct fmt_ptrn *x) {
 	assert(_fmt_ptrn_t_valid(x));
 
 	return x->errmsg;

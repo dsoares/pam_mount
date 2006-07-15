@@ -62,20 +62,17 @@ mount.c
 #    define EVP_MAX_BLOCK_LENGTH 0 // FIXME: this is ugly, but needed
 #endif
 
-static int already_mounted(const config_t * const, const unsigned int,
-    char * const, fmt_ptrn_t *);
-static int check_filesystem(const config_t *, const unsigned int, fmt_ptrn_t *,
-    const unsigned char *, size_t);
-static int do_losetup(const config_t *, const unsigned int, fmt_ptrn_t *,
-    const unsigned char *, size_t);
-static int do_unlosetup(const config_t *, fmt_ptrn_t *);
+static int already_mounted(const config_t * const, const unsigned int, char * const, struct fmt_ptrn *);
+static int check_filesystem(const config_t *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
+static int do_losetup(const config_t *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
+static int do_unlosetup(const config_t *, struct fmt_ptrn *);
 static int fstype_nodev(const char *);
 static void log_output(int);
 static void log_pm_input(const config_t * const, const unsigned int);
 static inline const char *loop_bk(const char *, struct loop_info64 *);
 static int mkmountpoint(vol_t * const, const char * const);
 static int pipewrite(int, const void *, size_t);
-static void run_lsof(const config_t * const, fmt_ptrn_t *);
+static void run_lsof(const config_t * const, struct fmt_ptrn *);
 static void vol_to_dev(char *, size_t, const vol_t *);
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -106,7 +103,7 @@ static void log_output(int fd)
  * NOTE: this fn simply runs lsof on a directory and logs its output for
  * debugging purposes
  */
-static void run_lsof(const config_t *const config, fmt_ptrn_t *vinfo) {
+static void run_lsof(const config_t *const config, struct fmt_ptrn *vinfo) {
 	int i, _argc = 0, cstdout = -1, child_exit;
 	const char *_argv[MAX_PAR + 1];
 	GError *err = NULL;
@@ -139,7 +136,7 @@ static void run_lsof(const config_t *const config, fmt_ptrn_t *vinfo) {
 /*
  * PRE:    config->volume[vol].type is a mount type (LCLMOUNT, SMBMOUNT, ...)
  *         sizeof(mntpt) >= PATH_MAX + 1
- *         vinfo is a valid struct fmt_ptrn_t
+ *         vinfo is a valid struct fmt_ptrn
  * POST:   mntpt contains:
  *           config->volume[vol].mountpoint if config->volume[vol].volume is
  *             already mounted there
@@ -149,7 +146,7 @@ static void run_lsof(const config_t *const config, fmt_ptrn_t *vinfo) {
  *         errors are logged
  */
 static int already_mounted(const config_t *const config,
- const unsigned int vol, char *const mntpt, fmt_ptrn_t *vinfo)
+ const unsigned int vol, char *const mntpt, struct fmt_ptrn *vinfo)
 #if defined(__linux__)
 {
     char dev[PATH_MAX+1] = {}, real_mpt[PATH_MAX+1];
@@ -420,15 +417,15 @@ static int mkmountpoint(vol_t *const volume, const char *const d) {
 }
 
 int do_unmount(const config_t *config, const unsigned int vol,
- fmt_ptrn_t *vinfo, const char *const password, const gboolean mkmntpoint)
+ struct fmt_ptrn *vinfo, const char *const password, const gboolean mkmntpoint)
+{
 /* PRE:    config points to a valid config_t*
  *         config->volume[vol] is a valid struct vol_t
- *         vinfo is a valid struct fmt_ptrn_t
+ *         vinfo is a valid struct fmt_ptrn
  *         mkmntpoint is true if mount point should be rmdir'ed
  * POST:   volume is unmounted
  * FN VAL: if error 0 else 1, errors are logged
  */
-{
 	GError *err = NULL;
 	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
@@ -525,15 +522,15 @@ _return:
 }
 
 static int do_losetup(const config_t *config, const unsigned int vol,
- fmt_ptrn_t *vinfo, const unsigned char *password, size_t password_len)
+ struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
+{
 /* PRE:    config points to a valid config_t*
  *         config->volume[vol] is a valid struct vol_t
- *         vinfo is a valid struct fmt_ptrn_t
+ *         vinfo is a valid struct fmt_ptrn
  *         config->volume[vol].options is valid
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
  */
-{
 	pid_t pid;
 	GError *err = NULL;
 	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
@@ -595,9 +592,9 @@ static int do_losetup(const config_t *config, const unsigned int vol,
 	return ret;
 }
 
-static int do_unlosetup(const config_t *config, fmt_ptrn_t *vinfo) {
+static int do_unlosetup(const config_t *config, struct fmt_ptrn *vinfo) {
 /* PRE:    config points to a valid config_t*
- *         vinfo is a valid struct fmt_ptrn_t
+ *         vinfo is a valid struct fmt_ptrn
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
  */
@@ -632,14 +629,14 @@ static int do_unlosetup(const config_t *config, fmt_ptrn_t *vinfo) {
 }
 
 static int check_filesystem(const config_t *config, const unsigned int vol,
- fmt_ptrn_t * vinfo, const unsigned char *password, size_t password_len)
+ struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
+{
 /* PRE:    config points to a valid struct config_t*
  *         config->volume[vol] is a valid struct vol_t
- *         vinfo is a valid struct fmt_ptrn_t
+ *         vinfo is a valid struct fmt_ptrn
  * POST:   integrity of volume has been checked
  * FN VAL: if error 0 else 1, errors are logged
  */
-{
 #if defined (__linux__)
 	pid_t pid;
 	GError *err = NULL;
@@ -707,17 +704,17 @@ static int check_filesystem(const config_t *config, const unsigned int vol,
 #endif
 }
 
-int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
- const char *password, const gboolean mkmntpoint)
+int do_mount(const config_t *config, const unsigned int vol,
+ struct fmt_ptrn *vinfo, const char *password, const gboolean mkmntpoint)
+{
 /* PRE:    config points to a valid struct config_t*
  *         config->volume[vol] is a valid struct vol_t
- *         vinfo is a valid struct fmt_ptrn_t
+ *         vinfo is a valid struct fmt_ptrn
  *         mkmntpoint is true if mount point should be mkdir'ed
  *         false if mount point was received from pam_mount
  * POST:   volume is mounted
  * FN VAL: if error 0 else 1, errors are logged
  */
-{
 	const char *_argv[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];
 	size_t _password_len;
@@ -864,12 +861,12 @@ int do_mount(const config_t *config, const unsigned int vol, fmt_ptrn_t *vinfo,
  * NOTE:   * checked by volume_record_sane
  *         ** checked by read_volume()
  */
-int mount_op(int (*mnt)(const config_t *, const unsigned int, fmt_ptrn_t *,
+int mount_op(int (*mnt)(const config_t *, const unsigned int, struct fmt_ptrn *,
  const char *, const int), const config_t *config, const unsigned int vol,
  const char *password, const int mkmntpoint)
 {
 	int fnval;
-	fmt_ptrn_t vinfo;
+	struct fmt_ptrn vinfo;
 	char options[MAX_PAR + 1], uuid[16], ugid[16];
         const vol_t *vpt;
         struct passwd *pe;

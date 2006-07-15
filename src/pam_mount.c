@@ -273,7 +273,7 @@ pam_sm_authenticate(pam_handle_t * pamh, int flags,
 static int modify_pm_count(config_t *config, char *user, char *operation) {
 	FILE *fp;
 	GError *err;
-	fmt_ptrn_t vinfo;
+	struct fmt_ptrn vinfo;
 	int _argc = 0, child_exit, cstdout = -1, fnval = -1, i;
 	const char *_argv[MAX_PAR + 1];
 	pid_t pid;

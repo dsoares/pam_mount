@@ -34,7 +34,7 @@ fmt_ptrn.h
 extern "C" {
 #endif
 
-typedef struct fmt_ptrn {
+struct fmt_ptrn {
     gzFile template_fp;
     char template_path[PATH_MAX + 1];
     long line_num;
@@ -44,22 +44,22 @@ typedef struct fmt_ptrn {
     char errmsg[BUFSIZ + 1];    // General errors
     GQueue *parse_errmsg;       // Parse errors
     GTree *fillers;             // Format pattern / value pairs
-} fmt_ptrn_t;
+};
 
-extern int fmt_ptrn_close(fmt_ptrn_t *);
-extern gboolean fmt_ptrn_parse_err(const fmt_ptrn_t *);
-extern void enqueue_parse_errmsg(fmt_ptrn_t *, const char *, ...);
+extern int fmt_ptrn_close(struct fmt_ptrn *);
+extern gboolean fmt_ptrn_parse_err(const struct fmt_ptrn *);
+extern void enqueue_parse_errmsg(struct fmt_ptrn *, const char *, ...);
 
-extern char *fmt_ptrn_filled(fmt_ptrn_t *, const char *);
-extern char *fmt_ptrn_gets(char *, size_t, fmt_ptrn_t *);
-extern int fmt_ptrn_init(fmt_ptrn_t *);
-extern gboolean fmt_ptrn_open(const char *, fmt_ptrn_t *);
-extern void fmt_ptrn_parse_perror(fmt_ptrn_t *, const char *);
-extern void fmt_ptrn_perror(const fmt_ptrn_t *, const char *);
-extern char *fmt_ptrn_parse_strerror(fmt_ptrn_t *);
-extern const char *fmt_ptrn_strerror(const fmt_ptrn_t *);
-extern void fmt_ptrn_update_kv_p(fmt_ptrn_t *, const pair_t *);
-extern void fmt_ptrn_update_kv(fmt_ptrn_t *, const char *, const char *);
+extern char *fmt_ptrn_filled(struct fmt_ptrn *, const char *);
+extern char *fmt_ptrn_gets(char *, size_t, struct fmt_ptrn *);
+extern int fmt_ptrn_init(struct fmt_ptrn *);
+extern gboolean fmt_ptrn_open(const char *, struct fmt_ptrn *);
+extern void fmt_ptrn_parse_perror(struct fmt_ptrn *, const char *);
+extern void fmt_ptrn_perror(const struct fmt_ptrn *, const char *);
+extern char *fmt_ptrn_parse_strerror(struct fmt_ptrn *);
+extern const char *fmt_ptrn_strerror(const struct fmt_ptrn *);
+extern void fmt_ptrn_update_kv_p(struct fmt_ptrn *, const pair_t *);
+extern void fmt_ptrn_update_kv(struct fmt_ptrn *, const char *, const char *);
 
 #ifdef __cplusplus
 } // extern "C"

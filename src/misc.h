@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 extern void add_to_argv(const char **, int * const, const char * const,
-    fmt_ptrn_t *);
+    struct fmt_ptrn *);
 extern gboolean config_t_valid(const config_t *);
 extern int exists(const char *);
 extern void l0g(const char *, ...);

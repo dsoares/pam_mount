@@ -149,8 +149,7 @@ void print_dir(DIR * dp)
 }
 
 /* ============================= initialize_fillers_from_file () ============ */
-void initialize_fillers_from_file(fmt_ptrn_t *x, char *path)
-{
+void initialize_fillers_from_file(struct fmt_ptrn *x, char *path) {
     char line[PATH_MAX + 1], *key, *value, *ptr = line;
     FILE *input = fopen (path, "r");
 
@@ -162,8 +161,7 @@ void initialize_fillers_from_file(fmt_ptrn_t *x, char *path)
 }
 
 /* ============================= initialize_fillers () ====================== */
-void initialize_fillers(fmt_ptrn_t *x)
-{
+void initialize_fillers(struct fmt_ptrn *x) {
     int i;
     char b[BUFSIZ + 1], *key, *val;
     for(i = 0; environ[i] != NULL; i++)

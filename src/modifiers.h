@@ -34,7 +34,7 @@ struct buffer;
 
 typedef struct modifier_fns {
     char *id;
-    int (*fn)(struct buffer *, fmt_ptrn_t *, char *);
+    int (*fn)(struct buffer *, struct fmt_ptrn *, char *);
     int has_arg;
 } modifier_fns_t;
 

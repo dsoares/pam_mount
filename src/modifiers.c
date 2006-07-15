@@ -32,26 +32,26 @@ modifiers.c
 
 static int _apply_comment(struct buffer *, char *, char *);
 static int _apply_delim(struct buffer *, const char *, const char *);
-static int apply_after(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_basename(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_before(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_c_comment(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_c_delim(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_cpp_comment(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_cpp_delim(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_file(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_fn(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_lower(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_newlines(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_no_newlines(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_remove_underscore(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_sh_comment(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_sh_delim(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_template(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_tex_comment(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_tex_delim(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_upper(struct buffer *, fmt_ptrn_t *, char *);
-static int apply_xml_comment(struct buffer *, fmt_ptrn_t *, char *);
+static int apply_after(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_basename(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_before(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_c_comment(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_c_delim(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_cpp_comment(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_cpp_delim(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_file(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_fn(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_lower(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_newlines(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_no_newlines(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_remove_underscore(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_sh_comment(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_sh_delim(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_template(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_tex_comment(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_tex_delim(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_upper(struct buffer *, struct fmt_ptrn *, char *);
+static int apply_xml_comment(struct buffer *, struct fmt_ptrn *, char *);
 
 const modifier_fns_t mod_fn[] = {
     {"upper", apply_upper, 0},
@@ -80,21 +80,21 @@ const modifier_fns_t mod_fn[] = {
 };
 
 //-----------------------------------------------------------------------------
-static int apply_upper(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_upper(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     char *newdata = g_ascii_strup(dest->data, -1);
     free(dest->data);
     dest->data = newdata;
     return 1;
 }
 
-static int apply_lower(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_lower(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     char *newdata = g_ascii_strdown(dest->data, -1);
     free(dest->data);
     dest->data = newdata;
     return 1;
 }
 
-static int apply_basename(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_basename(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     char *ptr = strchr(dest->data, '.');
     if(ptr != NULL)
 	*ptr = '\0';
@@ -132,22 +132,26 @@ static int _apply_delim(struct buffer *str, const char *start_cmnt,
     return 1;
 }
 
-static int apply_c_delim(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_c_delim(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     _apply_delim(dest, "/*", "*/");
     return 1;
 }
 
-static int apply_cpp_delim(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_cpp_delim(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     _apply_delim(dest, "//", NULL);
     return 1;
 }
 
-static int apply_sh_delim(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_sh_delim(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     _apply_delim(dest, "#", NULL);
     return 1;
 }
 
-static int apply_tex_delim(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_tex_delim(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     _apply_delim(dest, "%", NULL);
     return 1;
 }
@@ -172,27 +176,37 @@ static int _apply_comment(struct buffer *dest, char *c0, char *c1) {
     return 1;
 }
 
-static int apply_c_comment(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_c_comment(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     return _apply_comment(dest, "/* ", " */");
 }
 
-static int apply_xml_comment(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_xml_comment(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     return _apply_comment(dest, "<!-- ", " -->");
 }
 
-static int apply_sh_comment(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_sh_comment(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     return _apply_comment(dest, "# ", NULL);
 }
 
-static int apply_cpp_comment(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_cpp_comment(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     return _apply_comment(dest, "// ", NULL);
 }
 
-static int apply_tex_comment(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_tex_comment(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     return _apply_comment(dest, "% ", NULL);
 }
 
-static int apply_before(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_before(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     /* Done with no malloc'd tmp. */
     size_t i, j, old_len = strlen(dest->data), src_len =
 	strlen(arg), new_len = old_len + src_len;
@@ -214,7 +228,9 @@ static int apply_before(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
     return 1;
 }
 
-static int apply_no_newlines(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_no_newlines(struct buffer *dest, struct fmt_ptrn *x,
+ char *arg)
+{
     int i;
     for (i = 0; i < dest->size; i++)
 	if (dest->data[i] == '\n')
@@ -222,7 +238,7 @@ static int apply_no_newlines(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
     return 1;
 }
 
-static int apply_newlines(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_newlines(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     int i;
     for (i = 0; i < dest->size; i++)
 	if (dest->data[i] == ' ')
@@ -230,7 +246,7 @@ static int apply_newlines(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
     return 1;
 }
 
-static int apply_remove_underscore(struct buffer *dest, fmt_ptrn_t *x,
+static int apply_remove_underscore(struct buffer *dest, struct fmt_ptrn *x,
  char *arg)
 {
     int i;
@@ -240,18 +256,18 @@ static int apply_remove_underscore(struct buffer *dest, fmt_ptrn_t *x,
     return 1;
 }
 
-static int apply_after(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_after(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     /* Too easy. */
     realloc_n_cat(dest, arg);
     return 1;
 }
 
-static int apply_fn(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_fn(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     apply_after(dest, x, " ()");
     return 1;
 }
 
-static int apply_file(struct buffer *dest, fmt_ptrn_t *x,
+static int apply_file(struct buffer *dest, struct fmt_ptrn *x,
  /* const */ char *arg)
 {
 /* This function handles the case where the FMT_PTRN_FILE modifier is 
@@ -268,11 +284,11 @@ static int apply_file(struct buffer *dest, fmt_ptrn_t *x,
     return 1;
 }
 
-static int apply_template(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
+static int apply_template(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
 /* This function handles the case where the FMT_PTRN_TEMPLATE modifier is 
  * used. 
  */
-    fmt_ptrn_t f;
+    struct fmt_ptrn f;
     char b[BUFSIZ];
     char template_path[PATH_MAX + 1];
     if (!fmt_ptrn_open(dest->data, &f)) {
@@ -289,7 +305,8 @@ static int apply_template(struct buffer *dest, fmt_ptrn_t *x, char *arg) {
     while(fmt_ptrn_gets(b, sizeof(b), &f) != NULL)
 	realloc_n_cat(dest, b);
     while (fmt_ptrn_parse_err(&f))
-	/* Copy parse error messages into the main fmt_ptrn_t data structure. */
+	/* Copy parse error messages into the main struct fmt_ptrn
+        data structure. */
 	enqueue_parse_errmsg(x, fmt_ptrn_parse_strerror(&f));
     /* Avoid freeing the stolen fillers: */
     /* FIXME: need to port to glib:

@@ -239,7 +239,7 @@ void log_argv(const char *const *argv) {
  *       overflow would otherwise have occured
  */
 void add_to_argv(const char **argv, int *const argc, const char *const arg,
- fmt_ptrn_t *vinfo)
+ struct fmt_ptrn *vinfo)
 {
 	char *filled;
 

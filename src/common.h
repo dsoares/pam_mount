@@ -29,8 +29,8 @@ common.h
 extern "C" {
 #endif
 
-extern void initialize_fillers(fmt_ptrn_t *);
-extern void initialize_fillers_from_file(fmt_ptrn_t *, char *);
+extern void initialize_fillers(struct fmt_ptrn *);
+extern void initialize_fillers_from_file(struct fmt_ptrn *, char *);
 extern void print_dir(DIR *);
 
 #ifdef __cplusplus
