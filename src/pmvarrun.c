@@ -46,14 +46,14 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 int Debug;
 static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
-typedef struct settings_t {
+struct settings {
 	char user[MAX_PAR + 1];
 	long operation;
-} settings_t;
+};
 
 static int modify_pm_count(const char *, long);
-static void parse_args(const int, const char **, settings_t *);
-static void set_defaults(settings_t *);
+static void parse_args(const int, const char **, struct settings *);
+static void set_defaults(struct settings *);
 static void usage(int, const char *, const char *);
 
 /* ============================ usage () ==================================== */
@@ -65,14 +65,16 @@ static void usage(const int exitcode, const char *error, const char *more) {
 }
 
 /* ============================ set_defaults () ============================= */
-static void set_defaults(settings_t *settings) {
+static void set_defaults(struct settings *settings) {
 	Debug = 0;
 	*settings->user = '\0';
 	settings->operation = 1;
 }
 
 /* ============================ parse_args () =============================== */
-static void parse_args(int argc, const char **argv, settings_t *settings) {
+static void parse_args(int argc, const char **argv,
+ struct settings *settings)
+{
 	int c;
 	int opt_index = 0;
 	struct option opts[] = {
@@ -319,7 +321,7 @@ static int modify_pm_count(const char *user, long amount) {
 /* ============================ main () ===================================== */
 int main(int argc, const char **argv) {
 	int pm_count;
-	settings_t settings;
+	struct settings settings;
 
 	set_defaults(&settings);
 	parse_args(argc, argv, &settings);
