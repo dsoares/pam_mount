@@ -518,10 +518,10 @@ static void dotconf_set_command(struct configfile *configfile,
 
 	/* fill in the command structure with values we already know */
 	cmd->name = (option->type == ARG_NAME) ? name : option->name;
-	cmd->option = (struct configoption *)option;
+	cmd->option = (struct configoption *)option; // const_cast<>
 	cmd->context = configfile->context;
 	cmd->configfile = configfile;
-	cmd->data.list = (char **)calloc(CFG_VALUES, sizeof(char *));
+	cmd->data.list = calloc(CFG_VALUES, sizeof(char *));
 	cmd->data.str = NULL;
 
 	if (option->type == ARG_RAW) {
