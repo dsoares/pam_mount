@@ -57,14 +57,14 @@ enum command_type {
     COMMAND_MAX,
 };
 
-typedef enum auth_type {
+enum auth_type {
     GET_PASS,
     USE_FIRST_PASS,
     TRY_FIRST_PASS
-} auth_type_t;
+};
 
 typedef struct pam_args {
-    auth_type_t auth_type;
+    enum auth_type auth_type;
 } pam_args_t;
 
 typedef struct pm_command {
