@@ -44,6 +44,7 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include "private.h"
 
 // Definitions
+#define ASCIIZ_LLX      sizeof("0xFFFFFFFF""FFFFFFFF")
 #define PREFIX          "pmvarrun: "
 #define VAR_RUN         "/var/run"
 #define VAR_RUN_PMT     VAR_RUN "/pam_mount"
@@ -58,6 +59,7 @@ static int create_var_run(void);
 static int modify_pm_count(const char *, long);
 static int open_and_lock(const char *, long);
 static void parse_args(const int, const char **, struct settings *);
+static long read_current_count(int, const char *);
 static void set_defaults(struct settings *);
 static void usage(int, const char *, const char *);
 
@@ -128,8 +130,8 @@ static void parse_args(int argc, const char **argv,
 static int modify_pm_count(const char *user, long amount) {
 	char filename[PATH_MAX + 1];
 	int fd = 0, err;
+    long val;
     int ret;
-	long val;
 	struct stat st;
 	char *buf = NULL;
         struct passwd *passwd_ent;
@@ -158,34 +160,12 @@ static int modify_pm_count(const char *user, long amount) {
     if(ret < 0)
         return ret;
 
-	buf = g_malloc(st.st_size + 2);	/* size will never grow by
-					 * more than one */
-	if(st.st_size > 0) {
-                /* FIXME: user can modify /var/.../<user> at will; security
-                problem?  Note that this file's contents is checked by
-                str_to_long. */
-		if (read(fd, buf, st.st_size) == -1) {
-                    err = errno;
-                    l0g(PREFIX "read error on %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-		if (lseek(fd, 0, SEEK_SET) == -1) {
-                    err = errno;
-                    l0g(PREFIX "lseek error on %s: %s\n",
-                      filename, strerror(errno));
-                    goto return_error;
-		}
-		buf[st.st_size] = '\0';
-		if((val = str_to_long(buf)) == LONG_MAX || val == LONG_MIN) {
-                        l0g(PREFIX "session count corrupt (overflow)\n");
-			err = -1;
-			goto return_error;
-		}
-	} else {
-		val = 0;
-        }
-        w4rn(PREFIX "parsed count value %ld\n", val);
+    if((val = read_current_count(fd, filename)) < 0) {
+        close(fd);
+        return val;
+    }
+
+    w4rn(PREFIX "parsed count value %ld\n", val);
 	if(amount != 0) {		/* amount == 0 implies query */
                 int size;
 		val += amount;
@@ -342,6 +322,39 @@ static int open_and_lock(const char *filename, long uid) {
     }
 
     return fd;
+}
+
+/*  read_current_count
+    @fd:        file descriptor to read from
+
+    Reads the current user's reference count from @fd and returns the value
+    on success. Otherwise, returns -EOVERFLOW in case we suspect a problem or
+    <0 to indicate errno.
+*/
+static long read_current_count(int fd, const char *filename) {
+    char buf[ASCIIZ_LLX] = {};
+    long ret;
+
+    if((ret = read(fd, buf, sizeof(buf))) < 0) {
+        ret = errno;
+        l0g(PREFIX "read error on fd: %s\n", filename, strerror(errno));
+        close(fd);
+        return -ret;
+    } else if(ret == 0) {
+        /* File is empty, ret is already 0 -- we are set. */
+    } else if(ret < sizeof(buf)) {
+        char *p;
+        if((ret = strtol(buf, &p, 0)) >= LONG_MAX || p == buf) {
+            l0g(PREFIX "parse problem / session count corrupt (overflow), "
+                "check your refcount file\n");
+            return -EOVERFLOW;
+        }
+    } else if(ret >= sizeof(buf)) {
+        l0g(PREFIX "session count corrupt (overflow)\n");
+        return -EOVERFLOW;
+    }
+
+    return ret;
 }
 
 //=============================================================================
