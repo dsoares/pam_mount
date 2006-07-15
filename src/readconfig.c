@@ -49,16 +49,16 @@ readconfig.c
 #define ICONTEXT (*(int *)cmd->context)
 #define ICONFIG ((struct config *)cmd->option->info)
 
-typedef enum fstab_field_t {
+enum fstab_field {
 	FSTAB_VOLUME,
 	FSTAB_MNTPT,
 	FSTAB_FSTYPE,
 	FSTAB_OPTS
-} fstab_field_t;
+};
 
 static char *expand_home(const char *, const char *, char *, size_t);
 static char *expand_user_wildcard(const char *, const char *, char *, size_t);
-static int fstab_value(const char *, const fstab_field_t, char *, const int);
+static int fstab_value(const char *, const enum fstab_field, char *, const int);
 static enum command_type get_command_index(const struct pm_command *, const char *);
 static FUNC_ERRORHANDLER(log_error);
 static DOTCONF_CB(read_command);
@@ -487,16 +487,15 @@ static DOTCONF_CB(read_debug)
 }
 
 /* ============================ fstab_value () ============================= */
-static int
-fstab_value(const char *volume, const fstab_field_t field, char *value,
-	    const int size)
+static int fstab_value(const char *volume, const enum fstab_field field,
+ char *value, const int size)
+{
 /* PRE:    volume points to a valid string != NULL
  *         0 <= field < 4 (last two fields are integers) 
  *         value points to a valid string of size size
  * POST:   value points to the volume's field'th field from /etc/fstab
  * FN VAL: if error 0 else 1, errors are logged
  */
-{
 	char *val;
 #if defined(__linux__)
 	FILE *fstab;
