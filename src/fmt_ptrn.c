@@ -39,7 +39,7 @@ typedef struct mystack_t {
 	int size;
 } mystack_t;
 
-static void     _apply_modifiers(fmt_ptrn_t *, buffer_t *, mystack_t *);
+static void     _apply_modifiers(fmt_ptrn_t *, struct buffer *, mystack_t *);
 static gint     _cmp(gconstpointer, gconstpointer);
 static gboolean _copy_fillers(gpointer, gpointer, gpointer);
 static void     _eat_alternate(fmt_ptrn_t *, const char **);
@@ -49,12 +49,12 @@ static gboolean _fmt_ptrn_t_valid(const fmt_ptrn_t *);
 static gboolean _free_tree_node(gpointer, gpointer, gpointer);
 static void     _handle_fmt_str(fmt_ptrn_t *, const char **);
 static gboolean _is_literal(fmt_ptrn_t *, const char *);
-static gboolean _lookup(const fmt_ptrn_t *, const char *, buffer_t *);
+static gboolean _lookup(const fmt_ptrn_t *, const char *, struct buffer *);
 static char *   _matching_paren(const char *);
 static inline gboolean _modifier_t_valid(const modifier_t *);
-static void     _read_alternate(fmt_ptrn_t *, const char **, buffer_t *);
+static void     _read_alternate(fmt_ptrn_t *, const char **, struct buffer *);
 static void     _read_key(fmt_ptrn_t *, char *, const char **);
-static void     _read_literal(fmt_ptrn_t *, char *, buffer_t *);
+static void     _read_literal(fmt_ptrn_t *, char *, struct buffer *);
 static gboolean _read_modifier(fmt_ptrn_t *, const char **, mystack_t *);
 static void     _read_modifier_arg(fmt_ptrn_t *, const char **, modifier_t *);
 static void     _read_modifiers(fmt_ptrn_t *, const char **, mystack_t *);
@@ -286,7 +286,9 @@ static int _fmt_ptrn_copy_fillers(fmt_ptrn_t *x, fmt_ptrn_t *y) {
 }
 
 /* ============================ _read_alternate () ========================= */
-static void _read_alternate(fmt_ptrn_t * x, const char **p, buffer_t *buf) {
+static void _read_alternate(fmt_ptrn_t * x, const char **p,
+ struct buffer *buf)
+{
 	char *alt_end;
 	assert(_fmt_ptrn_t_valid(x));
 	assert(p != NULL);
@@ -478,8 +480,8 @@ static void _read_key(fmt_ptrn_t *x, char *key, const char **p) {
 }
 
 /* ============================ _apply_modifiers () ======================== */
-static void _apply_modifiers(fmt_ptrn_t * x,
-			     buffer_t *str, mystack_t *modifier)
+static void _apply_modifiers(fmt_ptrn_t *x, struct buffer *str,
+ mystack_t *modifier)
 {
 	modifier_t m;
 
@@ -506,7 +508,7 @@ static void _apply_modifiers(fmt_ptrn_t * x,
 
 /* ============================ _lookup () ================================= */
 static gboolean _lookup(const fmt_ptrn_t *x, const char *key,
- buffer_t *value)
+ struct buffer *value)
 {
 	char *tmp;
 	gboolean fnval = FALSE;
@@ -552,8 +554,7 @@ static gboolean _is_literal(fmt_ptrn_t *x, const char *str) {
 
 /* ============================ _read_literal () =========================== */
 /* FIXME: is this right?  it does not seem to look for closing '"' */
-static void _read_literal(fmt_ptrn_t *x, char *str, buffer_t * buf)
-{
+static void _read_literal(fmt_ptrn_t *x, char *str, struct buffer *buf) {
 	assert(_fmt_ptrn_t_valid(x));
 	assert(str != NULL);
 	assert(buffer_t_valid(buf));

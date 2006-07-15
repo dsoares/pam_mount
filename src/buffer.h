@@ -38,18 +38,18 @@ typedef struct buffer {
 /*
  *      BUFFER.C
  */
-extern void buffer_clear(buffer_t *);
-extern void buffer_eat(buffer_t, size_t);
-extern size_t buffer_len(const buffer_t *);
-extern gboolean buffer_t_valid(const buffer_t *);
-extern void realloc_n_cat(buffer_t *, const char *);
-extern void realloc_n_cpy(buffer_t *, const char *);
-extern void realloc_n_ncat(buffer_t *, const char *, size_t);
+extern void buffer_clear(struct buffer *);
+extern void buffer_eat(struct buffer, size_t);
+extern size_t buffer_len(const struct buffer *);
+extern gboolean buffer_t_valid(const struct buffer *);
+extern void realloc_n_cat(struct buffer *, const char *);
+extern void realloc_n_cpy(struct buffer *, const char *);
+extern void realloc_n_ncat(struct buffer *, const char *, size_t);
 
 /*
  *      INLINE FUNCTIONS
  */
-static inline void buffer_init(buffer_t *x) {
+static inline void buffer_init(struct buffer *x) {
     x->size = 0;
     x->data = NULL;
     return;

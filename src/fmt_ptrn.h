@@ -38,9 +38,9 @@ typedef struct fmt_ptrn {
     gzFile template_fp;
     char template_path[PATH_MAX + 1];
     long line_num;
-    buffer_t raw_buf;           // Buffer for unfilled data
-    buffer_t filled_buf;        // Buffer for filled data
-    buffer_t lookup_buf;        // Lookup buffer; here so it is persistent
+    struct buffer raw_buf;      // Buffer for unfilled data
+    struct buffer filled_buf;   // Buffer for filled data
+    struct buffer lookup_buf;   // Lookup buffer; here so it is persistent
     char errmsg[BUFSIZ + 1];    // General errors
     GQueue *parse_errmsg;       // Parse errors
     GTree *fillers;             // Format pattern / value pairs

@@ -22,7 +22,6 @@ modifiers.h
 #ifndef PMT_MODIFIERS_H
 #define PMT_MODIFIERS_H 1
 
-#include "buffer.h"
 #include "fmt_ptrn.h"
 
 #ifdef __cplusplus
@@ -31,9 +30,11 @@ extern "C" {
 
 #define MODIFIER_ARG_LEN 80
 
+struct buffer;
+
 typedef struct modifier_fns {
     char *id;
-    int (*fn)(buffer_t *, fmt_ptrn_t *, char *);
+    int (*fn)(struct buffer *, fmt_ptrn_t *, char *);
     int has_arg;
 } modifier_fns_t;
 
