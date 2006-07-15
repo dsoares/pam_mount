@@ -57,7 +57,7 @@ static int read_password(pam_handle_t *, const char *, char **);
 
 __attribute__((weak)) int Debug = 0;
 config_t Config = {};
-pam_args_t Args = {};
+struct pam_args Args = {};
 
 /* ============================ parse_pam_args () ========================== */
 /* INPUT: argc and argv, standard main()-type arguments

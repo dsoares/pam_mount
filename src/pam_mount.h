@@ -31,7 +31,7 @@ extern "C" {
 
 extern int Debug;
 extern config_t Config;
-extern pam_args_t Args;
+extern struct pam_args Args;
 
 #ifdef __cplusplus
 } // extern "C"

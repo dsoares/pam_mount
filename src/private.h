@@ -63,9 +63,9 @@ enum auth_type {
     TRY_FIRST_PASS
 };
 
-typedef struct pam_args {
+struct pam_args {
     enum auth_type auth_type;
-} pam_args_t;
+};
 
 typedef struct pm_command {
     enum command_type type;
