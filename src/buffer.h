@@ -30,10 +30,10 @@ buffer.h
 extern "C" {
 #endif
 
-typedef struct buffer {
+struct buffer {
     char *data;
     size_t size;
-} buffer_t;
+};
 
 /*
  *      BUFFER.C
