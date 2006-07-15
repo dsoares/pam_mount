@@ -131,28 +131,29 @@ static int dotconf_continue_line(char *, size_t);
 static int dotconf_find_wild_card(const char *, char *, char **, char **,
     const char **);
 static void dotconf_free_command(command_t *);
-static char *dotconf_get_here_document(configfile_t *, const char *);
-static int dotconf_get_next_line(char *, size_t, configfile_t *);
-static const char *dotconf_handle_command(configfile_t *, char *);
+static char *dotconf_get_here_document(struct configfile *, const char *);
+static int dotconf_get_next_line(char *, size_t, struct configfile *);
+static const char *dotconf_handle_command(struct configfile *, char *);
 static int dotconf_handle_star(const command_t *, const char *, const char *,
     const char *);
 static int dotconf_handle_question_mark(const command_t *, const char *,
     const char *, const char *);
 static int dotconf_handle_wild_card(const command_t *, char, const char *,
     const char *, const char *);
-static const char *dotconf_invoke_command(const configfile_t *,
+static const char *dotconf_invoke_command(const struct configfile *,
     const command_t *);
 static int dotconf_is_wild_card(char);
 static int dotconf_question_mark_match(const char *, const char *,
     const char *);
-static char *dotconf_read_arg(const configfile_t *, char **);
-static void dotconf_register_options(configfile_t *, const configoption_t *);
-static void dotconf_set_command(configfile_t *, const configoption_t *,
-    char *, command_t *);
+static char *dotconf_read_arg(const struct configfile *, char **);
+static void dotconf_register_options(struct configfile *,
+    const configoption_t *);
+static void dotconf_set_command(struct configfile *,
+    const configoption_t *, char *, command_t *);
 static int dotconf_star_match(const char *, const char *, const char *);
 static int dotconf_strcmp_from_back(const char *, const char *);
-static char *dotconf_substitute_env(const configfile_t *, char *);
-static int dotconf_warning(const configfile_t *, int, unsigned long,
+static char *dotconf_substitute_env(const struct configfile *, char *);
+static int dotconf_warning(const struct configfile *, int, unsigned long,
     const char *, ...);
 static void dotconf_wild_card_cleanup(char *, char *);
 static void skip_whitespace(char **, int, char);
@@ -198,7 +199,7 @@ static const configoption_t *get_argname_fallback(const configoption_t *options)
 	return NULL;
 }
 
-static char *dotconf_substitute_env(const configfile_t *configfile,
+static char *dotconf_substitute_env(const struct configfile *configfile,
  char *str)
 {
         // {{ editor lineup
@@ -272,7 +273,7 @@ static char *dotconf_substitute_env(const configfile_t *configfile,
 	return strdup(tmp_value);
 }
 
-static int dotconf_warning(const configfile_t *configfile, int type,
+static int dotconf_warning(const struct configfile *configfile, int type,
  unsigned long errnum, const char *fmt, ...)
 {
 	va_list args;
@@ -296,7 +297,7 @@ static int dotconf_warning(const configfile_t *configfile, int type,
 	return retval;
 }
 
-static void dotconf_register_options(configfile_t *configfile,
+static void dotconf_register_options(struct configfile *configfile,
  const configoption_t * options)
 {
 	int num = configfile->config_option_count;
@@ -342,7 +343,7 @@ static int dotconf_continue_line(char *buffer, size_t length) {
 }
 
 static int dotconf_get_next_line(char *buffer, size_t bufsize,
- configfile_t *configfile)
+ struct configfile *configfile)
 {
 	char *cp1, *cp2;
 	char buf2[CFG_BUFSIZE];
@@ -377,7 +378,7 @@ static int dotconf_get_next_line(char *buffer, size_t bufsize,
 	return 0;
 }
 
-static char *dotconf_get_here_document(configfile_t *configfile,
+static char *dotconf_get_here_document(struct configfile *configfile,
  const char *delimit)
 {
 	/* it's a here-document: yeah, what a cool feature ;) */
@@ -426,13 +427,15 @@ static char *dotconf_get_here_document(configfile_t *configfile,
 	return realloc(here_doc, offset);
 }
 
-static const char *dotconf_invoke_command(const configfile_t *configfile,
+static const char *dotconf_invoke_command(const struct configfile *configfile,
  const command_t *cmd)
 {
 	return cmd->option->callback(cmd, configfile->context);
 }
 
-static char *dotconf_read_arg(const configfile_t *configfile, char **line) {
+static char *dotconf_read_arg(const struct configfile *configfile,
+ char **line)
+{
 	int sq = 0, dq = 0;							/* single quote, double quote */
 	int done = 0;
 	char *cp1 = *line;
@@ -517,7 +520,7 @@ static char *dotconf_read_arg(const configfile_t *configfile, char **line) {
  	return (buf[0] != '\0') ? dotconf_substitute_env(configfile, strdup(buf)) : NULL;
 }
 
-static void dotconf_set_command(configfile_t *configfile,
+static void dotconf_set_command(struct configfile *configfile,
  const configoption_t *option, char *args, command_t *cmd)
 {
 	char *eob = args + strlen(args);
@@ -619,7 +622,7 @@ static void dotconf_free_command(command_t *command) {
 	free(command->data.list);
 }
 
-static const char *dotconf_handle_command(configfile_t *configfile,
+static const char *dotconf_handle_command(struct configfile *configfile,
  char *buffer)
 {
 	char *cp1; 
@@ -706,8 +709,7 @@ static const char *dotconf_handle_command(configfile_t *configfile,
 	return error;
 }
 
-int dotconf_command_loop(configfile_t *configfile)
-{
+int dotconf_command_loop(struct configfile *configfile) {
 	/* ------ returns: 0 for failure -- !0 for success ------------------------------------------ */
 	char buffer[CFG_BUFSIZE];
 
@@ -722,10 +724,10 @@ int dotconf_command_loop(configfile_t *configfile)
 	return 1;
 }
 
-configfile_t *dotconf_create(const char *fname, const configoption_t *options,
-                             context_t *context, unsigned long flags)
+struct configfile *dotconf_create(const char *fname,
+ const configoption_t *options, context_t *context, unsigned long flags)
 {
-	configfile_t *new = NULL;
+	struct configfile *new = NULL;
 	char *dc_env;
 
 	if (access(fname, R_OK))
@@ -734,7 +736,7 @@ configfile_t *dotconf_create(const char *fname, const configoption_t *options,
 		return NULL;
 	}
 
-	new = calloc(1, sizeof(configfile_t));
+	new = calloc(1, sizeof(struct configfile));
 	if((new->stream = fopen(fname, "r")) == NULL) {
 		fprintf(stderr, "Error opening configuration file '%s'\n", fname);
 		free(new);
@@ -764,7 +766,7 @@ configfile_t *dotconf_create(const char *fname, const configoption_t *options,
 	return new;
 }
 
-void dotconf_cleanup(configfile_t *configfile) {
+void dotconf_cleanup(struct configfile *configfile) {
     fclose(configfile->stream);
     free(configfile->filename);
     free(configfile->config_options);
@@ -971,7 +973,7 @@ static int dotconf_star_match(const char *dir_name, const char *pre,
 static int dotconf_handle_question_mark(const command_t *cmd, const char *path,
  const char *pre, const char *ext)
 {
-	configfile_t *included;
+	struct configfile *included;
 	DIR *dh = NULL;
 	struct dirent *dirptr = NULL;
 	int i;
@@ -1099,7 +1101,7 @@ static int dotconf_handle_question_mark(const command_t *cmd, const char *path,
 static int dotconf_handle_star(const command_t *cmd, const char *path,
  const char *pre, const char *ext)
 {
-	configfile_t *included;
+	struct configfile *included;
 	DIR *dh = NULL;
 	struct dirent *dirptr = NULL;
 
@@ -1264,7 +1266,7 @@ static int dotconf_handle_star(const command_t *cmd, const char *path,
 static DOTCONF_CB(dotconf_cb_include) {
 	char *filename = NULL, *path = NULL, *pre = NULL;
         const char *ext = NULL;
-	configfile_t *included;
+	struct configfile *included;
 	char wild_card;
 
 	if (cmd->configfile->includepath != NULL

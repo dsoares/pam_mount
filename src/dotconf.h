@@ -32,7 +32,7 @@ extern "C" {
 #define DOTCONF_CB(__name) const char *__name(const command_t *cmd, context_t *ctx)
 #define CTX_ALL 0 // context: option can be used anywhere
 #define LAST_OPTION              {"", 0, NULL, NULL}
-#define FUNC_ERRORHANDLER(_name) int _name(configfile_t *configfile, \
+#define FUNC_ERRORHANDLER(_name) int _name(struct configfile *configfile, \
                                  int type, long dc_errno, const char *msg)
 
 // constants for type of option
@@ -46,13 +46,14 @@ enum {
     ARG_NONE,
 };
 
+struct configfile;
+
 typedef void info_t;
 typedef void context_t;
-typedef struct configfile configfile_t;
 typedef struct configoption configoption_t;
 typedef struct command command_t;
 typedef const char *(*dotconf_callback_t)(const command_t *, context_t *);
-typedef int (*dotconf_errorhandler_t)(const configfile_t *, int, unsigned long, const char *);
+typedef int (*dotconf_errorhandler_t)(const struct configfile *, int, unsigned long, const char *);
 typedef const char *(*dotconf_contextchecker_t)(command_t *, unsigned long);
 
 struct command {
@@ -68,12 +69,12 @@ struct command {
     int arg_count;      // number of arguments (in data.list)
 
     // misc context information
-    const configfile_t *configfile;
+    const struct configfile *configfile;
     context_t *context;
 };
 
 struct configfile {
-    /* ------ the fields in configfile_t are provided to the app
+    /* ------ the fields in struct configfile are provided to the app
     via command_t's ; READ ONLY! --- */
 
     FILE *stream;
@@ -82,7 +83,7 @@ struct configfile {
 
     context_t *context;
 
-    configoption_t const **config_options;
+    const configoption_t **config_options;
     int config_option_count;
 
     // misc read-only fields
@@ -106,10 +107,10 @@ struct configoption {
     unsigned long context;              // context sensitivity flags
 };
 
-extern void dotconf_cleanup(configfile_t *);
-extern int dotconf_command_loop(configfile_t *);
-extern configfile_t *dotconf_create(const char *, const configoption_t *,
-    context_t *, unsigned long);
+extern void dotconf_cleanup(struct configfile *);
+extern int dotconf_command_loop(struct configfile *);
+extern struct configfile *dotconf_create(const char *,
+    const configoption_t *, context_t *, unsigned long);
 
 #ifdef __cplusplus
 } // extern "C"

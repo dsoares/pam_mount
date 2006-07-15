@@ -709,7 +709,7 @@ DOTCONF_CB(read_volume)
 int readconfig(const char *user, const char *file, int globalconf,
  config_t *config)
 {
-	configfile_t *configfile;
+	struct configfile *configfile;
 	if(
 	    (configfile =
 	     dotconf_create(file, legal_config, &globalconf, 0)) == NULL) {
