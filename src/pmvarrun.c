@@ -296,6 +296,7 @@ static int modify_pm_count(const char *user, long amount) {
         }
         w4rn(PREFIX "parsed count value %ld\n", val);
 	if(amount != 0) {		/* amount == 0 implies query */
+                int size;
 		val += amount;
                 if(val <= 0 && unlink(filename) != 0) {
                     l0g(PREFIX "could not unlink %s: %s\n",
@@ -308,6 +309,13 @@ static int modify_pm_count(const char *user, long amount) {
                     err = -1;
                     goto return_error;
 		}
+                if((size = lseek(fd, 0, SEEK_CUR)) < 0) {
+                    l0g(PREFIX "lseek: %s\n", strerror(errno));
+                    err = errno;
+                    goto return_error;
+                }
+                write(fd, " ", 1);
+                ftruncate(fd, size);
 	}
 	err = val;
       return_error:
