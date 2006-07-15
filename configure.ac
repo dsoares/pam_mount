@@ -43,6 +43,22 @@ AM_PATH_GLIB_2_0(,,AC_MSG_ERROR(You are missing glib))
 
 AM_CONDITIONAL(FLYN, test "$FLYN")
 
+# GCC 4.x -fvisibility=hidden
+FVISIBILITY=""
+if test "$GCC" = yes; then
+#{
+    AC_LIBTOOL_COMPILER_OPTION(
+        [if $CC supports -fvisibility=hidden],
+        lt_cv_prog_compiler_fvisibility_hidden,
+        [-fvisibility=hidden],
+        [],
+        [FVISIBILITY="-fvisibility=hidden"],
+        [FVISIBILITY=""]
+    )
+#}
+fi
+AC_SUBST(FVISIBILITY)
+
 AC_CHECK_LIB(crypto, EVP_DecryptInit_ex) # RH 8.0's OpenSSL does not have?
 AC_CHECK_LIB(ssl, SSL_load_error_strings)
 AC_CHECK_FUNCS(setfsuid)

@@ -34,6 +34,7 @@ pam_mount.c
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "compiler.h"
 #include "fmt_ptrn.h"
 #include "misc.h"
 #include "mount.h"
@@ -55,7 +56,7 @@ static int modify_pm_count(struct config *, char *, char *);
 static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
-__attribute__((weak)) int Debug = 0;
+int Debug = 0;
 struct config Config = {};
 struct pam_args Args = {};
 
@@ -185,9 +186,8 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
  * NOTE: this is here because many PAM implementations don't allow
  *       pam_sm_open_session access to user's system password.
  */
-PAM_EXTERN int
-pam_sm_authenticate(pam_handle_t * pamh, int flags,
-		    int argc, const char **argv)
+PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
+ int argc, const char **argv)
 {
 	int ret = PAM_SUCCESS;
 	char *authtok = NULL;
@@ -338,9 +338,8 @@ _nosigact_return:
  *               should be or an error is logged
  * OUTPUT: PAM error code on error or PAM_SUCCESS
  */
-PAM_EXTERN int
-pam_sm_open_session(pam_handle_t * pamh, int flags,
-		    int argc, const char **argv)
+PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
+ int argc, const char **argv)
 {
 	int vol;
 	int ret = PAM_SUCCESS;
@@ -455,9 +454,8 @@ pam_sm_open_session(pam_handle_t * pamh, int flags,
 
 /* ============================ pam_sm_chauthtok () ======================== */
 /* NOTE: placeholder function so PAM does not get mad */
-PAM_EXTERN int
-pam_sm_chauthtok(pam_handle_t * pamh, int flags, int argc,
-		 const char **argv)
+PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
+ int argc, const char **argv)
 {
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
@@ -468,9 +466,8 @@ pam_sm_chauthtok(pam_handle_t * pamh, int flags, int argc,
  *               should be or an error is logged
  * OUTPUT: PAM error code on error or PAM_SUCCESS
  */
-PAM_EXTERN int
-pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
-		     const char **argv)
+PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
+ int flags, int argc, const char **argv)
 {
 	int vol;
 	/* FIXME: this currently always returns PAM_SUCCESS should return something else when errors occur but only after all unmounts are attempted??? */
@@ -520,23 +517,23 @@ pam_sm_close_session(pam_handle_t * pamh, int flags, int argc,
 
 /* ============================ pam_sm_setcred () ========================== */
 /* NOTE: placeholder function so PAM does not get mad */
-PAM_EXTERN int
-pam_sm_setcred(pam_handle_t * pamh, int flags, int argc, const char **argv)
+PAM_EXTERN EXPORT_SYMBOL int pam_sm_setcred(pam_handle_t *pamh, int flags,
+ int argc, const char **argv)
 {
 	return PAM_SUCCESS;
 }
 
 /* ============================ pam_sm_acct_mgmt () ======================== */
-PAM_EXTERN int 
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
-                    const char **argv) {
+PAM_EXTERN EXPORT_SYMBOL int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
+ int argc, const char **argv)
+{
     return PAM_IGNORE;
 }
 
 #ifdef PAM_STATIC
 /* static module data */
 
-struct pam_module _pam_mount_modstruct = {
+EXPORT_SYMBOL struct pam_module _pam_mount_modstruct = {
     .name                 = "pam_mount",
     .pam_sm_authenticate  = pam_sm_authenticate,
     .pam_sm_setcred       = pam_sm_setcred,
