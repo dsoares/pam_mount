@@ -53,9 +53,8 @@ void l0g(const char *format, ...)
 	assert(format != NULL);
 
 	va_start(args, format);
-	vfprintf(stderr, format, args);
-	va_end(args);
-	va_start(args, format);
+        if(Debug)
+            vfprintf(stderr, format, args);
 	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
 	va_end(args);
 }
