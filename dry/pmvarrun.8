@@ -1,0 +1,32 @@
+.TH pmvarrun 8 "15 June 2004"
+.SH NAME
+pmvarrun - updates /var/run/pam_mount/\fIuser\fP
+.SH SYNOPSIS
+\fBpmvarrun\fP \fB\-u\fP \fIuser\fP [\fIoptions\fP]
+.SH DESCRIPTION
+A separate program is needed so that /var/run/pam_mount/\fIuser\fP may be
+created with a pam_mount\-specific security context (otherwise
+SELinux policy will conflict with gdm, which also creates file
+in /var/run).
+.SH OPTIONS
+.TP
+\fB\-\-help\fP, \fB\-h\fP
+Display help.
+.TP
+\fB\-\-user\fP \fIuser\fP, \fB\-u\fP \fIuser\fP
+User to handle, must be a valid username.
+.TP
+\fB\-\-operation\fP \fInumber\fP, \fB\-o\fP \fInumber\fP
+Increase volume count by \fInumber\fP.
+.TP
+\fB\-d\fP
+Turn on debugging.
+.SH FILES
+\fB/var/run/pam_mount/\fP\fIuser\fP
+.SH AUTHOR
+This manpage was originally written by Bastian Kleineidam
+<calvin@debian.org> for the Debian distribution of libpam\-mount but
+may be used by others.
+
+See /usr/share/doc/packages/pam_mount/AUTHORS for the list of original authors
+of pam_mount.
