@@ -25,7 +25,7 @@ pmvarrun.c
 pmvarrun.c -- Updates /var/run/pam_mount/<user>.
     A seperate program is needed so that /var/run/pam_mount/<user> may be
     created with a pam_mount-specific security context (otherwise SELinux
-    policy will conflict with gdm, which also creates file in /var/run).
+    policy will conflict with gdm, which also creates files in /var/run).
 */
 
 #include <sys/stat.h>
@@ -65,7 +65,7 @@ static void usage(int, const char *, const char *);
 static int write_count(int, long, const char *);
 
 // Variables
-int Debug;
+int Debug = 0;
 static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
 /* ============================ usage () ==================================== */
@@ -78,7 +78,6 @@ static void usage(const int exitcode, const char *error, const char *more) {
 
 /* ============================ set_defaults () ============================= */
 static void set_defaults(struct settings *settings) {
-	Debug = 0;
 	*settings->user = '\0';
 	settings->operation = 1;
 }
@@ -131,21 +130,21 @@ static void parse_args(int argc, const char **argv,
 static int modify_pm_count(const char *user, long amount) {
     char filename[PATH_MAX + 1];
     struct passwd *pent;
-    int fd = 0, ret;
+    int fd, ret;
     struct stat sb;
     long val;
 
     assert(user != NULL);
 
     if((pent = getpwnam(user)) == NULL) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "could not resolve uid for %s\n", user);
         return ret;
     }
 
     if(stat(VAR_RUN_PMT, &sb) != 0) {
         if(errno != ENOENT) {
-            ret = errno;
+            ret = -errno;
             l0g(PREFIX "unable to stat" VAR_RUN_PMT ": %s\n", strerror(errno));
             return ret;
         }
@@ -211,13 +210,13 @@ static int create_var_run(void) {
 
     w4rn(PREFIX "creating " VAR_RUN_PMT);
     if(mkdir(VAR_RUN_PMT, 0000) != 0) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "unable to create " VAR_RUN_PMT ": %s\n", strerror(errno));
         return ret;
     }
 
     if(chown(VAR_RUN_PMT, 0, 0) != 0) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "unable to chown " VAR_RUN_PMT ": %s\n", strerror(errno));
         return ret;
     }
@@ -226,7 +225,7 @@ static int create_var_run(void) {
     permissions. User needs to be able to access file on logout. */
 
     if(chmod(VAR_RUN_PMT, S_IRWXU | S_IRXG | S_IRXO) != 0) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "unable to chmod " VAR_RUN_PMT ": %s\n", strerror(errno));
         return ret;
     }
@@ -253,12 +252,12 @@ static int open_and_lock(const char *filename, long uid) {
     int fd, ret;
 
     if((fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "unable to open %s: %s\n", filename, strerror(errno));
         return ret;
     }
     if((fchown(fd, uid, 0)) != 0) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "unable to chown %s: %s\n", filename, strerror(errno));
         return ret;
     }
@@ -291,11 +290,11 @@ static int open_and_lock(const char *filename, long uid) {
     /* It is possible at this point that the file has been removed by a
     previous login; if this happens, we need to start over. */
     if(stat(filename, &sb) != 0) {
-        ret = errno;
+        ret = -errno;
         close(fd);
-        if(ret == ENOENT)
+        if(ret == -ENOENT)
             return -EAGAIN;
-        return -ret;
+        return ret;
     }
 
     return fd;
@@ -313,10 +312,10 @@ static long read_current_count(int fd, const char *filename) {
     long ret;
 
     if((ret = read(fd, buf, sizeof(buf))) < 0) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "read error on %s: %s\n", filename, strerror(errno));
         close(fd);
-        return -ret;
+        return ret;
     } else if(ret == 0) {
         /* File is empty, ret is already 0 -- we are set. */
     } else if(ret < sizeof(buf)) {
@@ -352,14 +351,14 @@ static int write_count(int fd, long nv, const char *filename) {
     }
 
     if((ret = lseek(fd, 0, SEEK_SET)) != 0) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX, "failed to seek in %s: %s\n", filename, strerror(errno));
-        return -errno;
+        return ret;
     }
 
     len = snprintf(buf, sizeof(buf), "0x%lX", nv);
     if((wrt = write(fd, buf, len)) != len) {
-        ret = errno;
+        ret = -errno;
         l0g(PREFIX "wrote %d of %d bytes; write error on %s: %s\n",
             (wrt < 0) ? 0 : wrt, len, filename, strerror(errno));
         close(fd);
