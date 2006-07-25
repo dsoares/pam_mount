@@ -1,1 +1,0 @@
-#include "readconfig.c"

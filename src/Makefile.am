@@ -28,8 +28,7 @@ sbin_PROGRAMS = pmvarrun
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c common.c buffer.c spawn.c
 pam_mount_la_LDFLAGS = -module -avoid-version -lz $(GLIB_LIBS)
 
-# FIXME: misc.c needs to be compiled both with and without libtool
-pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c common-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c
+pmvarrun_SOURCES = pmvarrun.c misc.c fmt_ptrn.c modifiers.c common.c buffer.c template.c pair.c
 pmvarrun_LDFLAGS = -lz $(GLIB_LIBS)
 
 INCLUDES = -I$(srcdir)/../include
