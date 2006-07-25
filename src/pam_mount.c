@@ -489,16 +489,18 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	if(Config.volcount <= 0)
 		w4rn(PMPREFIX "volcount is zero\n");
 /* This code needs root priv. */
-	if(modify_pm_count(&Config, Config.user, "-1") <= 0)
+	if(modify_pm_count(&Config, Config.user, "-1") <= 0) {
 		/* Unmount in reverse order to facilitate nested mounting. */
 		for(vol = Config.volcount - 1; vol >= 0; vol--) {
 			w4rn(PMPREFIX "going to unmount\n");
 			if(!mount_op(do_unmount, &Config, vol, NULL, Config.mkmntpoint))
 				l0g(PMPREFIX "unmount of %s failed\n", Config.volume[vol].volume);
+                }
 /* end root priv. */
-	} else
+	} else {
 		w4rn(PMPREFIX "%s seems to have other remaining open sessions\n",
                  Config.user);
+        }
       _return:
         // Note that PMConfig is automatically freed later in clean_config().
 	w4rn(PMPREFIX "pam_mount execution complete\n");
