@@ -23,6 +23,7 @@ spawn.h
 #define PMT_SPAWN_H 1
 
 #include <glib.h>
+#include "compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,8 +42,9 @@ static inline gboolean spawn_ap0(const char *wd, const char *const *argv,
  const char *const *envp, GSpawnFlags flags, GSpawnChildSetupFunc cs,
  void *data, int *pid, int *istdin, int *istdout, int *istderr, GError **err)
 {
-    return g_spawn_async_with_pipes(wd, (char **)argv, (char **)envp, flags,
-     cs, data, pid, istdin, istdout, istderr, err);
+    return g_spawn_async_with_pipes(wd, const_cast(char **, argv),
+           const_cast(char **, envp), flags, cs, data, pid, istdin,
+           istdout, istderr, err);
 }
 
 #ifdef __cplusplus

@@ -30,8 +30,10 @@ modifiers.c
 #include "fmt_ptrn.h"
 #include "template.h"
 
+// Definitions
 typedef int (apply_fn_t)(struct buffer *, struct fmt_ptrn *, char *);
 
+// Functions
 static int _apply_comment(struct buffer *, char *, char *);
 static int _apply_delim(struct buffer *, const char *, const char *);
 static apply_fn_t

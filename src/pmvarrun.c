@@ -40,6 +40,7 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
+#include "compiler.h"
 #include "misc.h"
 #include "private.h"
 
@@ -94,7 +95,7 @@ static void parse_args(int argc, const char **argv,
 		{"operation", 1, 0, 'o'},
 		{0, 0, 0, 0}
 	};
-        while((c = getopt_long(argc, (char * const *)argv,
+        while((c = getopt_long(argc, reinterpret_cast(char * const *, argv),
          "hdo:u:", opts, &opt_index)) >= 0) {
 	    switch (c) {
 		case 'h':

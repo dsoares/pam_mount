@@ -38,10 +38,11 @@ template.c
 #include "fmt_ptrn.h"
 #include "template.h"
 
+// Functions
 static int _at_path(char *);
 static void _build_template_dir(char *, const char *, const char *);
 
-/* Globals. */
+// Variables
 static char _template_errmsg[BUFSIZ + 1];
 static char _template_local_dir[PATH_MAX + 1];
 static char _template_global_dir[PATH_MAX + 1];

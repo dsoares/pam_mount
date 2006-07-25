@@ -36,6 +36,7 @@ mount.c
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
+#include "compiler.h"
 #include "crypto.h"
 #include "fmt_ptrn.h"
 #include "misc.h"
@@ -62,6 +63,7 @@ mount.c
 #    define EVP_MAX_BLOCK_LENGTH 0 // FIXME: this is ugly, but needed
 #endif
 
+// Functions
 static int already_mounted(const struct config * const, const unsigned int, char * const, struct fmt_ptrn *);
 static int check_filesystem(const struct config *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
 static int do_losetup(const struct config *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
@@ -793,7 +795,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 			/* _password is an ASCII string in this case -- we'll treat its
 			 * MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the standard string 
 			 * MAX_PAR + 1 in this case */
-			strncpy((char *) _password, password, MAX_PAR);
+			strncpy(signed_cast(char *, _password), password, MAX_PAR);
 			_password[MAX_PAR] = '\0';
 			_password_len = strlen(password);
 		}
@@ -882,8 +884,8 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
             w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
              Config.user, strerror(errno));
         } else {
-            snprintf(uuid, sizeof(uuid), "%ld", (long)pe->pw_uid);
-            snprintf(ugid, sizeof(ugid), "%ld", (long)pe->pw_gid);
+            snprintf(uuid, sizeof(uuid), "%ld", static_cast(long, pe->pw_uid));
+            snprintf(ugid, sizeof(ugid), "%ld", static_cast(long, pe->pw_gid));
             fmt_ptrn_update_kv(&vinfo, "USERUID", uuid);
             fmt_ptrn_update_kv(&vinfo, "USERGID", ugid);
         }
@@ -959,7 +961,7 @@ static inline const char *loop_bk(const char *filename,
         return filename;
     }
     close(fd);
-    return (char *)i->lo_file_name; // signed_cast<>
+    return signed_cast(char *, i->lo_file_name);
 }
 
 //=============================================================================

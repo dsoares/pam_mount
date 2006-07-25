@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "compiler.h"
 #include "dotconf.h"
 #include "optlist.h"
 #include "pam_mount.h"
@@ -98,7 +99,7 @@ START_TEST(test_read_volume)
 	config.volume = NULL;
 	config.volcount = 0;
 
-	fail_unless(read_volume(&cmd, (context_t *) &ctx) == NULL,
+	fail_unless(read_volume(&cmd, reinterpret_cast(context_t *, &ctx)) == NULL,
 		    "test_read_volume test failed");
 	fail_unless(config.volume[0].type == LCLMOUNT,
 		    "test_read_volume test failed");

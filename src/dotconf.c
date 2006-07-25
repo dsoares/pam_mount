@@ -49,6 +49,7 @@ dotconf.c
 #ifdef HAVE_SYSLOG
 #    include <syslog.h>
 #endif
+#include "compiler.h"
 #include "dotconf.h"
 
 // some buffersize definitions
@@ -123,13 +124,13 @@ enum callback_types
 
 typedef enum callback_types callback_types;
 
+// Functions
 static const struct configoption *get_argname_fallback(const struct configoption *);
 static void copy_word(char **, char **, int, char);
 static DOTCONF_CB(dotconf_cb_include);          // internal 'Include'
 static DOTCONF_CB(dotconf_cb_includepath);      // internal 'IncludePath'
 static int dotconf_continue_line(char *, size_t);
-static int dotconf_find_wild_card(const char *, char *, char **, char **,
-    const char **);
+static int dotconf_find_wild_card(const char *, char *, char **, char **, const char **);
 static void dotconf_free_command(struct command *);
 static char *dotconf_get_here_document(struct configfile *, const char *);
 static int dotconf_get_next_line(char *, size_t, struct configfile *);
@@ -139,21 +140,19 @@ static int dotconf_handle_question_mark(const struct command *, const char *, co
 static int dotconf_handle_wild_card(const struct command *, char, const char *, const char *, const char *);
 static const char *dotconf_invoke_command(const struct configfile *, const struct command *);
 static int dotconf_is_wild_card(char);
-static int dotconf_question_mark_match(const char *, const char *,
-    const char *);
+static int dotconf_question_mark_match(const char *, const char *, const char *);
 static char *dotconf_read_arg(const struct configfile *, char **);
-static void dotconf_register_options(struct configfile *,
-    const struct configoption *);
+static void dotconf_register_options(struct configfile *, const struct configoption *);
 static void dotconf_set_command(struct configfile *, const struct configoption *, char *, struct command *);
 static int dotconf_star_match(const char *, const char *, const char *);
 static int dotconf_strcmp_from_back(const char *, const char *);
 static char *dotconf_substitute_env(const struct configfile *, char *);
-static int dotconf_warning(const struct configfile *, int, unsigned long,
-    const char *, ...);
+static int dotconf_warning(const struct configfile *, int, unsigned long, const char *, ...);
 static void dotconf_wild_card_cleanup(char *, char *);
 static void skip_whitespace(char **, int, char);
 static inline long MIN(long, long);
 
+// Variables
 static struct configoption dotconf_options[] =
 {
 	{ "Include", ARG_STR, dotconf_cb_include, NULL, CTX_ALL },
@@ -518,7 +517,7 @@ static void dotconf_set_command(struct configfile *configfile,
 
 	/* fill in the command structure with values we already know */
 	cmd->name = (option->type == ARG_NAME) ? name : option->name;
-	cmd->option = (struct configoption *)option; // const_cast<>
+	cmd->option = const_cast(struct configoption *, option);
 	cmd->context = configfile->context;
 	cmd->configfile = configfile;
 	cmd->data.list = calloc(CFG_VALUES, sizeof(char *));
@@ -655,7 +654,7 @@ static const char *dotconf_handle_command(struct configfile *configfile,
 			for(opt_idx = next_opt_idx; configfile->config_options[mod][opt_idx].name[0] != '\0'; opt_idx++) {
 				if(configfile->cmp_func(name, configfile->config_options[mod][opt_idx].name, CFG_MAX_OPTION) == 0) {
 					/* TODO: this could be flagged: option overwriting by modules */
-					option = (struct configoption *)&configfile->config_options[mod][opt_idx];
+					option = &configfile->config_options[mod][opt_idx];
 					done = 1;
 					break;		/* found one; break out */
 				}

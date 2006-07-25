@@ -32,6 +32,12 @@ extern "C" {
 #    define EXPORT_SYMBOL
 #endif
 
+// These are just code annotations
+#define const_cast(type, expr)          ((type)(expr))
+#define signed_cast(type, expr)         ((type)(expr))
+#define reinterpret_cast(type, expr)    ((type)(expr))
+#define static_cast(type, expr)         ((type)(expr))
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

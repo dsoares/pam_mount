@@ -35,13 +35,15 @@ crypto.c
 #else
 #    define EVP_MAX_BLOCK_LENGTH 0	/* FIXME: this is ugly, but needed */
 #endif
+#include "compiler.h"
 #include "crypto.h"
 #include "misc.h"
 #include "private.h"
 
+// Functions
 #ifdef HAVE_LIBCRYPTO
 static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,
-  unsigned char *, unsigned char *);
+    unsigned char *, unsigned char *);
 static void sslerror(const char *);
 #endif
 
@@ -85,8 +87,9 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 		return 0;
 	}
 	md = EVP_md5();
-        if(EVP_BytesToKey(cipher, md, salt, (const unsigned char *)authtok,
-         strlen(authtok), 1, hash, iv) <= 0) {
+        if(EVP_BytesToKey(cipher, md, salt,
+          signed_cast(const unsigned char *, authtok),
+          strlen(authtok), 1, hash, iv) <= 0) {
 		l0g(PMPREFIX "failed to hash system password\n");
 		return 0;
 	}

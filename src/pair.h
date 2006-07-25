@@ -35,6 +35,9 @@ struct pair {
     void (*destroy_v)(void *);
 };
 
+/*
+ *      PAIR.C
+ */
 extern void pair_destroy(struct pair *);
 extern void pair_init(struct pair *, void *, void *,
     void (*)(void *), void (*)(void *));

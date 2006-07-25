@@ -28,9 +28,12 @@ fmt_ptrn.c
 #include <string.h>
 #include <zlib.h>
 #include "buffer.h"
+#include "compiler.h"
 #include "modifiers.h"
 #include "fmt_ptrn.h"
 #include "pair.h"
+
+// Definitions
 #define KEY_LEN         80
 #define PARSE_ERR_LEN   BUFSIZ
 #define STACK_MAX_ITEMS 10
@@ -40,6 +43,7 @@ struct mystack {
     int size;
 };
 
+// Functions
 static void     _apply_modifiers(struct fmt_ptrn *, struct buffer *, struct mystack *);
 static gint     _cmp(gconstpointer, gconstpointer);
 static gboolean _copy_fillers(gpointer, gpointer, gpointer);
@@ -226,7 +230,7 @@ void fmt_ptrn_update_kv(struct fmt_ptrn *x, const char *key, const char *val) {
 	assert(val != NULL);
 	/* FIXME: getting rid of the const is silly, but I didn't write g_tree_insert */
         // string not duplicated but freed? see above
-	g_tree_insert(x->fillers, (char *) key, (char *) val);
+	g_tree_insert(x->fillers, const_cast(char *, key), const_cast(char *, val));
 	assert(_fmt_ptrn_t_valid(x));
 }
 
@@ -243,7 +247,7 @@ static char *_matching_paren(const char *str) {
 		else if (*str == ')')
 			count--;
 		if (count == 0)
-			return (char *)str;
+			return const_cast(char *, str);
 		str++;
 	}
 	return NULL;
@@ -255,7 +259,7 @@ static gboolean _copy_fillers(gpointer key, gpointer val, gpointer data) {
 	assert(val != NULL);
 	assert(_fmt_ptrn_t_valid(data));
 
-	g_tree_insert(((struct fmt_ptrn *)data)->fillers,
+	g_tree_insert(static_cast(struct fmt_ptrn *, data)->fillers,
 		      strdup(key), strdup(val));
 
 	assert(_fmt_ptrn_t_valid(data));
@@ -596,7 +600,8 @@ static void _handle_fmt_str(struct fmt_ptrn *x, const char **p) {
 
 /* ============================ _fill_it () ================================ */
 static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
-	const char *pattern, *orig_ptr;
+	const char *pattern;
+        char *orig_ptr;
 	gboolean fnval = TRUE;
 
 	assert(_fmt_ptrn_t_valid(x));
@@ -616,7 +621,7 @@ static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
 			realloc_n_ncat(&x->filled_buf, pattern++, 1);
 		}
 	}
-	g_free((char *)orig_ptr);
+	g_free(orig_ptr);
 
 	assert(_fmt_ptrn_t_valid(x));
 

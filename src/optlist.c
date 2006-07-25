@@ -25,10 +25,12 @@ optlist.c
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>
+#include "compiler.h"
 #include "optlist.h"
 #include "pair.h"
 #include "private.h"
 
+// Functions
 static int _compare(gconstpointer, gconstpointer);
 static int _parse_opt(const char *, size_t, optlist_t **);
 static int _parse_string_opt(const char *str, size_t, optlist_t **);
@@ -195,7 +197,7 @@ const char *optlist_value(optlist_t * optlist, const char *str)
 
 	assert(ptr != NULL || !optlist_exists(optlist, str));
 
-	return (ptr != NULL) ? ((struct pair *)ptr->data)->val : NULL;
+	return (ptr != NULL) ? static_cast(const struct pair *, ptr->data)->val : NULL;
 }
 
 /* ============================ optlist_to_str () ========================== */

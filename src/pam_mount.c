@@ -49,6 +49,7 @@ pam_mount.c
 #    define CONFIGFILE "/etc/security/pam_mount.conf"
 #endif
 
+// Functions
 static void clean_config(pam_handle_t *, void *, int);
 static void clean_system_authtok(pam_handle_t *, void *, int);
 static int converse(pam_handle_t *, int, const struct pam_message **,
@@ -57,6 +58,7 @@ static int modify_pm_count(struct config *, char *, char *);
 static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
+// Variables
 int Debug = 0;
 struct config Config = {};
 struct pam_args Args = {};
@@ -128,7 +130,8 @@ converse(pam_handle_t * pamh, int nargs,
 	assert(resp != NULL);
 
 	*resp = NULL;
-	retval = pam_get_item(pamh, PAM_CONV, (void *)&conv);
+	retval = pam_get_item(pamh, PAM_CONV, static_cast(const void **,
+                 static_cast(void *, &conv)));
 
         if(retval == PAM_SUCCESS) {
             retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
@@ -212,7 +215,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	Config.user = relookup_user(pam_user);
 	if(Args.auth_type != GET_PASS) {	/* get password from PAM system */
 		char *ptr = NULL;
-                ret = pam_get_item(pamh, PAM_AUTHTOK, (void *)&ptr);
+                ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
+                      static_cast(void *, &ptr)));
                 if(ret != PAM_SUCCESS || ptr == NULL) {
                         if (ret == PAM_SUCCESS && ptr == NULL)
                                 ret = PAM_AUTHINFO_UNAVAIL;
@@ -363,7 +367,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
         ret = pam_get_data(pamh, "pam_mount_system_authtok",
-                           (void *)&system_authtok);
+              static_cast(const void **, static_cast(void *, &system_authtok)));
         if(ret != PAM_SUCCESS) {
 		l0g(PMPREFIX "error trying to retrieve authtok from auth code\n");
                 ret = read_password(pamh, "reenter password:", &system_authtok);

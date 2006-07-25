@@ -32,6 +32,7 @@ common.c
 #include "common.h"
 #include "fmt_ptrn.h"
 
+// Functions
 static char *_firstname(void);
 static char *_lastname(void);
 static char *_middlename(void);
@@ -41,6 +42,7 @@ static int parse_kv(char *, char **, char **);
 static void shift_str(char *, char *);
 static char *year(char *, size_t);
 
+// Variables
 extern char **environ;
 
 /* FIXME: the code in these functions needs to be checked for:

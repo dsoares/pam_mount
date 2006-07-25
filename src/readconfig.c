@@ -32,6 +32,7 @@ readconfig.c
 #include <stdlib.h>
 #include <string.h>
 #include <pwd.h>
+#include "compiler.h"
 #include "dotconf.h"
 #include "misc.h"
 #include "optlist.h"
@@ -43,11 +44,13 @@ readconfig.c
 #elif defined(__linux__)
 #    include <mntent.h>
 #endif
+
+// Definitions
 #define DEBUG_DEFAULT           FALSE
 #define MKMOUNTPOINT_DEFAULT    FALSE
 #define FSCKLOOP_DEFAULT        "/dev/loop7"
-#define ICONTEXT (*(int *)cmd->context)
-#define ICONFIG ((struct config *)cmd->option->info)
+#define ICONTEXT        (*static_cast(int *, cmd->context))
+#define ICONFIG         static_cast(struct config *, cmd->option->info)
 
 enum fstab_field {
 	FSTAB_VOLUME,
@@ -63,6 +66,7 @@ struct pm_command {
     char *def[MAX_PAR + 1];
 };
 
+// Functions
 static char *expand_home(const char *, const char *, char *, size_t);
 static char *expand_user_wildcard(const char *, const char *, char *, size_t);
 static int fstab_value(const char *, const enum fstab_field, char *, const int);
@@ -82,6 +86,7 @@ static int options_deny_ok(optlist_t *, optlist_t *);
 static int options_required_ok(optlist_t *, optlist_t *);
 static int user_in_sgrp(const char *, const char *);
 
+// Variables
 /* defaults are included here but these are overridden by pam_mount.conf */
 static const struct pm_command Command[] = {
         {SMBMOUNT, "smbfs", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
@@ -477,7 +482,7 @@ static DOTCONF_CB(read_int_param)
 {
 	if(!ICONTEXT)
 		return "tried to set int param from user config";
-	*((int *) cmd->option->info) = cmd->data.value;
+	*static_cast(int *, cmd->option->info) = cmd->data.value;
 	return NULL;
 }
 
@@ -623,7 +628,7 @@ DOTCONF_CB(read_volume)
 
         if((gent = getgrgid(pent->pw_gid)) == NULL) {
             w4rn(PMPREFIX "getgrgid(%ld) failed: %s\n",
-             (long)pent->pw_gid, strerror(errno));
+                 static_cast(long, pent->pw_gid), strerror(errno));
             return NULL;
         }
         if(strcmp(gname, gent->gr_name) != 0 &&
@@ -915,13 +920,15 @@ int expandconfig(const struct config *config) {
                 if(!expand_user_wildcard(optlist_key(e), config->user,
                  tmp, sizeof(tmp)))
                     return 0;
-                HX_strclone((void *)&optlist_key(e), tmp);
+                HX_strclone(static_cast(char **, static_cast(void *,
+                 &optlist_key(e))), tmp);
 
 
                 if(!expand_user_wildcard(optlist_val(e), config->user,
                  tmp, sizeof(tmp)))
                     return 0;
-                HX_strclone((void *)&optlist_val(e), tmp);
+                HX_strclone(static_cast(char **, static_cast(void *,
+                 &optlist_val(e))), tmp);
             }
 
             if(!expand_user_wildcard(vpt->fs_key_path, config->user,

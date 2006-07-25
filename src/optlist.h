@@ -23,6 +23,7 @@ optlist.h
 #define PMT_OPTLIST_H 1
 
 #include <glib.h>
+#include "compiler.h"
 #include "pair.h"
 
 #ifdef __cplusplus
@@ -30,12 +31,17 @@ extern "C" {
 #endif
 
 #define optlist_next(element)   g_list_next(element)
-#define optlist_key(element)    (((struct pair *)(element)->data)->key)
-#define optlist_val(element)    (((struct pair *)(element)->data)->val)
+#define optlist_key(element) \
+    static_cast(const struct pair *, (element)->data)->key
+#define optlist_val(element) \
+    static_cast(const struct pair *, (element)->data)->val
 #define optlist_len(list)       g_list_length(list)
 
 typedef GList optlist_t;
 
+/*
+ *      OPTLIST.C
+ */
 extern gboolean optlist_exists(optlist_t *, const char *);
 extern char *optlist_to_str(char *, const optlist_t *);
 extern const char *optlist_value(optlist_t *, const char *);
