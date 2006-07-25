@@ -366,7 +366,7 @@ static int write_count(int fd, long nv, const char *filename) {
         return ret;
     }
 
-    ftruncate(fd, ret);
+    ftruncate(fd, len);
     return 1;
 }
 
