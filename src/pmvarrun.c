@@ -145,7 +145,7 @@ static int modify_pm_count(const char *user, long amount) {
     if(stat(VAR_RUN_PMT, &sb) != 0) {
         if(errno != ENOENT) {
             ret = -errno;
-            l0g(PREFIX "unable to stat" VAR_RUN_PMT ": %s\n", strerror(errno));
+            l0g(PREFIX "unable to stat " VAR_RUN_PMT ": %s\n", strerror(errno));
             return ret;
         }
         if((ret = create_var_run()) < 0)
