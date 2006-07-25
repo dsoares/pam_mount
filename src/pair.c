@@ -41,7 +41,12 @@ void pair_init(struct pair *pair, void *key, void *val,
     pair->destroy_v = destroy_v;
 }
 
-/* ========================== pair_destroy () =============================== */
+/*  pair_destroy
+    @pair:      pair to destroy
+
+    Destroy the pair pointed to by @pair.
+    Note: This function is currently not called from anywhere.
+*/
 void pair_destroy(struct pair *pair) {
     if(pair->destroy_k != NULL)
         pair->destroy_k(pair->key);
@@ -51,3 +56,5 @@ void pair_destroy(struct pair *pair) {
     memset(pair, 0, sizeof(struct pair));
     g_free(pair);
 }
+
+//=============================================================================

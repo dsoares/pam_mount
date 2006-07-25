@@ -110,22 +110,6 @@ char *fmt_ptrn_parse_strerror(struct fmt_ptrn *x) {
 	return fnval;
 }
 
-/* ============================ fmt_ptrn_parse_perror () =================== */
-void fmt_ptrn_parse_perror(struct fmt_ptrn *x, const char *msg) {
-	char *errmsg;
-
-	assert(_fmt_ptrn_t_valid(x));
-
-	errmsg = fmt_ptrn_parse_strerror(x);
-	if(msg != NULL)
-		fprintf(stderr, "%s: %s\n", msg, errmsg);
-	else
-		fprintf(stderr, "%s\n", errmsg);
-	g_free(errmsg);
-
-	assert(_fmt_ptrn_t_valid(x));
-}
-
 /* ============================ enqueue_parse_errmsg () =================== */
 void enqueue_parse_errmsg(struct fmt_ptrn *x, const char *msg, ...) {
 	va_list args;
@@ -210,17 +194,6 @@ static int _stack_contains(const struct mystack s, const char *n)
 		if (s.data[i].fn.id == n)
 			return 1;
 	return 0;
-}
-
-/* ============================ fmt_ptrn_update_kv_p () ==================== */
-void fmt_ptrn_update_kv_p(struct fmt_ptrn *x, const struct pair *p) {
-	assert(_fmt_ptrn_t_valid(x));
-	assert(pair_t_valid(p));
-	/* [MP] FIXME: this strdups here but other fn requires malloced strs!
-           [JE] No problem here, strdup uses malloc. */
-        // string duplicated but not freed? also see below
-	g_tree_insert(x->fillers, strdup(p->key), strdup(p->val));
-	assert(_fmt_ptrn_t_valid(x));
 }
 
 /* ============================ fmt_ptrn_update_kv () ====================== */
@@ -765,17 +738,4 @@ int fmt_ptrn_close(struct fmt_ptrn *x) {
             gzclose(x->template_fp) : 1;
 }
 
-/* ============================ fmt_ptrn_perror () ========================= */
-void fmt_ptrn_perror(const struct fmt_ptrn *x, const char *msg) {
-	assert(_fmt_ptrn_t_valid(x));
-	assert(msg != NULL);
-
-	fprintf(stderr, "%s: %s\n", msg, x->errmsg);
-}
-
-/* ============================ fmt_ptrn_strerror () ======================= */
-const char *fmt_ptrn_strerror(const struct fmt_ptrn *x) {
-	assert(_fmt_ptrn_t_valid(x));
-
-	return x->errmsg;
-}
+//=============================================================================

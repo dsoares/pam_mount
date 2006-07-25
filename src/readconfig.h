@@ -39,7 +39,6 @@ extern void freeconfig(struct config *);
 extern int initconfig(struct config *);
 extern gboolean luserconf_volume_record_sane(const struct config *, int);
 extern int readconfig(const char *, const char *, int, struct config *);
-extern DOTCONF_CB(read_volume);
 extern gboolean volume_record_sane(const struct config *, int);
 
 #ifdef __cplusplus

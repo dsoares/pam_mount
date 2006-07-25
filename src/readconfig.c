@@ -80,6 +80,7 @@ static DOTCONF_CB(read_luserconf);
 static DOTCONF_CB(read_options_allow);
 static DOTCONF_CB(read_options_deny);
 static DOTCONF_CB(read_options_require);
+static DOTCONF_CB(read_volume);
 static int _options_ok(const struct config *, const struct vol *);
 static int options_allow_ok(optlist_t *, optlist_t *);
 static int options_deny_ok(optlist_t *, optlist_t *);
@@ -583,8 +584,7 @@ static int fstab_value(const char *volume, const enum fstab_field field,
 
 /* ============================ read_volume () ============================= */
 /* NOTE: callback function for reading volume parameters */
-DOTCONF_CB(read_volume)
-{
+static DOTCONF_CB(read_volume) {
 #define VOL ICONFIG->volume
 #define VOLCOUNT ICONFIG->volcount
     enum wildcard_type {

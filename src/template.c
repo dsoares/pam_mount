@@ -34,7 +34,6 @@ template.c
 #else
 #    include <pwd.h>
 #endif
-#include "common.h"
 #include "fmt_ptrn.h"
 #include "template.h"
 

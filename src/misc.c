@@ -42,6 +42,10 @@ misc.c
 #include "private.h"
 #include "readconfig.h"
 
+// Functions
+static gboolean static_string_valid(const char *, const size_t);
+
+//-----------------------------------------------------------------------------
 /* ============================ l0g () ===================================== */
 /* INPUT: similar to printf; all args are valid strings != NULL
  * SIDE EFFECTS: format + args are logged and displayed */
@@ -140,9 +144,13 @@ long str_to_long(const char *n) {
 	return val;
 }
 
-/* ============================ static_string_valid () ===================== */
-gboolean static_string_valid(const char *s, const size_t len)
-{
+/*  static_string_valid
+    @s:         string to analyze
+    @len:       maximum length of string
+
+    Verifies that there is a '\0' byte within the first @len bytes of @s.
+*/
+static gboolean static_string_valid(const char *s, const size_t len) {
 	size_t i;
 	if (s == NULL)
 		return FALSE;

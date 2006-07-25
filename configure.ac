@@ -70,11 +70,6 @@ if test x"$have_pamheader" != x"yes"; then
 	AC_MSG_ERROR(You are missing PAM headers)
 fi
 
-#AM_PATH_CHECK(,[have_check="yes"],
-#  AC_MSG_WARN([Check not found; cannot run unit tests!])
-#      [have_check="no"])
-#          AM_CONDITIONAL(HAVE_CHECK, test x"$have_check" = "xyes")
-
 case "$host" in
   *-*-linux*)
     # See also <configure-flags> in pam_mount.xml.
