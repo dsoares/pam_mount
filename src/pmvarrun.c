@@ -124,22 +124,23 @@ static void parse_args(int argc, const char **argv,
     @amount:    increment (usually -1, 0 or +1)
 
     Adjusts /var/run/pam_mount/@user by @amount, or deletes the file if the
-    resulting value (current + @amount) is <= 0. Returns >0 on success or else
-    to indicate errno. -ESTALE and -EOVERFLOW are passed up from subfunctions
-    and must be handled in the caller.
+    resulting value (current + @amount) is <= 0. Returns >= 0 on success to
+    indicate the new login count, or negative to indicate errno. -ESTALE and
+    -EOVERFLOW are passed up from subfunctions and must be handled in the
+    caller.
 */
 static int modify_pm_count(const char *user, long amount) {
     char filename[PATH_MAX + 1];
     struct passwd *pent;
-    int fd, ret;
     struct stat sb;
+    int fd, ret;
     long val;
 
     assert(user != NULL);
 
     if((pent = getpwnam(user)) == NULL) {
         ret = -errno;
-        l0g(PREFIX "could not resolve uid for %s\n", user);
+        l0g(PREFIX "could not resolve user %s\n", user);
         return ret;
     }
 
@@ -171,7 +172,7 @@ static int modify_pm_count(const char *user, long amount) {
         ret = write_count(fd, val + amount, filename);
 
     close(fd);
-    return ret;
+    return (ret < 0) ? ret : val + amount;
 }
 
 /* ============================ main () ===================================== */
