@@ -95,6 +95,8 @@ static const struct pm_command Command[] = {
         {CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
         {NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
+        {FUSEMOUNT, "fuse", "fusemount", {"/sbin/mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
+        {FUSEUMOUNT, "fuse", "fuseumount", {"/usr/bin/fusermount", "-u", "%(MNTPT)", NULL}},
         {NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
 	{LCLMOUNT, NULL, "lclmount", {"/bin/mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
@@ -124,6 +126,8 @@ static const struct configoption legal_config[] = {
 	{"cifsmount", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"ncpmount", ARG_LIST, read_command, &Config, CTX_ALL},
         {"ncpumount", ARG_LIST, read_command, &Config, CTX_ALL},
+        {"fusemount", ARG_LIST, read_command, &Config, CTX_ALL},
+        {"fuseumount", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"umount", ARG_LIST, read_command, &Config, CTX_ALL},
 	{"lclmount", ARG_LIST, read_command, &Config, CTX_ALL},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */

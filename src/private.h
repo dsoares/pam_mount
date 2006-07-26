@@ -54,6 +54,8 @@ enum command_type {
     CIFSMOUNT,
     NCPMOUNT,
     NCPUMOUNT,
+    FUSEMOUNT,
+    FUSEUMOUNT,
     LCLMOUNT,
     CRYPTMOUNT, // FIXME: hope to have this in util-linux (LCLMOUNT) some day
     NFSMOUNT,

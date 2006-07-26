@@ -452,6 +452,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
         switch(vpt->type) {
             case SMBMOUNT: type = SMBUMOUNT; break;
             case NCPMOUNT: type = NCPUMOUNT; break;
+            case FUSEMOUNT: type = FUSEUMOUNT; break;
             default:       type = UMOUNT; break;
         }
 
@@ -775,6 +776,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 		}
 	} else {
 		GError *err = NULL;
+                char *mount_user;
 		if(config->command[0][vpt->type] == NULL) {
 			l0g(PMPREFIX "proper mount command not defined in pam_mount.conf\n");
 			return 0;
@@ -815,8 +817,9 @@ int do_mount(const struct config *config, const unsigned int vol,
                 if(vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT)
 			setenv("PASSWD_FD", "0", 1);
 		log_argv(_argv);
+                mount_user = strcmp(vpt->fstype, "fuse") == 0 ? vpt->user : NULL;
                 if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-                  set_myuid, NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
+                  set_myuid, mount_user, &pid, &cstdin, NULL, &cstderr, &err)) {
 			l0g(PMPREFIX "%s\n", err->message);
 			g_error_free(err);
 			return 0;

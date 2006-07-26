@@ -1,12 +1,4 @@
 
-
-=== ADDED 2005-11-17 ===
-
-- the sshfs fuse daemon kills itself for some reason, but other than
-  that, it seems to work. Should not happen with different fuse modules
-  anyway.
-
-
 === ADDED 2005-09-xx ===
 
 o unit tests
@@ -26,8 +18,6 @@ o make a test system that takes XML and creates  pam_mount.conf, images,
 efsk's, mnt points and check script.
 
 o finish .*_valid invariants.
-
-o finish using struct invariants throghout code.
 
 o write class invariant function for assertions
 
@@ -77,10 +67,6 @@ o ensure '\0'-termination is guarenteed everytime strlen is used.
 o If losetup does not regain -k option, modify scripts.
 
 o Get rid of FIXMEs.
-
-o Perhaps /var/run/pam_mount/* should be owned by root so users can not
-edit it (see related FIXMEs)?  Currently testing.
-JE: chmod +t it.
 
 = OpenBSD =====================================================================
 
@@ -146,8 +132,6 @@ o Get smbmount and ncpmount to support mount-like -p0 option to simplify
 pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
     => CHECK IT NOW, it's almost working, if not entirely.
 
-o Ensure that NFS shares are working. Document NFS use.
-
 o Add the ability to create an encrypted loopback filesystem to useradd.
 This should also create a README file in, for example, /home/mike that
 explains setup.  (useradd is a part of passwd package, adduser is a part
@@ -157,12 +141,8 @@ of adduser package).
 o Modify passwd to update /home/mike.key.  Add -p, --post-script option
 to run passwdehd?  (See passwdehd script)
 
-o Get pam_mount in standard and Red Hat pam dist.
-    => Not a pam_mount problem
-
 o Get supported by Red Hat.
 	- Need upstream linux-utils/kernel to support encr.
-    => Not really a pam_mount problem
 
 o Make home directory images scalable in size (resize.*fs?).
 

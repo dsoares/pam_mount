@@ -169,8 +169,8 @@ gboolean vol_t_valid(const struct vol *v) {
 		return FALSE;
 	/* should be guaranteed by volume_record_sane() */
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	if (!((v->type == LCLMOUNT || v->type == CRYPTMOUNT)
-	      || strlen(v->server) > 0))
+	if (!(v->type == LCLMOUNT || v->type == CRYPTMOUNT ||
+          v->type == FUSEMOUNT || strlen(v->server) > 0))
 		return FALSE;
 	/* gboolean globalconf; */
 	/* gboolean created_mntpt; */
@@ -281,6 +281,7 @@ void set_myuid(void *data) {
      */
     const char *user = data;
 
+    setsid();
     if(user == NULL) {
         w4rn(PMPREFIX "%s(pre): real uid/gid=%ld:%ld, "
              "effective uid/gid=%ld:%ld\n", __FUNCTION__,
