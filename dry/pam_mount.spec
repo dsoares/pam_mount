@@ -1,75 +1,44 @@
 
-%define wname pam-mount
-Name:     pam_mount
-Version:  0.13.0
-Release:  0
-Group:    System/Libraries
-URL:      http://pam-mount.sf.net/
-Summary:  A PAM module that can mount volumes for a user session
+Name:           pam_mount
+Version:        0.15.0
+Release:        0
+Group:          System/Libraries
+Summary:        A PAM module that can mount volumes for a user session
+License:        LGPL
+URL:            http://pam-mount.sf.net/
 
-Source:   http://heanet.dl.sf.net/sourceforge/%wname/%name-%version.tbz2
-License:  LGPL
-Requires: pam
-BuildRequires: glib2-devel pam-devel openssl-devel zlib-devel
-BuildRoot: %_tmppath/%name-%version-build
+Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
+Requires:       pam
+BuildRequires:  autoconf automake binutils gcc glib2-devel libtool pam-devel openssl-devel zlib-devel
+BuildRoot:      %_tmppath/%name-%version-build
 
 %description
-This module is aimed at environments with SMB (Samba or Windows NT) 
-or NCP (Netware or Mars-NWE) servers that Unix users wish to access 
-transparently. It facilitates access to private volumes of these types 
-well. The module also supports mounting home directories using 
-loopback encrypted filesystems. The module was originally written for 
-use on the GNU/Linux operating system but has since been modified to 
-work on several flavors of BSD.
+pam_mount automatically mounts directories when the user logs in,
+using the password just entered.
 
- - Every user can access his own volumes
+pam_mount supports SMB, NCP, and any type of filesystem that can 
+be mounted using the standard mount command.
 
- - The user needs to type the password just once (at login)
-
- - The mounting process is transparent to the users
-
- - There is no need to keep the login passwords in any additional file
-
- - The volumes are unmounted upon logout, so it saves system resources, 
-   avoiding the need of listing every every possibly useful remote 
-   volume in /etc/fstab or in an automount/supermount config file. This 
-   is also necessary for securing encrypted filesystems.
-
-Pam_mount supports SMB, NCP, and any type of filesystem that can 
-be mounted using the standard mount command. If someone has a 
-particular need for a different filesystem, feel free to ask me to 
-include it and send me patches.
-
-If you intend to use pam_mount to protect volumes on your computer 
-using an encrypted filesystem system, please know that there are many 
-other issues you need to consider in order to protect your data. 
-For example, you probably want to disable or encrypt your swap 
-partition (the cryptoswap can help you do this). Don't assume a 
-system is secure without carefully considering potential threats.
-
+## Remove the %debug_package line to compile under FedoraCore
+%debug_package
 %prep
 %setup
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" CXXFLAGS="$RPM_OPT_FLAGS" \
-  ./configure --prefix=%_prefix --sysconfdir=%_sysconfdir --libdir=/%_lib \
-  --localstatedir=%_localstatedir --infodir=%_infodir --mandir=%_mandir \
-  --disable-debug;
+autoreconf -fi;
+%configure --disable-debug --libdir=/lib
 make;
 
 %install
-b="$RPM_BUILD_ROOT";
-[ "$b" != "/" -a -d "$b" ] && rm -Rf "$b";
+b="%buildroot";
+rm -Rf "$b";
 make -i install DESTDIR="$b";
 mkdir -p "$b/%_sysconfdir/security";
 install -m0644 config/pam_mount.conf "$b/%_sysconfdir/security/";
-find "$b" -type f -perm +111 -print0 | xargs -0 strip -s &>/dev/null || :;
 rm -f "$b/%_lib/security/"*.{la,a};
 
 %clean
-b="$RPM_BUILD_ROOT";
-[ "$b" != "/" -a -d "$b" ] && rm -Rf "$b";
-rm -Rf "$b";
+rm -Rf "%buildroot";
 
 %files
 %defattr(-,root,root)
@@ -80,9 +49,11 @@ rm -Rf "$b";
 %_bindir/autoehd
 %_bindir/passwdehd
 %_bindir/mount_ehd
-%_bindir/mount.crypt
-%_bindir/umount.crypt
+/sbin/mount.crypt
+/sbin/umount.crypt
 %_mandir/man8/*
 #%policy %_sysconfdir/selinux/strict/src/policy/macros/%{name}_macros.te
 #%policy %_sysconfdir/selinux/strict/src/policy/file_contexts/misc/%name.fc
 %doc AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ TODO
+
+%changelog -n pam_mount

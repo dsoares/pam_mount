@@ -1,162 +1,154 @@
-Copyright (C) 2003 W. Michael Petullo <mike@flyn.org>
-
-pam_mount is A PAM module that can mount volumes for a user session
+pam_mount(8)                                                      pam_mount(8)
 
 
-== OVERVIEW ============================================================
-	
-This module is aimed at environments with SMB (Samba or Windows NT) or
-NCP (Netware or Mars-NWE) servers that Unix users wish to access
-transparently. It facilitates access to private volumes of these types
-well. The module also supports mounting home directories using loopback
-encrypted filesystems. The module was originally written for use on the
-GNU/Linux operating system but has since been modified to work on
-several flavors of BSD.
 
-  * Every user can access his own volumes
+NAME
+       pam_mount - A PAM module that can mount volumes for a user session
 
-  * The user needs to type the password just once (at login)
+OVERVIEW
+       This  module is aimed at environments with SMB (Samba or Windows NT) or
+       NCP (Netware or Mars-NWE) servers that Unix users wish to access trans‐
+       parently. It facilitates access to private volumes of these types well.
+       The module also supports  mounting  home  directories  using   loopback
+       encrypted filesystems. The module was originally written for use on the
+       GNU/Linux operating system but has since been modified to work on  sev‐
+       eral flavors of BSD.
 
-  * The mounting process is transparent to the users
+       ·   Every user can access his own volumes
 
-  * There is no need to keep the login passwords in any additional file
+       ·   The user needs to type the password just once (at login)
 
-  * The volumes are unmounted upon logout, so it saves system
-    resources, avoiding the need of listing every every possibly useful
-    remote volume in /etc/fstab or in an automount/supermount config
-    file.  This is also necessary for securing encrypted filesystems.
+       ·   The mounting process is transparent to the users
 
-Pam_mount "understands" SMB, NCP, and any type of filesystem that can
-be mounted using the standard mount command. If someone has a
-particular need for a different filesystem, feel free to ask me to
-include it and send me patches.
+       ·   There is no need to keep the login passwords in any additional file
 
-If you intend to use pam_mount to protect volumes on your computer
-using an encrypted filesystem system, please know that there are many
-other issues you need to consider in order to protect your data.  For
-example, you probably want to disable or encrypt your swap partition
-(the cryptoswap can help you do this). Don't assume a system is secure
-without carefully considering potential threats.
+       ·   The  volumes  are  unmounted  upon  logout,  so  it  saves   system
+           resources, avoiding the need of listing every every possibly useful
+           remote  volume in /etc/fstab or in an  automount/supermount  config
+           file. This is also necessary for securing encrypted filesystems.
+
+       pam_mount  "understands"  SMB, NCP, and any type of filesystem that can
+       be mounted using the standard mount command. If someone has a  particu‐
+       lar  need for a different filesystem, feel free to ask me to include it
+       and send me patches.
+
+       If you intend to use pam_mount to  protect  volumes  on  your  computer
+       using  an  encrypted filesystem system, please know that there are many
+       other issues you need to consider in order to protect  your  data.  For
+       example,  you  probably  want to disable or encrypt your swap partition
+       (the cryptoswap can help you do this). Do not assume a system is secure
+       without carefully considering potential threats.
+
+NASTY DETAILS
+       The   primary   configuration   file   for   the  pam_mount  module  is
+       pam_mount.conf. On most platforms this file  is  read  from  /etc/secu‐
+       rity/pam_mount.conf.  On OpenBSD pam_mount reads its configuration file
+       from /etc/pam_mount.conf.  pam_mount.conf contains many comments  docu‐
+       menting its use.
+
+       In  addition,  you  must include two entries in the system's applicable
+       /etc/pam.d/SERVICE config files, as the following example shows:
+
+                  auth     required  pam_securetty.so
+                  auth     required  pam_pwdb.so shadow nullok
+                  auth     required  pam_nologin.so
+              +++ auth     optional  pam_mount.so use_first_pass
+                  account  required  pam_pwdb.so
+                  password required  pam_cracklib.so
+                  password required  pam_pwdb.so shadow nullok use_authtok
+                  session  required  pam_pwdb.so
+                  session  optional  pam_console.so
+              +++ session  optional  pam_mount.so
+
+       If you use pam_ldap, pam_winbind, or any other authentication  services
+       that make use of PAM's sufficient keyword then model your configuration
+       on the following:
 
 
-== BUILDING ============================================================
+              account sufficient  pam_ldap.so
+              auth    required    pam_mount.so
+              auth    sufficient  pam_ldap.so use_first_pass
+              auth    required    pam_unix.so use_first_pass
+              session optional    pam_mount.so
 
-To build, cross your fingers and try...
+       This allows the following:
 
-    1. ./configure
-    2. make
-    3. make install
+       1.  pam_mount will prompt for a password and export it to the PAM  sys‐
+           tem.
 
-Read the "INSTALL" file for generic detailed information on installing
-this program.
+       2.  pam_ldap  will  use  the  password  from  the PAM system to try and
+           authenticate the user. If this succedes, the user will be authenti‐
+           cated. If it fails, pam_unix will try to authenticate.
 
-	
-== NASTY DETAILS =======================================================
-	
-The primary configuration file for the pam_mount module is
-pam_mount.conf. On most platforms this file is read from
-/etc/security/pam_mount.conf. On OpenBSD pam_mount reads its
-configuration file from /etc/pam_mount.conf. Pam_mount.conf contains
-many comments documenting its use.
+       3.  pam_unix  will  try  to authenticate the user if pam_ldap fails. If
+           pam_unix fails, then the authentication will be refused.
 
-In addition, you must include an entry in the system's applicable
-/etc/pam.d/SERVICE config files, as the following example shows:
+       If your volume has a different password than your system account,  then
+       encrypt  the  password to the volume you wish mounted using your system
+       password as the key and store  it  somewhere  on  your  system's  local
+       filesystem. pam_mount supports transparently decrypting this filesystem
+       key, as long as the cipher used is supported by openssl. Given:
 
-    auth     required  pam_securetty.so
-    auth     required  pam_pwdb.so shadow nullok
-    auth     required  pam_nologin.so
-+++ auth     optional  pam_mount.so use_first_pass
-    account  required  pam_pwdb.so
-    password required  pam_cracklib.so
-    password required  pam_pwdb.so shadow nullok use_authtok
-    session  required  pam_pwdb.so
-    session  optional  pam_console.so
-+++ session  optional  pam_mount.so
+       sk     system key, the key or password used to log into the system
 
-If you use pam_ldap, pam_winbind, or any other authentication services
-that make use of PAM's sufficient keyword then model your configuration
-on the following:
+       fsk    filesystem key, the key that allows you to  use  the  filesystem
+              you wish pam_mount to mount for you
 
-    ...
-    account sufficient  pam_ldap.so	
-    auth    required    pam_mount.so
-    auth    sufficient  pam_ldap.so use_first_pass
-    auth    required    pam_unix.so use_first_pass
-    session optional    pam_mount.so
-    ...
+       E and D
+              an openssl supported synchronous encryption/decryption algorithm
 
-This allows the following:
+       efsk   encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on
+              the local filesystem (ie: /home/user.key)
 
-  1. Pam_mount will prompt for a password and export it to the PAM system.
+       pam_mount  will read efsk from the local filesystem, perform fsk = D_sk
+       (efsk) and use fsk to mount the filesystem. If you change  your  system
+       password,  simply  regenerate efsk using efsk = E_sk (fsk). If you want
+       to mount this volume  by  hand,  use  something  like  openssl  enc  -d
+       -aes-256-ecb  -in  /home/user.key | mount -p0 /home/user. More informa‐
+       tion about this technique is included in pam_mount.conf.
 
-  2. Pam_ldap will use the password from the PAM system to try and
-     authenticate the user. If this succedes, the user will be
-     authenticated. If it fails, pam_unix will try to authenticate.
+       A script  named  mkehd  is  provided  with  pam_mount  to  help  create
+       encrypted  home  directories.  If  you  have  an entry for a user using
+       encrypted home directories in pam_mount.conf, mkehd will create  neces‐
+       sary filesystem images and possibly encrypted filesystem keys.
 
-  3. Pam_unix will try to authenticate the user if pam_ldap fails. If
-     pam_unix fails, then the authentication will be refused.
+       Individual  users  may define additional volumes to mount if allowed by
+       pam_mount.conf (usually ~/.pam_mount.conf). The volume keyword  is  the
+       only valid keyword in these per-user configuration files. If the luser‐
+       conf parameter is set in pam_mount.conf, allowing user-defined  volume,
+       then users may mount and unmount any volume they own at any mount point
+       they own. On some filesystem configurations this may be a security flaw
+       so  user-defined  volumes are not allowed by the example pam_mount.conf
+       distributed with pam_mount.
 
-If your volume has a different password than your system account, then
-encrypt the password to the volume you wish mounted using your system
-password as the key and store it somewhere on your system's local
-filesystem. Pam_mount supports transparently decrypting this filesystem
-key, as long as the cipher used is supported by openssl.  Given:
+       In general, you will leave all the first (general) parameters  as  pro‐
+       vided  by default. You only have to provide the user/volume list in the
+       end of the file, following the examples.
 
-sk
-    system key, the key or password used to log into the system
+       To ensure that your system and, possibly, the  remote  server  are  all
+       properly configured, you should try to mount all or some of the volumes
+       by  hand,  using  the  same  commands  and  mount  points  provided  in
+       pam_mount.conf.  This  will  save  you a lot of grief, since it is more
+       difficult to debug the mounting process via pam_mount.
 
-fsk
-    filesystem key, the key that allows you to use the filesystem you
-    wish pam_mount to mount for you
+       If you can mount the volumes by  hand  but  it  is  not  happening  via
+       pam_mount,  you may want to enable the "debug" option in pam_mount.conf
+       to see what is happening.
 
-E and D
-    an OpenSSL supported synchronous encryption/decryption algorithm
+       Verify if the user owns the mount point and has sufficient  permissions
+       over  that.  pam_mount  will  verify  this and will refuse to mount the
+       remote volume if the user does not own that directory.
 
-efsk
-    encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on
-    the local filesystem (i.e: /home/user.key)
+       If pam_mount is having trouble unmounting  volumes  upon  logging  out,
+       enable   the   debug   variable   and   check   the  lsof  variable  in
+       pam_mount.conf. This causes pam_mount to run lsof upon logging out  and
+       write lsof's output to the system's logs.
 
-Pam_mount will read efsk from the local filesystem, perform fsk = D_sk
-(efsk) and use fsk to mount the filesystem. If you change your system
-password, simply regenerate efsk using efsk = E_sk (fsk). If you want
-to mount this volume by hand, use something like `openssl enc -d
--aes-256-ecb -in /home/user.key | mount -p0 /home/user`. More
-information about this technique is included in pam_mount.conf.
+AUTHORS
+       W. Michael Petullo <mike@flyn.org>
 
-A script named mkehd is provided with pam_mount to help create
-encrypted home directories. If you have an entry for a user using
-encrypted home directories in pam_mount.conf, mkehd will create
-necessary filesystem images and possibly encrypted filesystem keys.
+       Jan Engelhardt <jengelh [at] gmx de> (current maintainer)
 
-Individual users may define additional volumes to mount if allowed by
-pam_mount.conf (usually ~/.pam_mount.conf). The volume keyword is the
-only valid keyword in these per-user configuration files. If the
-luserconf parameter is set in pam_mount.conf, allowing user-defined
-volume, then users may mount and unmount any volume they own at any
-mount point they own. On some filesystem configurations this may be a
-security flaw so user-defined volumes are not allowed by the example
-pam_mount.conf distributed with pam_mount.
 
-In general, you will leave all the first (general) parameters as
-provided by default. You only have to provide the user/volume list in
-the end of the file, following the examples.
 
-To ensure that your system and, possibly, the remote server are all
-properly configured, you should try to mount all or some of the volumes
-by hand, using the same commands and mount points provided in
-pam_mount.conf. This will save you a lot of grief, since it is more
-difficult to debug the mounting process via pam_mount.
-
-If you can mount the volumes by hand but it is not happening via
-pam_mount, you may want to enable the "debug" option in pam_mount.conf
-to see what is happening.
-
-Verify if the user owns the mount point and has sufficient permissions
-over that. pam_mount will verify this and will refuse to mount the
-remote volume if the user does not own that directory.
-
-If pam_mount is having trouble unmounting volumes upon logging out,
-enable the debug variable and check the lsof variable in
-pam_mount.conf. This causes pam_mount to run lsof upon logging out and
-write lsof's output to the system's logs.
-
+                                                                  pam_mount(8)
