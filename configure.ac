@@ -36,28 +36,30 @@ AC_SUBST(MICRO_VERSION)
 AC_SUBST(VER_INFO)
 
 AC_PROG_CC
+
+# GCC 4.x -fvisibility=hidden {
+FVISIBILITY=""
+AC_LANG_PUSH(C)
+saved_cflags="$CFLAGS"
+CFLAGS="$CFLAGS -fvisibility=hidden"
+AC_CACHE_CHECK([whether $CC supports -fvisibility=hidden], [ac_cv_gcc_fvis],
+    [AC_COMPILE_IFELSE([ ], [ac_cv_gcc_fvis=yes], [ac_cv_gcc_fvis=no])])
+CFLAGS="$saved_cflags"
+if test "$ac_cv_gcc_fvis" = yes; then
+    FVISIBILITY="-fvisibility=hidden"
+else
+    FVISIBILITY=""
+fi
+AC_SUBST(FVISIBILITY)
+AC_LANG_POP(C)
+# }
+
 AC_PROG_INSTALL
 AM_PROG_LIBTOOL
 AC_PROG_LN_S
 AM_PATH_GLIB_2_0(,,AC_MSG_ERROR(You are missing glib))
 
 AM_CONDITIONAL(FLYN, test "$FLYN")
-
-# GCC 4.x -fvisibility=hidden
-FVISIBILITY=""
-if test "$GCC" = yes; then
-#{
-    AC_LIBTOOL_COMPILER_OPTION(
-        [if $CC supports -fvisibility=hidden],
-        lt_cv_prog_compiler_fvisibility_hidden,
-        [-fvisibility=hidden],
-        [],
-        [FVISIBILITY="-fvisibility=hidden"],
-        [FVISIBILITY=""]
-    )
-#}
-fi
-AC_SUBST(FVISIBILITY)
 
 AC_CHECK_LIB(crypto, EVP_DecryptInit_ex) # RH 8.0's OpenSSL does not have?
 AC_CHECK_LIB(ssl, SSL_load_error_strings)
