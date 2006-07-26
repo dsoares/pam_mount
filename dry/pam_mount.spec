@@ -19,7 +19,7 @@ using the password just entered.
 pam_mount supports SMB, NCP, and any type of filesystem that can 
 be mounted using the standard mount command.
 
-## Remove the %debug_package line to compile under FedoraCore
+## Remove the debug_package line to compile under FedoraCore
 %debug_package
 %prep
 %setup
