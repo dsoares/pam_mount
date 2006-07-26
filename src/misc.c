@@ -282,8 +282,10 @@ void set_myuid(void *data) {
     const char *user = data;
 
     if(user == NULL) {
-        w4rn(PMPREFIX "setting uid to 0 (previous [e]uid: %d[%d])\n",
-             getuid(), geteuid());
+        w4rn(PMPREFIX "%s(pre): real uid/gid=%ld:%ld, "
+             "effective uid/gid=%ld:%ld\n", __FUNCTION__,
+             static_cast(long, getuid()), static_cast(long, getgid()),
+             static_cast(long, geteuid()), static_cast(long, getegid()));
         if(setuid(0) == -1) {
             l0g(PMPREFIX "error setting uid to 0\n");
             return;
@@ -296,23 +298,26 @@ void set_myuid(void *data) {
 #endif
     } else {
         // Set UID and GID to the user's one.
-        struct passwd *real_user;
+        const struct passwd *real_user;
         w4rn(PMPREFIX "setting uid to user %s\n", user);
         if((real_user = getpwnam(user)) == NULL) {
             l0g(PMPREFIX "could not get passwd entry for user %s\n", user);
             return;
         }
         if(setgid(real_user->pw_gid) == -1) {
-            l0g(PMPREFIX "could not set gid to %u\n", real_user->pw_gid);
+            l0g(PMPREFIX "could not set gid to %ld\n",
+                static_cast(long, real_user->pw_gid));
             return;
         }
         if(setuid(real_user->pw_uid) == -1) {
-            l0g(PMPREFIX "could not set uid to %u\n", real_user->pw_uid);
+            l0g(PMPREFIX "could not set uid to %ld\n",
+                static_cast(long, real_user->pw_uid));
             return;
         }
     }
-    w4rn(PMPREFIX "real user/group IDs are %d/%d, effective is %d/%d\n",
-      getuid(), getgid(), geteuid(), getegid());
+    w4rn(PMPREFIX "%s(post): real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
+         __FUNCTION__, static_cast(long, getuid()), static_cast(long, getgid()),
+         static_cast(long, geteuid()), static_cast(long, getegid()));
     return;
 }
 
