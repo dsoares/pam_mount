@@ -44,6 +44,9 @@ struct pam_args {
 /*
  *      PAM_MOUNT.C
  */
+#if defined(__GNUC__) && __GNUC__ < 4
+#    define Debug pmt_debug
+#endif
 extern int Debug;
 extern struct config Config;
 extern struct pam_args Args;

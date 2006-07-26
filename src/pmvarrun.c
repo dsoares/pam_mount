@@ -42,6 +42,7 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <pwd.h>
 #include "compiler.h"
 #include "misc.h"
+#include "pam_mount.h" // Debug workaround
 #include "private.h"
 
 // Definitions
