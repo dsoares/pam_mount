@@ -23,7 +23,6 @@ misc.h
 #define PMT_MISC_H 1
 
 #include <sys/types.h>
-#include <glib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,23 +37,16 @@ struct vol;
  */
 extern void add_to_argv(const char **, int * const, const char * const,
     struct fmt_ptrn *);
-extern gboolean config_valid(const struct config *);
+extern int config_valid(const struct config *);
 extern int exists(const char *);
 extern void l0g(const char *, ...);
 extern void log_argv(const char * const *);
-extern gboolean owns(const char *, const char *);
+extern int owns(const char *, const char *);
 extern char *relookup_user(const char *);
 extern void set_myuid(void *);
 extern long str_to_long(const char *);
-extern gboolean vol_valid(const struct vol *);
+extern int vol_valid(const struct vol *);
 extern void w4rn(const char *, ...);
-
-/*
- *      INLINE FUNCTIONS
- */
-static inline int pm_command_t_valid(const struct config *x) {
-    return TRUE;
-}
 
 #ifdef __cplusplus
 } // extern "C"

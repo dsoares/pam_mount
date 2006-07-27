@@ -27,7 +27,6 @@ misc.c
 #endif
 #include <sys/stat.h>
 #include <assert.h>
-#include <glib.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -43,15 +42,17 @@ misc.c
 #include "readconfig.h"
 
 // Functions
-static gboolean static_string_valid(const char *, const size_t);
+static int static_string_valid(const char *, const size_t);
 
 //-----------------------------------------------------------------------------
-/* ============================ l0g () ===================================== */
-/* INPUT: similar to printf; all args are valid strings != NULL
- * SIDE EFFECTS: format + args are logged and displayed */
-void l0g(const char *format, ...)
-{
-	/* Used to log issues that cause pam_mount to fail. */
+/*  l0g
+    @format:    printf(3)-style format specifier
+
+    Message is logged to syslog, and, if debugging is turned on, printed to
+    %stderr. Use this for critical messages or issues that cause(d) pam_mount
+    to fail.
+*/
+void l0g(const char *format, ...) {
 	va_list args;
 
 	assert(format != NULL);
@@ -61,52 +62,63 @@ void l0g(const char *format, ...)
             vfprintf(stderr, format, args);
 	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
 	va_end(args);
+        return;
 }
 
-/* ============================ w4rn () ==================================== */
-/* INPUT: similar to printf; all args are valid string != NULL
- * SIDE EFFECTS: format + args are logged and displayed iff debug == 1
- * NOTE: Used to log informational messages and issues that should not cause
- *       pam_mount to fail. */
+
+/*  w4rn
+    @format:    printf(3)-style format specifier
+
+    If debugging is turned on, the message is logged to syslog and %stderr.
+    Use this for debugging messages.
+*/
 void w4rn(const char *format, ...) {
-    va_list args;
+    va_list args, arg2;
 
     assert(format != NULL);
-
-    if(Debug == 0) return;
+    if(Debug == 0)
+        return;
 
     va_start(args, format);
+    va_copy(arg2, args);
     vfprintf(stderr, format, args);
+    vsyslog(LOG_AUTHPRIV | LOG_ERR, format, arg2);
     va_end(args);
-
-    va_start(args, format);
-    vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
-    va_end(args);
+    va_end(arg2);
     return;
 }
 
-/* ============================ exists () ================================== */
-/* INPUT: file, a file path
- * OUTPUT: 0 if file does not exist or 1 if file exists */
+
+/*  exists
+    @file:      file to check
+
+    Check if a file exists (if it can be stat()'ed) and return positive
+    non-zero if that was successful. Returns 0 for error. %errno will be set
+    in case of error.
+*/
 int exists(const char *file) {
     struct stat sb;
     assert(file != NULL);
     return stat(file, &sb) == 0;
 }
 
-/* ============================ owns () ==================================== */
-/* INPUT: user, a username; file, a file path
- * OUTPUT: FALSE if user does not own file or TRUE if user owns file */
-gboolean owns(const char *user, const char *file)
-{
+
+/*  owns
+    @user:      user to check for
+    @file:      file to check
+    
+    Checks whether @user owns @file. Returns positive non-zero if this is the
+    case, otherwise zero. If an error occurred, zero is returned and %errno
+    is set. (For the success case, %errno is undefined.)
+*/
+int owns(const char *user, const char *file) {
 	struct stat filestat;
 	struct passwd *userinfo;
 
 	assert(user != NULL);
 	assert(file != NULL);
 
-	userinfo = getpwnam(user);
-	if(userinfo == NULL) {
+	if((userinfo = getpwnam(user)) == NULL) {
 		l0g(PMPREFIX "user %s could not be translated to UID\n",
 		    user);
 		return FALSE;
@@ -117,19 +129,19 @@ gboolean owns(const char *user, const char *file)
 		return FALSE;
 	}
 
-    return (filestat.st_uid == userinfo->pw_uid && !S_ISLNK(filestat.st_mode))
-           ? TRUE : FALSE;
+    return filestat.st_uid == userinfo->pw_uid && !S_ISLNK(filestat.st_mode);
 }
 
-/* ============================ str_to_long () ============================= */
+
+/*  str_to_long
+    @n: string to analyze
+
+    Calls @strtol on @n using base 10 and makes sure there were no invalid
+    characters in @n. Returns the value, or %LONG_MAX in case of an
+    over-/underflow.
+    NOTE: This function is only referenced from pmvarrun.c.
+*/
 long str_to_long(const char *n) {
-/* INPUT: n, a string
- * SIDE EFFECT: errors are logged
- * OUTPUT: if error LONG_MAX or LONG_MIN else long value of n
- * NOTE:   this is needed because users own /var/run/pam_mount/<user> 
- *         and they could try something sneaky
- *         FIXME: the above NOTE may no longer be true
- */
 	long val;
 	char *endptr = NULL;
 	if(n == NULL) {
@@ -144,13 +156,14 @@ long str_to_long(const char *n) {
 	return val;
 }
 
+
 /*  static_string_valid
     @s:         string to analyze
     @len:       maximum length of string
 
     Verifies that there is a '\0' byte within the first @len bytes of @s.
 */
-static gboolean static_string_valid(const char *s, const size_t len) {
+static int static_string_valid(const char *s, const size_t len) {
 	size_t i;
 	if (s == NULL)
 		return FALSE;
@@ -161,8 +174,13 @@ static gboolean static_string_valid(const char *s, const size_t len) {
 	return FALSE;
 }
 
-/* ============================ vol_valid () ============================= */
-gboolean vol_valid(const struct vol *v) {
+
+/*  vol_valid
+    @v: volume to check
+
+    Verifies that the volume structure is consistent.
+*/
+int vol_valid(const struct vol *v) {
 	if (v == NULL)
 		return FALSE;
 	if (!(v->type >= 0 && v->type < COMMAND_MAX))
@@ -191,8 +209,13 @@ gboolean vol_valid(const struct vol *v) {
 	return TRUE;
 }
 
-/* ============================ config_valid () ========================== */
-gboolean config_valid(const struct config *c) {
+
+/*  config_valid
+    @c: config to check
+
+    Verifies that the configuration structure is consistent.
+*/
+int config_valid(const struct config *c) {
 	int i;
         if(c == NULL || c->user == NULL)
 		return FALSE;
@@ -212,12 +235,13 @@ gboolean config_valid(const struct config *c) {
 	return TRUE;
 }
 
-/* ============================ log_argv () ================================ */
+
+/*  log_argv
+    @argv:      argument vector
+
+    Log @argv using w4rn() when debugging is turned on.
+*/
 void log_argv(const char *const *argv) {
-/* PRE:  argv[0...n] point to valid strings != NULL
- *       argv[n + 1] is NULL
- * POST: argv[0...n] is logged in a nice manner
- */
 	/* FIXME: UGLY! */
 	int i;
 	char str[MAX_PAR + 1];
@@ -235,14 +259,22 @@ void log_argv(const char *const *argv) {
 			break;
 	}
 	w4rn(PMPREFIX "command: %s\n", str);
+        return;
 }
 
-/* ============================ add_to_argv () ============================= */
-/* POST: arg has been added to end of argv, which is NULL * terminated
- *       argc++
- * NOTE: this function exits on an error as an error means a buffer
- *       overflow would otherwise have occured
- */
+
+/*  add_to_argv
+    @argv:      argument vector to add to
+    @argc:      pointer to current argument count
+    @arg:       argument to add
+    @vinfo:
+
+    Expands @arg according to @vinfo and adds it to the @argv vector which is
+    (and will be) NULL-terminated. @argc is increased by one.
+
+    There is a compile-time limit imposed: there can not be more than MAX_PAR-1
+    elements in the @argv vector.
+*/
 void add_to_argv(const char **argv, int *const argc, const char *const arg,
  struct fmt_ptrn *vinfo)
 {
@@ -272,13 +304,26 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 
 	argv[*argc] = filled;
 	argv[++*argc] = NULL;
+        return;
 }
 
+
+/*  set_myuid
+    @data:      username
+
+    set_myuid() is called in the child process as a result of the spawn_ap0()
+    fork, before exec() will take place.
+
+    If @user is %NULL, the UID is changed to root. (In most cases, we are
+    already root, though.)
+
+    If @user is not %NULL, the UID of the current process is changed to
+    that of @user. Also, for FUSE daemons, we set the HOME and USER
+    environment variables. setsid() is called so that FUSE daemons (e.g.
+    sshfs) get a new session identifier and do not get killed by the
+    login program after PAM authentication is successful.
+*/
 void set_myuid(void *data) {
-    /* INPUT: user, the username or NULL to setuid(0)
-     * SIDE EFFECTS: sets process uid (and gid if user!=NULL)
-     * OUTPUT: -1 on error, 0 else
-     */
     const char *user = data;
 
     setsid();
@@ -323,6 +368,7 @@ void set_myuid(void *data) {
          static_cast(long, geteuid()), static_cast(long, getegid()));
     return;
 }
+
 
 /*  relookup_user
     @user:      The user to retrieve
