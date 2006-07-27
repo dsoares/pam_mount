@@ -63,9 +63,13 @@ int Debug = 0;
 struct config Config = {};
 struct pam_args Args = {};
 
-/* ============================ parse_pam_args () ========================== */
-/* INPUT: argc and argv, standard main()-type arguments
- * SIDE EFFECTS: gloabl args is initialized, based on argc and argv */
+//-----------------------------------------------------------------------------
+/*  parse_pam_args
+    @argv:      NULL-terminated argument vector
+    @argc:      number of elements in @argc
+
+    Global @Args is initialized, based on @argv.
+*/
 static void parse_pam_args(int argc, const char **argv) {
 	int i;
 
@@ -84,13 +88,17 @@ static void parse_pam_args(int argc, const char **argv) {
 		else
 			w4rn(PMPREFIX "bad pam_mount option\n");
 	}
+        return;
 }
 
-/*
-FUNCTION <clean_config>
-INPUT:   pamh; data; errcode
-ACTION:  Data from a struct config variable is freed.
-NOTES:   This is registered as a PAM callback function and called directly.
+
+/*  clean_config
+    @pamh:      PAM handle
+    @data:      custom data pointer
+    @err:
+
+    Free data from a struct config variable.
+    Note: This is registered as a PAM callback function and is called directly.
 */
 static void clean_config(pam_handle_t *pamh, void *data, int err) {
     w4rn(PMPREFIX "Clean global config (%d)\n", err);
@@ -98,29 +106,39 @@ static void clean_config(pam_handle_t *pamh, void *data, int err) {
     return;
 }
 
-/* ============================ clean_system_authtok () ==================== */
-/* INPUT: pamh; data; errcode
- * SIDE EFFECTS: if data does not point to NULL then it is zeroized and freed 
- * NOTE: this is registered as a PAM callback function and called directly */
+
+/*  clean_system_authtok
+    @pamh:      PAM handle
+    @data:      custom data pointer
+    @err:
+
+    Zero and free @data if it is not %NULL.
+    Note: This is registered as a PAM callback function and is called directly.
+
+    FIXME: Not binary-password safe.
+*/
 static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode) {
 	w4rn(PMPREFIX "clean system authtok (%d)\n", errcode);
-/* FIXME: not binary password safe */
-/* FIXME: valgrind does not like -- called previously?
+/*
 	if (data) {
 		memset(data, 0, strlen(data));
 		free(data);
 	}
 */
+    return;
 }
 
-/* ============================ converse () ================================ */
-/* INPUT: pamh; nargs; message, a prompt message
- * SIDE EFFECTS: resp points to PAM's (user's) response to message
- * OUTPUT: any PAM error code encountered or PAM_SUCCESS
- * NOTE:   adapted from pam_unix/support.c */
-static int
-converse(pam_handle_t * pamh, int nargs,
-	 const struct pam_message **message, struct pam_response **resp)
+
+/*  converse
+    @pamh:      PAM handle
+    @nargs:     number of messages
+    @message:   PAM message array
+    @resp:      user response array
+
+    Note: Adapted from pam_unix/support.c.
+*/
+static int converse(pam_handle_t *pamh, int nargs,
+ const struct pam_message **message, struct pam_response **resp)
 {
 	int retval;
 	struct pam_conv *conv;
@@ -151,12 +169,15 @@ converse(pam_handle_t * pamh, int nargs,
 	return retval;		/* propagate error status */
 }
 
-/* ============================ read_password () =========================== */
-/* INPUT: pamh; prompt1, a prompt message
- * SIDE EFFECTS: pass points to PAM's (user's) response to prompt1 (malloc'ed)
- * OUTPUT: any PAM error code encountered or PAM_SUCCESS
- * NOTE:   adapted from pam_unix/support.c (_unix_read_password)
- */
+
+/*  read_password
+    @pamh:      PAM handle
+    @prompt:    a prompt message
+    @pass:      space for entered password
+
+    Returns PAM error code or %PAM_SUCCESS.
+    Note: Adapted from pam_unix/support.c:_unix_read_password().
+*/
 static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
 	int retval;
 	struct pam_message msg;
@@ -180,14 +201,17 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
 	return retval;
 }
 
-/* ============================ pam_sm_authenticate () ===================== */
-/* INPUT: this function is called by PAM
- * SIDE EFFECTS: user's system password is added to PAM's global module data
- *               Pam_sm_open_session does the rest.
- * OUTPUT: PAM error code on error or PAM_SUCCESS
- * NOTE: this is here because many PAM implementations don't allow
- *       pam_sm_open_session access to user's system password.
- */
+
+/*  pam_sm_authenticat
+    @pamh:      PAM handle
+    @flags:     PAM flags
+    @argc:      number of elements in @argv
+    @argv:      NULL-terminated argument vector
+
+    Called by the PAM layer. The user's system password is added to PAM's
+    global module data. This is because pam_sm_open_session() does not allow
+    access to the user's password. Returns the PAM error code or %PAM_SUCCESS.
+*/
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
  int argc, const char **argv)
 {
@@ -258,16 +282,18 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	return ret;
 }
 
-/* ============================ modify_pm_count () ========================= */
-/* FIXME: use INPUT, SIDE EFFECTS and OUTPUT */
-/* FIXME: add PRE/POST assertions */
-/* POST:   amount is added to /var/run/pam_mount/<user>'s value
- *         if value == 0, then file is removed.
- * FN VAL: new value else -1 on error, errors are logged
- * NOTE:   code is modified version of pam_console.c's use_count
- * FIXME:  should this be replaced with utmp (man utmp) usage?
- *         Is utmp portable?  This function is nasty and MAY BE INSECURE.
- */
+
+/*  modify_pm_count
+    @config:
+    @user:
+    @operation: string specifying numerical increment
+
+    Calls out to the `pmvarrun` helper utility to adjust the mount reference
+    count in /var/run/pam_mount/@user for the specified user.
+    Returns the new reference count value on success, or -1 on error.
+
+    Note: Modified version of pam_console.c:use_count()
+*/
 static int modify_pm_count(struct config *config, char *user,
  char *operation)
 {
@@ -278,6 +304,10 @@ static int modify_pm_count(struct config *config, char *user,
 	const char *_argv[MAX_PAR + 1];
 	pid_t pid;
 	struct sigaction sact, oldsact;
+
+        assert(config_valid(config));
+        assert(user != NULL);
+        assert(operation != NULL);
 
 	/* avoid bomb on command exiting before count read */
 	sact.sa_handler = SIG_DFL;
@@ -327,15 +357,22 @@ static int modify_pm_count(struct config *config, char *user,
 _return:
 	sigaction(SIGPIPE, &oldsact, NULL);
 _nosigact_return:
+
+        assert(config_valid(config));
 	return fnval;
 }
 
-/* ============================ pam_sm_open_session () ===================== */
-/* INPUT: this function is called by PAM
- * SIDE EFFECTS: user's directories are mounted if pam_mount.conf says they
- *               should be or an error is logged
- * OUTPUT: PAM error code on error or PAM_SUCCESS
- */
+
+/*  pam_sm_open_session
+    @pamh:      PAM handle
+    @flags:     PAM flags
+    @argc:      number of elements in @argv
+    @argv:      NULL-terminated argument vector
+
+    Entrypoint from the PAM layer. Starts the wheels and eventually mounts the
+    user's directories according to pam_mount.conf. Returns the PAM error code
+    or %PAM_SUCCESS.
+*/
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
  int argc, const char **argv)
 {
@@ -451,25 +488,39 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	return ret;
 }
 
-/* ============================ pam_sm_chauthtok () ======================== */
-/* NOTE: placeholder function so PAM does not get mad */
+
+/*  pam_sm_chauthtok
+    @pamh:      PAM handle
+    @flags:     PAM flags
+    @argc:      number of elements in @argv
+    @argv:      NULL-terminated argument vector
+
+    This is a placeholder function so PAM does not get mad.
+*/
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
  int argc, const char **argv)
 {
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
 
-/* ============================ pam_sm_close_session () ==================== */
-/* INPUT: this function is called by PAM
- * SIDE EFFECTS: user's directories are unmounted if pam_mount.conf says they
- *               should be or an error is logged
- * OUTPUT: PAM error code on error or PAM_SUCCESS
- */
+
+/*  pam_sm_close_session
+    @pamh:      PAM handle
+    @flags:     PAM flags
+    @argc:      number of elements in @argv
+    @argv:      NULL-terminated argument vector
+
+    Entrypoint from the PAM layer. Stops all wheels and eventually unmounts the
+    user's directories. Returns the PAM error code or %PAM_SUCCESS.
+
+    FIXME: This function currently always returns %PAM_SUCCESS. Should it
+    return soemthing else when errors occur and all unmounts have been
+    attempted?
+*/
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
  int flags, int argc, const char **argv)
 {
 	int vol;
-	/* FIXME: this currently always returns PAM_SUCCESS should return something else when errors occur but only after all unmounts are attempted??? */
 	int ret = PAM_SUCCESS;
 	const char *pam_user = NULL;
 
@@ -513,15 +564,30 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	return ret;
 }
 
-/* ============================ pam_sm_setcred () ========================== */
-/* NOTE: placeholder function so PAM does not get mad */
+
+/*  pam_sm_setcred
+    @pamh:      PAM handle
+    @flags:     PAM flags
+    @argc:      number of elements in @argv
+    @argv:      NULL-terminated argument vector
+
+    This is a placeholder function so PAM does not get mad.
+*/
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_setcred(pam_handle_t *pamh, int flags,
  int argc, const char **argv)
 {
 	return PAM_SUCCESS;
 }
 
-/* ============================ pam_sm_acct_mgmt () ======================== */
+
+/*  pam_sm_acct_mgmt
+    @pamh:      PAM handle
+    @flags:     PAM flags
+    @argc:      number of elements in @argv
+    @argv:      NULL-terminated argument vector
+
+    This is a placeholder function so PAM does not get mad.
+*/
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
  int argc, const char **argv)
 {
@@ -542,3 +608,5 @@ EXPORT_SYMBOL struct pam_module _pam_mount_modstruct = {
 };
 
 #endif
+
+//=============================================================================

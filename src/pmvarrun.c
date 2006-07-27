@@ -63,28 +63,46 @@ static int open_and_lock(const char *, long);
 static void parse_args(const int, const char **, struct settings *);
 static long read_current_count(int, const char *);
 static void set_defaults(struct settings *);
-static void usage(int, const char *, const char *);
+static void usage(int, const char *);
 static int write_count(int, long, const char *);
 
 // Variables
 int Debug = 0;
-static const char *usage_pmvarrun = "pmvarrun -u user [-o number] [-d]";
 
-/* ============================ usage () ==================================== */
-static void usage(const int exitcode, const char *error, const char *more) {
-	fprintf(stderr, "%s\n", usage_pmvarrun);
-	if(error != NULL)
-		fprintf(stderr, "%s: %s.\n\n", error, more);
-	exit(exitcode);
+//-----------------------------------------------------------------------------
+/*  usage
+    @exitcode:  numeric value we will be exiting with
+    @error:     descriptive error string
+
+    Displays the help string and an optional extra error message.
+*/
+static void usage(const int exitcode, const char *error) {
+    fprintf(stderr, "Usage: pmvarrun -u USER [-o NUMBER] [-d]\n");
+    if(error != NULL)
+        fprintf(stderr, PREFIX ": %s\n\n", error);
+    exit(exitcode);
 }
 
-/* ============================ set_defaults () ============================= */
+
+/*  set_defaults
+    @settings:  pointer to settings structure
+
+    Uh, sets some defaults.
+*/
 static void set_defaults(struct settings *settings) {
-	*settings->user = '\0';
-	settings->operation = 1;
+    *settings->user     = '\0';
+    settings->operation = 1;
+    return;
 }
 
-/* ============================ parse_args () =============================== */
+
+/*  parse_args
+    @argc:      number of elements in @argv
+    @argv:      NULL-terminated argument vector
+    @settings:  pointer to settings structure
+
+    Parse options from @argv and put it into @settings.
+*/
 static void parse_args(int argc, const char **argv,
  struct settings *settings)
 {
@@ -115,10 +133,13 @@ static void parse_args(int argc, const char **argv,
 				  sizeof(settings->user));
 			break;
 		default:
-			usage(EXIT_FAILURE, NULL, NULL);
+			usage(EXIT_FAILURE, NULL);
+                        break;
 	    }
 	}
+    return;
 }
+
 
 /*  modify_pm_count
     @user:      user to poke on
@@ -176,7 +197,6 @@ static int modify_pm_count(const char *user, long amount) {
     return (ret < 0) ? ret : val + amount;
 }
 
-/* ============================ main () ===================================== */
 int main(int argc, const char **argv) {
     struct settings settings;
     int ret;
@@ -185,7 +205,7 @@ int main(int argc, const char **argv) {
     parse_args(argc, argv, &settings);
 
     if(strlen(settings.user) == 0)
-        usage(EXIT_FAILURE, NULL, NULL);
+        usage(EXIT_FAILURE, NULL);
 
     ret = modify_pm_count(settings.user, settings.operation);
     if(ret == -ESTALE) {
@@ -235,6 +255,7 @@ static int create_var_run(void) {
 
     return 1;
 }
+
 
 /*  open_and_lock
     @filename:  file to open
@@ -303,6 +324,7 @@ static int open_and_lock(const char *filename, long uid) {
     return fd;
 }
 
+
 /*  read_current_count
     @fd:        file descriptor to read from
 
@@ -335,6 +357,7 @@ static long read_current_count(int fd, const char *filename) {
 
     return ret;
 }
+
 
 /*  write_count
     @fd:        file descriptor to write to
