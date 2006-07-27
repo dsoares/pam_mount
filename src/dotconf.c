@@ -51,6 +51,7 @@ dotconf.c
 #endif
 #include "compiler.h"
 #include "dotconf.h"
+#include "xstdlib.h"
 
 // some buffersize definitions
 #define CFG_BUFSIZE             4096    // max length of one line */
@@ -396,8 +397,7 @@ static char *dotconf_get_here_document(struct configfile *configfile,
 	 * allocate a buffer of filesize bytes; should be enough to
 	 * prevent buffer overflows
 	 */
-	here_doc = malloc(configfile->size);	/* allocate buffer memory */
-	memset(here_doc, 0, configfile->size);
+	here_doc = xzalloc(configfile->size);	/* allocate buffer memory */
 
 	here_string = 1;
 	limit_len = snprintf(here_limit, 9, "%s", delimit);

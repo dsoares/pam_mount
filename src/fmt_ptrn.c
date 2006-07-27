@@ -701,7 +701,7 @@ char *fmt_ptrn_gets(char *buf, size_t size, struct fmt_ptrn *x) {
 	}
 	if (buffer_len(&x->filled_buf) > 0) {
 		g_strlcpy(buf, x->filled_buf.data, size);
-		buffer_eat(x->filled_buf, strlen(buf));
+		buffer_eat(&x->filled_buf, strlen(buf));
 		fnval = buf;
 	} else {
 		fnval = NULL;

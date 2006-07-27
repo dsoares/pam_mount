@@ -37,9 +37,7 @@ int buffer_valid(const struct buffer *b) {
 	int i;
 	if (b == NULL)
 		return FALSE;
-	if(b->data == NULL && b->size > 0)
-		return FALSE;
-	if(b->data != NULL && b->size == 0)
+	if((b->data == NULL) ^ (b->size == 0))
 		return FALSE;
 	if(b->data != NULL) {
 		for (i = 0; i < b->size; i++) {
@@ -74,17 +72,16 @@ void buffer_clear(struct buffer *buf) {
 
     Removes the first @n characters off the beginning of the buffer.
 */
-void buffer_eat(struct buffer buf, size_t n) {
-    char *p_1, *p_2;
+void buffer_eat(struct buffer *buf, size_t n) {
+    size_t z;
 
-    assert(buffer_valid(&buf));
-
-    p_1 = buf.data;
-    if(n > 0)
-        for (p_2 = p_1 + n; p_2 <= p_1 + strlen(p_1); p_2++)
-	    *p_1++ = *p_2;
-
-    assert(buffer_valid(&buf));
+    assert(buffer_valid(buf));
+    z = strlen(buf->data);
+    if(n > z)
+        n = z;
+    memmove(buf->data, buf->data + n, n + 1); // +1 to copy the '\0' also
+    assert(buffer_valid(buf));
+    return;
 }
 
 /*  buffer_len
@@ -110,7 +107,8 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     assert(buffer_valid(dest));
     assert(src != NULL);
 
-    new_len = ((dest && dest->data) ? strlen(dest->data) : 0) + strlen(src);
+    new_len = strlen(src) + ((dest != NULL && dest->data != NULL) ?
+                            strlen(dest->data) : 0);
     if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
 	dest->data = xmalloc(dest->size);
@@ -121,6 +119,7 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     g_strlcat(dest->data, src, dest->size);
 
     assert(buffer_valid(dest));
+    return;
 }
 
 /*  realloc_n_ncat
@@ -140,7 +139,7 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
     assert(src != NULL);
 
     src_len = strlen(src);
-    new_len = ((dest && dest->data) ? strlen(dest->data) : 0) +
+    new_len = ((dest != NULL && dest->data != NULL) ? strlen(dest->data) : 0) +
               ((src_len < nc) ? src_len : nc);
 
     if(dest->data == NULL) {

@@ -32,7 +32,7 @@ pair.c
     Verifies that thep air structure is consistent.
 */
 int pair_valid(const struct pair *p) {
-    return (p == NULL || p->key == NULL || p->val == NULL) ? FALSE : TRUE;
+    return p != NULL && p->key != NULL && p->val != NULL;
 }
 
 /*  pair_init
@@ -61,9 +61,8 @@ void pair_destroy(struct pair *pair) {
         pair->destroy_k(pair->key);
     if(pair->destroy_v != NULL)
         pair->destroy_v(pair->val);
-
-    memset(pair, 0, sizeof(struct pair));
     free(pair);
+    return;
 }
 
 //=============================================================================

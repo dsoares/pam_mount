@@ -101,7 +101,6 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 
 	return 1;
 }
-#endif				/* HAVE_LIBCRYPTO */
 
 /*  decrypted_key
     @pt_fs_key:         filesystem key
@@ -125,7 +124,6 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
  const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
 {
-#ifdef HAVE_LIBCRYPTO
 	int ret = 1;
 	int segment_len;
 	unsigned char ct_fs_key[MAX_PAR];	/* encrypted filesystem key. */
@@ -204,8 +202,17 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
         assert(ret == 0 || *pt_fs_key_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	return ret;
-#else
-	l0g(PMPREFIX "encrypted filesystem key not supported: no openssl\n");
-	return 0;
-#endif				/* HAVE_LIBCRYPTO */
 }
+
+#else // HAVE_LIBCRYPTO
+
+int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
+ const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
+{
+    l0g(PMPREFIX "encrypted filesystem key not supported: no openssl\n");
+    return 0;
+}
+
+#endif // HAVE_LIBCRYPTO
+
+//=============================================================================
