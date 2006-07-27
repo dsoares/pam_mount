@@ -26,7 +26,7 @@ be mounted using the standard mount command.
 
 %build
 autoreconf -fi;
-%configure --disable-debug --libdir=/lib
+%configure --disable-debug --disable-static
 make;
 
 %install
