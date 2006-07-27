@@ -3,6 +3,7 @@
 #   DATE: 03 August 2002
 # 
 # Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
+# Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
 # All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -34,6 +35,15 @@ AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
 AC_SUBST(MICRO_VERSION)
 AC_SUBST(VER_INFO)
+
+AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],
+    [Path to the super sbin directory [[/sbin]]]),
+    [slibdir="$withval"], [slibdir="/lib"])
+AC_ARG_WITH([ssbindir], AS_HELP_STRING([--with-ssbindir=PATH],
+    [Path to the super lib directory [[/lib]]]),
+    [ssbindir="$withval"], [ssbindir="/sbin"])
+AC_SUBST(slibdir)
+AC_SUBST(ssbindir)
 
 AC_PROG_CC
 
@@ -75,7 +85,7 @@ fi
 case "$host" in
   *-*-linux*)
     # See also <configure-flags> in pam_mount.xml.
-    PAM_MODDIR="/\$(libdir)/security"
+    PAM_MODDIR="\$(slibdir)/security"
     ;;
   *-*-darwin*)
     PAM_MODDIR="/usr/lib/pam"
