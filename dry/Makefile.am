@@ -26,9 +26,9 @@ endif
 
 AUTOMAKE_OPTIONS = gnu
 
-man_MANS = pam_mount.8
+man_MANS = $(wildcard *.[1-9])
 
-EXTRA_DIST = pam_mount.spec pam_mount.8
+EXTRA_DIST = pam_mount.spec $(man_MANS)
 
 if FLYN
 # For local development use only.
