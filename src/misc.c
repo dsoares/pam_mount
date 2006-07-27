@@ -315,6 +315,8 @@ void set_myuid(void *data) {
                 static_cast(long, real_user->pw_uid));
             return;
         }
+        setenv("HOME", real_user->pw_dir, 1);
+        setenv("USER", real_user->pw_name, 1);
     }
     w4rn(PMPREFIX "%s(post): real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
          __FUNCTION__, static_cast(long, getuid()), static_cast(long, getgid()),
