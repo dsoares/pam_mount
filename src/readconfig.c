@@ -39,6 +39,7 @@ readconfig.c
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
+#include "xstdlib.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    include <fstab.h>
 #elif defined(__linux__)
@@ -644,7 +645,7 @@ static DOTCONF_CB(read_volume) {
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
 
-	VOL = g_realloc(VOL, sizeof(struct vol) * (VOLCOUNT + 1));
+	VOL = xrealloc(VOL, sizeof(struct vol) * (VOLCOUNT + 1));
         vpt = &VOL[VOLCOUNT];
 	memset(vpt, 0, sizeof(struct vol));
 
@@ -774,10 +775,10 @@ void freeconfig(struct config *config) {
 	   for (i = 0; i < config.volcount; i++)
 	   optlist_free(&config.volume[i].options); FIXME: May be NULL!!
 	 */
-        g_free(config->user);
+        free(config->user);
         for(i = 0; i < COMMAND_MAX; ++i) {
             for(j = 0; config->command[j][i] != NULL; ++j) {
-                g_free(config->command[j][i]);
+                free(config->command[j][i]);
                 config->command[j][i] = NULL;
             }
         }

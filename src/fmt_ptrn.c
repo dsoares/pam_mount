@@ -32,6 +32,7 @@ fmt_ptrn.c
 #include "modifiers.h"
 #include "fmt_ptrn.h"
 #include "pair.h"
+#include "xstdlib.h"
 
 // Definitions
 #define KEY_LEN         80
@@ -118,7 +119,7 @@ void enqueue_parse_errmsg(struct fmt_ptrn *x, const char *msg, ...) {
 	assert(fmt_ptrn_valid(x));
 	assert(msg != NULL);
 
-	err = g_new0(char, PARSE_ERR_LEN + 1);
+	err = xmalloc(PARSE_ERR_LEN + 1);
 	va_start(args, msg);
 	vsnprintf(err, PARSE_ERR_LEN, msg, args);
 	va_end(args);
@@ -282,8 +283,8 @@ static void _read_alternate(struct fmt_ptrn *x, const char **p,
 						     fmt_ptrn_parse_strerror
 						     (&y));
 			*p += (alt_end - *p);
-			g_free(alt);
-			g_free(filled_alt);
+			free(alt);
+			free(filled_alt);
 			fmt_ptrn_close(&y);
 		} else
 			enqueue_parse_errmsg(x, "%s: %ld: end of input",
@@ -594,7 +595,7 @@ static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
 			realloc_n_ncat(&x->filled_buf, pattern++, 1);
 		}
 	}
-	g_free(orig_ptr);
+	free(orig_ptr);
 
 	assert(fmt_ptrn_valid(x));
 
@@ -726,7 +727,7 @@ int fmt_ptrn_close(struct fmt_ptrn *x) {
 	assert(fmt_ptrn_valid(x));
 
 	while ((ptr = g_queue_pop_head(x->parse_errmsg)) != NULL)
-		g_free(ptr);
+		free(ptr);
 	g_tree_foreach(x->fillers, _free_tree_node, NULL);
 	buffer_clear(&x->raw_buf);
 	buffer_clear(&x->filled_buf);

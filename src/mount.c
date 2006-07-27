@@ -415,7 +415,7 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 	}
 	volume->created_mntpt = TRUE;
       _return:
-	g_free(parent);
+	free(parent);
 	return ret;
 }
 

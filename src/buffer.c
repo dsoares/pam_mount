@@ -22,8 +22,10 @@ buffer.c
 =============================================================================*/
 #include <assert.h>
 #include <glib.h>
+#include <stdlib.h>
 #include <string.h>
 #include "buffer.h"
+#include "xstdlib.h"
 
 /* ============================ buffer_valid () ========================= */
 gboolean buffer_valid(const struct buffer *b) {
@@ -48,7 +50,7 @@ void buffer_clear(struct buffer *buf) {
     assert(buffer_valid(buf));
 
     if(buf->data != NULL) {
-            g_free(buf->data);
+            free(buf->data);
  	    buf->data = NULL;
     }
     buf->size = 0;
@@ -88,10 +90,10 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     new_len = ((dest && dest->data) ? strlen(dest->data) : 0) + strlen(src);
     if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
-	dest->data = g_new0(char, dest->size);
+	dest->data = xmalloc(dest->size);
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
-	dest->data = g_realloc(dest->data, dest->size);
+	dest->data = xrealloc(dest->data, dest->size);
     }
     g_strlcat(dest->data, src, dest->size);
 
@@ -112,10 +114,10 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
 
     if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
-	dest->data = g_new0(char, dest->size);
+	dest->data = xmalloc(dest->size);
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
-	dest->data = g_realloc(dest->data, dest->size);
+	dest->data = xrealloc(dest->data, dest->size);
     }
     /* g_strlcat will not work because its nc is the size of dest */
     strncat(dest->data, src, nc);

@@ -29,6 +29,7 @@ optlist.c
 #include "optlist.h"
 #include "pair.h"
 #include "private.h"
+#include "xstdlib.h"
 
 // Functions
 static int _compare(gconstpointer, gconstpointer);
@@ -62,14 +63,14 @@ static int _parse_string_opt(const char *str, size_t len,
 		ret = 0;
 		goto _return;
 	}
-	pair = g_new0(struct pair, 1);
-	key = g_new0(char, delim - str + 1);
-	val = g_new0(char, len - (delim - str));	/* '=' is +1 */
+	pair = xmalloc(sizeof(struct pair));
+	key = xmalloc(delim - str + 1); // +1 for '='
+	val = xmalloc(len - (delim - str));
 	strncpy(key, str, delim - str);
 	key[delim - str] = '\0';
 	strncpy(val, delim + 1, len - (delim - str) - 1);
 	val[len - (delim - str) - 1] = '\0';
-	pair_init(pair, key, val, g_free, g_free);
+	pair_init(pair, key, val, free, free);
 	*optlist = g_list_append(*optlist, pair);
       _return:
 
@@ -100,13 +101,13 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
 	assert(optlist != NULL);
 
-	pair = g_new0(struct pair, 1);
-	key = g_new0(char, len + 1);
-	val = g_new0(char, 1);
+	pair = xmalloc(sizeof(struct pair));
+	key = xmalloc(len + 1);
+	val = xmalloc(1); // o_O waste
 	strncpy(key, str, len);
 	key[len] = '\0';
 	*val = '\0';
-	pair_init(pair, key, val, g_free, g_free);
+	pair_init(pair, key, val, free, free);
 	*optlist = g_list_append(*optlist, pair);
       _return:
 

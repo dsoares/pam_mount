@@ -54,7 +54,7 @@ void pair_destroy(struct pair *pair) {
         pair->destroy_v(pair->val);
 
     memset(pair, 0, sizeof(struct pair));
-    g_free(pair);
+    free(pair);
 }
 
 //=============================================================================

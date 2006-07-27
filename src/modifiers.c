@@ -29,6 +29,7 @@ modifiers.c
 #include "modifiers.h"
 #include "fmt_ptrn.h"
 #include "template.h"
+#include "xstdlib.h"
 
 // Definitions
 typedef int (apply_fn_t)(struct buffer *, struct fmt_ptrn *, char *);
@@ -103,7 +104,7 @@ static int _apply_delim(struct buffer *str, const char *start_cmnt,
     size_t len;
     if(str->size < sizeof(ptr)) {
         /* FIXME: use proper buffer interfaces */
-	str->data = g_realloc(str->data, 81);
+	str->data = xrealloc(str->data, 81);
 	str->size = sizeof(ptr);
     }
     strcpy(ptr, start_cmnt);
@@ -204,7 +205,7 @@ static int apply_before(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     /* FIXME: use proper buffer interface! */
     if (new_len + 1 > dest->size) {
 	dest->size = new_len + 1;
-	dest->data = g_realloc(dest->data, dest->size);
+	dest->data = xrealloc(dest->data, dest->size);
     }
     /* Shift dest over to make room for arg. */
     if (old_len > 0)
