@@ -23,7 +23,6 @@ buffer.h
 #define PMT_BUFFER_H 1
 
 #include <sys/types.h>
-#include <glib.h>
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -31,8 +30,8 @@ extern "C" {
 #endif
 
 struct buffer {
-    char *data;
-    size_t size;
+    char *data;         // '\0'-terminated string
+    size_t size;        // malloc()'ated length, not string length
 };
 
 /*
@@ -41,7 +40,7 @@ struct buffer {
 extern void buffer_clear(struct buffer *);
 extern void buffer_eat(struct buffer, size_t);
 extern size_t buffer_len(const struct buffer *);
-extern gboolean buffer_valid(const struct buffer *);
+extern int buffer_valid(const struct buffer *);
 extern void realloc_n_cat(struct buffer *, const char *);
 extern void realloc_n_cpy(struct buffer *, const char *);
 extern void realloc_n_ncat(struct buffer *, const char *, size_t);

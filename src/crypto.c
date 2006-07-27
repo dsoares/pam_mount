@@ -49,21 +49,26 @@ static void sslerror(const char *);
 
 //-----------------------------------------------------------------------------
 #ifdef HAVE_LIBCRYPTO
-/* human readable SSL error message */
-static void sslerror(const char *msg)
-{
+/*  sslerror
+    @msg:       Prefix to display
+
+    Print the human-readable form of the current SSL error.
+*/
+static void sslerror(const char *msg) {
 	unsigned long err = ERR_get_error();
 	if(err != 0)
 		l0g(PMPREFIX "%s: %s", msg, ERR_error_string(err, NULL));
 }
 
-/* ============================ hash_authtok () ============================ */
-/* INPUT: fp, file containing encrypted stream; cipher; authtok, the key
- *        to unlock stream contained in fs
- * SIDE EFFECTS: hash, hash(authtok); iv, the initialization vector for fp;
- *               errors are logged
- * OUTPUT: if error 0 else 1
- */
+/*  hash_authtok
+    @fp:        stream containing encrypted stream
+    @cipher:    OpenSSL cipher struct
+    @authtok:   key to unlock stream
+    @hash:
+    @iv:        initialization vector for @fp
+
+    Returns zero on error or positive non-zero on success.
+*/
 static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
  const char *authtok, unsigned char *hash, unsigned char *iv)
 {
@@ -98,25 +103,28 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 }
 #endif				/* HAVE_LIBCRYPTO */
 
-/* ============================ decrypted_key () =========================== */
-/* INPUT: fs_key_path, the path to an encrypted file (efsk); fs_key_cipher,
- *        the cipher used to encrypt the file; authtok, the key to unlock the
- *        file at fs_key_path
- * SIDE EFFECTS: pt_fs_key points to the decrypted data from the file at
- *               fs_key_path (fsk); pt_fs_key_len is the length of pt_fs_key;
- *               errors are logged
- * OUTPUT: if error 0 else 1
- * NOTE: pt_fs_key must point to a memory block large enough to hold fsk
- *       (MAX_PAR + EVP_MAX_BLOCK_LENGTH -- length of ct_fs_key + one block)
- *       efsk = encrypted filesystem key (stored in filesystem)
- *       fsk = filesystem key (D(efsk))
- *       pt_fs_key will contain binary data; don't use strlen, strcpy, etc.
- *       pt_fs_key may contain trailing garbage; use pt_fs_key_len
- */
+/*  decrypted_key
+    @pt_fs_key:         filesystem key
+    @pt_fs_key_len:     filesystem key length
+    @fs_key_path:       path to an encrypted file (EFSK)
+    @fs_key_cipher:     the cipher used to encrypt the file
+    @authtok:           key to unlock the file at @fs_key_path
+
+    Returns zero on error or positive non-zero on success.
+
+    NOTES:
+     *  @pt_fs_key must point to a memory block large enough to hold fsk
+        (MAX_PAR + EVP_MAX_BLOCK_LENGTH -- length of @ct_fs_key + one block)
+     *  efsk = encrypted filesystem key (stored in filesystem)
+     *  fsk = filesystem key (D(efsk))
+     *  @pt_fs_key will contain binary data; do not use strlen(), strcpy(), etc.
+     *  @pt_fs_key may contain trailing garbage; use @pt_fs_key_len
+
+    FIXME: this function may need to be broken up and made more readable.
+*/
 int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
  const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
 {
-/* FIXME: this function may need to be broken up and made more readable */
 #ifdef HAVE_LIBCRYPTO
 	int ret = 1;
 	int segment_len;

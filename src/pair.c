@@ -25,20 +25,29 @@ pair.c
 #include <glib.h>
 #include "pair.h"
 
-/* ========================== pair_valid () =============================== */
-gboolean pair_valid(const struct pair *p) {
+//-----------------------------------------------------------------------------
+/*  pair_valid
+    @p: pair to analyze
+
+    Verifies that thep air structure is consistent.
+*/
+int pair_valid(const struct pair *p) {
     return (p == NULL || p->key == NULL || p->val == NULL) ? FALSE : TRUE;
 }
 
-
-/* ========================== pair_init () ================================== */
+/*  pair_init
+    @p: pair structure to initialize
+ 
+    Fills @p with with @key, @val and the @destroy_k and @destroy_v functions.
+*/
 void pair_init(struct pair *pair, void *key, void *val,
-	       void (*destroy_k)(void *), void (*destroy_v)(void *))
+ void (*destroy_k)(void *), void (*destroy_v)(void *))
 {
     pair->key = key;
     pair->val = val;
     pair->destroy_k = destroy_k;
     pair->destroy_v = destroy_v;
+    return;
 }
 
 /*  pair_destroy

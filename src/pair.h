@@ -22,8 +22,6 @@ pair.h
 #ifndef PMT_PAIR_H
 #define PMT_PAIR_H 1
 
-#include <glib.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,7 +39,7 @@ struct pair {
 extern void pair_destroy(struct pair *);
 extern void pair_init(struct pair *, void *, void *,
     void (*)(void *), void (*)(void *));
-extern gboolean pair_valid(const struct pair *);
+extern int pair_valid(const struct pair *);
 
 #ifdef __cplusplus
 } // extern "C"

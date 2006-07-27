@@ -27,8 +27,13 @@ buffer.c
 #include "buffer.h"
 #include "xstdlib.h"
 
-/* ============================ buffer_valid () ========================= */
-gboolean buffer_valid(const struct buffer *b) {
+//-----------------------------------------------------------------------------
+/*  buffer_valid
+    @b: buffer to check
+
+    Verifies that the buffer structure is consistent.
+*/
+int buffer_valid(const struct buffer *b) {
 	int i;
 	if (b == NULL)
 		return FALSE;
@@ -45,7 +50,11 @@ gboolean buffer_valid(const struct buffer *b) {
 	return TRUE;
 }
 
-/* ============================ buffer_clear () ============================ */
+/*  buffer_clear
+    @b: buffer to clear
+
+    Clears the contents of the buffer.
+*/
 void buffer_clear(struct buffer *buf) {
     assert(buffer_valid(buf));
 
@@ -56,11 +65,16 @@ void buffer_clear(struct buffer *buf) {
     buf->size = 0;
 
     assert(buffer_valid(buf));
+    return;
 }
 
-/* ============================ buffer_eat () ============================== */
+/*  buffer_eat
+    @buf:       buffer to edit
+    @n:         characters to consume
+
+    Removes the first @n characters off the beginning of the buffer.
+*/
 void buffer_eat(struct buffer buf, size_t n) {
-/* Eats n characters off the beginning of buffer. */
     char *p_1, *p_2;
 
     assert(buffer_valid(&buf));
@@ -73,14 +87,23 @@ void buffer_eat(struct buffer buf, size_t n) {
     assert(buffer_valid(&buf));
 }
 
-/* ============================ buffer_len () ============================== */
+/*  buffer_len
+    @b: buffer to analyze
+
+    Returns the string length of the buffer @b.
+*/
 size_t buffer_len(const struct buffer *buf) {
     assert(buffer_valid(buf));
-
     return (buf->data == NULL) ? 0 : strlen(buf->data);
 }
 
-/* ============================ realloc_n_cat () =========================== */
+/*  realloc_n_cat
+    @dest:      destination buffer
+    @src:       source string
+
+    Append @src to the buffer pointed to by @dest, necessarily reallocating
+    @dest's buffer.
+*/
 void realloc_n_cat(struct buffer *dest, const char *src) {
     size_t new_len;
 
@@ -100,9 +123,17 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     assert(buffer_valid(dest));
 }
 
-/* ============================ realloc_n_ncat () ========================= */
+/*  realloc_n_ncat
+    @dest:      destination buffer
+    @src:       source string
+    @nc:        maximum length of string
+
+    Append at most @nc characters from @src to the buffer pointed to by @dest,
+    necessarily reallocating @dest's buffer.
+
+    [MP] FIXME: this function is displaying memory corruption.
+*/
 void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
-/* FIXME: this function is displaying memory corruption */
     size_t src_len, new_len;
 
     assert(buffer_valid(dest));
@@ -119,15 +150,23 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
 	dest->size = new_len * 2 + 1;
 	dest->data = xrealloc(dest->data, dest->size);
     }
-    /* g_strlcat will not work because its nc is the size of dest */
+
+    /* g_strlcat() will not work because there is no way to pass @nc.
+    HX_strlncat(dest->data, src, dest->size, nc) would be the ideal solution. */
     strncat(dest->data, src, nc);
-    // g_strlcat(dest->data, src, dest->size); // voilà
     dest->data[dest->size - 1] = '\0';
 
     assert(buffer_valid(dest));
+    return;
 }
 
-/* ============================ realloc_n_cpy () =========================== */
+/*  realloc_n_cpy
+    @dest:      destination buffer
+    @src:       source string
+
+    Copies @src to the buffer pointed to by @dest, necessarily reallocating
+    @dest's buffer.
+*/
 void realloc_n_cpy(struct buffer *dest, const char *src) {
     assert(buffer_valid(dest));
     assert(src != NULL);
@@ -137,4 +176,7 @@ void realloc_n_cpy(struct buffer *dest, const char *src) {
     realloc_n_cat(dest, src);
 
     assert(buffer_valid(dest));
+    return;
 }
+
+//=============================================================================
