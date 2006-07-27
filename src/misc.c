@@ -161,8 +161,8 @@ static gboolean static_string_valid(const char *s, const size_t len) {
 	return FALSE;
 }
 
-/* ============================ vol_t_valid () ============================= */
-gboolean vol_t_valid(const struct vol *v) {
+/* ============================ vol_valid () ============================= */
+gboolean vol_valid(const struct vol *v) {
 	if (v == NULL)
 		return FALSE;
 	if (!(v->type >= 0 && v->type < COMMAND_MAX))
@@ -191,8 +191,8 @@ gboolean vol_t_valid(const struct vol *v) {
 	return TRUE;
 }
 
-/* ============================ config_t_valid () ========================== */
-gboolean config_t_valid(const struct config *c) {
+/* ============================ config_valid () ========================== */
+gboolean config_valid(const struct config *c) {
 	int i;
         if(c == NULL || c->user == NULL)
 		return FALSE;
@@ -207,7 +207,7 @@ gboolean config_t_valid(const struct config *c) {
 	/* optlist_t *options_allow; */
 	/* optlist_t *options_deny; */
 	for(i = 0; i < c->volcount; ++i)
-                if(!vol_t_valid(c->volume))
+                if(!vol_valid(c->volume))
 			return FALSE;
 	return TRUE;
 }

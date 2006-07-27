@@ -25,8 +25,8 @@ buffer.c
 #include <string.h>
 #include "buffer.h"
 
-/* ============================ buffer_t_valid () ========================= */
-gboolean buffer_t_valid(const struct buffer *b) {
+/* ============================ buffer_valid () ========================= */
+gboolean buffer_valid(const struct buffer *b) {
 	int i;
 	if (b == NULL)
 		return FALSE;
@@ -45,7 +45,7 @@ gboolean buffer_t_valid(const struct buffer *b) {
 
 /* ============================ buffer_clear () ============================ */
 void buffer_clear(struct buffer *buf) {
-    assert(buffer_t_valid(buf));
+    assert(buffer_valid(buf));
 
     if(buf->data != NULL) {
             g_free(buf->data);
@@ -53,7 +53,7 @@ void buffer_clear(struct buffer *buf) {
     }
     buf->size = 0;
 
-    assert(buffer_t_valid(buf));
+    assert(buffer_valid(buf));
 }
 
 /* ============================ buffer_eat () ============================== */
@@ -61,19 +61,19 @@ void buffer_eat(struct buffer buf, size_t n) {
 /* Eats n characters off the beginning of buffer. */
     char *p_1, *p_2;
 
-    assert(buffer_t_valid(&buf));
+    assert(buffer_valid(&buf));
 
     p_1 = buf.data;
     if(n > 0)
         for (p_2 = p_1 + n; p_2 <= p_1 + strlen(p_1); p_2++)
 	    *p_1++ = *p_2;
 
-    assert(buffer_t_valid(&buf));
+    assert(buffer_valid(&buf));
 }
 
 /* ============================ buffer_len () ============================== */
 size_t buffer_len(const struct buffer *buf) {
-    assert(buffer_t_valid(buf));
+    assert(buffer_valid(buf));
 
     return (buf->data == NULL) ? 0 : strlen(buf->data);
 }
@@ -82,7 +82,7 @@ size_t buffer_len(const struct buffer *buf) {
 void realloc_n_cat(struct buffer *dest, const char *src) {
     size_t new_len;
 
-    assert(buffer_t_valid(dest));
+    assert(buffer_valid(dest));
     assert(src != NULL);
 
     new_len = ((dest && dest->data) ? strlen(dest->data) : 0) + strlen(src);
@@ -95,7 +95,7 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     }
     g_strlcat(dest->data, src, dest->size);
 
-    assert(buffer_t_valid(dest));
+    assert(buffer_valid(dest));
 }
 
 /* ============================ realloc_n_ncat () ========================= */
@@ -103,7 +103,7 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
 /* FIXME: this function is displaying memory corruption */
     size_t src_len, new_len;
 
-    assert(buffer_t_valid(dest));
+    assert(buffer_valid(dest));
     assert(src != NULL);
 
     src_len = strlen(src);
@@ -122,17 +122,17 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
     // g_strlcat(dest->data, src, dest->size); // voilà
     dest->data[dest->size - 1] = '\0';
 
-    assert(buffer_t_valid(dest));
+    assert(buffer_valid(dest));
 }
 
 /* ============================ realloc_n_cpy () =========================== */
 void realloc_n_cpy(struct buffer *dest, const char *src) {
-    assert(buffer_t_valid(dest));
+    assert(buffer_valid(dest));
     assert(src != NULL);
 
     if(dest->data != NULL)
 	*dest->data = '\0';
     realloc_n_cat(dest, src);
 
-    assert(buffer_t_valid(dest));
+    assert(buffer_valid(dest));
 }

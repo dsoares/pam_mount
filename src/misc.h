@@ -38,7 +38,7 @@ struct vol;
  */
 extern void add_to_argv(const char **, int * const, const char * const,
     struct fmt_ptrn *);
-extern gboolean config_t_valid(const struct config *);
+extern gboolean config_valid(const struct config *);
 extern int exists(const char *);
 extern void l0g(const char *, ...);
 extern void log_argv(const char * const *);
@@ -46,7 +46,7 @@ extern gboolean owns(const char *, const char *);
 extern char *relookup_user(const char *);
 extern void set_myuid(void *);
 extern long str_to_long(const char *);
-extern gboolean vol_t_valid(const struct vol *);
+extern gboolean vol_valid(const struct vol *);
 extern void w4rn(const char *, ...);
 
 /*

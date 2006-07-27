@@ -159,7 +159,7 @@ static int already_mounted(const struct config *const config,
     FILE *mtab;
     struct vol *vpt;
  
-    assert(config_t_valid(config));
+    assert(config_valid(config));
     vpt = &config->volume[vol];
     vol_to_dev(dev, sizeof(dev), vpt);
 
@@ -219,7 +219,7 @@ static int already_mounted(const struct config *const config,
     pid_t pid;
     FILE *fp;
 
-    assert(config_t_valid(config));
+    assert(config_valid(config));
     vpt = &config->volume[vol];
     vol_to_dev(dev, sizeof(dev), vpt);
 
@@ -384,7 +384,7 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 	struct passwd *passwd_ent;
 	char dcopy[PATH_MAX + 1], *parent;
 
-	assert(vol_t_valid(volume));
+	assert(vol_valid(volume));
 	assert(d != NULL);
 
 	w4rn(PMPREFIX "creating mount point %s\n", d);
@@ -436,7 +436,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
         const struct vol *vpt;
         int type;
 
-	assert(config_t_valid(config));
+	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
 
@@ -542,7 +542,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
         const char *cipher, *keybits;
         const struct vol *vpt;
 
-	assert(config_t_valid(config));
+	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 	/* password_len is unsigned */
@@ -606,7 +606,7 @@ static int do_unlosetup(const struct config *config, struct fmt_ptrn *vinfo) {
 	const char *_argv[MAX_PAR + 1];
 	int i, child_exit, _argc = 0;
 
-	assert(config_t_valid(config));
+	assert(config_valid(config));
 	assert(vinfo != NULL);
 
 	if(config->command[0][UNLOSETUP] == NULL) {
@@ -649,7 +649,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
         const char *fsck_target;
         const struct vol *vpt;
 
-	assert(config_t_valid(config));
+	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 	assert(password_len >= 0
@@ -725,7 +725,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 	pid_t pid = -1;
         struct vol *vpt;
 
-	assert(config_t_valid(config));
+	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 
@@ -872,7 +872,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
         const struct vol *vpt;
         struct passwd *pe;
 
-	assert(config_t_valid(config));
+	assert(config_valid(config));
 
         vpt = &config->volume[vol];
 

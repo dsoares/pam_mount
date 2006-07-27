@@ -50,13 +50,13 @@ static gboolean _copy_fillers(gpointer, gpointer, gpointer);
 static void     _eat_alternate(struct fmt_ptrn *, const char **);
 static gboolean _fill_it(struct fmt_ptrn *, const char *);
 static int      _fmt_ptrn_copy_fillers(struct fmt_ptrn *, struct fmt_ptrn *);
-static gboolean _fmt_ptrn_t_valid(const struct fmt_ptrn *);
+static gboolean fmt_ptrn_valid(const struct fmt_ptrn *);
 static gboolean _free_tree_node(gpointer, gpointer, gpointer);
 static void     _handle_fmt_str(struct fmt_ptrn *, const char **);
 static gboolean _is_literal(struct fmt_ptrn *, const char *);
 static gboolean _lookup(const struct fmt_ptrn *, const char *, struct buffer *);
 static char *   _matching_paren(const char *);
-static inline gboolean _modifier_t_valid(const struct modifier *);
+static inline gboolean modifier_valid(const struct modifier *);
 static void     _read_alternate(struct fmt_ptrn *, const char **, struct buffer *);
 static void     _read_key(struct fmt_ptrn *, char *, const char **);
 static void     _read_literal(struct fmt_ptrn *, char *, struct buffer *);
@@ -67,18 +67,18 @@ static int      _stack_contains(const struct mystack, const char *);
 static inline void _stack_init(struct mystack *);
 static gboolean _stack_pop(struct mystack *, struct modifier *);
 static gboolean _stack_push(struct fmt_ptrn *, struct mystack *, const struct modifier *);
-static inline gboolean _stack_t_valid(const struct mystack *);
+static inline gboolean mystack_valid(const struct mystack *);
 
-/* ============================ _fmt_ptrn_t_valid () ======================= */
-static gboolean _fmt_ptrn_t_valid(const struct fmt_ptrn *x) {
+/* ============================ fmt_ptrn_valid () ======================= */
+static gboolean fmt_ptrn_valid(const struct fmt_ptrn *x) {
 	if (x == NULL)
 		return FALSE;
 	/* FIXME */
 	/* gzFile template_fp; */
 	/* char template_path[PATH_MAX + 1]; */
 	/* long line_num; */
-        if(!buffer_t_valid(&x->raw_buf) || !buffer_t_valid(&x->filled_buf) ||
-         !buffer_t_valid(&x->lookup_buf))
+        if(!buffer_valid(&x->raw_buf) || !buffer_valid(&x->filled_buf) ||
+         !buffer_valid(&x->lookup_buf))
 		return FALSE;
 	/* char errmsg[BUFSIZ + 1]; */
 	/* GQueue *parse_errmsg; */
@@ -88,7 +88,7 @@ static gboolean _fmt_ptrn_t_valid(const struct fmt_ptrn *x) {
 
 /* ============================ fmt_ptrn_parse_err () ====================== */
 gboolean fmt_ptrn_parse_err(const struct fmt_ptrn *x) {
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	return !g_queue_is_empty(x->parse_errmsg);
 }
 
@@ -97,14 +97,14 @@ char *fmt_ptrn_parse_strerror(struct fmt_ptrn *x) {
 	char *errmsg;
 	char *fnval;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	if((errmsg = g_queue_pop_tail(x->parse_errmsg)) == NULL)
 		fnval = g_strdup("no error"); // leak
 	else
 		fnval = errmsg; // g_queue_pop_tail: possible leak
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(fnval != NULL);
 
 	return fnval;
@@ -115,7 +115,7 @@ void enqueue_parse_errmsg(struct fmt_ptrn *x, const char *msg, ...) {
 	va_list args;
 	char *err;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(msg != NULL);
 
 	err = g_new0(char, PARSE_ERR_LEN + 1);
@@ -124,24 +124,24 @@ void enqueue_parse_errmsg(struct fmt_ptrn *x, const char *msg, ...) {
 	va_end(args);
 	g_queue_push_head(x->parse_errmsg, err);
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 }
 
-/* ============================ _modifier_t_valid () ======================= */
-static inline gboolean _modifier_t_valid(const struct modifier *m) {
+/* ============================ modifier_valid () ======================= */
+static inline gboolean modifier_valid(const struct modifier *m) {
 	/* FIXME */
 	return TRUE;
 }
 
-/* ============================ _stack_t_valid () ========================== */
-static inline gboolean _stack_t_valid(const struct mystack *s) {
+/* ============================ mystack_valid () ========================== */
+static inline gboolean mystack_valid(const struct mystack *s) {
     return (s == NULL && s->size != 0) ? FALSE : TRUE;
 }
 
 /* ============================ _stack_init () ============================= */
 static inline void _stack_init(struct mystack *s) {
 	s->size = 0;
-	assert(_stack_t_valid(s));
+	assert(mystack_valid(s));
 }
 
 /* ============================ _stack_push () ============================= */
@@ -150,9 +150,9 @@ static gboolean _stack_push(struct fmt_ptrn *x, struct mystack *s,
 {
 	gboolean fnval = FALSE;
 
-	assert(_fmt_ptrn_t_valid(x));
-	assert(_stack_t_valid(s));
-	assert(_modifier_t_valid(data));
+	assert(fmt_ptrn_valid(x));
+	assert(mystack_valid(s));
+	assert(modifier_valid(data));
 	if (s->size == STACK_MAX_ITEMS) {
 		enqueue_parse_errmsg(x, "%s: %ld: more than %d modifiers",
 				     x->template_path, x->line_num,
@@ -163,16 +163,16 @@ static gboolean _stack_push(struct fmt_ptrn *x, struct mystack *s,
 		fnval = TRUE;
 	}
 
-	assert(_fmt_ptrn_t_valid(x));
-	assert(_stack_t_valid(s));
+	assert(fmt_ptrn_valid(x));
+	assert(mystack_valid(s));
 	return fnval;
 }
 
 /* ============================ _stack_pop () ============================== */
 static gboolean _stack_pop(struct mystack *s, struct modifier *data) {
 	gboolean fnval = FALSE;
-	assert(_stack_t_valid(s));
-	assert(_modifier_t_valid(data));
+	assert(mystack_valid(s));
+	assert(modifier_valid(data));
 	if(s->size == 0)
 		fnval = FALSE;
 	else {
@@ -180,8 +180,8 @@ static gboolean _stack_pop(struct mystack *s, struct modifier *data) {
 		fnval = TRUE;
 	}
 
-	assert(_stack_t_valid(s));
-	assert(_modifier_t_valid(data));
+	assert(mystack_valid(s));
+	assert(modifier_valid(data));
 	return fnval;
 }
 
@@ -189,7 +189,7 @@ static gboolean _stack_pop(struct mystack *s, struct modifier *data) {
 static int _stack_contains(const struct mystack s, const char *n)
 {
 	int i;
-	assert(_stack_t_valid(&s));
+	assert(mystack_valid(&s));
 	for (i = 0; i < s.size; i++)
 		if (s.data[i].fn.id == n)
 			return 1;
@@ -198,13 +198,13 @@ static int _stack_contains(const struct mystack s, const char *n)
 
 /* ============================ fmt_ptrn_update_kv () ====================== */
 void fmt_ptrn_update_kv(struct fmt_ptrn *x, const char *key, const char *val) {
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(key != NULL);
 	assert(val != NULL);
 	/* FIXME: getting rid of the const is silly, but I didn't write g_tree_insert */
         // string not duplicated but freed? see above
 	g_tree_insert(x->fillers, const_cast(char *, key), const_cast(char *, val));
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 }
 
 /* ============================ _matching_paren () ========================= */
@@ -230,12 +230,12 @@ static char *_matching_paren(const char *str) {
 static gboolean _copy_fillers(gpointer key, gpointer val, gpointer data) {
 	assert(key != NULL);
 	assert(val != NULL);
-	assert(_fmt_ptrn_t_valid(data));
+	assert(fmt_ptrn_valid(data));
 
 	g_tree_insert(static_cast(struct fmt_ptrn *, data)->fillers,
 		      strdup(key), strdup(val));
 
-	assert(_fmt_ptrn_t_valid(data));
+	assert(fmt_ptrn_valid(data));
 
 	return FALSE;
 }
@@ -243,14 +243,14 @@ static gboolean _copy_fillers(gpointer key, gpointer val, gpointer data) {
 /* ============================ _fmt_ptrn_copy_fillers () ================== */
 static int _fmt_ptrn_copy_fillers(struct fmt_ptrn *x, struct fmt_ptrn *y) {
 /* Copies fillers from one fmt_ptrn to another. */
-	assert(_fmt_ptrn_t_valid(x));
-	assert(_fmt_ptrn_t_valid(y));
+	assert(fmt_ptrn_valid(x));
+	assert(fmt_ptrn_valid(y));
 
 	/* FIXME: tried using g_node_copy but that did not seem to work */
 	g_tree_foreach(y->fillers, _copy_fillers, x);
 
-	assert(_fmt_ptrn_t_valid(x));
-	assert(_fmt_ptrn_t_valid(y));
+	assert(fmt_ptrn_valid(x));
+	assert(fmt_ptrn_valid(y));
 
 	return 1;
 }
@@ -260,10 +260,10 @@ static void _read_alternate(struct fmt_ptrn *x, const char **p,
  struct buffer *buf)
 {
 	char *alt_end;
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 	assert(*p != NULL);
-	assert(buffer_t_valid(buf));
+	assert(buffer_valid(buf));
 	if(**p == '\0')		/* Already queued error, hopefully. */
 		return;
 	if (**p == ':') {
@@ -296,16 +296,16 @@ static void _read_alternate(struct fmt_ptrn *x, const char **p,
 		 */
 		enqueue_parse_errmsg(x, "%s: %ld: key has no value",
 				     x->template_path, x->line_num);
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 	assert(*p != NULL);
-	assert(buffer_t_valid(buf));
+	assert(buffer_valid(buf));
 }
 
 /* ============================ _eat_alternate () ========================== */
 static void _eat_alternate(struct fmt_ptrn *x, const char **pattern) {
 	char *alt_end;
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(pattern != NULL);
 	assert(*pattern != NULL);
 	if(**pattern == '\0' || **pattern != ':')
@@ -316,7 +316,7 @@ static void _eat_alternate(struct fmt_ptrn *x, const char **pattern) {
 	if(**pattern == '\0')
 		enqueue_parse_errmsg(x, "%s: %ld: end of input",
 				     x->template_path, x->line_num);
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(pattern != NULL);
 	assert(*pattern != NULL);
 }
@@ -328,10 +328,10 @@ static void _read_modifier_arg(struct fmt_ptrn *x, const char **pattern,
 	size_t arg_len;
 	char *end_quote, *end_paren;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(pattern != NULL);
 	assert(*pattern != NULL);
-	assert(_modifier_t_valid(i));
+	assert(modifier_valid(i));
 
 	end_quote = strchr(*pattern, '"');
 	end_paren = strchr(*pattern, ')');
@@ -356,10 +356,10 @@ static void _read_modifier_arg(struct fmt_ptrn *x, const char **pattern,
 		*pattern += arg_len + 2;	/* Add 2 for end quote and space. */
 	}
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(pattern != NULL);
 	assert(*pattern != NULL);
-	assert(_modifier_t_valid(i));
+	assert(modifier_valid(i));
 }
 
 /* ============================ _read_modifier () ========================== */
@@ -370,10 +370,10 @@ static gboolean _read_modifier(struct fmt_ptrn *x, const char **ptrn,
 	struct modifier m;
 	gboolean fnval = FALSE;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(ptrn != NULL);
 	assert(*ptrn != NULL);
-	assert(_stack_t_valid(modifier));
+	assert(mystack_valid(modifier));
 
 	while(mod_fn[i].id != NULL) {
 		if(strncmp(mod_fn[i].id, *ptrn, strlen(mod_fn[i].id)) == 0) {
@@ -392,10 +392,10 @@ static gboolean _read_modifier(struct fmt_ptrn *x, const char **ptrn,
 		i++;
 	}
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(ptrn != NULL);
 	assert(*ptrn != NULL);
-	assert(_stack_t_valid(modifier));
+	assert(mystack_valid(modifier));
 
 	return fnval;
 }
@@ -404,17 +404,17 @@ static gboolean _read_modifier(struct fmt_ptrn *x, const char **ptrn,
 static void _read_modifiers(struct fmt_ptrn *x, const char **ptrn,
  struct mystack *modifier)
 {
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(ptrn != NULL);
 	assert(*ptrn != NULL);
-	assert(_stack_t_valid(modifier));
+	assert(mystack_valid(modifier));
 
 	while(_read_modifier(x, ptrn, modifier)) /* noop */;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(ptrn != NULL);
 	assert(*ptrn != NULL);
-	assert(_stack_t_valid(modifier));
+	assert(mystack_valid(modifier));
 
 	return;
 }
@@ -423,7 +423,7 @@ static void _read_modifiers(struct fmt_ptrn *x, const char **ptrn,
 static void _read_key(struct fmt_ptrn *x, char *key, const char **p) {
 	int i;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(key != NULL);
 	assert(p != NULL);
 	assert(*p != NULL);
@@ -442,7 +442,7 @@ static void _read_key(struct fmt_ptrn *x, char *key, const char **p) {
 		enqueue_parse_errmsg(x, "%s: %ld: end of input",
 				     x->template_path, x->line_num);
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 	assert(*p != NULL);
 }
@@ -453,9 +453,9 @@ static void _apply_modifiers(struct fmt_ptrn *x, struct buffer *str,
 {
 	struct modifier m;
 
-	assert(_fmt_ptrn_t_valid(x));
-	assert(buffer_t_valid(str));
-	assert(_stack_t_valid(modifier));
+	assert(fmt_ptrn_valid(x));
+	assert(buffer_valid(str));
+	assert(mystack_valid(modifier));
 
 	if (buffer_len(str) > 0)	/* error should have been queued elsewhere */
             while(_stack_pop(modifier, &m))
@@ -463,9 +463,9 @@ static void _apply_modifiers(struct fmt_ptrn *x, struct buffer *str,
                     enqueue_parse_errmsg(x, "%s: %ld: error applying %s modifier to %s",
                       x->template_path, x->line_num, m.fn.id, str->data);
 
-	assert(_fmt_ptrn_t_valid(x));
-	assert(buffer_t_valid(str));
-	assert(_stack_t_valid(modifier));
+	assert(fmt_ptrn_valid(x));
+	assert(buffer_valid(str));
+	assert(mystack_valid(modifier));
 }
 
 /* ============================ _lookup () ================================= */
@@ -475,9 +475,9 @@ static gboolean _lookup(const struct fmt_ptrn *x, const char *key,
 	char *tmp;
 	gboolean fnval = FALSE;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(key != NULL);
-	assert(buffer_t_valid(value));
+	assert(buffer_valid(value));
 
 	tmp = g_tree_lookup(x->fillers, key);
 	if(tmp != NULL) {
@@ -489,7 +489,7 @@ static gboolean _lookup(const struct fmt_ptrn *x, const char *key,
 		fnval = FALSE;
 	}
 
-	assert(buffer_t_valid(value));
+	assert(buffer_valid(value));
 
 	return fnval;
 }
@@ -498,7 +498,7 @@ static gboolean _lookup(const struct fmt_ptrn *x, const char *key,
 static gboolean _is_literal(struct fmt_ptrn *x, const char *str) {
 	gboolean fnval = FALSE;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(str != NULL);
 
 	if (*str == '"') {
@@ -509,7 +509,7 @@ static gboolean _is_literal(struct fmt_ptrn *x, const char *str) {
 		fnval = TRUE;
 	}
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	return fnval;
 }
@@ -517,9 +517,9 @@ static gboolean _is_literal(struct fmt_ptrn *x, const char *str) {
 /* ============================ _read_literal () =========================== */
 /* FIXME: is this right?  it does not seem to look for closing '"' */
 static void _read_literal(struct fmt_ptrn *x, char *str, struct buffer *buf) {
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(str != NULL);
-	assert(buffer_t_valid(buf));
+	assert(buffer_valid(buf));
 
 	str++;
 	str[strlen(str) - 1] = '\0';
@@ -530,8 +530,8 @@ static void _read_literal(struct fmt_ptrn *x, char *str, struct buffer *buf) {
 					     x->template_path,
 					     x->line_num);
 
-	assert(_fmt_ptrn_t_valid(x));
-	assert(buffer_t_valid(buf));
+	assert(fmt_ptrn_valid(x));
+	assert(buffer_valid(buf));
 }
 
 /* ============================ _handle_fmt_str () ========================= */
@@ -540,7 +540,7 @@ static void _handle_fmt_str(struct fmt_ptrn *x, const char **p) {
 	struct mystack modifier;
 	char key[KEY_LEN + 1];
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 	assert(*p != NULL);
 
@@ -566,7 +566,7 @@ static void _handle_fmt_str(struct fmt_ptrn *x, const char **p) {
 	if(**p != '\0')
 		++*p; /* Skip ')'. */
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 	assert(*p != NULL);
 }
@@ -577,7 +577,7 @@ static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
         char *orig_ptr;
 	gboolean fnval = TRUE;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 
 	pattern = orig_ptr = g_strdup(p);
@@ -596,7 +596,7 @@ static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
 	}
 	g_free(orig_ptr);
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	return fnval;
 }
@@ -605,7 +605,7 @@ static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
 char *fmt_ptrn_filled(struct fmt_ptrn *x, const char *p) {
 	char *fnval = NULL;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 
 	buffer_clear(&x->filled_buf);
@@ -615,7 +615,7 @@ char *fmt_ptrn_filled(struct fmt_ptrn *x, const char *p) {
 		/* FIXME: what if len == 0? protected by assert, but... */
 		fnval = g_strdup(x->filled_buf.data);
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 	/* FIXME: assert(fnval != NULL); WHY DID I THINK THIS WAS NEEDED? */
 
 	return fnval;
@@ -648,7 +648,7 @@ int fmt_ptrn_init(struct fmt_ptrn *x) {
         buffer_init(&x->lookup_buf);
 	g_strlcpy(x->template_path, "string", sizeof(x->template_path));
 	
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	return 1;
 }
@@ -659,7 +659,7 @@ gboolean fmt_ptrn_open(const char *path, struct fmt_ptrn *x) {
 	gboolean fnval = TRUE;
 
 	assert(path != NULL);
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	if((in_file = gzopen(path, "rb")) == NULL) {
 		fnval = FALSE;
@@ -672,7 +672,7 @@ gboolean fmt_ptrn_open(const char *path, struct fmt_ptrn *x) {
 	x->template_fp = in_file;	/* init sets this to NULL. */
 	strcpy(x->template_path, path);	/* init sets this to "string". */
 _return:
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	return fnval;
 }
@@ -682,7 +682,7 @@ char *fmt_ptrn_gets(char *buf, size_t size, struct fmt_ptrn *x) {
 	char *fnval = NULL;
 
 	assert(buf != NULL);
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	if (buffer_len(&x->filled_buf) == 0) {
 		/* FIXME: potentially, a buffer could be filled with only 
@@ -707,7 +707,7 @@ char *fmt_ptrn_gets(char *buf, size_t size, struct fmt_ptrn *x) {
 		goto _return;
 	}
 _return:
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	return fnval;
 }
@@ -723,7 +723,7 @@ static gboolean _free_tree_node(gpointer key, gpointer val, gpointer data) {
 int fmt_ptrn_close(struct fmt_ptrn *x) {
 	gpointer ptr;
 
-	assert(_fmt_ptrn_t_valid(x));
+	assert(fmt_ptrn_valid(x));
 
 	while ((ptr = g_queue_pop_head(x->parse_errmsg)) != NULL)
 		g_free(ptr);

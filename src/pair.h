@@ -41,7 +41,7 @@ struct pair {
 extern void pair_destroy(struct pair *);
 extern void pair_init(struct pair *, void *, void *,
     void (*)(void *), void (*)(void *));
-extern gboolean pair_t_valid(const struct pair *);
+extern gboolean pair_valid(const struct pair *);
 
 #ifdef __cplusplus
 } // extern "C"

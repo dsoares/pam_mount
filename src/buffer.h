@@ -41,7 +41,7 @@ struct buffer {
 extern void buffer_clear(struct buffer *);
 extern void buffer_eat(struct buffer, size_t);
 extern size_t buffer_len(const struct buffer *);
-extern gboolean buffer_t_valid(const struct buffer *);
+extern gboolean buffer_valid(const struct buffer *);
 extern void realloc_n_cat(struct buffer *, const char *);
 extern void realloc_n_cpy(struct buffer *, const char *);
 extern void realloc_n_ncat(struct buffer *, const char *, size_t);

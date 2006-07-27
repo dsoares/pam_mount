@@ -25,8 +25,8 @@ pair.c
 #include <glib.h>
 #include "pair.h"
 
-/* ========================== pair_t_valid () =============================== */
-gboolean pair_t_valid(const struct pair *p) {
+/* ========================== pair_valid () =============================== */
+gboolean pair_valid(const struct pair *p) {
     return (p == NULL || p->key == NULL || p->val == NULL) ? FALSE : TRUE;
 }
 
