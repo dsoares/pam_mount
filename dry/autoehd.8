@@ -1,8 +1,11 @@
 .TH AUTOEHD 8 "14 April 2003"
 .SH NAME
-autoehd - mount the EHD of a user that is defined in pam_mount.conf
+autoehd - mount the encrypted home directory of a user
 .SH SYNOPSIS
 \fBautoehd\fP [\fIuser\fP] [\fIoptions\fP]...
+.SH DESCRIPTION
+Mounts the encrypted home directory defined in \fBpam_mount.conf\fP for the
+given user.
 .SH OPTIONS
 .TP
 \fB\-h\fP,\fB\-?\fP
