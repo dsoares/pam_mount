@@ -466,7 +466,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 	 * util-linux will have native dm_crypt support some day */
 	if(vpt->type == CRYPTMOUNT) {
 		_argc = 0;
-		add_to_argv(_argv, &_argc, "/usr/bin/umount.crypt", vinfo);
+		add_to_argv(_argv, &_argc, "/sbin/umount.crypt", vinfo);
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
 	}
 	log_argv(_argv);
