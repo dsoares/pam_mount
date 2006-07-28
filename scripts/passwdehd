@@ -30,7 +30,7 @@ USAGE="[OPTION]...
 
 while :; do
 	case "$1" in
-		-h | "-?" )	
+		-h | "-?" )
 			echo -e "usage: ${0##*/} $USAGE" >&2;
 			exit 1 ;;
 		-?* )

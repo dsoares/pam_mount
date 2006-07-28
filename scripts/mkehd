@@ -43,7 +43,7 @@ USAGE="[OPTION]...
 
 while :; do
 	case "$1" in
-		-h | "-?" )	
+		-h | "-?" )
 			echo -e usage: ${0##*/} "$USAGE" >&2
 			exit 1 ;;
 		-c )
@@ -80,7 +80,7 @@ fi
 
 volcount=0
 # if no image filename is specified then we grab all out of pam_mount.conf
-if [ -z "${FILENAME[0]}" ]; then 
+if [ -z "${FILENAME[0]}" ]; then
 	while read LINE; do
 		if echo "$LINE" | grep -q "^volume $_USER "; then
 			FILENAME[$volcount]=`echo "$LINE" | awk '{ print $5 }'`;
@@ -126,8 +126,8 @@ for((a=5; volcount >= 0; --volcount)); do
 		fi
 		echo "Creating filesystem image using /dev/urandom (may take a LONG time)..."
 		dd if=/dev/urandom of="${FILENAME[$volcount]}" bs=1M count="$SIZE" >/dev/null;
-		# Use a named pipe because env. vars. are viewable by all 
-		# and random string is already being piped into openssl's 
+		# Use a named pipe because env. vars. are viewable by all
+		# and random string is already being piped into openssl's
 		# stdin
 		SYS_PASS_PIPE=`mktemp -u /tmp/mkehd.XXXXXX`
 		mkfifo -m 0600 "$SYS_PASS_PIPE";

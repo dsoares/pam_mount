@@ -222,7 +222,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
 	assert(pamh != NULL);
 
-	/* FIXME: this is called again in pam_sm_open_session.  this is because 
+	/* FIXME: this is called again in pam_sm_open_session.  this is because
          * pam_sm_authenticate is never called when root su's to another user.
 	 */
 	initconfig(&Config);
@@ -230,7 +230,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	/* needed because gdm does not prompt for username as login does: */
 	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
 		l0g(PMPREFIX "could not get user\n");
-		/* do NOT return PAM_SERVICE_ERR or root will not be able 
+		/* do NOT return PAM_SERVICE_ERR or root will not be able
 		 * to su to other users */
 		goto _return;
 	}
@@ -458,9 +458,9 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
              static_cast(long, getegid()));
 /* This code needs root priv. */
 	for(vol = 0; vol < Config.volcount; vol++) {
-		/* luserconf_volume_record_sane() is called here so that 
+		/* luserconf_volume_record_sane() is called here so that
 		 * a user can nest loopback images. otherwise ownership
-		 * tests will fail if parent loopback image not yet 
+		 * tests will fail if parent loopback image not yet
 		 * mounted.  volume_record_sane() is here to be consistent */
                 if(!volume_record_sane(&Config, vol))
 			continue;
@@ -534,7 +534,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	 */
 	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
 		l0g(PMPREFIX "could not get user\n");
-		/* do NOT return PAM_SERVICE_ERR or root will not be able 
+		/* do NOT return PAM_SERVICE_ERR or root will not be able
 		 * to su to other users */
 		goto _return;
 	}

@@ -93,7 +93,7 @@ logs back in.  HOW WOULD ALL OF THIS BE AUTHENTICATED?
 o share configuration reading and sanity checks with authconfig using
 a shared library.
 
-o Break into multiple (root priveleged and user priv.) processes? 
+o Break into multiple (root priveleged and user priv.) processes?
 	- See /* This code needs root priv. */
 	- root "exec program" process (or user + "mount" POSIX capability? CAP_SYS_ADMIN (not very fine-grained)) use shared memory (see shmget) to pass argv to root process.
 	- root "logger" process (or user + "logging" POSIX capability?)
@@ -156,7 +156,7 @@ pam_ldap might be a great solution.
 	- For NDS, use username to look up full context using LDAP?
 		. email pam_ldap folks about sharing:
 			1.  /etc/ldap.conf.
-			2.  _get_user_info (gets userdn -- used by 
+			2.  _get_user_info (gets userdn -- used by
 			    ldap_simple_bind).
 	- SENT EMAIL TO PAM_LDAP MAINT. ABOUT EXPORTING LDAP INFO. USING
 	PAM_SET_DATA.  WILL ALSO NEED TO IMPLEMNT A HACK TO ALLOW THIS

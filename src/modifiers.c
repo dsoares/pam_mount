@@ -262,8 +262,8 @@ static int apply_fn(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
 static int apply_file(struct buffer *dest, struct fmt_ptrn *x,
  /* const */ char *arg)
 {
-/* This function handles the case where the FMT_PTRN_FILE modifier is 
- * used. 
+/* This function handles the case where the FMT_PTRN_FILE modifier is
+ * used.
  */
     char b[BUFSIZ];
     gzFile f;
@@ -277,8 +277,8 @@ static int apply_file(struct buffer *dest, struct fmt_ptrn *x,
 }
 
 static int apply_template(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
-/* This function handles the case where the FMT_PTRN_TEMPLATE modifier is 
- * used. 
+/* This function handles the case where the FMT_PTRN_TEMPLATE modifier is
+ * used.
  */
     struct fmt_ptrn f;
     char b[BUFSIZ];
@@ -302,7 +302,7 @@ static int apply_template(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
 	enqueue_parse_errmsg(x, fmt_ptrn_parse_strerror(&f));
     /* Avoid freeing the stolen fillers: */
     /* FIXME: need to port to glib:
-    f.fillers.size = 0;		
+    f.fillers.size = 0;
     f.fillers.root = NULL;
     */
     fmt_ptrn_close(&f);

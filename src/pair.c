@@ -37,7 +37,7 @@ int pair_valid(const struct pair *p) {
 
 /*  pair_init
     @p: pair structure to initialize
- 
+
     Fills @p with with @key, @val and the @destroy_k and @destroy_v functions.
 */
 void pair_init(struct pair *pair, void *key, void *val,

@@ -106,7 +106,7 @@ int exists(const char *file) {
 /*  owns
     @user:      user to check for
     @file:      file to check
-    
+
     Checks whether @user owns @file. Returns positive non-zero if this is the
     case, otherwise zero. If an error occurred, zero is returned and %errno
     is set. (For the success case, %errno is undefined.)

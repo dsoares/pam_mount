@@ -1,6 +1,6 @@
-#   FILE: Makefile.am -- 
+#   FILE: Makefile.am --
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
-#   DATE: 06 October 2002 
+#   DATE: 06 October 2002
 #
 # Copyright (C) 2001 W. Michael Petullo <mike@flyn.org>
 # All rights reserved.

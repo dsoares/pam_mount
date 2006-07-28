@@ -83,7 +83,7 @@ static int split_bsd_mount(char *, const char **, const char **, const char **);
 
 /* ============================ log_output () ============================== */
 /* INPUT: fd, a valid file descriptor
- * SIDE EFFECTS: contents of fd are logged, usually fd is connected by a 
+ * SIDE EFFECTS: contents of fd are logged, usually fd is connected by a
  *               pipe to another process's stdout or stderr
  */
 static void log_output(int fd)
@@ -158,7 +158,7 @@ static int already_mounted(const struct config *const config,
     int mounted = 0;
     FILE *mtab;
     struct vol *vpt;
- 
+
     assert(config_valid(config));
     vpt = &config->volume[vol];
     vol_to_dev(dev, sizeof(dev), vpt);
@@ -696,7 +696,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	if(optlist_exists(vpt->options, "loop"))
 		if (!do_unlosetup(config, vinfo))
 			return 0;
-	/* pass on through the result -- okay if 0 (no errors) 
+	/* pass on through the result -- okay if 0 (no errors)
 	 * or 1 (errors corrected) */
 	return WEXITSTATUS(child_exit) == 0 || WEXITSTATUS(child_exit) == 1;
 #else
@@ -795,7 +795,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 				return 0;
 		} else {
 			/* _password is an ASCII string in this case -- we'll treat its
-			 * MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the standard string 
+			 * MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the standard string
 			 * MAX_PAR + 1 in this case */
 			strncpy(signed_cast(char *, _password), password, MAX_PAR);
 			_password[MAX_PAR] = '\0';

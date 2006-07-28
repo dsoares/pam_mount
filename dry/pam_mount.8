@@ -38,7 +38,7 @@ threats.
 .PP
 The primary configuration file for the pam_mount module is pam_mount.conf. On
 most platforms this file is read from /etc/security/pam_mount.conf. On OpenBSD
-pam_mount reads its configuration file from /etc/pam_mount.conf. 
+pam_mount reads its configuration file from /etc/pam_mount.conf.
 pam_mount.conf contains many comments documenting its use.
 .PP
 In addition, you must include two entries in the system's applicable
@@ -64,7 +64,7 @@ following:
 .nf
 
 ...
-account sufficient  pam_ldap.so	
+account sufficient  pam_ldap.so
 auth    required    pam_mount.so
 auth    sufficient  pam_ldap.so use_first_pass
 auth    required    pam_unix.so use_first_pass
@@ -121,7 +121,7 @@ and unmount any volume they own at any mount point they own. On some filesystem
 configurations this may be a security flaw so user-defined volumes are not
 allowed by the example pam_mount.conf distributed with pam_mount.
 .PP
-In general, you will leave all the first (general) parameters as provided by 
+In general, you will leave all the first (general) parameters as provided by
 default. You only have to provide the user/volume list in the end of the file,
 following the examples.
 .PP
@@ -131,12 +131,12 @@ the same commands and mount points provided in pam_mount.conf. This will save
 you a lot of grief, since it is more difficult to debug the mounting process
 via pam_mount.
 .PP
-If you can mount the volumes by hand but it is not happening via pam_mount, 
+If you can mount the volumes by hand but it is not happening via pam_mount,
 you may want to enable the "debug" option in pam_mount.conf to see what is
 happening.
 .PP
-Verify if the user owns the mount point and has sufficient permissions over 
-that. pam_mount will verify this and will refuse to mount the remote volume if 
+Verify if the user owns the mount point and has sufficient permissions over
+that. pam_mount will verify this and will refuse to mount the remote volume if
 the user does not own that directory.
 .PP
 If pam_mount is having trouble unmounting volumes upon logging out, enable the

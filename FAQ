@@ -86,9 +86,9 @@ A.  See https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=103200.
         #!/bin/sh
         export LD_ASSUME_KERNEL=2.4.1
         exec smbmount "$@"
-                                                                                
+
     Then configure pam_mount with the following in pam_mount.conf:
-                                                                                
+
         smbmount /bin/mount -t smbfs_no_nptl
 
 =======================================================================
@@ -131,7 +131,7 @@ A.  As of version 3.3, sshd has a feature called privilege separation
     work with privilege separation.
 
     In addition, Peter Astrand says:
-                                                                                
+
         RedHat uses a patched version of OpenSSH, which always starts
         off with calling PAM with bogus auth info. The idea is that
         successful logins should take the same amount of time as

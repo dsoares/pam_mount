@@ -481,7 +481,7 @@ static char *dotconf_read_arg(const struct configfile *configfile,
 		}
 		/* unquoted, unescaped comment-hash ; break out, unless NO_INLINE_COMMENTS is set */
 		else if (*cp1 == '#' && !dq && !sq && !(configfile->flags & NO_INLINE_COMMENTS)) {
-			/* 
+			/*
 			 * NOTE: 1.0.8a got the NO_INLINE_COMMENTS feature wrong: it
              * skipped every argument starting with a #, instead of simply eating it!
 			 */
@@ -615,7 +615,7 @@ static void dotconf_free_command(struct command *command) {
 static const char *dotconf_handle_command(struct configfile *configfile,
  char *buffer)
 {
-	char *cp1; 
+	char *cp1;
 	char *cp2;
 	/* generic char pointer      */
 	char *eob;									/* end of buffer; end of string  */
@@ -663,7 +663,7 @@ static const char *dotconf_handle_command(struct configfile *configfile,
 
 		if(option == NULL)
 			option = get_argname_fallback(configfile->config_options[1]);
-		
+
 		if(option == NULL || option->callback == NULL) {
 			if(error != NULL)
 				return error;

@@ -97,4 +97,4 @@ allow mount_t fixed_disk_device_t:blk_file { relabelto unlink };
 allow mount_t selinux_config_t:file { read getattr };
 allow mount_t mount_t:dir { search };
 allow mount_t mount_t:file { getattr read };
-# ============================================================================= 
+# =============================================================================

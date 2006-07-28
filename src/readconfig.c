@@ -155,7 +155,7 @@ static FUNC_ERRORHANDLER(log_error)
 {
 	l0g(PMPREFIX "%s\n", msg);
 	/* FIXME: This free is broken.
-	 * If an invalid command definition (ie: foomount) exists in 
+	 * If an invalid command definition (ie: foomount) exists in
 	 * pam_mount.conf then su, loging, gdm, etc. segfault with:
 	 * pam_mount: Unknown Config-Option: 'fsck'
 	 * Segmentation fault
@@ -243,7 +243,7 @@ static enum command_type get_command_index(const struct pm_command *command,
 /* NOTE: callback function for reading command configurations
  *       command array must be initialized to [ 0x00, ..., 0x00 ]
  *       (see initconfig)
- *       mount.c's functions do checks on command array before it tries to 
+ *       mount.c's functions do checks on command array before it tries to
  *       execv anything so don't worry about missing configurations */
 static DOTCONF_CB(read_command)
 {
@@ -288,7 +288,7 @@ static DOTCONF_CB(read_command)
 /* INPUT:  allowed, an optlist of allowed options
  *         options, a list of options
  * OUTPUT: if options acceptable 1 else 0
- * SIDE EFFECTS: error logged 
+ * SIDE EFFECTS: error logged
  */
 static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 {
@@ -506,7 +506,7 @@ static int fstab_value(const char *volume, const enum fstab_field field,
  char *value, const int size)
 {
 /* PRE:    volume points to a valid string != NULL
- *         0 <= field < 4 (last two fields are integers) 
+ *         0 <= field < 4 (last two fields are integers)
  *         value points to a valid string of size size
  * POST:   value points to the volume's field'th field from /etc/fstab
  * FN VAL: if error 0 else 1, errors are logged
@@ -673,8 +673,8 @@ static DOTCONF_CB(read_volume) {
 	} else
 		strncpy(vpt->mountpoint, cmd->data.list[4], MAX_PAR);
 	if (*cmd->data.list[5] == '-') {
-		/* three options: field defined, field is '-' and fstab 
-		 * should be used (when no mount point was provided either) 
+		/* three options: field defined, field is '-' and fstab
+		 * should be used (when no mount point was provided either)
 		 * or field is '-' and this means no options */
 		if(vpt->use_fstab) {
 			char options[MAX_PAR + 1];

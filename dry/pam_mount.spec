@@ -16,7 +16,7 @@ BuildRoot:      %_tmppath/%name-%version-build
 pam_mount automatically mounts directories when the user logs in,
 using the password just entered.
 
-pam_mount supports SMB, NCP, and any type of filesystem that can 
+pam_mount supports SMB, NCP, and any type of filesystem that can
 be mounted using the standard mount command.
 
 ## Remove the debug_package line to compile under FedoraCore

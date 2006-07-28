@@ -347,7 +347,7 @@ static void _read_modifier_arg(struct fmt_ptrn *x, const char **pattern,
 					     "%s: %ld: modifier arg. too long",
 					     x->template_path,
 					     x->line_num);
-		} else 
+		} else
 			g_strlcpy(i->arg, *pattern, arg_len + 1);
 		if (*(*pattern + arg_len + 1) != ' ')
 			enqueue_parse_errmsg(x,
@@ -636,7 +636,7 @@ static gint _cmp(gconstpointer a, gconstpointer b) {
 
 /* ============================ fmt_ptrn_init () =========================== */
 int fmt_ptrn_init(struct fmt_ptrn *x) {
-/* Alternative to open; does everything but open the file.  This 
+/* Alternative to open; does everything but open the file.  This
  * should be used when filling strings instead of files.
  */
 	g_strlcpy(x->errmsg, "no error", sizeof(x->errmsg));
@@ -648,7 +648,7 @@ int fmt_ptrn_init(struct fmt_ptrn *x) {
         buffer_init(&x->filled_buf);
         buffer_init(&x->lookup_buf);
 	g_strlcpy(x->template_path, "string", sizeof(x->template_path));
-	
+
 	assert(fmt_ptrn_valid(x));
 
 	return 1;
@@ -665,7 +665,7 @@ gboolean fmt_ptrn_open(const char *path, struct fmt_ptrn *x) {
 	if((in_file = gzopen(path, "rb")) == NULL) {
 		fnval = FALSE;
 		goto _return;
-	} 
+	}
 	if (!fmt_ptrn_init(x)) {
 		fnval = FALSE;
 		goto _return;
@@ -686,8 +686,8 @@ char *fmt_ptrn_gets(char *buf, size_t size, struct fmt_ptrn *x) {
 	assert(fmt_ptrn_valid(x));
 
 	if (buffer_len(&x->filled_buf) == 0) {
-		/* FIXME: potentially, a buffer could be filled with only 
-		 * half of a format string. 
+		/* FIXME: potentially, a buffer could be filled with only
+		 * half of a format string.
 		 */
 		/* Here buf is used as a temp. buffer. */
 		if (gzgets(x->template_fp, buf, size) == Z_NULL) {
@@ -732,7 +732,7 @@ int fmt_ptrn_close(struct fmt_ptrn *x) {
 	buffer_clear(&x->raw_buf);
 	buffer_clear(&x->filled_buf);
 	buffer_clear(&x->lookup_buf);
-	/* x->template_fp == NULL if fmt_ptrn_init was used instead of 
+	/* x->template_fp == NULL if fmt_ptrn_init was used instead of
 	 * fmt_ptrn_open.
 	 */
 	return (x != NULL && x->template_fp != NULL) ?
