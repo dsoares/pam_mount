@@ -325,8 +325,7 @@ static int modify_pm_count(struct config *config, char *user,
 	fmt_ptrn_close(&vinfo);
 	log_argv(_argv);
 
-        spawn_set_sigchld();
-        if(!spawn_ap0(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
+        if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
          NULL, &pid, NULL, &cstdout, NULL, &err)) {
 		l0g(PMPREFIX "error executing /usr/sbin/pmvarrun\n");
 		fnval = -1;
@@ -343,6 +342,7 @@ static int modify_pm_count(struct config *config, char *user,
 		goto _return;
 	}
 	if (waitpid(pid, &child_exit, 0) == -1) {
+                spawn_restore_sigchld();
 		l0g(PMPREFIX "error waiting for child\n");
 		fnval = -1;
 		goto _return;

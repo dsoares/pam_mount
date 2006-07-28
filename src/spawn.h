@@ -23,7 +23,6 @@ spawn.h
 #define PMT_SPAWN_H 1
 
 #include <glib.h>
-#include "compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,20 +31,11 @@ extern "C" {
 /*
  *      SPAWN.C
  */
-extern int spawn_set_sigchld(void);
+extern int spawn_apS(const char *, const char *const *, const char *const *,
+    GSpawnFlags, GSpawnChildSetupFunc, void *, int *, int *, int *, int *,
+    GError **);
 extern int spawn_restore_sigchld(void);
-
-/*
- *      INLINE FUNCTIONS
- */
-static inline gboolean spawn_ap0(const char *wd, const char *const *argv,
- const char *const *envp, GSpawnFlags flags, GSpawnChildSetupFunc cs,
- void *data, int *pid, int *istdin, int *istdout, int *istderr, GError **err)
-{
-    return g_spawn_async_with_pipes(wd, const_cast(char **, argv),
-           const_cast(char **, envp), flags, cs, data, pid, istdin,
-           istdout, istderr, err);
-}
+extern int spawn_set_sigchld(void);
 
 #ifdef __cplusplus
 } // extern "C"
