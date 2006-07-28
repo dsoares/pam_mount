@@ -343,7 +343,7 @@ static int modify_pm_count(struct config *config, char *user,
 	}
 	if (waitpid(pid, &child_exit, 0) == -1) {
                 spawn_restore_sigchld();
-		l0g(PMPREFIX "error waiting for child\n");
+		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
 		fnval = -1;
 		goto _return;
 	}

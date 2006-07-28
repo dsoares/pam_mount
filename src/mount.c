@@ -130,7 +130,7 @@ static void run_lsof(const struct config *const config,
 	log_output(cstdout);
 	w4rn(PMPREFIX "waiting for lsof\n");
 	if (waitpid(pid, &child_exit, 0) == -1)
-		l0g(PMPREFIX "error waiting for child\n");
+		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
         spawn_restore_sigchld();
 	CLOSE(cstdout);
 }
@@ -271,7 +271,8 @@ static int already_mounted(const struct config *const config,
     }
 
     fclose(fp); // automatically closes cstdout, too
-    waitpid(pid, NULL, 0);
+    if(waitpid(pid, NULL, 0) != 0)
+        l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
     spawn_restore_sigchld();
     return mounted;
 }
@@ -479,7 +480,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 	CLOSE(cstderr);
 	w4rn(PMPREFIX "waiting for umount\n");
 	if (waitpid(pid, &child_exit, 0) == -1) {
-		l0g(PMPREFIX "error waiting for child\n");
+		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
 		ret = 0;
 		goto _return;
 	} else {
@@ -584,7 +585,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	CLOSE(cstderr);
 	w4rn(PMPREFIX "waiting for losetup\n");
 	if (waitpid(pid, &child_exit, 0) == -1) {
-		l0g(PMPREFIX "error waiting for child\n");
+		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
 		ret = 0;
 	} else if(ret > 0) {
 		/* pass on through the result from the losetup process */
@@ -625,7 +626,8 @@ static int do_unlosetup(const struct config *config, struct fmt_ptrn *vinfo) {
 		return 0;
 	}
 	w4rn(PMPREFIX "waiting for losetup delete\n");
-	waitpid(pid, &child_exit, 0);
+        if(waitpid(pid, &child_exit, 0) != 0)
+            l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
         spawn_restore_sigchld();
 	/* pass on through the result */
 	return !WEXITSTATUS(child_exit);
@@ -692,7 +694,8 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	log_output(cstderr);
 	CLOSE(cstderr);
 	w4rn(PMPREFIX "waiting for filesystem check\n");
-	waitpid(pid, &child_exit, 0);
+        if(waitpid(pid, &child_exit, 0) != 0)
+            l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
         spawn_restore_sigchld();
 	if(optlist_exists(vpt->options, "loop"))
 		if (!do_unlosetup(config, vinfo))
@@ -840,7 +843,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 	w4rn(PMPREFIX "waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) == -1) {
                 spawn_restore_sigchld();
-		l0g(PMPREFIX "error waiting for child\n");
+		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
 		return 0;
 	}
 
