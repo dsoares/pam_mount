@@ -118,15 +118,15 @@ static void parse_args(int argc, const char **argv,
          "hdo:u:", opts, &opt_index)) >= 0) {
 	    switch (c) {
 		case 'h':
-			usage(EXIT_SUCCESS, NULL, NULL);
+			usage(EXIT_SUCCESS, NULL);
+                        break;
 		case 'd':
 			Debug = 1;
 			break;
 		case 'o':
                     if((settings->operation = str_to_long(optarg)) == LONG_MAX
                      || settings->operation == LONG_MIN)
-                        usage(EXIT_FAILURE, PREFIX "%s\n",
-                          "count string is not valid");
+                        usage(EXIT_FAILURE, "count string is not valid");
 			break;
 		case 'u':
 			g_strlcpy(settings->user, optarg,
