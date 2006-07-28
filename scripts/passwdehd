@@ -51,9 +51,15 @@ if [ ! -f "$CONF" ]; then
 	exit 1
 fi
 
-REGEX="^volume $USER ";
-CIPHER=`grep "$REGEX" "$CONF" | awk '{ print $8 }'`;
-KEYPATH=`grep "$REGEX" "$CONF" | awk '{ print $9 }'`;
+GROUP=`id -gn "$USER"`;
+REGEX="^volume[[:space:]]\+\($USER\|*\|@$GROUP\)[[:space:]]\+";
+LINE=`grep -m1 "$REGEX" "$CONF"`;
+if [ -z "$LINE" ]; then
+    echo "${0##*/}: could not find configuration for $USER in $CONF" >&2;
+    exit 1;
+fi;
+CIPHER=`echo "$LINE" | awk '{ print $8 }'`;
+KEYPATH=`echo "$LINE" | awk '{ print $9 }' | sed "s/\&/$USER/g"`;
 
 if [ ! -f "$KEYPATH.old" -a "$UID" -ne 0 ]; then
 	echo "${0##*/}: $KEYPATH.old does not yet exist and you can't create it"
@@ -87,7 +93,7 @@ export NEW_EFSK_PASSWORD
 cp "$KEYPATH" "$KEYPATH.old";
 openssl enc -d -$CIPHER -pass env:OLD_EFSK_PASSWORD -in "$KEYPATH" | \
     openssl enc -$CIPHER -pass env:NEW_EFSK_PASSWORD >"/tmp/passwdehd.$$";
-cp "/tmp/passwdehd.$$" "$KEYPATH";
-# Don't use mv because of permission issues.
-# WHAT issue? mv _keeps_ permissions, cp does not necessarily without -p
-rm "/tmp/passwdehd.$$";
+if ! mv "/tmp/passwdehd.$$" "$KEYPATH"; then
+    echo "Move the key file manually from /tmp/passwdehd.$$";
+    echo "to $KEYPATH and set the permissions correctly.";
+fi;

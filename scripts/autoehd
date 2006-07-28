@@ -51,17 +51,19 @@ if [ ! -f "$CONF" ]; then
 	exit 1
 fi
 
-REGEX="^volume $USER ";
-MNTPT=`grep "$REGEX" "$CONF" | awk '{ print $6 }'`;
-OPTIONS=`grep "$REGEX" "$CONF" | awk '{ print $7 }'`;
-CIPHER=`grep "$REGEX" "$CONF" | awk '{ print $8 }'`;
-KEYPATH=`grep "$REGEX" "$CONF" | awk '{ print $9 }'`;
-VOLUME=`grep "$REGEX" "$CONF" | awk '{ print $5 }'`;
-
-if [ -z "$VOLUME" ]; then
-	echo "${0##*/}: could not find configuration for $USER in pam_mount.conf" >&2
-	exit 1
+REGEX="^volume[[:space:]]\+\($USER\|*\|@$GROUP\)[[:space:]]\+";
+LINE=`grep -m1 "$REGEX" "$CONF"`;
+if [ -z "$LINE" ]; then
+    echo "${0##*/}: could not find configuration for $USER in $CONF" >&2;
+    exit 1;
 fi
+
+MNTPT=`echo "$LINE" | awk '{ print $6 }'`;
+OPTIONS=`echo "$LINE" | awk '{ print $7 }'`;
+CIPHER=`echo "$LINE" | awk '{ print $8 }'`;
+KEYPATH=`echo "$LINE" | awk '{ print $9 }'`;
+VOLUME=`echo "$LINE" | awk '{ print $5 }'`;
+
 
 if [ "$MNTPT" == "-" ]; then
 	MNTPT="";
