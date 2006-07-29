@@ -332,11 +332,13 @@ static int modify_pm_count(struct config *config, char *user,
 		goto _return;
 	}
 	if ((fp = fdopen(cstdout, "r")) == NULL) {
+                spawn_restore_sigchld();
 		w4rn(PMPREFIX "error opening file: %s\n", strerror(errno));
 		fnval = -1;
 		goto _return;
 	}
 	if (fscanf(fp, "%d", &fnval) == 0) {
+                spawn_restore_sigchld();
 		w4rn(PMPREFIX "error reading login count from pmvarrun\n");
 		fnval = -1;
 		goto _return;
