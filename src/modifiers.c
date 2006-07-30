@@ -44,6 +44,7 @@ static apply_fn_t
     apply_sh_comment, apply_sh_delim, apply_template, apply_tex_comment,
     apply_tex_delim, apply_upper, apply_xml_comment;
 
+// Variables
 const struct modifier_info mod_fn[] = {
     {"upper",             apply_upper,             0},
     {"lower",             apply_lower,             0},

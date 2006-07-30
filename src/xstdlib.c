@@ -26,21 +26,36 @@ xstdlib.c
 #include "xstdlib.h"
 
 //-----------------------------------------------------------------------------
+/*  xmalloc
+    @n: size of the new buffer
+
+    Wrapper around malloc() that warns when no new memory block could be
+    obtained.
+*/
 void *xmalloc(size_t n) {
     void *ret;
     if((ret = malloc(n)) == NULL)
-        fprintf(stderr, "xmalloc: Could not allocate %lu bytes\n",
-                static_cast(unsigned long, n));
+        l0g(PMPREFIX "xmalloc: Could not allocate %lu bytes\n",
+            static_cast(unsigned long, n));
     return ret;
 }
 
+
+/*  xrealloc
+    @orig:      original address of the buffer
+    @n:         new size of the buffer
+
+    Wrapper around realloc() that warns when no new memory block could be
+    obtained.
+*/
 void *xrealloc(void *orig, size_t n) {
     void *ret;
     if((ret = realloc(orig, n)) == NULL)
-        fprintf(stderr, "xrealloc: Could not reallocate to %lu bytes\n",
-                static_cast(unsigned long, n));
+        l0g(PMPREFIX "xrealloc: Could not reallocate to %lu bytes\n",
+            static_cast(unsigned long, n));
     return ret;
 }
+
 
 /*  xzalloc
     @n: bytes to allocate

@@ -81,30 +81,32 @@ static void vol_to_dev(char *, size_t, const struct vol *);
 static int split_bsd_mount(char *, const char **, const char **, const char **);
 #endif
 
-/* ============================ log_output () ============================== */
-/* INPUT: fd, a valid file descriptor
- * SIDE EFFECTS: contents of fd are logged, usually fd is connected by a
- *               pipe to another process's stdout or stderr
- */
-static void log_output(int fd)
-{
+//-----------------------------------------------------------------------------
+/*  log_output
+    @fd:        file descriptor to read from
+
+    Reads all data from @fd and logs it using w4rn(). @fd is uaually connected
+    to a pipe to a nother process's stdout or stderr.
+*/
+static void log_output(int fd) {
 	FILE *fp;
 	char buf[BUFSIZ + 1];
-	/* FIXME: check fdopen's retval */
 	if ((fp = fdopen(fd, "r")) == NULL) {
-		w4rn(PMPREFIX "error opening file: %s\n",
-		     strerror(errno));
+		w4rn(PMPREFIX "error opening file: %s\n", strerror(errno));
 		return;
 	}
 	while(fgets(buf, sizeof(buf), fp) != NULL)
-		w4rn(PMPREFIX "%s\n", buf);
+		w4rn(PMPREFIX "%s", buf);
 }
 
-/* ============================ run_lsof () ================================ */
-/*
- * NOTE: this fn simply runs lsof on a directory and logs its output for
- * debugging purposes
- */
+
+/*  run_lsof
+    @config:    current configuration
+    @vinfo:
+
+    Runs `lsof` on a directory/mountpoint and logs its output, for debugging
+    purposes.
+*/
 static void run_lsof(const struct config *const config,
  struct fmt_ptrn *vinfo)
 {
@@ -116,8 +118,7 @@ static void run_lsof(const struct config *const config,
 		l0g(PMPREFIX "lsof not defined in pam_mount.conf\n");
 	/* FIXME: NEW */
 	for(i = 0; config->command[i][LSOF] != NULL; i++)
-		add_to_argv(_argv, &_argc, config->command[i][LSOF],
-			    vinfo);
+		add_to_argv(_argv, &_argc, config->command[i][LSOF], vinfo);
 	log_argv(_argv);
 
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
@@ -135,19 +136,18 @@ static void run_lsof(const struct config *const config,
 	CLOSE(cstdout);
 }
 
-/* ============================ already_mounted () ========================= */
-/*
- * PRE:    config->volume[vol].type is a mount type (LCLMOUNT, SMBMOUNT, ...)
- *         sizeof(mntpt) >= PATH_MAX + 1
- *         vinfo is a valid struct fmt_ptrn
- * POST:   mntpt contains:
- *           config->volume[vol].mountpoint if config->volume[vol].volume is
- *             already mounted there
- *           some other path if config->volume[vol].volume is mounted elsewhere
- *           undefined if config->volume[vol].volume is not mounted
- * FN VAL: 1 if config->volume[vol].volume is mounted, 0 if not, -1 on error
- *         errors are logged
- */
+
+/*  already_mounted
+    @config:    current config
+    @vol:       volume index into @config->volume[]
+    @mntpt:     destination buffer for current mountpoint
+    @vinfo:
+
+    Checks if @config->volume[@vol] is already mounted, and if so, writes the
+    mountpoint into @mntpt (which must be at least of size %PATH_MAX+1) and
+    returns 1. If the volume is not mounted, returns zero and @mntpt is
+    cleared. Returns -1 on error.
+*/
 static int already_mounted(const struct config *const config,
  const unsigned int vol, char *const mntpt, struct fmt_ptrn *vinfo)
 #if defined(__linux__)
@@ -168,16 +168,18 @@ static int already_mounted(const struct config *const config,
     }
     if(realpath(vpt->mountpoint, real_mpt) == NULL) {
         w4rn(PMPREFIX "can't get realpath of volume %s: %s\n",
-          vpt->mountpoint, strerror(errno));
+             vpt->mountpoint, strerror(errno));
         strncpy(real_mpt, vpt->mountpoint, PATH_MAX);
         real_mpt[PATH_MAX] = '\0';
     } else {
         real_mpt[PATH_MAX] = '\0';
         l0g(PMPREFIX "realpath of volume \"%s\" is \"%s\"\n",
-          vpt->mountpoint, real_mpt);
+            vpt->mountpoint, real_mpt);
     }
+
+    *mntpt = '\0';
     w4rn(PMPREFIX "checking to see if %s is already mounted at %s\n",
-      dev, vpt->mountpoint);
+         dev, vpt->mountpoint);
 
     while((mtab_record = getmntent(mtab)) != NULL) {
         const char *fsname = mtab_record->mnt_fsname;
@@ -188,11 +190,10 @@ static int already_mounted(const struct config *const config,
         struct stat statbuf;
 
         if(stat(fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
-         major(statbuf.st_rdev) == LOOP_MAJOR) {
+         major(statbuf.st_rdev) == LOOP_MAJOR)
             /* If /etc/mtab is a link to /proc/mounts then the loop device
             instead of the real device will be listed -- resolve it. */
             fsname = loop_bk(fsname, &loopdev);
-        }
 
         xcmp = (strcmp(fstype, "smbfs") == 0 || strcmp(fstype, "cifs") == 0 ||
                 strcmp(fstype, "ncpfs") == 0) ? strcasecmp : strcmp;
@@ -248,7 +249,7 @@ static int already_mounted(const struct config *const config,
         int (*xcmp)(const char *, const char *);
         const char *fsname, *fstype, *fspt;
 
-        w4rn(PMPREFIX "mounted filesystem: %s", mte); // MTE includes '\n'
+        w4rn(PMPREFIX "mounted filesystem: %s", mte); // @mte includes '\n'
         if(!split_bsd_mount(mte, &fsname, &fspt, &fstype)) {
             mounted = -1;
             break;
@@ -256,7 +257,7 @@ static int already_mounted(const struct config *const config,
 
         // Use case-insensitive for SMB, etc.
         // FIXME: Is it called "smbfs" under BSD too?
-        xcmp = (fstype != NULL && *fstype != '\0' &&
+        xcmp = (fstype != NULL &&
                (strcmp(fstype, "smbfs") == 0 || strcmp(fstype, "cifs") == 0 ||
                strcmp(fstype, "ncpfs") == 0)) ? strcasecmp : strcmp;
 
@@ -284,6 +285,13 @@ static int already_mounted(const struct config *const config,
 }
 #endif
 
+
+/*  vol_to_dev
+    @match:
+    @s:
+    @vol:       volume to analyze
+
+*/
 static void vol_to_dev(char *match, size_t s, const struct vol *vol) {
     switch(vol->type) {
         case SMBMOUNT:

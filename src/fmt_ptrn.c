@@ -51,7 +51,7 @@ static gboolean _copy_fillers(gpointer, gpointer, gpointer);
 static void     _eat_alternate(struct fmt_ptrn *, const char **);
 static gboolean _fill_it(struct fmt_ptrn *, const char *);
 static int      _fmt_ptrn_copy_fillers(struct fmt_ptrn *, struct fmt_ptrn *);
-static gboolean fmt_ptrn_valid(const struct fmt_ptrn *);
+static int      fmt_ptrn_valid(const struct fmt_ptrn *);
 static gboolean _free_tree_node(gpointer, gpointer, gpointer);
 static void     _handle_fmt_str(struct fmt_ptrn *, const char **);
 static gboolean _is_literal(struct fmt_ptrn *, const char *);
@@ -70,8 +70,13 @@ static gboolean _stack_pop(struct mystack *, struct modifier *);
 static gboolean _stack_push(struct fmt_ptrn *, struct mystack *, const struct modifier *);
 static inline gboolean mystack_valid(const struct mystack *);
 
-/* ============================ fmt_ptrn_valid () ======================= */
-static gboolean fmt_ptrn_valid(const struct fmt_ptrn *x) {
+//-----------------------------------------------------------------------------
+/*  fmt_ptrn_valid
+    @x: fmt_ptrn to check
+
+    Verifies that the fmt_ptrn strucutre is consistent.
+*/
+static int fmt_ptrn_valid(const struct fmt_ptrn *x) {
 	if (x == NULL)
 		return FALSE;
 	/* FIXME */

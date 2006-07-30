@@ -48,6 +48,7 @@ int buffer_valid(const struct buffer *b) {
 	return TRUE;
 }
 
+
 /*  buffer_clear
     @b: buffer to clear
 
@@ -65,6 +66,7 @@ void buffer_clear(struct buffer *buf) {
     assert(buffer_valid(buf));
     return;
 }
+
 
 /*  buffer_eat
     @buf:       buffer to edit
@@ -84,6 +86,7 @@ void buffer_eat(struct buffer *buf, size_t n) {
     return;
 }
 
+
 /*  buffer_len
     @b: buffer to analyze
 
@@ -93,6 +96,7 @@ size_t buffer_len(const struct buffer *buf) {
     assert(buffer_valid(buf));
     return (buf->data == NULL) ? 0 : strlen(buf->data);
 }
+
 
 /*  realloc_n_cat
     @dest:      destination buffer
@@ -121,6 +125,7 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     assert(buffer_valid(dest));
     return;
 }
+
 
 /*  realloc_n_ncat
     @dest:      destination buffer
@@ -158,6 +163,7 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
     assert(buffer_valid(dest));
     return;
 }
+
 
 /*  realloc_n_cpy
     @dest:      destination buffer

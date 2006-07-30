@@ -60,6 +60,7 @@ static void sslerror(const char *msg) {
 		l0g(PMPREFIX "%s: %s", msg, ERR_error_string(err, NULL));
 }
 
+
 /*  hash_authtok
     @fp:        stream containing encrypted stream
     @cipher:    OpenSSL cipher struct
@@ -101,6 +102,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 
 	return 1;
 }
+
 
 /*  decrypted_key
     @pt_fs_key:         filesystem key
