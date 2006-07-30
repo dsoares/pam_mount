@@ -23,6 +23,7 @@ xstdlib.c
 #include <stdlib.h>
 #include <string.h>
 #include "compiler.h"
+#include "private.h"
 #include "xstdlib.h"
 
 //-----------------------------------------------------------------------------
