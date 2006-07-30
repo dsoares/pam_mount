@@ -51,7 +51,7 @@ rm -Rf "%buildroot";
 %_bindir/mount_ehd
 /sbin/mount.crypt
 /sbin/umount.crypt
-%_mandir/man8/*
+%_mandir/*/*
 #%policy %_sysconfdir/selinux/strict/src/policy/macros/%{name}_macros.te
 #%policy %_sysconfdir/selinux/strict/src/policy/file_contexts/misc/%name.fc
 %doc AUTHORS COPYING ChangeLog INSTALL NEWS README FAQ TODO
