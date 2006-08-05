@@ -115,7 +115,7 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
                             strlen(dest->data) : 0);
     if(dest->data == NULL) {
 	dest->size = new_len * 2 + 1;
-	dest->data = xmalloc(dest->size);
+	dest->data = xzalloc(dest->size);
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
 	dest->data = xrealloc(dest->data, dest->size);
@@ -134,8 +134,6 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
 
     Append at most @nc characters from @src to the buffer pointed to by @dest,
     necessarily reallocating @dest's buffer.
-
-    [MP] FIXME: this function is displaying memory corruption.
 */
 void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
     size_t src_len, new_len;
