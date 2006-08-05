@@ -23,6 +23,7 @@ xstdlib.c
 #include <stdlib.h>
 #include <string.h>
 #include "compiler.h"
+#include "misc.h"
 #include "private.h"
 #include "xstdlib.h"
 
@@ -69,6 +70,45 @@ void *xzalloc(size_t n) {
     if((ret = xmalloc(n)) != NULL)
         memset(ret, 0, n);
     return ret;
+}
+
+
+/*  xmemdup
+    @src:       pointer to source data
+    @n:         amount of bytes to copy
+
+    Allocates a new block of size @n and copies @n bytes from @src to it,
+    and returns it. Returns %NULL on allocation failure.
+*/
+void *xmemdup(const void *src, size_t n) {
+    void *ret;
+    if((ret = xmalloc(n)) == NULL)
+        return ret;
+    return memcpy(ret, src, n);
+}
+
+
+/*  xstrdup
+    @src:       source string
+
+    Basically just the usual strdup(), but with error reporting to fprintf()
+    should allocation fail.
+*/
+char *xstrdup(const char *src) {
+    return xmemdup(src, strlen(src));
+}
+
+
+/*  xstrndup
+    @src:       source string
+    @max:       maximum number of characters to copy
+
+    Basically just the usual strndup(), but with error reporting to fprintf()
+    should allocation fail.
+*/
+char *xstrndup(const char *src, size_t max) {
+    size_t s = strlen(src);
+    return xmemdup(src, (max < s) ? max : s);
 }
 
 //=============================================================================

@@ -23,10 +23,6 @@ dotconf.c
 =============================================================================*/
 /* -- dotconf.c - this code is responsible for the input, parsing and dispatching of options  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 /* Added by Stephen W. Boyer <sboyer@caldera.com>
  * for wildcard support in Include file paths
  */
@@ -266,7 +262,7 @@ static char *dotconf_substitute_env(const struct configfile *configfile,
 	*cp2 = '\0';				/* terminate buffer */
 
 	free(str);
-	return strdup(tmp_value);
+	return xstrdup(tmp_value);
 }
 
 static int dotconf_warning(const struct configfile *configfile, int type,
@@ -506,8 +502,8 @@ static char *dotconf_read_arg(const struct configfile *configfile,
 		BOTH! will be substituted, which is somewhat wrong, ain't it ?? :-(
 	*/
 	if(configfile->flags & DONT_SUBSTITUTE)
-		return (buf[0] != '\0') ? strdup(buf) : NULL;
- 	return (buf[0] != '\0') ? dotconf_substitute_env(configfile, strdup(buf)) : NULL;
+		return (buf[0] != '\0') ? xstrdup(buf) : NULL;
+ 	return (buf[0] != '\0') ? dotconf_substitute_env(configfile, xstrdup(buf)) : NULL;
 }
 
 static void dotconf_set_command(struct configfile *configfile,
@@ -520,13 +516,13 @@ static void dotconf_set_command(struct configfile *configfile,
 	cmd->option = const_cast(struct configoption *, option);
 	cmd->context = configfile->context;
 	cmd->configfile = configfile;
-	cmd->data.list = calloc(CFG_VALUES, sizeof(char *));
+	cmd->data.list = xzalloc(CFG_VALUES * sizeof(char *));
 	cmd->data.str = NULL;
 
 	if (option->type == ARG_RAW) {
 		/* if it is an ARG_RAW type, save some time and call the
 		   callback now */
-		cmd->data.str = strdup(args);
+		cmd->data.str = xstrdup(args);
 	}
 	else if (option->type == ARG_STR) {
 		char *cp = args;
@@ -554,7 +550,7 @@ static void dotconf_set_command(struct configfile *configfile,
 		skip_whitespace(&args, eob - args, '\0');
 
 		if(cmd->arg_count > 0 && cmd->data.list[cmd->arg_count-1] != NULL && *args != '\0')
-			cmd->data.list[cmd->arg_count++] = strdup(args);
+			cmd->data.list[cmd->arg_count++] = xstrdup(args);
 
 		/* has an option entry been found before or do we have to use a fallback? */
 		if((option->name != NULL && option->name[0] > ' ') || option->type == ARG_NAME) {
@@ -590,7 +586,7 @@ static void dotconf_set_command(struct configfile *configfile,
 						return;
 					}
 
-					cmd->data.str = strdup(cmd->data.list[0]);
+					cmd->data.str = xstrdup(cmd->data.list[0]);
 					break;
 				case ARG_NAME:	/* fall through */
 				case ARG_LIST:
@@ -720,7 +716,7 @@ struct configfile *dotconf_create(const char *fname,
 		return NULL;
 	}
 
-	new = calloc(1, sizeof(struct configfile));
+	new = xzalloc(sizeof(struct configfile));
 	if((new->stream = fopen(fname, "r")) == NULL) {
 		fprintf(stderr, "Error opening configuration file '%s'\n", fname);
 		free(new);
@@ -728,7 +724,7 @@ struct configfile *dotconf_create(const char *fname,
 	}
 
 	new->flags = flags;
-	new->filename = strdup(fname);
+	new->filename = xstrdup(fname);
 
 	new->includepath = malloc(CFG_MAX_FILENAME);
 	new->includepath[0] = '\0';
@@ -1230,7 +1226,7 @@ static DOTCONF_CB(dotconf_cb_include) {
 				 cmd->configfile->includepath, sl, cmd->data.str);
 	}
 	else						/* fully qualified, or no includepath */
-		filename = strdup(cmd->data.str);
+		filename = xstrdup(cmd->data.str);
 
 	/* Added wild card support here */
 	if (dotconf_find_wild_card(filename,&wild_card,&path,&pre,&ext) >= 0)

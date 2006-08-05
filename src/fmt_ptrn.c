@@ -106,7 +106,7 @@ char *fmt_ptrn_parse_strerror(struct fmt_ptrn *x) {
 	assert(fmt_ptrn_valid(x));
 
 	if((errmsg = g_queue_pop_tail(x->parse_errmsg)) == NULL)
-		fnval = g_strdup("no error"); // leak
+		fnval = xstrdup("no error"); // leak
 	else
 		fnval = errmsg; // g_queue_pop_tail: possible leak
 
@@ -239,7 +239,7 @@ static gboolean _copy_fillers(gpointer key, gpointer val, gpointer data) {
 	assert(fmt_ptrn_valid(data));
 
 	g_tree_insert(static_cast(struct fmt_ptrn *, data)->fillers,
-		      strdup(key), strdup(val));
+		      xstrdup(key), xstrdup(val));
 
 	assert(fmt_ptrn_valid(data));
 
@@ -278,7 +278,7 @@ static void _read_alternate(struct fmt_ptrn *x, const char **p,
 			/* FIXME: clean up? */
 			struct fmt_ptrn y;
 			char *alt, *filled_alt;
-			alt = g_strndup(*p, (alt_end - *p));
+			alt = xstrndup(*p, (alt_end - *p));
 			fmt_ptrn_init(&y);
 			_fmt_ptrn_copy_fillers(&y, x);
 			filled_alt = fmt_ptrn_filled(&y, alt);
@@ -586,7 +586,7 @@ static gboolean _fill_it(struct fmt_ptrn *x, const char *p) {
 	assert(fmt_ptrn_valid(x));
 	assert(p != NULL);
 
-	pattern = orig_ptr = g_strdup(p);
+	pattern = orig_ptr = xstrdup(p);
 	while(*pattern != '\0') {
 		if (*pattern == '%' && *(pattern + 1) == '%') {
 			/* Handle %%(...), which should be filled as %(...). */
@@ -619,7 +619,7 @@ char *fmt_ptrn_filled(struct fmt_ptrn *x, const char *p) {
 		return NULL;
 	if(buffer_len(&x->filled_buf) > 0)
 		/* FIXME: what if len == 0? protected by assert, but... */
-		fnval = g_strdup(x->filled_buf.data);
+		fnval = xstrdup(x->filled_buf.data);
 
 	assert(fmt_ptrn_valid(x));
 	/* FIXME: assert(fnval != NULL); WHY DID I THINK THIS WAS NEEDED? */

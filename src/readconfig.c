@@ -273,11 +273,11 @@ static DOTCONF_CB(read_command)
 	for (i = 0; i < cmd->arg_count; i++)
 		if (strlen(cmd->data.list[i]) > MAX_PAR)
 			return "command too long";
-	COMMAND(0) = g_strdup(cmd->data.list[0]);
+	COMMAND(0) = xstrdup(cmd->data.list[0]);
 	for (i = 1; i < cmd->arg_count; i++) {
 		if (i > MAX_PAR)
                     return PMPREFIX "configured command line too long";
-		COMMAND(i) = g_strdup(cmd->data.list[i]);
+		COMMAND(i) = xstrdup(cmd->data.list[i]);
 	}
         if(i <= MAX_PAR)
             COMMAND(i) = NULL;
@@ -750,9 +750,9 @@ int initconfig(struct config *config) {
 
 	/* set commands to defaults */
 	for(i = 0; Command[i].type != -1; i++) {
-		config->command[0][Command[i].type] = g_strdup(Command[i].def[0]);
+		config->command[0][Command[i].type] = xstrdup(Command[i].def[0]);
 		for(j = 1; Command[i].def[j] != NULL; ++j)
-			config->command[j][Command[i].type] = g_strdup(Command[i].def[j]);
+			config->command[j][Command[i].type] = xstrdup(Command[i].def[j]);
 		config->command[j + 1][Command[i].type] = NULL;
 	}
 

@@ -40,6 +40,7 @@ misc.c
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
+#include "xstdlib.h"
 
 // Functions
 static int static_string_valid(const char *, const size_t);
@@ -380,9 +381,9 @@ void set_myuid(void *data) {
 char *relookup_user(const char *user) {
     struct passwd *pe;
     if((pe = getpwnam(user)) == NULL)
-        return strdup(user);
+        return xstrdup(user);
     else
-        return strdup(pe->pw_name);
+        return xstrdup(pe->pw_name);
 }
 
 //=============================================================================

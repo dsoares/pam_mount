@@ -22,6 +22,8 @@
 #   -- For details, see the file named "LICENSE.GPL2"
 #==============================================================================
 
+# This script is usually run by the user, so do not expect root privileges.
+
 CONF=/etc/security/pam_mount.conf
 
 USAGE="[OPTION]...

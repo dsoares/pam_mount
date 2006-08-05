@@ -43,6 +43,8 @@ pam_mount.c
 #include "private.h"
 #include "readconfig.h"
 #include "spawn.h"
+#include "xstdlib.h"
+
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    define CONFIGFILE "/etc/pam_mount.conf"
 #else
@@ -194,7 +196,7 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
 	msg.msg = prompt;
 	retval = converse(pamh, 1, &pmsg, &resp);
 	if (retval == PAM_SUCCESS)
-		*pass = strdup(resp->resp);
+		*pass = xstrdup(resp->resp);
 
 	assert(retval != PAM_SUCCESS || (pass != NULL && *pass != NULL));
 
@@ -248,7 +250,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			if(Args.auth_type == USE_FIRST_PASS)
 				goto _return;
 		} else
-			authtok = strdup(ptr);
+			authtok = xstrdup(ptr);
 	}
 	if (!authtok) {		/* get password directly */
 		if((ret = read_password(pamh, "password:", &authtok)) != PAM_SUCCESS) {
