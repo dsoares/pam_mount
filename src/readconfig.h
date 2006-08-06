@@ -22,8 +22,8 @@ readconfig.h
 #ifndef PMT_READCONFIG_H
 #define PMT_READCONFIG_H 1
 
-#include <glib.h>
 #include "dotconf.h"
+#include "xstdlib.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,9 +37,9 @@ struct config;
 extern int expandconfig(const struct config *);
 extern void freeconfig(struct config *);
 extern int initconfig(struct config *);
-extern gboolean luserconf_volume_record_sane(const struct config *, int);
+extern bool luserconf_volume_record_sane(const struct config *, int);
 extern int readconfig(const char *, const char *, int, struct config *);
-extern gboolean volume_record_sane(const struct config *, int);
+extern bool volume_record_sane(const struct config *, int);
 
 #ifdef __cplusplus
 } // extern "C"

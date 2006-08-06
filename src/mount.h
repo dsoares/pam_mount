@@ -22,9 +22,9 @@ mount.h
 #ifndef PMT_MOUNT_H
 #define PMT_MONUT_H 1
 
-#include <glib.h>
 #include "fmt_ptrn.h"
 #include "private.h"
+#include "xstdlib.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +34,7 @@ struct config;
 struct fmt_ptrn;
 
 typedef int (mount_op_fn_t)(const struct config *, const unsigned int,
-    struct fmt_ptrn *, const char *, const gboolean);
+    struct fmt_ptrn *, const char *, const bool);
 
 /*
  *      MOUNT.C

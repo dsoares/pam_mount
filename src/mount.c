@@ -46,6 +46,7 @@ mount.c
 #include "private.h"
 #include "readconfig.h"
 #include "spawn.h"
+#include "xstdlib.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #    include <fstab.h>
 #elif defined(__linux__)
@@ -426,7 +427,7 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 }
 
 int do_unmount(const struct config *config, const unsigned int vol,
- struct fmt_ptrn *vinfo, const char *const password, const gboolean mkmntpoint)
+ struct fmt_ptrn *vinfo, const char *const password, const bool mkmntpoint)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -728,7 +729,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
     Returns zero on error, positive non-zero for success.
 */
 int do_mount(const struct config *config, const unsigned int vol,
- struct fmt_ptrn *vinfo, const char *password, const gboolean mkmntpoint)
+ struct fmt_ptrn *vinfo, const char *password, const bool mkmntpoint)
 {
 	const char *_argv[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];

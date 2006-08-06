@@ -23,6 +23,7 @@ private.h
 #define PMT_PRIVATE_H 1
 
 #include "optlist.h"
+#include "xstdlib.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,8 +76,8 @@ enum command_type {
 
 struct vol {
     enum command_type type;
-    gboolean globalconf;        // TRUE if config. from global config, FALSE if luserconf
-    gboolean created_mntpt;     // set so umount knows to rm it
+    bool globalconf;        // TRUE if config. from global config, FALSE if luserconf
+    bool created_mntpt;     // set so umount knows to rm it
     char fs_key_cipher[MAX_PAR + 1];
     char fs_key_path[PATH_MAX + 1];
     char server[MAX_PAR + 1];
@@ -85,14 +86,14 @@ struct vol {
     char volume[MAX_PAR + 1];   // FIXME: PATH_MAX
     optlist_t *options;         // may be NULL if no options
     char mountpoint[PATH_MAX + 1];
-    gboolean use_fstab;
-    gboolean used_wildcard;
+    bool use_fstab;
+    bool used_wildcard;
 };
 
 struct config {
     char *user;	/* user logging in */
-    gboolean debug;
-    gboolean mkmntpoint;
+    bool debug;
+    bool mkmntpoint;
     unsigned int volcount;
     char luserconf[PATH_MAX + 1];
     char fsckloop[PATH_MAX + 1];

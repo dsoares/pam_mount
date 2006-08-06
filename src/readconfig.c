@@ -25,7 +25,6 @@ readconfig.c
 #include <alloca.h>
 #include <assert.h>
 #include <errno.h>
-#include <glib.h>
 #include <grp.h>
 #include <limits.h>
 #include <stdio.h>
@@ -388,7 +387,7 @@ static int _options_ok(const struct config *config, const struct vol *volume) {
 		vol...
 */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-gboolean luserconf_volume_record_sane(const struct config *config, int vol) {
+bool luserconf_volume_record_sane(const struct config *config, int vol) {
         const struct vol *vpt;
 	assert(config != NULL);
 	assert(config->volume != NULL);
@@ -409,7 +408,7 @@ gboolean luserconf_volume_record_sane(const struct config *config, int vol) {
 /* PRE:    config points to a valid struct config
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-gboolean volume_record_sane(const struct config *config, int vol) {
+bool volume_record_sane(const struct config *config, int vol) {
         const struct vol *vpt;
 
         assert(config != NULL);

@@ -25,6 +25,7 @@ optlist.h
 #include <glib.h>
 #include "compiler.h"
 #include "pair.h"
+#include "xstdlib.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,10 +43,10 @@ typedef GList optlist_t;
 /*
  *      OPTLIST.C
  */
-extern gboolean optlist_exists(optlist_t *, const char *);
+extern bool optlist_exists(optlist_t *, const char *);
 extern char *optlist_to_str(char *, const optlist_t *);
 extern const char *optlist_value(optlist_t *, const char *);
-extern gboolean str_to_optlist(optlist_t **, const char *);
+extern bool str_to_optlist(optlist_t **, const char *);
 
 #ifdef __cplusplus
 } // extern "C"

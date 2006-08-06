@@ -122,8 +122,7 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
  * SIDE EFFECTS: str has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
-gboolean str_to_optlist(optlist_t ** optlist, const char *str)
-{
+bool str_to_optlist(optlist_t **optlist, const char *str) {
 	int ret = 1;
 	char *ptr;
 
@@ -173,8 +172,7 @@ static int _compare(gconstpointer x, gconstpointer y)
 /* INPUT: optlist and str
  * OUTPUT: if optlist[str] exists 1 else 0
  */
-gboolean optlist_exists(optlist_t * optlist, const char *str)
-{
+bool optlist_exists(optlist_t *optlist, const char *str) {
 	assert(str != NULL);
 
 	if(optlist == NULL)

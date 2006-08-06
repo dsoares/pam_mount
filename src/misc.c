@@ -191,8 +191,8 @@ int vol_valid(const struct vol *v) {
 	if (!(v->type == LCLMOUNT || v->type == CRYPTMOUNT ||
           v->type == FUSEMOUNT || strlen(v->server) > 0))
 		return FALSE;
-	/* gboolean globalconf; */
-	/* gboolean created_mntpt; */
+	/* bool globalconf; */
+	/* bool created_mntpt; */
 	if(!static_string_valid(v->fs_key_cipher, MAX_PAR + 1) ||
 	 !static_string_valid(v->fs_key_path, PATH_MAX + 1))
 		return FALSE;
@@ -206,7 +206,7 @@ int vol_valid(const struct vol *v) {
 	/* optlist_t * options */
         if(!static_string_valid(v->mountpoint, PATH_MAX + 1))
 		return FALSE;
-	/* gboolean use_fstab */
+	/* bool use_fstab */
 	return TRUE;
 }
 
@@ -220,8 +220,8 @@ int config_valid(const struct config *c) {
 	int i;
         if(c == NULL || c->user == NULL)
 		return FALSE;
-	/* gboolean debug */
-	/* gboolean mkmountpoint */
+	/* bool debug */
+	/* bool mkmountpoint */
 	/* unsigned int volcount */
         if(!static_string_valid(c->luserconf, PATH_MAX + 1) ||
          !static_string_valid(c->fsckloop, PATH_MAX + 1))

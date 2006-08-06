@@ -28,6 +28,8 @@ xstdlib.h
 extern "C" {
 #endif
 
+typedef int bool;
+
 /*
  *      XSTDLIB.C
  */
