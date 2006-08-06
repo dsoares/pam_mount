@@ -292,7 +292,10 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 		return;
 	}
 	if ((filled = fmt_ptrn_filled(vinfo, arg)) == NULL) {
-		l0g(PMPREFIX "could not fill %s\n", arg);
+                /* This case may happen with e.g. %(before="-o" OPTIONS)
+                where OPTIONS is empty. And empty options is certainly
+                valid. */
+		w4rn(PMPREFIX "could not fill %s\n", arg);
 		while (fmt_ptrn_parse_err(vinfo) != 0)
 			l0g(PMPREFIX "%s\n",
 			    fmt_ptrn_parse_strerror(vinfo));

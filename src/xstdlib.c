@@ -95,7 +95,7 @@ void *xmemdup(const void *src, size_t n) {
     should allocation fail.
 */
 char *xstrdup(const char *src) {
-    return xmemdup(src, strlen(src));
+    return xmemdup(src, strlen(src) + 1);
 }
 
 
@@ -108,7 +108,14 @@ char *xstrdup(const char *src) {
 */
 char *xstrndup(const char *src, size_t max) {
     size_t s = strlen(src);
-    return xmemdup(src, (max < s) ? max : s);
+    char *ret;
+
+    if(max < s)
+        s = max;
+
+    ret    = xmemdup(src, s + 1);
+    ret[s] = '\0';
+    return ret;
 }
 
 //=============================================================================
