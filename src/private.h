@@ -28,13 +28,15 @@ private.h
 extern "C" {
 #endif
 
+#define __STRINGIFY_EXPAND(s)   #s
+#define __STRINGIFY(s)          __STRINGIFY_EXPAND(s)
 #define CLOSE(a) do { if(close(a) == -1) { \
     l0g("pam_mount: could not close fd: %s\n", strerror(errno)); \
     l0g("pam_mount: %s\n", "I don't like failed system calls -- I quit"); \
     exit(EXIT_FAILURE); \
 } } while(0)
-#define MAX_PAR 127
-#define PMPREFIX "pam_mount: "
+#define MAX_PAR         127
+#define PMPREFIX        "pam_mount(" __FILE__ ":" __STRINGIFY(__LINE__) ") "
 #ifndef S_IRUGO
 #    define S_IRUGO (S_IRUSR | S_IRGRP | S_IROTH)
 #endif
