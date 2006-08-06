@@ -114,8 +114,9 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     new_len = strlen(src) + ((dest != NULL && dest->data != NULL) ?
                             strlen(dest->data) : 0);
     if(dest->data == NULL) {
-	dest->size = new_len * 2 + 1;
-	dest->data = xzalloc(dest->size);
+	dest->size  = new_len * 2 + 1;
+	dest->data  = xmalloc(dest->size);
+        *dest->data = '\0';
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
 	dest->data = xrealloc(dest->data, dest->size);
@@ -146,8 +147,9 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
               ((src_len < nc) ? src_len : nc);
 
     if(dest->data == NULL) {
-	dest->size = new_len * 2 + 1;
-	dest->data = xmalloc(dest->size);
+	dest->size  = new_len * 2 + 1;
+	dest->data  = xmalloc(dest->size);
+        *dest->data = '\0';
     } else if (new_len + 1 > dest->size) {
 	dest->size = new_len * 2 + 1;
 	dest->data = xrealloc(dest->data, dest->size);
