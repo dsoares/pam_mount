@@ -20,7 +20,7 @@ modifiers.c
 
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
-#include <glib.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,16 +74,16 @@ const struct modifier_info mod_fn[] = {
 
 //-----------------------------------------------------------------------------
 static int apply_upper(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
-    char *newdata = g_ascii_strup(dest->data, -1);
-    free(dest->data);
-    dest->data = newdata;
+    int n;
+    for(n = 0; n < strlen(dest->data); ++n)
+        dest->data[n] = toupper(dest->data[n]);
     return 1;
 }
 
 static int apply_lower(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
-    char *newdata = g_ascii_strdown(dest->data, -1);
-    free(dest->data);
-    dest->data = newdata;
+    int n;
+    for(n = 0; n < strlen(dest->data); ++n)
+        dest->data[n] = tolower(dest->data[n]);
     return 1;
 }
 
