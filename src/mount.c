@@ -717,17 +717,19 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 #endif
 }
 
+
+/*  do_mount
+    @config:    current config
+    @vol:       volume index into @config->vol[]
+    @vinfo:     valid struct fmt_ptrn
+    @password:
+    @mkmntpoint: whether to create mountpoint if it does not exist
+
+    Returns zero on error, positive non-zero for success.
+*/
 int do_mount(const struct config *config, const unsigned int vol,
  struct fmt_ptrn *vinfo, const char *password, const gboolean mkmntpoint)
 {
-/* PRE:    config points to a valid struct config
- *         config->volume[vol] is a valid struct vol
- *         vinfo is a valid struct fmt_ptrn
- *         mkmntpoint is true if mount point should be mkdir'ed
- *         false if mount point was received from pam_mount
- * POST:   volume is mounted
- * FN VAL: if error 0 else 1, errors are logged
- */
 	const char *_argv[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];
 	size_t _password_len;
@@ -863,20 +865,17 @@ int do_mount(const struct config *config, const unsigned int vol,
         return !WEXITSTATUS(child_exit);
 }
 
-/* ============================ mount_op () ================================ */
-/*
- * PRE:    mnt is function to execute mount operations: do_mount or do_unmount
- *         vol > 0
- *         config points to a valid struct config_t
- *         config->volume[vol] is a valid struct vol
- *         password points to a valid string (can be NULL if UNmounting)
- *         mkmntpoint is true if mount point should be created when it does
- *         not already exist
- * POST:   appropriate mount or unmount operations are performed
- * FN VAL: if error 0 else 1, errors are logged
- * NOTE:   * checked by volume_record_sane
- *         ** checked by read_volume()
- */
+
+/*  mount_op
+    @mnt:       function to execute mount operations (do_mount or do_unmount)
+    @config:
+    @vol:       volume index into @config->volume[]
+    @password:  password string (may be %NULL on unmount)
+    @mkmntpoint: whether to create mountpoint if it does not exist
+
+    Returns zero on error, positive non-zero for success.
+    Note: Checked by volume_record_sane() and read_volume()
+*/
 int mount_op(mount_op_fn_t *mnt, const struct config *config,
  const unsigned int vol, const char *password, const int mkmntpoint)
 {
@@ -919,6 +918,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	return fnval;
 }
 
+
 /* copied from libHX */
 /* noproto */ static
 char *HX_chomp(char *s) {
@@ -932,11 +932,14 @@ char *HX_chomp(char *s) {
     return s;
 }
 
-static int fstype_nodev(const char *name) {
-    /* Returns 1 if the filesystem does not require a block device,
-    0 if it does require a block device,
-    -1 if we could not find out. */
 
+/*  fstype_nodev
+    @name:      fstype to check
+
+    Returns 1 if the filesystem does not require a block device, 0 if it does
+    require a block device, -1 if we could not find out.
+*/
+static int fstype_nodev(const char *name) {
     char buf[MAX_PAR];
     FILE *fp;
 
@@ -958,6 +961,15 @@ static int fstype_nodev(const char *name) {
     return -1;
 }
 
+
+/*  loop_bk
+    @filename:  block device to query
+    @i:         pointer to result storage
+
+    Run the LOOP_GET_STATUS64 ioctl on @filename and store the result in @i.
+    Returns the underlying file of the loop device, or @filename if @filename
+    does not seem to be a loop device at all.
+*/
 static inline const char *loop_bk(const char *filename,
  struct loop_info64 *i)
 {
