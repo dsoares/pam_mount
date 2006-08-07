@@ -326,11 +326,15 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
     environment variables. setsid() is called so that FUSE daemons (e.g.
     sshfs) get a new session identifier and do not get killed by the
     login program after PAM authentication is successful.
+
+    chdir("/") is called so that fusermount does not get stuck in a
+    non-readable directory (by means of doing `su - unprivilegeduser`)
 */
 void set_myuid(void *data) {
     const char *user = data;
 
     setsid();
+    chdir("/");
     if(user == NULL) {
         w4rn(PMPREFIX "%s(pre): real uid/gid=%ld:%ld, "
              "effective uid/gid=%ld:%ld\n", __FUNCTION__,
