@@ -112,8 +112,9 @@ char *xstrndup(const char *src, size_t max) {
 
     if(max < s)
         s = max;
+    if((ret = xmemdup(src, s + 1)) == NULL)
+        return NULL;
 
-    ret    = xmemdup(src, s + 1);
     ret[s] = '\0';
     return ret;
 }
