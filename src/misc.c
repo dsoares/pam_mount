@@ -54,15 +54,17 @@ static int static_string_valid(const char *, const size_t);
     to fail.
 */
 void l0g(const char *format, ...) {
-	va_list args;
+	va_list args, arg2;
 
 	assert(format != NULL);
 
 	va_start(args, format);
+	va_copy(arg2, args);
         if(Debug)
             vfprintf(stderr, format, args);
-	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, args);
+	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, arg2);
 	va_end(args);
+	va_end(arg2);
         return;
 }
 
