@@ -26,7 +26,9 @@ compiler.h
 extern "C" {
 #endif
 
-#if defined(__GNUC__) && __GNUC__ >= 4
+#include <config.h>
+
+#ifdef HAVE_VISIBILITY_HIDDEN
 #    define EXPORT_SYMBOL __attribute__((visibility("default")))
 #else
 #    define EXPORT_SYMBOL
