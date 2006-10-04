@@ -186,12 +186,12 @@ static int static_string_valid(const char *s, const size_t len) {
 int vol_valid(const struct vol *v) {
 	if (v == NULL)
 		return FALSE;
-	if (!(v->type >= 0 && v->type < COMMAND_MAX))
+	if (!(v->type >= 0 && v->type < _CMD_MAX))
 		return FALSE;
 	/* should be guaranteed by volume_record_sane() */
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	if (!(v->type == LCLMOUNT || v->type == CRYPTMOUNT ||
-          v->type == FUSEMOUNT || strlen(v->server) > 0))
+	if (!(v->type == CMD_LCLMOUNT || v->type == CMD_CRYPTMOUNT ||
+          v->type == CMD_FUSEMOUNT || strlen(v->server) > 0))
 		return FALSE;
 	/* bool globalconf; */
 	/* bool created_mntpt; */

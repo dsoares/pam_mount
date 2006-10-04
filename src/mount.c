@@ -115,11 +115,11 @@ static void run_lsof(const struct config *const config,
 	const char *_argv[MAX_PAR + 1];
 	GError *err = NULL;
 	pid_t pid;
-	if(config->command[0][LSOF] == NULL)
+	if(config->command[0][CMD_LSOF] == NULL)
 		l0g(PMPREFIX "lsof not defined in pam_mount.conf\n");
 	/* FIXME: NEW */
-	for(i = 0; config->command[i][LSOF] != NULL; i++)
-		add_to_argv(_argv, &_argc, config->command[i][LSOF], vinfo);
+	for(i = 0; config->command[i][CMD_LSOF] != NULL; i++)
+		add_to_argv(_argv, &_argc, config->command[i][CMD_LSOF], vinfo);
 	log_argv(_argv);
 
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
@@ -295,12 +295,12 @@ static int already_mounted(const struct config *const config,
 */
 static void vol_to_dev(char *match, size_t s, const struct vol *vol) {
     switch(vol->type) {
-        case SMBMOUNT:
-        case CIFSMOUNT:
+        case CMD_SMBMOUNT:
+        case CMD_CIFSMOUNT:
             snprintf(match, s, "//%s/%s", vol->server, vol->volume);
             break;
 
-        case NCPMOUNT:
+        case CMD_NCPMOUNT:
             /* FIXME: volume sanity check in readconfig.c ensures
             optlist_value() will not return NULL for user.
             [JE] So what to fix? */
@@ -308,11 +308,11 @@ static void vol_to_dev(char *match, size_t s, const struct vol *vol) {
               optlist_value(vol->options, "user"));
             break;
 
-        case NFSMOUNT:
+        case CMD_NFSMOUNT:
             snprintf(match, s, "%s:%s", vol->server, vol->volume);
             break;
 
-        case CRYPTMOUNT: {
+        case CMD_CRYPTMOUNT: {
             /* FIXME: ugly hack to support umount.crypt script. I hope that
             util-linux will have native dm_crypt support some day. */
             char *wp = match + sizeof("/dev/mapper/")-1;
@@ -457,10 +457,10 @@ int do_unmount(const struct config *config, const unsigned int vol,
 		run_lsof(config, vinfo);
 
         switch(vpt->type) {
-            case SMBMOUNT: type = SMBUMOUNT; break;
-            case NCPMOUNT: type = NCPUMOUNT; break;
-            case FUSEMOUNT: type = FUSEUMOUNT; break;
-            default:       type = UMOUNT; break;
+            case CMD_SMBMOUNT:  type = CMD_SMBUMOUNT;  break;
+            case CMD_NCPMOUNT:  type = CMD_NCPUMOUNT;  break;
+            case CMD_FUSEMOUNT: type = CMD_FUSEUMOUNT; break;
+            default:            type = CMD_UMOUNT;     break;
         }
 
         if(config->command[0][type] == NULL)
@@ -471,7 +471,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 
 	/* FIXME: ugly hack to support umount.crypt script.  I hope that
 	 * util-linux will have native dm_crypt support some day */
-	if(vpt->type == CRYPTMOUNT) {
+	if(vpt->type == CMD_CRYPTMOUNT) {
 		_argc = 0;
 		add_to_argv(_argv, &_argc, "/sbin/umount.crypt", vinfo);
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
@@ -560,7 +560,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
         cipher  = optlist_value(vpt->options, "encryption");
         keybits = optlist_value(vpt->options, "keybits");
 
-	if(config->command[0][LOSETUP] == NULL) {
+	if(config->command[0][CMD_LOSETUP] == NULL) {
 		l0g(PMPREFIX "losetup not defined in pam_mount.conf\n");
 		return 0;
 	}
@@ -571,8 +571,8 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 		if(keybits != NULL)
 			fmt_ptrn_update_kv(vinfo, "KEYBITS", keybits);
 	}
-	for(i = 0; config->command[i][LOSETUP] != NULL; ++i)
-            add_to_argv(_argv, &_argc, config->command[i][LOSETUP], vinfo);
+	for(i = 0; config->command[i][CMD_LOSETUP] != NULL; ++i)
+            add_to_argv(_argv, &_argc, config->command[i][CMD_LOSETUP], vinfo);
 
 	log_argv(_argv);
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
@@ -618,15 +618,15 @@ static int do_unlosetup(const struct config *config, struct fmt_ptrn *vinfo) {
 	assert(config_valid(config));
 	assert(vinfo != NULL);
 
-	if(config->command[0][UNLOSETUP] == NULL) {
+	if(config->command[0][CMD_UNLOSETUP] == NULL) {
 		l0g(PMPREFIX "unlosetup not defined in pam_mount.conf\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
 	/* FIXME: NEW */
-	for(i = 0; config->command[i][UNLOSETUP] != NULL; i++)
+	for(i = 0; config->command[i][CMD_UNLOSETUP] != NULL; i++)
 		add_to_argv(_argv, &_argc,
-			    config->command[i][UNLOSETUP], vinfo);
+			    config->command[i][CMD_UNLOSETUP], vinfo);
 	log_argv(_argv);
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
           &pid, NULL, NULL, NULL, &err)) {
@@ -669,7 +669,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
         vpt = &config->volume[vol];
         fsck_target = vpt->volume;
 
-	if(config->command[0][FSCK] == NULL) {
+	if(config->command[0][CMD_FSCK] == NULL) {
 		l0g(PMPREFIX "fsck not defined in pam_mount.conf\n");
 		return 0;
 	}
@@ -689,8 +689,8 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	/* FIXME: NEW */
 	/* FIXME: need to fsck /dev/mapper/whatever... */
 	fmt_ptrn_update_kv(vinfo, "FSCKTARGET", fsck_target);
-	for (i = 0; config->command[i][FSCK]; i++)
-            add_to_argv(_argv, &_argc, config->command[i][FSCK], vinfo);
+	for (i = 0; config->command[i][CMD_FSCK]; i++)
+            add_to_argv(_argv, &_argc, config->command[i][CMD_FSCK], vinfo);
 
 	log_argv(_argv);
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
@@ -758,7 +758,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 			w4rn(PMPREFIX "%s already mounted elsewhere at %s\n", config->volume[vol].volume, prev_mntpt);
 			/* FIXME: ugly hack to support umount.crypt script.  I hope that
 			 * util-linux will have native dm_crypt support some day */
-                        if(vpt->type != LCLMOUNT && vpt->type != CRYPTMOUNT)
+                        if(vpt->type != CMD_LCLMOUNT && vpt->type != CMD_CRYPTMOUNT)
 				mount_again = 0;
 		}
 	}
@@ -773,15 +773,15 @@ int do_mount(const struct config *config, const unsigned int vol,
 	}
 	if (mount_again) {
 		GError *err = NULL;
-		if(config->command[0][MNTAGAIN] == NULL) {
+		if(config->command[0][CMD_MNTAGAIN] == NULL) {
 			l0g(PMPREFIX "mntagain not defined in pam_mount.conf\n");
 			return 0;
 		}
 		/* FIXME: NEW */
 		fmt_ptrn_update_kv(vinfo, "PREVMNTPT", prev_mntpt);
-		for(i = 0; config->command[i][MNTAGAIN] != NULL; i++)
+		for(i = 0; config->command[i][CMD_MNTAGAIN] != NULL; i++)
 			add_to_argv(_argv, &_argc,
-				    config->command[i][MNTAGAIN], vinfo);
+				    config->command[i][CMD_MNTAGAIN], vinfo);
 		log_argv(_argv);
                 if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
                   set_myuid, NULL, &pid, NULL, NULL, &cstderr, &err)) {
@@ -825,11 +825,11 @@ int do_mount(const struct config *config, const unsigned int vol,
                 for(i = 0; config->command[i][vpt->type] != NULL; ++i)
                     add_to_argv(_argv, &_argc, config->command[i][vpt->type], vinfo);
 
-                if(vpt->type == LCLMOUNT &&
+                if(vpt->type == CMD_LCLMOUNT &&
                   !check_filesystem(config, vol, vinfo, _password, _password_len))
 			l0g(PMPREFIX "error checking filesystem but will continue\n");
 		/* send password down pipe to mount process */
-                if(vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT)
+                if(vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
 			setenv("PASSWD_FD", "0", 1);
 		log_argv(_argv);
                 mount_user = strcmp(vpt->fstype, "fuse") == 0 ? vpt->user : NULL;
@@ -839,7 +839,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 			g_error_free(err);
 			return 0;
 		}
-                if(vpt->type != NFSMOUNT) {
+                if(vpt->type != CMD_NFSMOUNT) {
 			if(pipewrite(cstdin, _password, _password_len) != _password_len)
 				/* FIXME: clean: returns value of exit below */
 				l0g(PMPREFIX "error sending password to mount\n");

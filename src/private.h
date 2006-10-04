@@ -52,26 +52,27 @@ extern "C" {
 #endif
 
 enum command_type {
-    SMBMOUNT,
-    SMBUMOUNT,
-    CIFSMOUNT,
-    NCPMOUNT,
-    NCPUMOUNT,
-    FUSEMOUNT,
-    FUSEUMOUNT,
-    LCLMOUNT,
-    CRYPTMOUNT, // FIXME: hope to have this in util-linux (LCLMOUNT) some day
-    NFSMOUNT,
-    UMOUNT,
-    PMHELPER,
-    LSOF,
-    MNTAGAIN,
-    MNTCHECK,
-    FSCK,
-    LOSETUP,
-    UNLOSETUP,
-    PMVARRUN,
-    COMMAND_MAX,
+    CMD_NONE,
+    CMD_SMBMOUNT,
+    CMD_SMBUMOUNT,
+    CMD_CIFSMOUNT,
+    CMD_NCPMOUNT,
+    CMD_NCPUMOUNT,
+    CMD_FUSEMOUNT,
+    CMD_FUSEUMOUNT,
+    CMD_LCLMOUNT,
+    CMD_CRYPTMOUNT, // FIXME: hope to have this in util-linux (LCLMOUNT) some day
+    CMD_NFSMOUNT,
+    CMD_UMOUNT,
+    CMD_PMHELPER,
+    CMD_LSOF,
+    CMD_MNTAGAIN,
+    CMD_MNTCHECK,
+    CMD_FSCK,
+    CMD_LOSETUP,
+    CMD_UNLOSETUP,
+    CMD_PMVARRUN,
+    _CMD_MAX,
 };
 
 struct vol {
@@ -97,11 +98,12 @@ struct config {
     unsigned int volcount;
     char luserconf[PATH_MAX + 1];
     char fsckloop[PATH_MAX + 1];
-    char *command[MAX_PAR + 1][COMMAND_MAX];
+    char *command[MAX_PAR + 1][_CMD_MAX];
     optlist_t *options_require;
     optlist_t *options_allow;
     optlist_t *options_deny;
     struct vol *volume;
+    int level;
 };
 
 #ifdef __cplusplus

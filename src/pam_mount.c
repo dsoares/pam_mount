@@ -322,8 +322,8 @@ static int modify_pm_count(struct config *config, char *user,
 	fmt_ptrn_init(&vinfo);
 	fmt_ptrn_update_kv(&vinfo, "USER", user);
 	fmt_ptrn_update_kv(&vinfo, "OPERATION", operation);
-	for(i = 0; config->command[i][PMVARRUN] != NULL; i++)
-                add_to_argv(_argv, &_argc, config->command[i][PMVARRUN], &vinfo);
+	for(i = 0; config->command[i][CMD_PMVARRUN] != NULL; i++)
+                add_to_argv(_argv, &_argc, config->command[i][CMD_PMVARRUN], &vinfo);
 	fmt_ptrn_close(&vinfo);
 	log_argv(_argv);
 

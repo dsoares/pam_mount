@@ -90,29 +90,29 @@ static int user_in_sgrp(const char *, const char *);
 // Variables
 /* defaults are included here but these are overridden by pam_mount.conf */
 static const struct pm_command Command[] = {
-        {SMBMOUNT, "smbfs", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-        {SMBUMOUNT, "smbfs", "smbumount", {"/usr/bin/smbumount", "%(MNTPT)", NULL}},
-        {CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-        {NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
-        {NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
-        {FUSEMOUNT, "fuse", "fusemount", {"/sbin/mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
-        {FUSEUMOUNT, "fuse", "fuseumount", {"/usr/bin/fusermount", "-u", "%(MNTPT)", NULL}},
-        {NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
-	{LCLMOUNT, NULL, "lclmount", {"/bin/mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
+        {CMD_SMBMOUNT, "smbfs", "smbmount", {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+        {CMD_SMBUMOUNT, "smbfs", "smbumount", {"/usr/bin/smbumount", "%(MNTPT)", NULL}},
+        {CMD_CIFSMOUNT, "cifs", "cifsmount", {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+        {CMD_NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+        {CMD_NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
+        {CMD_FUSEMOUNT, "fuse", "fusemount", {"/sbin/mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
+        {CMD_FUSEUMOUNT, "fuse", "fuseumount", {"/usr/bin/fusermount", "-u", "%(MNTPT)", NULL}},
+        {CMD_NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
+	{CMD_LCLMOUNT, NULL, "lclmount", {"/bin/mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	{CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{UMOUNT, NULL, "umount", {"/bin/umount", "%(MNTPT)", NULL}},
-	{LSOF, NULL, "lsof", {"/usr/bin/lsof", "%(MNTPT)", NULL}},
-	{MNTAGAIN, NULL, "mntagain", {"/bin/mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_UMOUNT, NULL, "umount", {"/bin/umount", "%(MNTPT)", NULL}},
+	{CMD_LSOF, NULL, "lsof", {"/usr/bin/lsof", "%(MNTPT)", NULL}},
+	{CMD_MNTAGAIN, NULL, "mntagain", {"/bin/mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
 	/*
 	 * Leave mntcheck available on GNU/Linux so I can ship one config file
 	 * example
 	 */
-	{MNTCHECK, NULL, "mntcheck", {"/bin/mount", NULL}},
-	{FSCK, NULL, "fsck", {"/sbin/fsck", "-p", "%(FSCKTARGET)", NULL}},
-	{LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
-	{UNLOSETUP, NULL, "unlosetup", {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
-	{PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
+	{CMD_MNTCHECK, NULL, "mntcheck", {"/bin/mount", NULL}},
+	{CMD_FSCK, NULL, "fsck", {"/sbin/fsck", "-p", "%(FSCKTARGET)", NULL}},
+	{CMD_LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
+	{CMD_UNLOSETUP, NULL, "unlosetup", {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
+	{CMD_PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
 	{-1, NULL, NULL, {NULL}},
 };
 
@@ -420,17 +420,17 @@ bool volume_record_sane(const struct config *config, int vol) {
 		l0g("mount command not defined for this type\n");
 		return FALSE;
 	}
-        if((vpt->type == SMBMOUNT || vpt->type == CIFSMOUNT ||
-         vpt->type == NCPMOUNT || vpt->type == NFSMOUNT) &&
+        if((vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
+         vpt->type == CMD_NCPMOUNT || vpt->type == CMD_NFSMOUNT) &&
          strlen(vpt->server) == 0) {
 		l0g("remote mount type specified without server\n");
 		return FALSE;
 	}
-        if(vpt->type == NCPMOUNT && !optlist_exists(vpt->options, "user")) {
+        if(vpt->type == CMD_NCPMOUNT && !optlist_exists(vpt->options, "user")) {
 		l0g("NCP volume definition missing user option\n");
 		return FALSE;
 	}
-	if(config->command[0][UMOUNT] == NULL) {
+	if(config->command[0][CMD_UMOUNT] == NULL) {
 		l0g("umount command not defined\n");
 		return FALSE;
 	}
@@ -650,7 +650,7 @@ static DOTCONF_CB(read_volume) {
 
 	vpt->globalconf = ICONTEXT ? TRUE : FALSE;
         strncpy(vpt->user, *cmd->data.list, MAX_PAR);
-        vpt->type = LCLMOUNT;
+        vpt->type = CMD_LCLMOUNT;
         strncpy(vpt->fstype, cmd->data.list[1], sizeof(vpt->fstype));
 
 	for(i = 0; Command[i].type != -1; ++i)
@@ -775,7 +775,7 @@ void freeconfig(struct config *config) {
 	   optlist_free(&config.volume[i].options); FIXME: May be NULL!!
 	 */
         free(config->user);
-        for(i = 0; i < COMMAND_MAX; ++i) {
+        for(i = 0; i < _CMD_MAX; ++i) {
             for(j = 0; config->command[j][i] != NULL; ++j) {
                 free(config->command[j][i]);
                 config->command[j][i] = NULL;
