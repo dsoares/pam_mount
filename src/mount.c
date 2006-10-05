@@ -90,15 +90,18 @@ static int split_bsd_mount(char *, const char **, const char **, const char **);
     to a pipe to another process's stdout or stderr.
 */
 static void log_output(int fd) {
-	FILE *fp;
-	char buf[BUFSIZ + 1];
-	if ((fp = fdopen(fd, "r")) == NULL) {
-		w4rn(PMPREFIX "error opening file: %s\n", strerror(errno));
-		return;
-	}
-        setvbuf(fp, NULL, _IOLBF, 0);
-	while(fgets(buf, sizeof(buf), fp) != NULL)
-		w4rn(PMPREFIX "%s", buf);
+    char buf[BUFSIZ + 1];
+    FILE *fp;
+
+    if((fp = fdopen(fd, "r")) == NULL) {
+    	w4rn(PMPREFIX "error opening file: %s\n", strerror(errno));
+    	return;
+    }
+
+    setvbuf(fp, NULL, _IOLBF, 0);
+    while(fgets(buf, sizeof(buf), fp) != NULL)
+        w4rn(PMPREFIX "%s", buf);
+    return;
 }
 
 
