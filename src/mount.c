@@ -87,7 +87,7 @@ static int split_bsd_mount(char *, const char **, const char **, const char **);
     @fd:        file descriptor to read from
 
     Reads all data from @fd and logs it using w4rn(). @fd is uaually connected
-    to a pipe to a nother process's stdout or stderr.
+    to a pipe to another process's stdout or stderr.
 */
 static void log_output(int fd) {
 	FILE *fp;
@@ -96,6 +96,7 @@ static void log_output(int fd) {
 		w4rn(PMPREFIX "error opening file: %s\n", strerror(errno));
 		return;
 	}
+        setvbuf(fp, NULL, _IOLBF, 0);
 	while(fgets(buf, sizeof(buf), fp) != NULL)
 		w4rn(PMPREFIX "%s", buf);
 }
