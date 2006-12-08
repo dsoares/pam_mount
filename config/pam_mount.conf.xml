@@ -15,7 +15,7 @@ handled by the parser.
 This can be overriden by user's local configuration. This will also affect
 the pmvarrun helper program. To disable, use enable="0" or comment it out
 entirely. -->
-<debug enable="1" />
+<debug enable="0" />
 
 
 <!-- Create mountpoint if it does not exist yet. This is a good thing. -->
