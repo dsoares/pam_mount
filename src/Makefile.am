@@ -25,7 +25,7 @@ moduledir = @PAM_MODDIR@
 module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
 
-pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c readconfig.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c buffer.c spawn.c xstdlib.c
+pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf2.c dotconf.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c buffer.c spawn.c xstdlib.c
 pam_mount_la_LDFLAGS = -module -avoid-version -lz $(GLIB_LIBS)
 
 # [JE] There does not seem to be a difference between compiling with or without
