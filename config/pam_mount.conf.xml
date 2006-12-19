@@ -19,7 +19,7 @@ comment it out entirely.
 
 
 <!-- Loopback device to use to run fsck on loopback filesystems. -->
-<fsckloop>/dev/loop7</fsckloop>
+<fsckloop device="/dev/loop7" />
 
 
 <!--
@@ -101,10 +101,10 @@ the child process - look for STDIN_FILENO).
 <smbmount>/usr/bin/smbmount //%(SERVER)/%(VOLUME) %(MNTPT) -o
     "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</smbmount>
 
+<smbumount>/usr/bin/smbumount %(MNTPT)</smbumount>
+
 <ncpmount>/usr/bin/ncpmount %(SERVER)/%(USER) %(MNTPT) -o
     "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)"</ncpmount>
-
-<smbumount>/usr/bin/smbumount %(MNTPT)</smbumount>
 
 <ncpumount>/usr/bin/ncpumount %(MNTPT)</ncpumount>
 
