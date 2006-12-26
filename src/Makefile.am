@@ -26,13 +26,10 @@ module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
 
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c buffer.c spawn.c xstdlib.c
-pam_mount_la_LDFLAGS = -module -avoid-version -lxml2 -lz $(GLIB_LIBS)
+pam_mount_la_LDFLAGS = -module -avoid-version -lxml2 $(GLIB_LIBS)
 
-# [JE] There does not seem to be a difference between compiling with or without
-# libtool, but automake sadly fails when the sources list contains
-# "misc.c fmt_ptrn.c..."
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c xstdlib-nolibtool.c
-pmvarrun_LDFLAGS = -lz $(GLIB_LIBS)
+pmvarrun_LDFLAGS = $(GLIB_LIBS)
 
 INCLUDES = -I$(srcdir)/../include
 
