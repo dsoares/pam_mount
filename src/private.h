@@ -53,7 +53,6 @@ extern "C" {
 #define sizeof_z(x) (sizeof(x) - 1)
 
 enum command_type {
-    CMD_NONE,
     CMD_SMBMOUNT,
     CMD_SMBUMOUNT,
     CMD_CIFSMOUNT,
@@ -74,6 +73,7 @@ enum command_type {
     CMD_UNLOSETUP,
     CMD_PMVARRUN,
     _CMD_MAX,
+    CMD_NONE,
 };
 
 struct vol {
