@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <pam_mount>
 
-<!-- NOTE: Special characters like < > and & require escaping them to
-&lt; &gt; and &amp; according to the XML standard. Though, you really
-should not use them in pathnames.
+<!--
+NOTE: Special characters like < > and & require escaping them to &lt; &gt;
+and &amp; according to the XML standard. Though, you really should not use
+them in pathnames.
 
 Do not use comments inside tags like <lsof></lsof> - the case is not
-handled by the parser. -->
+handled by the parser.
+-->
 
 
 <!-- Turn on if you want to debug why some volume cannot be mounted etc.
-This can be overriden by user's local configuration. This will also
-affect the pmvarrun helper program. To disable, use enable="0" or
-comment it out entirely.
--->
-
+This can be overriden by user's local configuration. This will also affect
+the pmvarrun helper program. To disable, use enable="0" or comment it out
+entirely. -->
 <debug enable="1" />
 
 
@@ -27,15 +27,15 @@ comment it out entirely.
 
 
 <!--
-Users' local configuration file (if there is none, comment this
-parameter out). Will be read as ~/<file>
+Users' local configuration file (if there is none, comment this parameter
+out). Will be read as ~/<file>.
 
 Note: you must include either options_allow or options_deny to use this
 directive. I recommend also including options_require.
 
 Individual users may define additional volumes to mount if allowed by
-pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume keyword is the
-only valid keyword in these per-user configuration files. If the
+pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume keyword is
+the only valid keyword in these per-user configuration files. If the
 luserconf parameter is set in pam_mount.conf.xml, allowing user-defined
 volumes, users may mount and unmount any volumes they specify. The mount
 operation is executed under the user account, not with root permissions.
@@ -45,9 +45,9 @@ operation is executed under the user account, not with root permissions.
 
 
 <!--
-These directives determine which options may be specified in a user
-config file (luserconf). You must include one of these directives if you
-have a luserconf directive. You may not include both directives.
+These directives determine which options may be specified in a user config
+file (luserconf). You must include one of these directives if you have a
+luserconf directive. You may not include both directives.
 
 If you have an options_allow directive, then the options listed in that
 directive wil be allowed, and all others rejected. If you have an
@@ -68,16 +68,16 @@ permitting the suid and dev options.
 
 <!--
 The options listed in this directive are required for all volumes from a
-user config file. That is, any volume specified in a user config file
-that does not include these options will be ignored.
+user config file. That is, any volume specified in a user config file that
+does not include these options will be ignored.
 
 Note: you must make sure that a required option is permitted (either by
 including it in options_allow, or by not including it in options_deny).
 
 I recommend requiring at least nosuid and nodev.
 
-This is ignored completely if the volume is configured to get its
-options and mount point from /etc/fstab.
+This is ignored completely if the volume is configured to get its options
+and mount point from /etc/fstab.
 -->
 <mntoptions require="nosuid,nodev" />
 
@@ -119,14 +119,15 @@ the child process - look for STDIN_FILENO).
 
 
 <!--
-Linux supports lazy unmounting (-l).  May be dangerous for encrypted
+Linux supports lazy unmounting (-l). May be dangerous for encrypted
 volumes. May also break loopback mounts because loopback devices are not
 freed. Need to unmount mount point not volume to support SMB mounts, etc.
 -->
 <umount>/bin/umount %(MNTPT)</umount>
 
 
-<!-- On OpenBSD try "/usr/local/bin/mount_ehd" (included in pam_mount package). -->
+<!-- On OpenBSD try "/usr/local/bin/mount_ehd" (included in pam_mount
+package). -->
 <lclmount>/bin/mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
     "%(before=\"-o\" OPTIONS)"</lclmount>
 
@@ -166,39 +167,40 @@ Volumes that will be mounted when user triggers the pam_mount module
         fskeypath="..."
     />
 
+
 USER is a user for which a volume rule applies. "*" selects all users,
-"@xyz" selects all users who have xyz as their primary group, and
-"@@xyz" selects all users who either have xyz as their primary or
-secondary group. If this attribute is not present, "*" is assumed.
+"@xyz" selects all users who have xyz as their primary group, and "@@xyz"
+selects all users who either have xyz as their primary or secondary group.
+If this attribute is not present, "*" is assumed.
 
 
 FSTYPE can be any filesystem type. If /bin/mount or the kernel does not
-support it, you will get an error. You can use the special keyword
-"auto" which automatically lets the kernel choose a matching filesystem.
-Note that you the kernel's auto feature only works with filesystems
-listed in /proc/filesystem, so you will have to load the necessary
-modules _first_ for them to be recognized with "auto". If this attribute
-is not present, "auto" is assumed.
+support it, you will get an error. You can use the special keyword "auto"
+which automatically lets the kernel choose a matching filesystem. Note
+that you the kernel's auto feature only works with filesystems listed in
+/proc/filesystem, so you will have to load the necessary modules _first_
+for them to be recognized with "auto". If this attribute is not present,
+"auto" is assumed.
 
-The "cifs", "smbfs" and "ncpfs" types override the identically-named kernel
-filesystems and use the smbmount/ncpmount programs, as defined above,
-instead of `mount -t smbfs ...`.
-
-
-SERVER defines the server from which to source. The exact volume path depends
-on the filesystem type (SMB uses //SERVER/VOLUME, NFS uses SERVER:VOLUME).
-The attribute may be absent.
+The "cifs", "smbfs" and "ncpfs" types override the identically-named
+kernel filesystems and use the smbmount/ncpmount programs, as defined
+above, instead of `mount -t smbfs ...`.
 
 
-PATH specifies the source location of the volume on the server (if applies).
-This attribute is mandatory.
+SERVER defines the server from which to source. The exact volume path
+depends on the filesystem type (SMB uses //SERVER/VOLUME, NFS uses
+SERVER:VOLUME). The attribute may be absent.
 
 
-MOUNTPOINT specifies the destination folder onto which the volume is mounted.
-'~' expands to the user's home directory as present in the passwd database,
-according to sh semantics. "~name" is not supported. If this attribute is
-omitted, the location is read from /etc/fstab, which also requires PATH to be
-the device of an fstab entry.
+PATH specifies the source location of the volume on the server (if
+applies). This attribute is mandatory.
+
+
+MOUNTPOINT specifies the destination folder onto which the volume is
+mounted. '~' expands to the user's home directory as present in the passwd
+database, according to sh semantics. "~name" is not supported. If this
+attribute is omitted, the location is read from /etc/fstab, which also
+requires PATH to be the device of an fstab entry.
 
 
 OPTIONS specifies mount options. If omitted, and /etc/fstab is used (see
@@ -209,8 +211,8 @@ Note that if the mount command has specified an option, e.g. %(KEYBITS)
 and you do not specify a value, a warning is printed in the log. The
 warning can usually be ignored, except when the option is mandatory.
 
-SMB mounts require the `smbmount` and `smbumount` programs,
-NCP `ncpmount` and `ncpumount`. Both SMB and NCP work in ~/.pam_mount.conf.xml.
+SMB mounts require the `smbmount` and `smbumount` programs, NCP `ncpmount`
+and `ncpumount`. Both SMB and NCP work in ~/.pam_mount.conf.xml.
 
 
 General examples:
@@ -224,9 +226,9 @@ General examples:
     <volume fstype="smbfs" server="krueger" path="homes"
         mountpoint="/home/%(USER)/remote" options="dmask=0711" />
 
-You can use ~ to use whatever home directory the user has (therefore you can
-distribute home directories along more than one location.
-This is useful for pam_chroot:
+You can use ~ to use whatever home directory the user has (therefore you
+can distribute home directories along more than one location. This is
+useful for pam_chroot:
 
     <volume path="/bin" mountpoint="~/bin" options="bind" />
 
@@ -253,13 +255,12 @@ me without -jengelh), example (thanks John Knox):
 
 
 <!--
-
 Linux encrypted home directory examples, using dm_crypt:
 
 crypt mounts require a kernel with CONFIG_BLK_DEV_DM and CONFIG_DM_CRYPT
 enabled as well as all the used ciphers (e.g. CONFIG_CRYPTO_AES_586,
 CONFIG_CRYPTO_TWOFISH, etc.). crypt mounts must be in the global config
-file /etc/security/pam_mount.conf
+file /etc/security/pam_mount.conf.xml.
 
 Linux encrypted home directory examples, using dm_crypt:
 
@@ -268,8 +269,9 @@ Linux encrypted home directory examples, using dm_crypt:
         fskeypath="/home/user.key" />
 
 cryptoloop mounts require a kernel with CONFIG_BLK_DEV_CRYPTOLOOP enabled.
-cryptoloop mounts must be in the global config /etc/security/pam_mount.conf
-Linux encrypted home directory examples, using cryptoloop:
+cryptoloop mounts must be in the global config
+/etc/security/pam_mount.conf.xml. Linux encrypted home directory examples,
+using cryptoloop:
 
     <volume path="/dev/hda123" mountpoint="/home/user"
         options="loop,encryption=aes" />
@@ -291,17 +293,17 @@ OpenBSD encrypted home directory example (see also lclmount above):
     <volume path="/home/user.img" mountpoint="/home/user"
         options="svnd0" />
 
-Volatile tmpfs mount with restricted size (thanks to Mike Hommey for
-this example):
+Volatile tmpfs mount with restricted size (thanks to Mike Hommey for this
+example):
 
     <volume user="test" fstype="tmpfs" path="none" mountpoint="/home/test"
         options="size=10M,uid=test,gid=users,mode=0700" />
 
-See http://www.tldp.org/HOWTO/Loopback-Encrypted-Filesystem-HOWTO.html
-to learn how to create a encrypted loopback filesystem.
+See http://www.tldp.org/HOWTO/Loopback-Encrypted-Filesystem-HOWTO.html to
+learn how to create a encrypted loopback filesystem.
 
-If the volume's password is different than the user's login password,
-the following technique may be used (see also README):
+If the volume's password is different than the user's login password, the
+following technique may be used (see also README):
 
 {...} are placeholders, insert the proper value there!
 
@@ -324,19 +326,17 @@ the following technique may be used (see also README):
     e.  mkfs -t ext2 /dev/loop0
     f.  losetup -d /dev/loop0
 
-3.  In pam_mount.conf:
+3.  In pam_mount.conf.xml:
         a.  Set the fs key cipher variable to the cipher used
             (ie: aes-256-ecb).
         b.  Set the fs key path variable to the key's path
             (ie: /home/user.key)
 
-4.  If a user changes his login password, regenerate the efsk that
-    was created in step 1b.  A script named passwdehd is provided to
-    do this.
+4.  If a user changes his login password, regenerate the efsk that was
+    created in step 1b.  A script named passwdehd is provided to do this.
 
 If FSKEYCIPHER is empty, then the user's login password is also the
 volume's password.
 -->
-
 
 </pam_mount>
