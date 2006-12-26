@@ -24,7 +24,6 @@ modifiers.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
 #include "buffer.h"
 #include "modifiers.h"
 #include "fmt_ptrn.h"
@@ -35,14 +34,9 @@ modifiers.c
 typedef int (apply_fn_t)(struct buffer *, struct fmt_ptrn *, char *);
 
 // Functions
-static int _apply_comment(struct buffer *, char *, char *);
-static int _apply_delim(struct buffer *, const char *, const char *);
 static apply_fn_t
-    apply_after, apply_basename, apply_before, apply_c_comment, apply_c_delim,
-    apply_cpp_comment, apply_cpp_delim, apply_file, apply_fn, apply_lower,
-    apply_newlines, apply_no_newlines, apply_remove_underscore,
-    apply_sh_comment, apply_sh_delim, apply_template, apply_tex_comment,
-    apply_tex_delim, apply_upper, apply_xml_comment;
+    apply_after, apply_basename, apply_before, apply_lower, apply_newlines,
+    apply_no_newlines, apply_remove_underscore, apply_template, apply_upper;
 
 // Variables
 const struct modifier_info mod_fn[] = {
@@ -51,21 +45,9 @@ const struct modifier_info mod_fn[] = {
     {"basename",          apply_basename,          0},
     {"before=\"",         apply_before,            1},
     {"after=\"",          apply_after,             1},
-    {"fn",                apply_fn,                0},
-    {"c_delim",           apply_c_delim,           0},
-    {"cpp_delim",         apply_cpp_delim,         0},
-    {"sh_delim",          apply_sh_delim,          0},
-    {"tex_delim",         apply_tex_delim,         0},
-    {"c_comment",         apply_c_comment,         0},
-    {"cpp_comment",       apply_cpp_comment,       0},
-    {"sh_comment",        apply_sh_comment,        0},
-    {"tex_comment",       apply_tex_comment,       0},
-    {"xml_comment",       apply_xml_comment,       0},
-    {"sgml_comment",      apply_xml_comment,       0},
     {"newlines",          apply_newlines,          0},
     {"no_newlines",       apply_no_newlines,       0},
     {"template",          apply_template,          0},
-    {"file",              apply_file,              0},
     /* FIXME: The following is handled as a special case. */
     {"#",                 NULL,                    0},
     {"remove_underscore", apply_remove_underscore, 0},
@@ -92,111 +74,6 @@ static int apply_basename(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     if(ptr != NULL)
 	*ptr = '\0';
     return 1;
-}
-
-static int _apply_delim(struct buffer *str, const char *start_cmnt,
- const char *end_cmnt)
-{
-    /* This one is a bit ugly, but not very interesting. */
-    int i;
-    char ptr[81];
-    size_t start_cmnt_len = strlen(start_cmnt) + 1;	/* + 1 for ' '. */
-    size_t end_cmnt_len = (end_cmnt != NULL) ? strlen(end_cmnt) + 1 : 0;
-    size_t len;
-    if(str->size < sizeof(ptr)) {
-        /* FIXME: use proper buffer interfaces */
-	str->data = xrealloc(str->data, 81);
-	str->size = sizeof(ptr);
-    }
-    strcpy(ptr, start_cmnt);
-    strcat(ptr, " ");
-    for(i = 0; i < 31 - start_cmnt_len - 2; i++)	/* - 2 for spaces. */
-	strcat(ptr, "=");
-    strcat(ptr, " ");
-    len = strlen(ptr);
-    strncat(ptr, str->data, sizeof(ptr) - 1 - len - 2 - end_cmnt_len);	/* - 2 for spaces. */
-    strcat(ptr, " ");
-    len = strlen(ptr);
-    for(i = 0; i < sizeof(ptr) - 1 - len - end_cmnt_len; i++)
-	strcat(ptr, "=");
-    strcat(ptr, (end_cmnt != NULL) ? " " : "");
-    strcat(ptr, (end_cmnt != NULL) ? end_cmnt : "");
-    strcpy(str->data, ptr);
-    return 1;
-}
-
-static int apply_c_delim(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
-    _apply_delim(dest, "/*", "*/");
-    return 1;
-}
-
-static int apply_cpp_delim(struct buffer *dest, struct fmt_ptrn *x,
- char *arg)
-{
-    _apply_delim(dest, "//", NULL);
-    return 1;
-}
-
-static int apply_sh_delim(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
-    _apply_delim(dest, "#", NULL);
-    return 1;
-}
-
-static int apply_tex_delim(struct buffer *dest, struct fmt_ptrn *x,
- char *arg)
-{
-    _apply_delim(dest, "%", NULL);
-    return 1;
-}
-
-static int _apply_comment(struct buffer *dest, char *c0, char *c1) {
-    int i;
-    struct buffer tmp;
-
-    buffer_init(&tmp);
-    realloc_n_cat(&tmp, c0);
-
-    for (i = 0; i < strlen(dest->data); i++) {
-	if (dest->data[i] == '\n' && c1)
-	    realloc_n_cat(&tmp, c1);
-	realloc_n_ncat(&tmp, dest->data + i, 1);
-	if (dest->data[i] == '\n' && i < strlen(dest->data) - 1)
-	    realloc_n_cat(&tmp, c0);
-    }
-
-    realloc_n_cpy(dest, tmp.data);
-    buffer_clear(&tmp);
-    return 1;
-}
-
-static int apply_c_comment(struct buffer *dest, struct fmt_ptrn *x,
- char *arg)
-{
-    return _apply_comment(dest, "/* ", " */");
-}
-
-static int apply_xml_comment(struct buffer *dest, struct fmt_ptrn *x,
- char *arg)
-{
-    return _apply_comment(dest, "<!-- ", " -->");
-}
-
-static int apply_sh_comment(struct buffer *dest, struct fmt_ptrn *x,
- char *arg)
-{
-    return _apply_comment(dest, "# ", NULL);
-}
-
-static int apply_cpp_comment(struct buffer *dest, struct fmt_ptrn *x,
- char *arg)
-{
-    return _apply_comment(dest, "// ", NULL);
-}
-
-static int apply_tex_comment(struct buffer *dest, struct fmt_ptrn *x,
- char *arg)
-{
-    return _apply_comment(dest, "% ", NULL);
 }
 
 static int apply_before(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
@@ -252,28 +129,6 @@ static int apply_remove_underscore(struct buffer *dest, struct fmt_ptrn *x,
 static int apply_after(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     /* Too easy. */
     realloc_n_cat(dest, arg);
-    return 1;
-}
-
-static int apply_fn(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
-    apply_after(dest, x, " ()");
-    return 1;
-}
-
-static int apply_file(struct buffer *dest, struct fmt_ptrn *x,
- /* const */ char *arg)
-{
-/* This function handles the case where the FMT_PTRN_FILE modifier is
- * used.
- */
-    char b[BUFSIZ];
-    gzFile f;
-    if((f = gzopen(dest->data, "rb")) == NULL)
-	return 0;
-    realloc_n_cpy(dest, "");
-    while(gzgets(f, b, sizeof(b)) != Z_NULL)
-	realloc_n_cat(dest, b);
-    gzclose(f);
     return 1;
 }
 
