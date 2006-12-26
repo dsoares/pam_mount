@@ -50,6 +50,7 @@ extern "C" {
 #ifndef S_IRXO
 #    define S_IRXO (S_IROTH | S_IXOTH)
 #endif
+#define sizeof_z(x) (sizeof(x) - 1)
 
 enum command_type {
     CMD_NONE,
@@ -61,7 +62,7 @@ enum command_type {
     CMD_FUSEMOUNT,
     CMD_FUSEUMOUNT,
     CMD_LCLMOUNT,
-    CMD_CRYPTMOUNT, // FIXME: hope to have this in util-linux (LCLMOUNT) some day
+    CMD_CRYPTMOUNT,
     CMD_NFSMOUNT,
     CMD_UMOUNT,
     CMD_PMHELPER,

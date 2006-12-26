@@ -78,6 +78,7 @@ AC_PROG_INSTALL
 AM_PROG_LIBTOOL
 AC_PROG_LN_S
 AM_PATH_GLIB_2_0(,,AC_MSG_ERROR(You are missing glib))
+AM_PATH_XML2(,,AC_MSG_ERROR(You are missing libxml2))
 
 AM_CONDITIONAL(FLYN, test "$FLYN")
 

@@ -46,9 +46,9 @@ pam_mount.c
 #include "xstdlib.h"
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-#    define CONFIGFILE "/etc/pam_mount.conf"
+#    define CONFIGFILE "/etc/pam_mount.conf.xml"
 #else
-#    define CONFIGFILE "/etc/security/pam_mount.conf"
+#    define CONFIGFILE "/etc/security/pam_mount.conf.xml"
 #endif
 
 // Functions
@@ -418,7 +418,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
                 }
 
 	}
-	if(!readconfig(Config.user, CONFIGFILE, 1, &Config)) {
+	if(!readconfig(CONFIGFILE, 1, &Config)) {
 		ret = PAM_SERVICE_ERR;
 		goto _return;
 	}
@@ -441,7 +441,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		w4rn(PMPREFIX "per-user configurations not allowed by pam_mount.conf\n");
         else if(exists(Config.luserconf) && owns(Config.user, Config.luserconf)) {
 		w4rn(PMPREFIX "going to readconfig user\n");
-		if(!readconfig(Config.user, Config.luserconf, 0, &Config)) {
+		if(!readconfig(Config.luserconf, 0, &Config)) {
 			ret = PAM_SERVICE_ERR;
 			goto _return;
 		}

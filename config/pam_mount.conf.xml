@@ -3,7 +3,10 @@
 
 <!-- NOTE: Special characters like < > and & require escaping them to
 &lt; &gt; and &amp; according to the XML standard. Though, you really
-should not use them in pathnames. -->
+should not use them in pathnames.
+
+Do not use comments inside tags like <lsof></lsof> - the case is not
+handled by the parser. -->
 
 
 <!-- Turn on if you want to debug why some volume cannot be mounted etc.
@@ -11,6 +14,7 @@ This can be overriden by user's local configuration. This will also
 affect the pmvarrun helper program. To disable, use enable="0" or
 comment it out entirely.
 -->
+
 <debug enable="1" />
 
 
@@ -30,13 +34,13 @@ Note: you must include either options_allow or options_deny to use this
 directive. I recommend also including options_require.
 
 Individual users may define additional volumes to mount if allowed by
-pam_mount.conf (usually ~/.pam_mount.conf)  The volume keyword is the
+pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume keyword is the
 only valid keyword in these per-user configuration files. If the
-luserconf parameter is set in pam_mount.conf, allowing user-defined
+luserconf parameter is set in pam_mount.conf.xml, allowing user-defined
 volumes, users may mount and unmount any volumes they specify. The mount
 operation is executed under the user account, not with root permissions.
 
-<luserconf name=".pam_mount.conf" />
+<luserconf name=".pam_mount.conf.xml" />
 -->
 
 
@@ -147,7 +151,6 @@ freed. Need to unmount mount point not volume to support SMB mounts, etc.
 
 <pmvarrun>/usr/sbin/pmvarrun -u %(USER) -o %(OPERATION)</pmvarrun>
 
-
 <!--
 Volumes that will be mounted when user triggers the pam_mount module
 (usually at login).
@@ -168,9 +171,6 @@ USER is a user for which a volume rule applies. "*" selects all users,
 "@@xyz" selects all users who either have xyz as their primary or
 secondary group. If this attribute is not present, "*" is assumed.
 
-'~' expands to the user's home directory as present in the passwd
-database, according to sh semantics. "~name" is not supported.
-
 
 FSTYPE can be any filesystem type. If /bin/mount or the kernel does not
 support it, you will get an error. You can use the special keyword
@@ -184,12 +184,33 @@ The "cifs", "smbfs" and "ncpfs" types override the identically-named kernel
 filesystems and use the smbmount/ncpmount programs, as defined above,
 instead of `mount -t smbfs ...`.
 
+
+SERVER defines the server from which to source. The exact volume path depends
+on the filesystem type (SMB uses //SERVER/VOLUME, NFS uses SERVER:VOLUME).
+The attribute may be absent.
+
+
+PATH specifies the source location of the volume on the server (if applies).
+This attribute is mandatory.
+
+
+MOUNTPOINT specifies the destination folder onto which the volume is mounted.
+'~' expands to the user's home directory as present in the passwd database,
+according to sh semantics. "~name" is not supported. If this attribute is
+omitted, the location is read from /etc/fstab, which also requires PATH to be
+the device of an fstab entry.
+
+
+OPTIONS specifies mount options. If omitted, and /etc/fstab is used (see
+MOUNTPOINT), then the options are also sourced from fstab.
+
+
 Note that if the mount command has specified an option, e.g. %(KEYBITS)
 and you do not specify a value, a warning is printed in the log. The
 warning can usually be ignored, except when the option is mandatory.
 
 SMB mounts require the `smbmount` and `smbumount` programs,
-NCP `ncpmount` and `ncpumount`. Both SMB and NCP work in ~/.pam_mount.conf.
+NCP `ncpmount` and `ncpumount`. Both SMB and NCP work in ~/.pam_mount.conf.xml.
 
 
 General examples:
@@ -222,7 +243,8 @@ Some more examples:
     <volume path="/home/%(USER).img" mountpoint="~" fskeycipher="aes-256-ecb"
         fskeypath="/etc/ehd/%(USER)" />
 
-Windows 2000, which requires a domain specified, example (thanks John Knox):
+Windows 2000, which requires a domain specified (does it really? works for
+me without -jengelh), example (thanks John Knox):
 
     <volume fstype="smbfs" server="viper" path="%(USER)"
         mountpoint="~" options="dmask=0751,workgroup=WINDOWS_DOMAIN" />
