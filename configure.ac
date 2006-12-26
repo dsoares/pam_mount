@@ -37,10 +37,10 @@ AC_SUBST(MICRO_VERSION)
 AC_SUBST(VER_INFO)
 
 AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],
-    [Path to the super sbin directory [[/sbin]]]),
+    [Path to the super lib directory [[/lib]]]),
     [slibdir="$withval"], [slibdir="/lib"])
 AC_ARG_WITH([ssbindir], AS_HELP_STRING([--with-ssbindir=PATH],
-    [Path to the super lib directory [[/lib]]]),
+    [Path to the super sbin directory [[/sbin]]]),
     [ssbindir="$withval"], [ssbindir="/sbin"])
 AC_SUBST(slibdir)
 AC_SUBST(ssbindir)
