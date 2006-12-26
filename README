@@ -42,9 +42,9 @@ OVERVIEW
 NASTY DETAILS
        The   primary   configuration   file   for   the  pam_mount  module  is
        pam_mount.conf. On most platforms this file  is  read  from  /etc/secu‐
-       rity/pam_mount.conf.  On OpenBSD pam_mount reads its configuration file
-       from /etc/pam_mount.conf.  pam_mount.conf contains many comments  docu‐
-       menting its use.
+       rity/pam_mount.conf.xml.  On  OpenBSD pam_mount reads its configuration
+       file from /etc/pam_mount.conf.xml.   pam_mount.conf.xml  contains  many
+       comments documenting its use.
 
        In  addition,  you  must include two entries in the system's applicable
        /etc/pam.d/SERVICE config files, as the following example shows:
@@ -105,21 +105,21 @@ NASTY DETAILS
        password,  simply  regenerate efsk using efsk = E_sk (fsk). If you want
        to mount this volume  by  hand,  use  something  like  openssl  enc  -d
        -aes-256-ecb  -in  /home/user.key | mount -p0 /home/user. More informa‐
-       tion about this technique is included in pam_mount.conf.
+       tion about this technique is included in pam_mount.conf.xml.
 
        A script  named  mkehd  is  provided  with  pam_mount  to  help  create
        encrypted  home  directories.  If  you  have  an entry for a user using
-       encrypted home directories in pam_mount.conf, mkehd will create  neces‐
-       sary filesystem images and possibly encrypted filesystem keys.
+       encrypted home directories in  pam_mount.conf.xml,  mkehd  will  create
+       necessary filesystem images and possibly encrypted filesystem keys.
 
        Individual  users  may define additional volumes to mount if allowed by
-       pam_mount.conf (usually ~/.pam_mount.conf). The volume keyword  is  the
-       only valid keyword in these per-user configuration files. If the luser‐
-       conf parameter is set in pam_mount.conf, allowing user-defined  volume,
-       then users may mount and unmount any volume they own at any mount point
-       they own. On some filesystem configurations this may be a security flaw
-       so  user-defined  volumes are not allowed by the example pam_mount.conf
-       distributed with pam_mount.
+       pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume  keyword
+       is the only valid keyword in these per-user configuration files. If the
+       luserconf parameter is set in pam_mount.conf.xml, allowing user-defined
+       volume,  then  users  may  mount and unmount any volume they own at any
+       mount point they own. On some filesystem configurations this may  be  a
+       security  flaw  so  user-defined volumes are not allowed by the example
+       pam_mount.conf.xml distributed with pam_mount.
 
        In general, you will leave all the first (general) parameters  as  pro‐
        vided  by default. You only have to provide the user/volume list in the
@@ -128,12 +128,12 @@ NASTY DETAILS
        To ensure that your system and, possibly, the  remote  server  are  all
        properly configured, you should try to mount all or some of the volumes
        by  hand,  using  the  same  commands  and  mount  points  provided  in
-       pam_mount.conf.  This  will  save  you a lot of grief, since it is more
+       pam_mount.conf.xml. This will save you a lot of grief, since it is more
        difficult to debug the mounting process via pam_mount.
 
        If you can mount the volumes by  hand  but  it  is  not  happening  via
-       pam_mount,  you may want to enable the "debug" option in pam_mount.conf
-       to see what is happening.
+       pam_mount,   you   may   want   to   enable   the   "debug"  option  in
+       pam_mount.conf.xml to see what is happening.
 
        Verify if the user owns the mount point and has sufficient  permissions
        over  that.  pam_mount  will  verify  this and will refuse to mount the
@@ -141,8 +141,8 @@ NASTY DETAILS
 
        If pam_mount is having trouble unmounting  volumes  upon  logging  out,
        enable   the   debug   variable   and   check   the  lsof  variable  in
-       pam_mount.conf. This causes pam_mount to run lsof upon logging out  and
-       write lsof's output to the system's logs.
+       pam_mount.conf.xml. This causes pam_mount to run lsof upon logging  out
+       and write lsof's output to the system's logs.
 
 AUTHORS
        W. Michael Petullo <mike@flyn.org>

@@ -120,7 +120,7 @@ static void run_lsof(const struct config *const config,
 	GError *err = NULL;
 	pid_t pid;
 	if(config->command[0][CMD_LSOF] == NULL)
-		l0g(PMPREFIX "lsof not defined in pam_mount.conf\n");
+		l0g(PMPREFIX "lsof not defined in pam_mount.conf.xml\n");
 	/* FIXME: NEW */
 	for(i = 0; config->command[i][CMD_LSOF] != NULL; i++)
 		add_to_argv(_argv, &_argc, config->command[i][CMD_LSOF], vinfo);
@@ -231,7 +231,7 @@ static int already_mounted(const struct config *const config,
     // FIXME: I am not overly fond of using mount, but BSD has no /etc/mtab?
     // "WONTFIX" I would say, eh?
     if(config->command[0][MNTCHECK] == NULL) {
-        l0g(PMPREFIX "mntcheck not defined in pam_mount.conf\n");
+        l0g(PMPREFIX "mntcheck not defined in pam_mount.conf.xml\n");
         return -1;
     }
 
@@ -305,7 +305,7 @@ static void vol_to_dev(char *match, size_t s, const struct vol *vol) {
             break;
 
         case CMD_NCPMOUNT:
-            /* FIXME: volume sanity check in readconfig.c ensures
+            /* FIXME: volume sanity check in rdconf2.c ensures
             optlist_value() will not return NULL for user.
             [JE] So what to fix? */
             snprintf(match, s, "%s/%s", vol->server,
@@ -338,7 +338,7 @@ static void vol_to_dev(char *match, size_t s, const struct vol *vol) {
 static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
  const char **fstype)
 {
-    /* mntcheck is currently defined as "/bin/mount" in pam_mount.conf so
+    /* mntcheck is currently defined as "/bin/mount" in pam_mount.conf.xml so
     a line is like "/dev/ad0s1 on / (ufs, local)". */
 
     *fsname = wp;
@@ -468,7 +468,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
         }
 
         if(config->command[0][type] == NULL)
-            l0g(PMPREFIX "{smb,ncp}umount not defined in pam_count.conf\n");
+            l0g(PMPREFIX "{smb,ncp}umount not defined in pam_count.conf.xml\n");
 
         for(i = 0; config->command[i][type] != NULL; ++i)
             add_to_argv(_argv, &_argc, config->command[i][type], vinfo);
@@ -565,7 +565,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
         keybits = optlist_value(vpt->options, "keybits");
 
 	if(config->command[0][CMD_LOSETUP] == NULL) {
-		l0g(PMPREFIX "losetup not defined in pam_mount.conf\n");
+		l0g(PMPREFIX "losetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
@@ -623,7 +623,7 @@ static int do_unlosetup(const struct config *config, struct fmt_ptrn *vinfo) {
 	assert(vinfo != NULL);
 
 	if(config->command[0][CMD_UNLOSETUP] == NULL) {
-		l0g(PMPREFIX "unlosetup not defined in pam_mount.conf\n");
+		l0g(PMPREFIX "unlosetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
@@ -674,7 +674,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
         fsck_target = vpt->volume;
 
 	if(config->command[0][CMD_FSCK] == NULL) {
-		l0g(PMPREFIX "fsck not defined in pam_mount.conf\n");
+		l0g(PMPREFIX "fsck not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 
@@ -778,7 +778,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 	if (mount_again) {
 		GError *err = NULL;
 		if(config->command[0][CMD_MNTAGAIN] == NULL) {
-			l0g(PMPREFIX "mntagain not defined in pam_mount.conf\n");
+			l0g(PMPREFIX "mntagain not defined in pam_mount.conf.xml\n");
 			return 0;
 		}
 		/* FIXME: NEW */
@@ -797,7 +797,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 		GError *err = NULL;
                 char *mount_user;
 		if(config->command[0][vpt->type] == NULL) {
-			l0g(PMPREFIX "proper mount command not defined in pam_mount.conf\n");
+			l0g(PMPREFIX "proper mount command not defined in pam_mount.conf.xml\n");
 			return 0;
 		}
 		w4rn(PMPREFIX "checking for encrypted filesystem key configuration\n");

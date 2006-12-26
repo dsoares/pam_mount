@@ -374,8 +374,8 @@ _nosigact_return:
     @argv:      NULL-terminated argument vector
 
     Entrypoint from the PAM layer. Starts the wheels and eventually mounts the
-    user's directories according to pam_mount.conf. Returns the PAM error code
-    or %PAM_SUCCESS.
+    user's directories according to pam_mount.conf.xml. Returns the PAM error
+    code or %PAM_SUCCESS.
 */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
  int argc, const char **argv)
@@ -438,7 +438,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	w4rn(PMPREFIX "back from global readconfig\n");
 	if(strlen(Config.luserconf) == 0)
-		w4rn(PMPREFIX "per-user configurations not allowed by pam_mount.conf\n");
+		w4rn(PMPREFIX "per-user configurations not allowed by pam_mount.conf.xml\n");
         else if(exists(Config.luserconf) && owns(Config.user, Config.luserconf)) {
 		w4rn(PMPREFIX "going to readconfig user\n");
 		if(!readconfig(Config.luserconf, 0, &Config)) {

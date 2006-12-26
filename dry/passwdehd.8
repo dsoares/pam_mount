@@ -5,18 +5,17 @@ passwdehd - changes a user's encrypted filesystem key password
 \fBpasswdehd\fP [\fIuser\fP] [\fIoption\fP]...
 .SH DESCRIPTION
 When using a password protected key file to mount an encrypted volume, this
-command changes the password of the key file for the given user.
-It reads the global \fBpam_mount.conf\fP file for keyfile and cipher options.
+command changes the password of the key file for the given user. It reads the
+global \fBpam_mount.conf.xml\fP file for keyfile and cipher options.
 .SH OPTIONS
 .TP
 \fB\-h\fP, \fB\-?\fP
 display help
 .SH FILES
-\fB/etc/security/pam_mount.conf\fP
+\fB/etc/security/pam_mount.conf.xml\fP
 .SH AUTHOR
-This manpage was originally written by Bastian Kleineidam
-<calvin@debian.org> for the Debian distribution of libpam\-mount but
-may be used by others.
+This manpage was originally written by Bastian Kleineidam <calvin@debian.org>
+for the Debian distribution of pam_mount but may be used by others.
 
 See /usr/share/doc/packages/pam_mount/AUTHORS for the list of original authors
 of pam_mount.

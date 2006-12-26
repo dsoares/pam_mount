@@ -4,10 +4,11 @@ Q.  I want to ask for help.  What information should I provide?
 
 A.  You need to provide us the following:
 
-    * A full log of a failed session with debugging on in pam_mount.conf
+    * A full log of a failed session with debugging on in
+      pam_mount.conf.xml
     * The version of pam_mount that you are using
     * /etc/pam.d/* as relevant
-    * pam_mount.conf as relevant, preferably completely
+    * pam_mount.conf.xml as relevant, preferably completely
 
 =======================================================================
 
@@ -70,10 +71,10 @@ A.  SMB (and some other non-UNIX-native network filesystems) do not
 Q.  Why are my volumes not being unmounted when I log out?
 
 A.  Often this is because processes remaining after logging out are
-    holding open files in your home directory. For example, some
-    versions of gconf do this. The best way to figure out what programs
-    are guilty is to enable debugging in your pam_mount.conf, configure
-    lsof and watch for lsof's output in your logs.
+    holding open files in your home directory. For example, some versions
+    of gconf do this. The best way to figure out what programs are guilty
+    is to enable debugging in your pam_mount.conf.xml, configure lsof and
+    watch for lsof's output in your logs.
 
 =======================================================================
 
@@ -87,9 +88,9 @@ A.  See https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=103200.
         export LD_ASSUME_KERNEL=2.4.1
         exec smbmount "$@"
 
-    Then configure pam_mount with the following in pam_mount.conf:
+    Then configure pam_mount with the following in pam_mount.conf.xml:
 
-        smbmount /bin/mount -t smbfs_no_nptl
+        <smbmount>/bin/mount -t smbfs_no_nptl</smbmount>
 
 =======================================================================
 
@@ -121,8 +122,8 @@ A.  As of version 3.3, sshd has a feature called privilege separation
     unmount them using the user option may help pam_mount to perform
     without root privileges:
 
-        # /etc/security/pam_mount.conf:
-        volume user auto - /home/user.img - - - -
+        # /etc/security/pam_mount.conf.xml:
+        <volume user="xyz" path="/home/user.img" />
 
         # /etc/fstab:
         /home/user.img /home/user ext2 user,loop,encryption=aes,keybits=256,noauto 0 0
