@@ -683,41 +683,6 @@ _return:
 	return fnval;
 }
 
-/* ============================ fmt_ptrn_gets () =========================== */
-char *fmt_ptrn_gets(char *buf, size_t size, struct fmt_ptrn *x) {
-	char *fnval = NULL;
-
-	assert(buf != NULL);
-	assert(fmt_ptrn_valid(x));
-
-	if (buffer_len(&x->filled_buf) == 0) {
-		/* FIXME: potentially, a buffer could be filled with only
-		 * half of a format string.
-		 */
-		/* Here buf is used as a temp. buffer. */
-		if (gzgets(x->template_fp, buf, size) == Z_NULL) {
-			fnval = NULL;
-			goto _return;
-		}
-		if (!_fill_it(x, buf)) {
-			fnval = NULL;
-			goto _return;
-		}
-	}
-	if (buffer_len(&x->filled_buf) > 0) {
-		g_strlcpy(buf, x->filled_buf.data, size);
-		buffer_eat(&x->filled_buf, strlen(buf));
-		fnval = buf;
-	} else {
-		fnval = NULL;
-		goto _return;
-	}
-_return:
-	assert(fmt_ptrn_valid(x));
-
-	return fnval;
-}
-
 /* ============================ _free_tree_node () ========================= */
 /* FIXME: this function should take TWO pointers!!!!!! */
 static bool _free_tree_node(gpointer key, gpointer val, gpointer data) {

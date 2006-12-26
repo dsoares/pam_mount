@@ -36,7 +36,7 @@ typedef int (apply_fn_t)(struct buffer *, struct fmt_ptrn *, char *);
 // Functions
 static apply_fn_t
     apply_after, apply_basename, apply_before, apply_lower, apply_newlines,
-    apply_no_newlines, apply_remove_underscore, apply_template, apply_upper;
+    apply_no_newlines, apply_remove_underscore, apply_upper;
 
 // Variables
 const struct modifier_info mod_fn[] = {
@@ -47,7 +47,6 @@ const struct modifier_info mod_fn[] = {
     {"after=\"",          apply_after,             1},
     {"newlines",          apply_newlines,          0},
     {"no_newlines",       apply_no_newlines,       0},
-    {"template",          apply_template,          0},
     /* FIXME: The following is handled as a special case. */
     {"#",                 NULL,                    0},
     {"remove_underscore", apply_remove_underscore, 0},
@@ -132,35 +131,4 @@ static int apply_after(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
     return 1;
 }
 
-static int apply_template(struct buffer *dest, struct fmt_ptrn *x, char *arg) {
-/* This function handles the case where the FMT_PTRN_TEMPLATE modifier is
- * used.
- */
-    struct fmt_ptrn f;
-    char b[BUFSIZ];
-    char template_path[PATH_MAX + 1];
-    if (!fmt_ptrn_open(dest->data, &f)) {
-	if (!template_find(template_path, "", dest->data, 0)) {
-	    enqueue_parse_errmsg(x, "%s: %ld: template %s does not exist",
-				 x->template_path, x->line_num,
-				 dest->data);
-	    return 0;
-	} else
-	    fmt_ptrn_open(template_path, &f);
-    }
-    f.fillers = x->fillers;
-    realloc_n_cpy(dest, "");
-    while(fmt_ptrn_gets(b, sizeof(b), &f) != NULL)
-	realloc_n_cat(dest, b);
-    while (fmt_ptrn_parse_err(&f))
-	/* Copy parse error messages into the main struct fmt_ptrn
-        data structure. */
-	enqueue_parse_errmsg(x, fmt_ptrn_parse_strerror(&f));
-    /* Avoid freeing the stolen fillers: */
-    /* FIXME: need to port to glib:
-    f.fillers.size = 0;
-    f.fillers.root = NULL;
-    */
-    fmt_ptrn_close(&f);
-    return 1;
-}
+//=============================================================================

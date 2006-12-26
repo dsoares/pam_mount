@@ -56,7 +56,6 @@ extern bool fmt_ptrn_parse_err(const struct fmt_ptrn *);
 extern void enqueue_parse_errmsg(struct fmt_ptrn *, const char *, ...);
 
 extern char *fmt_ptrn_filled(struct fmt_ptrn *, const char *);
-extern char *fmt_ptrn_gets(char *, size_t, struct fmt_ptrn *);
 extern int fmt_ptrn_init(struct fmt_ptrn *);
 extern bool fmt_ptrn_open(const char *, struct fmt_ptrn *);
 extern char *fmt_ptrn_parse_strerror(struct fmt_ptrn *);
