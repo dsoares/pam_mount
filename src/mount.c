@@ -174,10 +174,10 @@ static int already_mounted(const struct config *const config,
     if(realpath(vpt->mountpoint, real_mpt) == NULL) {
         w4rn(PMPREFIX "can't get realpath of volume %s: %s\n",
              vpt->mountpoint, strerror(errno));
-        strncpy(real_mpt, vpt->mountpoint, PATH_MAX);
-        real_mpt[PATH_MAX] = '\0';
+        strncpy(real_mpt, vpt->mountpoint, sizeof_z(real_mpt));
+        real_mpt[sizeof_z(real_mpt)] = '\0';
     } else {
-        real_mpt[PATH_MAX] = '\0';
+        real_mpt[sizeof_z(real_mpt)] = '\0';
         l0g(PMPREFIX "realpath of volume \"%s\" is \"%s\"\n",
             vpt->mountpoint, real_mpt);
     }
@@ -319,7 +319,7 @@ static void vol_to_dev(char *match, size_t s, const struct vol *vol) {
         case CMD_CRYPTMOUNT: {
             /* FIXME: ugly hack to support umount.crypt script. I hope that
             util-linux will have native dm_crypt support some day. */
-            char *wp = match + sizeof("/dev/mapper/")-1;
+            char *wp = match + sizeof_z("/dev/mapper/");
             snprintf(match, s, "/dev/mapper/%s", vol->volume);
             while((wp = strchr(wp, '/')) != NULL)
                 *wp = '_';
@@ -399,8 +399,8 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 	assert(d != NULL);
 
 	w4rn(PMPREFIX "creating mount point %s\n", d);
-	strncpy(dcopy, d, sizeof(dcopy) - 1);
-	dcopy[PATH_MAX] = '\0';
+	strncpy(dcopy, d, sizeof_z(dcopy));
+	dcopy[sizeof_z(dcopy)] = '\0';
 	parent = g_path_get_dirname(dcopy);
 	if(!exists(parent) && mkmountpoint(volume, parent) == 0) {
 		ret = 0;

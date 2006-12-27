@@ -75,7 +75,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 {
 	const EVP_MD *md;
 	unsigned char salt[PKCS5_SALT_LEN];
-	char magic[sizeof("Salted__") - 1];
+	char magic[sizeof_z("Salted__")];
 
 	assert(fp != NULL);	/* FIXME: check if valid, open file */
 	assert(cipher != NULL);	/* FIXME: check if cipher is valid OpenSSL cipher */
@@ -83,7 +83,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 	assert(hash != NULL);	/* FIXME: check hash is big enough? */
 	assert(iv != NULL);	/* FIXME: check iv is big enough? */
 
-	if(fread(magic, 1, sizeof(magic), fp) != sizeof("Salted__") - 1
+	if(fread(magic, 1, sizeof(magic), fp) != sizeof_z("Salted__")
 	    || fread(salt, 1, sizeof(salt), fp) != PKCS5_SALT_LEN) {
 		l0g(PMPREFIX "error reading salt from encrypted filesystem key\n");
 		return 0;
