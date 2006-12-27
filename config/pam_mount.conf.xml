@@ -118,11 +118,10 @@ the child process - look for STDIN_FILENO).
 <fuseumount>/usr/bin/fusermount -u %(MNTPT)</fuseumount>
 
 
-<!--
-Linux supports lazy unmounting (-l). May be dangerous for encrypted
+<!-- Linux supports lazy unmounting (-l). May be dangerous for encrypted
 volumes. May also break loopback mounts because loopback devices are not
-freed. Need to unmount mount point not volume to support SMB mounts, etc.
--->
+freed. Need to unmount mount point (not volume!) to support SMB mounts,
+etc. -->
 <umount>/bin/umount %(MNTPT)</umount>
 
 
@@ -177,14 +176,14 @@ If this attribute is not present, "*" is assumed.
 FSTYPE can be any filesystem type. If /bin/mount or the kernel does not
 support it, you will get an error. You can use the special keyword "auto"
 which automatically lets the kernel choose a matching filesystem. Note
-that you the kernel's auto feature only works with filesystems listed in
-/proc/filesystem, so you will have to load the necessary modules _first_
-for them to be recognized with "auto". If this attribute is not present,
-"auto" is assumed.
+that the kernel's auto feature only works with currently loaded
+filesystems (listed in /proc/filesystem), so you will have to load the
+necessary modules _first_ for them to be recognized with "auto". If this
+attribute is not present, "auto" is assumed.
 
-The "cifs", "smbfs" and "ncpfs" types override the identically-named
-kernel filesystems and use the smbmount/ncpmount programs, as defined
-above, instead of `mount -t smbfs ...`.
+The "cifs", "smbfs", "ncpfs" and "fuse" types override the
+identically-named kernel filesystems and use the smbmount/ncpmount
+programs, as defined above, instead of `mount -t smbfs ...`.
 
 
 SERVER defines the server from which to source. The exact volume path
@@ -192,11 +191,11 @@ depends on the filesystem type (SMB uses //SERVER/VOLUME, NFS uses
 SERVER:VOLUME). The attribute may be absent.
 
 
-PATH specifies the source location of the volume on the server (if
-applies). This attribute is mandatory.
+PATH specifies the location of the volume, locally or on the server (if
+applies), respectively. This attribute is mandatory.
 
 
-MOUNTPOINT specifies the destination folder onto which the volume is
+MOUNTPOINT specifies the destination directory onto which the volume is
 mounted. '~' expands to the user's home directory as present in the passwd
 database, according to sh semantics. "~name" is not supported. If this
 attribute is omitted, the location is read from /etc/fstab, which also
