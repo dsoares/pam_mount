@@ -253,7 +253,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			authtok = xstrdup(ptr);
 	}
 	if (!authtok) {		/* get password directly */
-		if((ret = read_password(pamh, "password:", &authtok)) != PAM_SUCCESS) {
+		if((ret = read_password(pamh, "pam_mount password:", &authtok)) != PAM_SUCCESS) {
 			l0g(PMPREFIX "error trying to read password\n");
 			goto _return;
 		}
@@ -411,7 +411,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
               static_cast(const void **, static_cast(void *, &system_authtok)));
         if(ret != PAM_SUCCESS) {
 		l0g(PMPREFIX "error trying to retrieve authtok from auth code\n");
-                ret = read_password(pamh, "reenter password:", &system_authtok);
+                ret = read_password(pamh, "reenter password for pam_mount:", &system_authtok);
                 if(ret != PAM_SUCCESS) {
                        l0g(PMPREFIX "error trying to read password\n");
                        goto _return;
