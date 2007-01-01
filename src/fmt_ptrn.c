@@ -1,7 +1,7 @@
 /*=============================================================================
 fmt_ptrn.c
   Copyright (C) W. Michael Putello <new@flyn.org>, 1999 - 2000
-  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as

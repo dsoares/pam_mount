@@ -3,7 +3,7 @@
 #   DATE: 03 August 2002
 #
 # Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
-# Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
+# Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
 # All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify

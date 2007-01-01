@@ -1,6 +1,6 @@
 /*=============================================================================
 compiler.h
-  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2006
+  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2006 - 2007
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as
