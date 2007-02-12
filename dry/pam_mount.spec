@@ -9,7 +9,7 @@ URL:            http://pam-mount.sf.net/
 
 Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
 Requires:       pam
-BuildRequires:  glib2-devel libtool pam-devel openssl-devel zlib-devel
+BuildRequires:  glib2-devel libtool pam-devel openssl-devel libxml2-devel
 BuildRoot:      %_tmppath/%name-%version-build
 Prefix:         %_prefix
 
