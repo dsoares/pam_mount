@@ -18,7 +18,9 @@ rdconf1.c
 
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
-#include <alloca.h>
+#if defined(__linux__) && defined(__GNUC__)
+#    include <alloca.h>
+#endif
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
