@@ -26,14 +26,14 @@ module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
 
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c pair.c optlist.c fmt_ptrn.c modifiers.c template.c buffer.c spawn.c xstdlib.c
-pam_mount_la_LDFLAGS = -module -avoid-version -lxml2 $(GLIB_LIBS)
+pam_mount_la_LDFLAGS = -module -avoid-version $(GLIB_LIBS) $(XML_LIBS)
 
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c fmt_ptrn-nolibtool.c modifiers-nolibtool.c buffer-nolibtool.c template-nolibtool.c pair-nolibtool.c xstdlib-nolibtool.c
 pmvarrun_LDFLAGS = $(GLIB_LIBS)
 
 INCLUDES = -I$(srcdir)/../include
 
-AM_CFLAGS = $(GLIB_CFLAGS) -DG_DISABLE_DEPRECATED \
+AM_CFLAGS = $(GLIB_CFLAGS) $(XML_CPPFLAGS) -DG_DISABLE_DEPRECATED \
 	-D_LARGEFILE_SOURCE=1 -D_LARGE_FILES -D_FILE_OFFSET_BITS=64 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
