@@ -26,7 +26,6 @@ fmt_ptrn.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
 #include "buffer.h"
 #include "compiler.h"
 #include "modifiers.h"
@@ -661,13 +660,13 @@ int fmt_ptrn_init(struct fmt_ptrn *x) {
 
 /* ============================ fmt_ptrn_open () =========================== */
 bool fmt_ptrn_open(const char *path, struct fmt_ptrn *x) {
-	gzFile in_file;
+	FILE *in_file;
 	bool fnval = TRUE;
 
 	assert(path != NULL);
 	assert(fmt_ptrn_valid(x));
 
-	if((in_file = gzopen(path, "rb")) == NULL) {
+	if((in_file = fopen(path, "rb")) == NULL) {
 		fnval = FALSE;
 		goto _return;
 	}
@@ -706,7 +705,7 @@ int fmt_ptrn_close(struct fmt_ptrn *x) {
 	 * fmt_ptrn_open.
 	 */
 	return (x != NULL && x->template_fp != NULL) ?
-            gzclose(x->template_fp) : 1;
+            fclose(x->template_fp) : 1;
 }
 
 //=============================================================================

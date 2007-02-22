@@ -26,7 +26,6 @@ fmt_ptrn.h
 #include <limits.h>
 #include <glib.h>
 #include <stdio.h> // BUFSIZ
-#include <zlib.h>
 #include "buffer.h"
 #include "xstdlib.h"
 
@@ -37,7 +36,7 @@ extern "C" {
 struct pair;
 
 struct fmt_ptrn {
-    gzFile template_fp;
+    FILE *template_fp;
     char template_path[PATH_MAX + 1];
     long line_num;
     struct buffer raw_buf;      // Buffer for unfilled data
