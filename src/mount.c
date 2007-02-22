@@ -72,12 +72,17 @@ static int do_unlosetup(const struct config *, struct fmt_ptrn *);
 static int fstype_nodev(const char *);
 static void log_output(int);
 static void log_pm_input(const struct config * const, const unsigned int);
-static inline const char *loop_bk(const char *, struct loop_info64 *);
 static int mkmountpoint(struct vol * const, const char * const);
 static int pipewrite(int, const void *, size_t);
 static void run_lsof(const struct config * const, struct fmt_ptrn *);
 static void vol_to_dev(char *, size_t, const struct vol *);
 
+#ifdef __linux__
+#    define HAVE_LINUX_LOOP 1
+#endif
+#ifdef HAVE_LINUX_LOOP
+static inline const char *loop_bk(const char *, struct loop_info64 *);
+#endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 static int split_bsd_mount(char *, const char **, const char **, const char **);
 #endif
@@ -194,11 +199,13 @@ static int already_mounted(const struct config *const config,
         struct loop_info64 loopdev;
         struct stat statbuf;
 
+#ifdef HAVE_LINUX_LOOP
         if(stat(fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
          major(statbuf.st_rdev) == LOOP_MAJOR)
             /* If /etc/mtab is a link to /proc/mounts then the loop device
             instead of the real device will be listed -- resolve it. */
             fsname = loop_bk(fsname, &loopdev);
+#endif
 
         xcmp = (strcmp(fstype, "smbfs") == 0 || strcmp(fstype, "cifs") == 0 ||
                 strcmp(fstype, "ncpfs") == 0) ? strcasecmp : strcmp;
@@ -230,13 +237,13 @@ static int already_mounted(const struct config *const config,
 
     // FIXME: I am not overly fond of using mount, but BSD has no /etc/mtab?
     // "WONTFIX" I would say, eh?
-    if(config->command[0][MNTCHECK] == NULL) {
+    if(config->command[0][CMD_MNTCHECK] == NULL) {
         l0g(PMPREFIX "mntcheck not defined in pam_mount.conf.xml\n");
         return -1;
     }
 
-    for(i = 0; config->command[i][MNTCHECK] != NULL; ++i)
-        add_to_argv(_argv, &_argc, config->command[i][MNTCHECK], vinfo);
+    for(i = 0; config->command[i][CMD_MNTCHECK] != NULL; ++i)
+        add_to_argv(_argv, &_argc, config->command[i][CMD_MNTCHECK], vinfo);
 
     log_argv(_argv);
 
@@ -967,6 +974,7 @@ static int fstype_nodev(const char *name) {
 }
 
 
+#ifdef HAVE_LINUX_LOOP
 /*  loop_bk
     @filename:  block device to query
     @i:         pointer to result storage
@@ -997,5 +1005,6 @@ static inline const char *loop_bk(const char *filename,
     close(fd);
     return signed_cast(char *, i->lo_file_name);
 }
+#endif
 
 //=============================================================================
