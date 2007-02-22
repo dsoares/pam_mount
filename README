@@ -41,10 +41,10 @@ OVERVIEW
 
 NASTY DETAILS
        The   primary   configuration   file   for   the  pam_mount  module  is
-       pam_mount.conf. On most platforms this file  is  read  from  /etc/secu‐
-       rity/pam_mount.conf.xml.  On  OpenBSD pam_mount reads its configuration
-       file from /etc/pam_mount.conf.xml.   pam_mount.conf.xml  contains  many
-       comments documenting its use.
+       pam_mount.conf.xml.   On  most  platforms  this  file  is   read   from
+       /etc/security/pam_mount.conf.xml.  On  OpenBSD pam_mount reads its con‐
+       figuration file from /etc/pam_mount.conf.xml.  pam_mount.conf.xml  con‐
+       tains many comments documenting its use.
 
        In  addition,  you  must include two entries in the system's applicable
        /etc/pam.d/SERVICE config files, as the following example shows:

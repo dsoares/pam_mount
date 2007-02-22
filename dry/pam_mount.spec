@@ -35,7 +35,7 @@ b="%buildroot";
 rm -Rf "$b";
 make -i install DESTDIR="$b";
 mkdir -p "$b/%_sysconfdir/security";
-install -m0644 config/pam_mount.conf "$b/%_sysconfdir/security/";
+install -m0644 config/pam_mount.conf.xml "$b/%_sysconfdir/security/";
 rm -f "$b/%_lib/security/"*.{la,a};
 
 %clean
@@ -43,7 +43,7 @@ rm -Rf "%buildroot";
 
 %files
 %defattr(-,root,root)
-%config(noreplace) %_sysconfdir/security/%name.conf
+%config(noreplace) %_sysconfdir/security/%name.conf.xml
 /%_lib/security/%{name}*.so
 %_sbindir/pmvarrun
 %_bindir/mkehd

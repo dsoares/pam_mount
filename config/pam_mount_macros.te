@@ -10,7 +10,7 @@ role $1_r types pam_mount_t;
 domain_auto_trans($2_t, pam_mount_exec_t, pam_mount_t)
 
 # FIXME: should have more fine-grained types
-# read /etc/pam_mount.conf and ~/.pam_mount.conf
+# read /etc/pam_mount.conf.xml and ~/.pam_mount.conf.xml
 allow $2_t etc_runtime_t:file { getattr read };
 allow $2_t user_home_t:file { getattr read };
 
