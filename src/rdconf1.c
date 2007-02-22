@@ -88,23 +88,6 @@ static const struct pmt_command default_command[];
 //-----------------------------------------------------------------------------
 /*@@@ Currently copied from libHX @@@*/
 
-/* noproto */ static
-char *HX_strclone(char **pa, const char *pb)
-{
-    if(*pa == pb)
-        return *pa;
-    if(*pa != NULL) {
-        free(*pa);
-        *pa = NULL;
-    }
-    if(pb == NULL)
-        return NULL;
-    if((*pa = malloc(strlen(pb) + 1)) == NULL)
-        return NULL;
-    strcpy(*pa, pb);
-    return *pa;
-}
-
 /* noproto */ static inline
 char *HX_strlcat(char *dest, const char *src, size_t len)
 {
@@ -140,7 +123,6 @@ int expandconfig(const struct config *config)
     int i;
 
     for(i = 0; i < config->volcount; ++i) {
-        char tmp[MAX_PAR + 1];
         vpt = &config->volume[i];
 
         if(expand_home(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
@@ -154,26 +136,7 @@ int expandconfig(const struct config *config)
         if(strcmp(vpt->user, "*") == 0 || *vpt->user == '@')
             vpt->used_wildcard = 1;
 
-        {
-            optlist_t *e;
-            strcpy(vpt->user, config->user);
-
-            for(e = vpt->options; e != NULL; e = optlist_next(e)) {
-                printf("opt: %s=%s\n", (char *)optlist_key(e), (char*) optlist_val(e));
-/*                if(!expand_user_wildcard(optlist_key(e), config->user,
-                  tmp, sizeof(tmp)))
-                        return 0;
-                HX_strclone(static_cast(char **, static_cast(void *,
-                            &optlist_key(e))), tmp);
-
-
-                if(!expand_user_wildcard(optlist_val(e), config->user,
-                  tmp, sizeof(tmp)))
-                        return 0;
-                HX_strclone(static_cast(char **, static_cast(void *,
-                            &optlist_val(e))), tmp);*/
-            }
-        }
+        strcpy(vpt->user, config->user);
     }
     return 1;
 }
