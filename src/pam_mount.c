@@ -46,7 +46,7 @@ pam_mount.c
 #include "spawn.h"
 #include "xstdlib.h"
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 #    define CONFIGFILE "/etc/pam_mount.conf.xml"
 #else
 #    define CONFIGFILE "/etc/security/pam_mount.conf.xml"
