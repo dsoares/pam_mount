@@ -23,14 +23,8 @@
 #==============================================================================
 
 # Sanitize environment
-export PATH="/bin:/sbin:/usr/bin:/usr/sbin";
+export PATH="/sbin:/bin:/usr/sbin:/usr/bin";
 export IFS=`echo -en " \t\n"`;
-
-# Commands
-LOSETUP=/sbin/losetup
-CRYPTSETUP=/sbin/cryptsetup
-MOUNT=/bin/mount
-FSCK="/sbin/fsck";
 
 OPTIONS=""
 FSTYPE="";
@@ -43,7 +37,7 @@ _losetup() {
 	DEVICE="$1";
 	LOOPDEV=0
 	while [ "$LOOPDEV" -le 15 ]; do
-		if "$LOSETUP" "/dev/loop$LOOPDEV" "$DEVICE" 2>/dev/null; then
+		if losetup "/dev/loop$LOOPDEV" "$DEVICE" 2>/dev/null; then
 			echo "/dev/loop$LOOPDEV";
 			return 0
 		fi
@@ -136,7 +130,7 @@ fi
 # if loop device, make device mapper name based on file pointed to
 case "$DEVICE" in
     /dev/loop*)
-        DMDEVICE=` "$LOSETUP" "$DEVICE" 2>/dev/null | sed 's/.*(\(.\+\)).*/\1/'`;
+        DMDEVICE=`losetup "$DEVICE" 2>/dev/null | sed 's/.*(\(.\+\)).*/\1/'`;
 esac;
 # if not a loop device or previous command fails use $DEVICE
 : ${DMDEVICE:=$DEVICE}
@@ -145,45 +139,45 @@ esac;
 DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
 
 # Check for LUKS
-if "$CRYPTSETUP" isLuks "$DEVICE" 2>/dev/null; then
+if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
     LUKS=true;
-    "$CRYPTSETUP" luksOpen "$DEVICE" "$DMDEVICE";
+    cryptsetup luksOpen "$DEVICE" "$DMDEVICE";
 else
     LUKS=false;
-    "$CRYPTSETUP" -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
+    cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
       -s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
 fi;
 
 if [ $? -ne 0 ]; then
 	echo "${0##*/}: error creating $DMDEVICE" >&2
-	[ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
+	[ "$LOOP" == true ] && losetup -d "$DEVICE";
 	exit 1
 fi
 
 if [ "$DOFSCK" == "true" ]; then
-    "$FSCK" -p "/dev/mapper/$DMDEVICE";
+    fsck -p "/dev/mapper/$DMDEVICE";
     if [ $? -gt 1 ]; then
         echo "${0##*/}: filesystem $DMDEVICE has errors" >&2;
         if [ "$LUKS" == true ]; then
-            "$CRYPTSETUP" luksClose "$DMDEVICE";
+            cryptsetup luksClose "$DMDEVICE";
         else
-            "$CRYPTSETUP" remove "$DMDEVICE";
+            cryptsetup remove "$DMDEVICE";
         fi;
-        [ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
+        [ "$LOOP" == true ] && losetup -d "$DEVICE";
         exit 1;
     fi;
 fi;
 
 # $MOUNT_POINT might not exist as mount can try to read it from /etc/fstab
-"$MOUNT" ${FSTYPE:+-t "$FSTYPE"} ${MOUNTOPTIONS:+-o "$MOUNTOPTIONS"} \
+mount ${FSTYPE:+-t "$FSTYPE"} ${MOUNTOPTIONS:+-o "$MOUNTOPTIONS"} \
  "/dev/mapper/$DMDEVICE" "$MOUNT_POINT";
 if [ $? -ne 0 ]; then
     echo "${0##*/}: error mounting $DMDEVICE" >&2;
     if [ "$LUKS" == true ]; then
-        "$CRYPTSETUP" luksClose "$DMDEVICE";
+        cryptsetup luksClose "$DMDEVICE";
     else
-        "$CRYPTSETUP" remove "$DMDEVICE";
+        cryptsetup remove "$DMDEVICE";
     fi;
-    [ "$LOOP" == true ] && "$LOSETUP" -d "$DEVICE";
+    [ "$LOOP" == true ] && losetup -d "$DEVICE";
     exit 1;
 fi;

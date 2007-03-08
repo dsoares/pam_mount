@@ -24,13 +24,9 @@
 #==============================================================================
 
 # Sanitize environment
-export PATH="/bin:/sbin:/usr/bin:/usr/sbin";
+export PATH="/sbin:/bin:/usr/sbin:/usr/bin";
 export IFS=`echo -en " \t\n"`;
 
-LOSETUP=/sbin/losetup
-CRYPTSETUP=/sbin/cryptsetup
-MOUNT=/bin/mount
-UMOUNT=/bin/umount
 READLINK="/usr/bin/readlink";
 OPTIONS=""
 USAGE="dir"
@@ -50,7 +46,7 @@ else
     DEVICEDIR="$1";
 fi;
 DEVICEDIR="${DEVICEDIR%/}";
-DMDEVICE=` "$MOUNT" | grep " $DEVICEDIR " | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`;
+DMDEVICE=`mount | grep " $DEVICEDIR " | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`;
 
 if [ -z "$DMDEVICE" ]; then
     echo "Could not map $DEVICEDIR to a DM device";
@@ -59,9 +55,9 @@ fi;
 
 # ask cryptsetup about the underlying device
 #
-REALDEVICE=` "$CRYPTSETUP" status "$DMDEVICE" | sed -n '/device/s/[ ]*device:[ ]*//p'`;
+REALDEVICE=`cryptsetup status "$DMDEVICE" | sed -n '/device/s/[ ]*device:[ ]*//p'`;
 
-"$UMOUNT" "$1";
+umount "$1";
 if [ $? -ne 0 ]; then
 	echo "${0##*/}: error unmounting $1" >&2
 	exit 1
@@ -69,10 +65,10 @@ fi
 
 # Check for LUKS
 #
-if "$CRYPTSETUP" isLuks "$DEVICE" 2>/dev/null; then
-    "$CRYPTSETUP" luksClose "$DMDEVICE";
+if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
+    cryptsetup luksClose "$DMDEVICE";
 else
-    "$CRYPTSETUP" remove "$DMDEVICE";
+    cryptsetup remove "$DMDEVICE";
 fi;
 
 if [ $? -ne 0 ]; then
@@ -81,7 +77,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if echo "$REALDEVICE" | grep ^/dev/loop >/dev/null; then
-	"$LOSETUP" -d "$REALDEVICE";
+	losetup -d "$REALDEVICE";
 	if [ $? -ne 0 ]; then
 		echo "${0##*/}: error removing $REALDEVICE" >&2
 		exit 1
