@@ -450,8 +450,10 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	} else
 		w4rn(PMPREFIX "%s does not exist or is not owned by user\n",
                  Config.luserconf);
-	if(Config.volcount <= 0)
+	if(Config.volcount <= 0) {
 		w4rn(PMPREFIX "no volumes to mount\n");
+		goto _return;
+	}
 	if(!expandconfig(&Config)) {
 		l0g(PMPREFIX "error expanding configuration\n");
 		ret = PAM_SERVICE_ERR;
