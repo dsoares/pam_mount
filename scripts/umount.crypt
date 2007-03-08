@@ -27,7 +27,7 @@
 export PATH="/sbin:/bin:/usr/sbin:/usr/bin";
 export IFS=`echo -en " \t\n"`;
 
-READLINK="/usr/bin/readlink";
+READLINK="`which readlink`";
 OPTIONS=""
 USAGE="dir"
 
