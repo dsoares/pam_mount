@@ -33,6 +33,7 @@ USAGE="dir"
 
 if [ -z "$1" ]; then
 	echo "${0##*/}: directory to unmount not specified" >&2
+	exit 1;
 fi
 
 if [ ! -d "$1" ]; then

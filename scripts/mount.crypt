@@ -70,6 +70,7 @@ done
 
 if [ -z "$DEVICE" ]; then
 	echo "${0##*/}: device to mount not specified" >&2
+	exit 1;
 fi
 
 if [ ! -f "$DEVICE" -a ! -b "$DEVICE" ]; then
