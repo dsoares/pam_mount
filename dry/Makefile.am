@@ -24,8 +24,6 @@ if FLYN
 include /etc/fctk/config.mk
 endif
 
-AUTOMAKE_OPTIONS = gnu
-
 man_MANS = autoehd.8 mount.crypt.8 pam_mount.8 pmvarrun.8 \
            mkehd.1 mount_ehd.8 passwdehd.8 umount.crypt.8
 

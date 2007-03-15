@@ -25,9 +25,9 @@ if FLYN
 include /etc/fctk/config.mk
 endif
 
-AUTOMAKE_OPTIONS = gnu
+AUTOMAKE_OPTIONS = foreign
 
-EXTRA_DIST = autogen.sh FAQ
+EXTRA_DIST = autogen.sh AUTHORS FAQ LICENSE.GPL2 LICENSE.LGPL2
 
 SUBDIRS = src config scripts dry
 

@@ -19,8 +19,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-AUTOMAKE_OPTIONS = gnu
-
 bin_SCRIPTS = mkehd autoehd passwdehd mount_ehd
 ssbindir = @ssbindir@
 ssbin_SCRIPTS = mount.crypt umount.crypt

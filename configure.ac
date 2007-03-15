@@ -27,9 +27,6 @@ AC_INIT(pam_mount, 0.18)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE
 
-VER_INFO=`expr $MINOR_VERSION + $MAJOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
-AC_SUBST(VER_INFO)
-
 AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],
     [Path to the super lib directory [[/lib]]]),
     [slibdir="$withval"], [slibdir="/lib"])
@@ -41,33 +38,7 @@ AC_SUBST(ssbindir)
 
 AC_PROG_CC
 
-# GCC 4.x -fvisibility=hidden {
-AC_DEFUN([CHECK_GCC_FVISIBILITY],
-[
-AC_LANG_PUSH(C)
-saved_CFLAGS="$CFLAGS"
-CFLAGS="$saved_CFLAGS -fvisibility=hidden"
-AC_CACHE_CHECK([whether compiler accepts -fvisibility=hidden],
-[cv_fvisibility_hidden],
-	AC_COMPILE_IFELSE(
-		AC_LANG_PROGRAM(
-		[],
-		[]),
-		[cv_fvisibility_hidden=yes],
-		[cv_fvisibility_hidden=no]
-	)
-)
-if test "$cv_fvisibility_hidden" = "yes"; then
-AC_DEFINE(HAVE_VISIBILITY_HIDDEN, [],
-        [True if compiler supports -fvisibility=hidden])
-AC_SUBST(GCC_FVISIBILITY_HIDDEN, [-fvisibility=hidden])
-fi
-CFLAGS="$saved_CFLAGS"
-AC_LANG_POP(C)
-])dnl
-CHECK_GCC_FVISIBILITY()
-# }
-
+m4_sinclude(m4lib/gcc4_visibility.m4)
 AC_PROG_INSTALL
 AC_DISABLE_STATIC
 AM_PROG_LIBTOOL
