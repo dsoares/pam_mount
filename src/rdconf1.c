@@ -18,9 +18,6 @@ rdconf1.c
 
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
-#if defined(__linux__) && defined(__GNUC__)
-#    include <alloca.h>
-#endif
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
@@ -202,11 +199,15 @@ static char *expand_home(const char *user, char *path, size_t size)
         return NULL;
     }
 
-    buf = alloca(size);
+    if((buf = malloc(size)) == NULL) {
+        l0g("%s\n", strerror(errno));
+        return NULL;
+    }
     if(snprintf(buf, size, "%s%s", pe->pw_dir, path + 1) >= size)
         l0g("Warning: Not enough buffer space in expand_home()\n");
 
     strncpy(path, buf, size);
+    free(buf);
     return path;
 }
 
