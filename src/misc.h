@@ -40,6 +40,7 @@ extern int config_valid(const struct config *);
 extern int exists(const char *);
 extern void l0g(const char *, ...);
 extern void log_argv(const char * const *);
+extern void misc_add_ntdom(struct HXbtree *, const char *);
 extern int owns(const char *, const char *);
 extern char *relookup_user(const char *);
 extern void set_myuid(void *);

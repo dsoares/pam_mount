@@ -905,6 +905,8 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	format_add(vinfo, "VOLUME",   vpt->volume);
 	format_add(vinfo, "SERVER",   vpt->server);
 	format_add(vinfo, "USER",     vpt->user);
+	misc_add_ntdom(vinfo, vpt->user);
+
         if((pe = getpwnam(vpt->user)) == NULL) {
             w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
              Config.user, strerror(errno));

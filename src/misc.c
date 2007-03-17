@@ -390,4 +390,34 @@ char *relookup_user(const char *user) {
         return xstrdup(pe->pw_name);
 }
 
+/*
+ * misc_add_ntdom
+ * @v:          substitution data
+ * @user:       username to add
+ *
+ * Splits up @user into domain and user parts (if applicable) and adds
+ * %(DOMAIN_NAME) and %(DOMAIN_USER) to @v. If @user is not of the form
+ * "domain\user", %(DOMAIN_NAME) will be added as an empty tag, and
+ * %(DOMAIN_USER) will be the same as @v. It is assumed that @user is also
+ * part of @v, and hence, will not go out of scope as long as %(DOMAIN_*) is
+ * in @v.
+ */
+void misc_add_ntdom(struct HXbtree *v, const char *user)
+{
+	const char *domain_user, *ptr;
+	char domain[32];
+	*domain = '\0';
+
+	if((ptr = strchr(user, '\\')) != NULL) {
+		snprintf(domain, sizeof(domain), "%.*s", ptr - user - 1, user);
+		domain_user = ptr + 1;
+	} else {
+		domain_user = user;
+	}
+
+	HXformat_add(v, "DOMAIN_NAME", domain, HXTYPE_STRING | HXFORMAT_IMMED);
+	HXformat_add(v, "DOMAIN_USER", domain_user, HXTYPE_STRING);
+	return;
+}
+
 //=============================================================================

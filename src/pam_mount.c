@@ -323,6 +323,8 @@ static int modify_pm_count(struct config *config, char *user,
 	vinfo = HXformat_init();
 	format_add(vinfo, "USER", user);
 	format_add(vinfo, "OPERATION", operation);
+	misc_add_ntdom(vinfo, user);
+
 	for(i = 0; config->command[i][CMD_PMVARRUN] != NULL; i++)
                 add_to_argv(_argv, &_argc, config->command[i][CMD_PMVARRUN], vinfo);
 	HXformat_free(vinfo);
