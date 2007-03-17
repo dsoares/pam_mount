@@ -23,7 +23,7 @@ misc.c
 =============================================================================*/
 #include <config.h>
 #ifdef HAVE_SETFSUID
-#    include <sys/fsuid.h>
+#	include <sys/fsuid.h>
 #endif
 #include <sys/stat.h>
 #include <assert.h>
@@ -42,7 +42,7 @@ misc.c
 #include "readconfig.h"
 #include "xstdlib.h"
 
-// Functions
+/* Functions */
 static int static_string_valid(const char *, const size_t);
 
 //-----------------------------------------------------------------------------
@@ -61,12 +61,12 @@ void misc_log(const char *format, ...)
 
 	va_start(args, format);
 	va_copy(arg2, args);
-        if(Debug)
-            vfprintf(stderr, format, args);
+	if(Debug)
+		vfprintf(stderr, format, args);
 	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
-        return;
+	return;
 }
 
 
@@ -78,19 +78,19 @@ void misc_log(const char *format, ...)
 */
 void misc_warn(const char *format, ...)
 {
-    va_list args, arg2;
+	va_list args, arg2;
 
-    assert(format != NULL);
-    if(Debug == 0)
-        return;
+	assert(format != NULL);
+	if(Debug == 0)
+		return;
 
-    va_start(args, format);
-    va_copy(arg2, args);
-    vfprintf(stderr, format, args);
-    vsyslog(LOG_AUTHPRIV | LOG_ERR, format, arg2);
-    va_end(args);
-    va_end(arg2);
-    return;
+	va_start(args, format);
+	va_copy(arg2, args);
+	vfprintf(stderr, format, args);
+	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, arg2);
+	va_end(args);
+	va_end(arg2);
+	return;
 }
 
 
@@ -101,10 +101,11 @@ void misc_warn(const char *format, ...)
     non-zero if that was successful. Returns 0 for error. %errno will be set
     in case of error.
 */
-int exists(const char *file) {
-    struct stat sb;
-    assert(file != NULL);
-    return stat(file, &sb) == 0;
+int exists(const char *file)
+{
+	struct stat sb;
+	assert(file != NULL);
+	return stat(file, &sb) == 0;
 }
 
 
@@ -116,7 +117,8 @@ int exists(const char *file) {
     case, otherwise zero. If an error occurred, zero is returned and %errno
     is set. (For the success case, %errno is undefined.)
 */
-int owns(const char *user, const char *file) {
+int owns(const char *user, const char *file)
+{
 	struct stat filestat;
 	struct passwd *userinfo;
 
@@ -126,15 +128,16 @@ int owns(const char *user, const char *file) {
 	if((userinfo = getpwnam(user)) == NULL) {
 		l0g("user %s could not be translated to UID\n",
 		    user);
-		return FALSE;
+		return 0;
 	}
 
-	if (stat(file, &filestat) != 0) {
+	if(stat(file, &filestat) != 0) {
 		w4rn("file %s could not be stat'ed\n", file);
-		return FALSE;
+		return 0;
 	}
 
-    return filestat.st_uid == userinfo->pw_uid && !S_ISLNK(filestat.st_mode);
+	return filestat.st_uid == userinfo->pw_uid &&
+	       !S_ISLNK(filestat.st_mode);
 }
 
 
@@ -146,7 +149,8 @@ int owns(const char *user, const char *file) {
     over-/underflow.
     NOTE: This function is only referenced from pmvarrun.c.
 */
-long str_to_long(const char *n) {
+long str_to_long(const char *n)
+{
 	long val;
 	char *endptr = NULL;
 	if(n == NULL) {
@@ -168,15 +172,16 @@ long str_to_long(const char *n) {
 
     Verifies that there is a '\0' byte within the first @len bytes of @s.
 */
-static int static_string_valid(const char *s, const size_t len) {
+static int static_string_valid(const char *s, const size_t len)
+{
 	size_t i;
-	if (s == NULL)
-		return FALSE;
-	/* make sure there is a terminating NULL */
-	for (i = 0; i < len; i++)
+	if(s == NULL)
+		return 0;
+	/* make sure there is a terminating NUL */
+	for(i = 0; i < len; i++)
 		if(s[i] == '\0')
-			return TRUE;
-	return FALSE;
+			return 1;
+	return 0;
 }
 
 
@@ -186,32 +191,32 @@ static int static_string_valid(const char *s, const size_t len) {
     Verifies that the volume structure is consistent.
 */
 int vol_valid(const struct vol *v) {
-	if (v == NULL)
-		return FALSE;
-	if (!(v->type >= 0 && v->type < _CMD_MAX))
-		return FALSE;
+	if(v == NULL)
+		return 0;
+	if(!(v->type >= 0 && v->type < _CMD_MAX))
+		return 0;
 	/* should be guaranteed by volume_record_sane() */
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	if (!(v->type == CMD_LCLMOUNT || v->type == CMD_CRYPTMOUNT ||
-          v->type == CMD_FUSEMOUNT || strlen(v->server) > 0))
-		return FALSE;
+	if(!(v->type == CMD_LCLMOUNT || v->type == CMD_CRYPTMOUNT ||
+	  v->type == CMD_FUSEMOUNT || strlen(v->server) > 0))
+		return 0;
 	/* bool globalconf; */
 	/* bool created_mntpt; */
 	if(!static_string_valid(v->fs_key_cipher, MAX_PAR + 1) ||
-	 !static_string_valid(v->fs_key_path, PATH_MAX + 1))
-		return FALSE;
+	  !static_string_valid(v->fs_key_path, PATH_MAX + 1))
+		return 0;
 	/* should be guaranteed by volume_record_sane(): */
-	if (!(strlen(v->fs_key_cipher) == 0 || strlen(v->fs_key_path) > 0))
-		return FALSE;
-        if(!static_string_valid(v->server, MAX_PAR + 1) ||
-         !static_string_valid(v->user, MAX_PAR + 1) ||
-         !static_string_valid(v->volume, MAX_PAR + 1))
-		return FALSE;
+	if(!(strlen(v->fs_key_cipher) == 0 || strlen(v->fs_key_path) > 0))
+		return 0;
+	if(!static_string_valid(v->server, MAX_PAR + 1) ||
+	  !static_string_valid(v->user, MAX_PAR + 1) ||
+	  !static_string_valid(v->volume, MAX_PAR + 1))
+		return 0;
 	/* optlist_t * options */
-        if(!static_string_valid(v->mountpoint, PATH_MAX + 1))
-		return FALSE;
+	if(!static_string_valid(v->mountpoint, PATH_MAX + 1))
+		return 0;
 	/* bool use_fstab */
-	return TRUE;
+	return 1;
 }
 
 
@@ -220,24 +225,25 @@ int vol_valid(const struct vol *v) {
 
     Verifies that the configuration structure is consistent.
 */
-int config_valid(const struct config *c) {
+int config_valid(const struct config *c)
+{
 	int i;
-        if(c == NULL || c->user == NULL)
-		return FALSE;
+	if(c == NULL || c->user == NULL)
+		return 0;
 	/* bool debug */
 	/* bool mkmountpoint */
 	/* unsigned int volcount */
-        if(!static_string_valid(c->luserconf, PATH_MAX + 1) ||
-         !static_string_valid(c->fsckloop, PATH_MAX + 1))
-		return FALSE;
+	if(!static_string_valid(c->luserconf, PATH_MAX + 1) ||
+	  !static_string_valid(c->fsckloop, PATH_MAX + 1))
+		return 0;
 	/* FIXME: test char *command[MAX_PAR + 1][COMMAND_MAX]; */
 	/* optlist_t *options_require; */
 	/* optlist_t *options_allow; */
 	/* optlist_t *options_deny; */
 	for(i = 0; i < c->volcount; ++i)
-                if(!vol_valid(c->volume))
-			return FALSE;
-	return TRUE;
+		if(!vol_valid(c->volume))
+			return 0;
+	return 1;
 }
 
 
@@ -246,16 +252,17 @@ int config_valid(const struct config *c) {
 
     Log @argv using w4rn() when debugging is turned on.
 */
-void log_argv(const char *const *argv) {
+void log_argv(const char *const *argv)
+{
 	/* FIXME: UGLY! */
 	int i;
 	char str[MAX_PAR + 1];
-        if(!Debug)
+	if(!Debug)
 		return;
 	g_strlcpy(str, argv[0], sizeof(str));
 	g_strlcat(str, " ", sizeof(str));
 	str[sizeof_z(str)] = '\0';
-	for (i = 1; argv[i] != NULL && strlen(str) < sizeof(str) - 2; i++) {
+	for(i = 1; argv[i] != NULL && strlen(str) < sizeof(str) - 2; i++) {
 		g_strlcat(str, "[", sizeof(str));
 		g_strlcat(str, argv[i], sizeof(str));
 		g_strlcat(str, "] ", sizeof(str));
@@ -264,7 +271,7 @@ void log_argv(const char *const *argv) {
 			break;
 	}
 	w4rn("command: %s\n", str);
-        return;
+	return;
 }
 
 
@@ -291,23 +298,22 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 	assert(arg != NULL);
 	assert(vinfo != NULL);
 
-	if (*argc == MAX_PAR) { /* FIXME: this is protected by assert above */
+	if(*argc == MAX_PAR) { /* FIXME: this is protected by assert above */
 		l0g("too many arguments to mount command\n");
 		return;
 	}
 	if(HXformat_aprintf(vinfo, &filled, arg) == 0) {
-                /* This case may happen with e.g. %(before="-o" OPTIONS)
-                where OPTIONS is empty. And empty options is certainly
-                valid. */
+		/*
+		 * This case may happen with e.g. %(before="-o" OPTIONS) where
+		 * OPTIONS is empty. And empty options is certainly valid.
+		 */
 		w4rn("could not fill %s\n", arg);
-		/* [??] hopefully "key has no value" -- for example:
-		 *  %(before=\"-k\" KEYBITS) */
 		return;
 	}
 
-	argv[*argc] = filled;
+	argv[*argc]   = filled;
 	argv[++*argc] = NULL;
-        return;
+	return;
 }
 
 
@@ -329,51 +335,51 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
     chdir("/") is called so that fusermount does not get stuck in a
     non-readable directory (by means of doing `su - unprivilegeduser`)
 */
-void set_myuid(void *data) {
-    const char *user = data;
+void set_myuid(void *data)
+{
+	const char *user = data;
 
-    setsid();
-    chdir("/");
-    if(user == NULL) {
-        w4rn("%s(pre): real uid/gid=%ld:%ld, "
-             "effective uid/gid=%ld:%ld\n", __func__,
-             static_cast(long, getuid()), static_cast(long, getgid()),
-             static_cast(long, geteuid()), static_cast(long, getegid()));
-        if(setuid(0) == -1) {
-            l0g("error setting uid to 0\n");
-            return;
-        }
+	setsid();
+	chdir("/");
+	if(user == NULL) {
+		w4rn("%s(pre): UID tuple is (%ld, %ld, %ld, %ld)\n", __func__,
+		     static_cast(long, getuid()), static_cast(long, getgid()),
+		     static_cast(long, geteuid()), static_cast(long, getegid()));
+		if(setuid(0) < 0) {
+			l0g("error setting uid to 0\n");
+			return;
+		}
 #ifdef HAVE_SETFSUID
-        if(setfsuid(0) == -1) {
-            l0g("error setting fsuid to 0\n");
-            return;
-        }
+		if(setfsuid(0) < 0) {
+			l0g("error setting fsuid to 0\n");
+			return;
+		}
 #endif
-    } else {
-        // Set UID and GID to the user's one.
-        const struct passwd *real_user;
-        w4rn("setting uid to user %s\n", user);
-        if((real_user = getpwnam(user)) == NULL) {
-            l0g("could not get passwd entry for user %s\n", user);
-            return;
-        }
-        if(setgid(real_user->pw_gid) == -1) {
-            l0g("could not set gid to %ld\n",
-                static_cast(long, real_user->pw_gid));
-            return;
-        }
-        if(setuid(real_user->pw_uid) == -1) {
-            l0g("could not set uid to %ld\n",
-                static_cast(long, real_user->pw_uid));
-            return;
-        }
-        setenv("HOME", real_user->pw_dir, 1);
-        setenv("USER", real_user->pw_name, 1);
-    }
-    w4rn("%s(post): real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
-         __func__, static_cast(long, getuid()), static_cast(long, getgid()),
-         static_cast(long, geteuid()), static_cast(long, getegid()));
-    return;
+	} else {
+		/* Set UID and GID to the user's one */
+		const struct passwd *real_user;
+		w4rn("setting uid to user %s\n", user);
+		if((real_user = getpwnam(user)) == NULL) {
+			l0g("could not get passwd entry for user %s\n", user);
+			return;
+		}
+		if(setgid(real_user->pw_gid) == -1) {
+			l0g("could not set gid to %ld\n",
+			    static_cast(long, real_user->pw_gid));
+			return;
+		}
+		if(setuid(real_user->pw_uid) == -1) {
+			l0g("could not set uid to %ld\n",
+			    static_cast(long, real_user->pw_uid));
+			return;
+		}
+		setenv("HOME", real_user->pw_dir, 1);
+		setenv("USER", real_user->pw_name, 1);
+	}
+	w4rn("%s(post): UID tuple is (%ld, %ld, %ld, %ld)\n", __func__,
+	     static_cast(long, getuid()), static_cast(long, getgid()),
+	     static_cast(long, geteuid()), static_cast(long, getegid()));
+	return;
 }
 
 
@@ -384,13 +390,15 @@ void set_myuid(void *data) {
     usernames with LDAP. Returns a copy of the real username (as stored in
     the user database).
 */
-char *relookup_user(const char *user) {
-    struct passwd *pe;
-    if((pe = getpwnam(user)) == NULL)
-        return xstrdup(user);
-    else
-        return xstrdup(pe->pw_name);
+char *relookup_user(const char *user)
+{
+	struct passwd *pe;
+	if((pe = getpwnam(user)) == NULL)
+		return xstrdup(user);
+	else
+		return xstrdup(pe->pw_name);
 }
+
 
 /*
  * misc_add_ntdom
@@ -421,5 +429,3 @@ void misc_add_ntdom(struct HXbtree *v, const char *user)
 	HXformat_add(v, "DOMAIN_USER", domain_user, HXTYPE_STRING);
 	return;
 }
-
-//=============================================================================

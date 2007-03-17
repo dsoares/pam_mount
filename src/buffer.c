@@ -27,25 +27,25 @@ buffer.c
 #include "buffer.h"
 #include "xstdlib.h"
 
-//-----------------------------------------------------------------------------
 /*  buffer_valid
     @b: buffer to check
 
     Verifies that the buffer structure is consistent.
 */
-int buffer_valid(const struct buffer *b) {
+int buffer_valid(const struct buffer *b)
+{
 	int i;
-	if (b == NULL)
-		return FALSE;
+	if(b == NULL)
+		return 0;
 	if((b->data == NULL) ^ (b->size == 0))
-		return FALSE;
+		return 0;
 	if(b->data != NULL) {
-		for (i = 0; i < b->size; i++) {
+		for(i = 0; i < b->size; i++) {
 			if(b->data[i] == '\0')
-				return TRUE;
+				return 1;
 		}
 	}
-	return TRUE;
+	return 1;
 }
 
 
@@ -54,17 +54,18 @@ int buffer_valid(const struct buffer *b) {
 
     Clears the contents of the buffer.
 */
-void buffer_clear(struct buffer *buf) {
-    assert(buffer_valid(buf));
+void buffer_clear(struct buffer *buf)
+{
+	assert(buffer_valid(buf));
 
-    if(buf->data != NULL) {
-            free(buf->data);
- 	    buf->data = NULL;
-    }
-    buf->size = 0;
+	if(buf->data != NULL) {
+		free(buf->data);
+ 		buf->data = NULL;
+	}
+	buf->size = 0;
 
-    assert(buffer_valid(buf));
-    return;
+	assert(buffer_valid(buf));
+	return;
 }
 
 
@@ -74,16 +75,18 @@ void buffer_clear(struct buffer *buf) {
 
     Removes the first @n characters off the beginning of the buffer.
 */
-void buffer_eat(struct buffer *buf, size_t n) {
-    size_t z;
+void buffer_eat(struct buffer *buf, size_t n)
+{
+	size_t z;
 
-    assert(buffer_valid(buf));
-    z = strlen(buf->data);
-    if(n > z)
-        n = z;
-    memmove(buf->data, buf->data + n, n + 1); // +1 to copy the '\0' also
-    assert(buffer_valid(buf));
-    return;
+	assert(buffer_valid(buf));
+	z = strlen(buf->data);
+	if(n > z)
+		n = z;
+	/* +1 to copy the '\0' too */
+	memmove(buf->data, buf->data + n, n + 1);
+	assert(buffer_valid(buf));
+	return;
 }
 
 
@@ -92,9 +95,10 @@ void buffer_eat(struct buffer *buf, size_t n) {
 
     Returns the string length of the buffer @b.
 */
-size_t buffer_len(const struct buffer *buf) {
-    assert(buffer_valid(buf));
-    return (buf->data == NULL) ? 0 : strlen(buf->data);
+size_t buffer_len(const struct buffer *buf)
+{
+	assert(buffer_valid(buf));
+	return (buf->data == NULL) ? 0 : strlen(buf->data);
 }
 
 
@@ -105,26 +109,27 @@ size_t buffer_len(const struct buffer *buf) {
     Append @src to the buffer pointed to by @dest, necessarily reallocating
     @dest's buffer.
 */
-void realloc_n_cat(struct buffer *dest, const char *src) {
-    size_t new_len;
+void realloc_n_cat(struct buffer *dest, const char *src)
+{
+	size_t new_len;
 
-    assert(buffer_valid(dest));
-    assert(src != NULL);
+	assert(buffer_valid(dest));
+	assert(src != NULL);
 
-    new_len = strlen(src) + ((dest != NULL && dest->data != NULL) ?
-                            strlen(dest->data) : 0);
-    if(dest->data == NULL) {
-	dest->size  = new_len * 2 + 1;
-	dest->data  = xmalloc(dest->size);
-        *dest->data = '\0';
-    } else if (new_len + 1 > dest->size) {
-	dest->size = new_len * 2 + 1;
-	dest->data = xrealloc(dest->data, dest->size);
-    }
-    g_strlcat(dest->data, src, dest->size);
+	new_len = strlen(src) + ((dest != NULL && dest->data != NULL) ?
+	                        strlen(dest->data) : 0);
+	if(dest->data == NULL) {
+		dest->size  = new_len * 2 + 1;
+		dest->data  = xmalloc(dest->size);
+		*dest->data = '\0';
+	} else if(new_len + 1 > dest->size) {
+		dest->size = new_len * 2 + 1;
+		dest->data = xrealloc(dest->data, dest->size);
+	}
+	g_strlcat(dest->data, src, dest->size);
 
-    assert(buffer_valid(dest));
-    return;
+	assert(buffer_valid(dest));
+	return;
 }
 
 
@@ -136,32 +141,36 @@ void realloc_n_cat(struct buffer *dest, const char *src) {
     Append at most @nc characters from @src to the buffer pointed to by @dest,
     necessarily reallocating @dest's buffer.
 */
-void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
-    size_t src_len, new_len;
+void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc)
+{
+	size_t src_len, new_len;
 
-    assert(buffer_valid(dest));
-    assert(src != NULL);
+	assert(buffer_valid(dest));
+	assert(src != NULL);
 
-    src_len = strlen(src);
-    new_len = ((dest != NULL && dest->data != NULL) ? strlen(dest->data) : 0) +
-              ((src_len < nc) ? src_len : nc);
+	src_len = strlen(src);
+	new_len = ((dest != NULL && dest->data != NULL) ? strlen(dest->data) : 0) +
+	          ((src_len < nc) ? src_len : nc);
 
-    if(dest->data == NULL) {
-	dest->size  = new_len * 2 + 1;
-	dest->data  = xmalloc(dest->size);
-        *dest->data = '\0';
-    } else if (new_len + 1 > dest->size) {
-	dest->size = new_len * 2 + 1;
-	dest->data = xrealloc(dest->data, dest->size);
-    }
+	if(dest->data == NULL) {
+		dest->size  = new_len * 2 + 1;
+		dest->data  = xmalloc(dest->size);
+		*dest->data = '\0';
+	} else if(new_len + 1 > dest->size) {
+		dest->size = new_len * 2 + 1;
+		dest->data = xrealloc(dest->data, dest->size);
+	}
 
-    /* g_strlcat() will not work because there is no way to pass @nc.
-    HX_strlncat(dest->data, src, dest->size, nc) would be the ideal solution. */
-    strncat(dest->data, src, nc);
-    dest->data[dest->size - 1] = '\0';
+	/*
+	 * g_strlcat() will not work because there is no way to pass @nc. 
+	 * HX_strlncat(dest->data, src, dest->size, nc) would be the ideal
+	 * solution.
+	 */
+	strncat(dest->data, src, nc);
+	dest->data[dest->size - 1] = '\0';
 
-    assert(buffer_valid(dest));
-    return;
+	assert(buffer_valid(dest));
+	return;
 }
 
 
@@ -172,16 +181,15 @@ void realloc_n_ncat(struct buffer *dest, const char *src, const size_t nc) {
     Copies @src to the buffer pointed to by @dest, necessarily reallocating
     @dest's buffer.
 */
-void realloc_n_cpy(struct buffer *dest, const char *src) {
-    assert(buffer_valid(dest));
-    assert(src != NULL);
+void realloc_n_cpy(struct buffer *dest, const char *src)
+{
+	assert(buffer_valid(dest));
+	assert(src != NULL);
 
-    if(dest->data != NULL)
-	*dest->data = '\0';
-    realloc_n_cat(dest, src);
+	if(dest->data != NULL)
+		*dest->data = '\0';
+	realloc_n_cat(dest, src);
 
-    assert(buffer_valid(dest));
-    return;
+	assert(buffer_valid(dest));
+	return;
 }
-
-//=============================================================================

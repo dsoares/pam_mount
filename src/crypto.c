@@ -26,19 +26,19 @@ crypto.c
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_LIBCRYPTO
-#    include <openssl/ssl.h>
-#    include <openssl/evp.h>
-#    include <openssl/err.h>
+#	include <openssl/ssl.h>
+#	include <openssl/evp.h>
+#	include <openssl/err.h>
 #endif
 #include "compiler.h"
 #include "crypto.h"
 #include "misc.h"
 #include "private.h"
 
-// Functions
+/* Functions */
 #ifdef HAVE_LIBCRYPTO
 static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,
-    unsigned char *, unsigned char *);
+	unsigned char *, unsigned char *);
 static void sslerror(const char *);
 #endif
 
@@ -49,7 +49,8 @@ static void sslerror(const char *);
 
     Print the human-readable form of the current SSL error.
 */
-static void sslerror(const char *msg) {
+static void sslerror(const char *msg)
+{
 	unsigned long err = ERR_get_error();
 	if(err != 0)
 		l0g("%s: %s", msg, ERR_error_string(err, NULL));
@@ -66,7 +67,7 @@ static void sslerror(const char *msg) {
     Returns zero on error or positive non-zero on success.
 */
 static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
- const char *authtok, unsigned char *hash, unsigned char *iv)
+    const char *authtok, unsigned char *hash, unsigned char *iv)
 {
 	const EVP_MD *md;
 	unsigned char salt[PKCS5_SALT_LEN];
@@ -78,8 +79,8 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 	assert(hash != NULL);	/* FIXME: check hash is big enough? */
 	assert(iv != NULL);	/* FIXME: check iv is big enough? */
 
-	if(fread(magic, 1, sizeof(magic), fp) != sizeof_z("Salted__")
-	    || fread(salt, 1, sizeof(salt), fp) != PKCS5_SALT_LEN) {
+	if(fread(magic, 1, sizeof(magic), fp) != sizeof_z("Salted__") ||
+	  fread(salt, 1, sizeof(salt), fp) != PKCS5_SALT_LEN) {
 		l0g("error reading salt from encrypted filesystem key\n");
 		return 0;
 	}
@@ -88,9 +89,9 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 		return 0;
 	}
 	md = EVP_md5();
-        if(EVP_BytesToKey(cipher, md, salt,
-          signed_cast(const unsigned char *, authtok),
-          strlen(authtok), 1, hash, iv) <= 0) {
+	if(EVP_BytesToKey(cipher, md, salt,
+	  signed_cast(const unsigned char *, authtok),
+	  strlen(authtok), 1, hash, iv) <= 0) {
 		l0g("failed to hash system password\n");
 		return 0;
 	}
@@ -119,7 +120,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
     FIXME: this function may need to be broken up and made more readable.
 */
 int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
- const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
+    const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
 {
 	int ret = 1;
 	int segment_len;
@@ -152,7 +153,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 		ret = 0;
 		goto _return;
 	}
-        if(hash_authtok(fs_key_fp, cipher, authtok, hashed_authtok, iv) == 0) {
+	if(hash_authtok(fs_key_fp, cipher, authtok, hashed_authtok, iv) == 0) {
 		ret = 0;
 		goto _return;
 	}
@@ -161,34 +162,36 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 		ret = 0;
 		goto _return;
 	}
-        if(EVP_DecryptInit_ex(&ctx, cipher, NULL, hashed_authtok, iv) == 0) {
+	if(EVP_DecryptInit_ex(&ctx, cipher, NULL, hashed_authtok, iv) == 0) {
 		sslerror("failed to initialize decryption code");
 		ret = 0;
 		goto _return;
 	}
-	/* assumes plaintexts is always <= ciphertext + EVP_MAX_BLOCK_LEN in length
-	 * OpenSSL's documentation seems to promise this */
-        if(EVP_DecryptUpdate(&ctx, pt_fs_key, &segment_len, ct_fs_key,
-          ct_fs_key_len) == 0) {
+	/*
+	 * assumes plaintexts is always <= ciphertext + EVP_MAX_BLOCK_LEN in
+	 * length OpenSSL's documentation seems to promise this
+	 */
+	if(EVP_DecryptUpdate(&ctx, pt_fs_key, &segment_len, ct_fs_key,
+	  ct_fs_key_len) == 0) {
 		sslerror("failed to decrypt key");
 		ret = 0;
 		goto _return;
 	}
 	*pt_fs_key_len = segment_len;
-        if(EVP_DecryptFinal_ex(&ctx, &pt_fs_key[*pt_fs_key_len],
-          &segment_len) == 0) {
+	if(EVP_DecryptFinal_ex(&ctx, &pt_fs_key[*pt_fs_key_len],
+	  &segment_len) == 0) {
 		sslerror
 		    ("bad pad on end of encrypted file (wrong algorithm or key size?)");
 		ret = 0;
 		goto _return;
 	}
 	*pt_fs_key_len += segment_len;
-      _return:
+ _return:
 	if (fclose(fs_key_fp) != 0) {
 		l0g("error closing file pointer\n");
 		ret = 0;
 	}
-      _return_no_close:
+ _return_no_close:
 	if (EVP_CIPHER_CTX_cleanup(&ctx) == 0) {
 		sslerror("error cleaning up cipher context");
 		ret = 0;
@@ -196,20 +199,18 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 
 	ERR_free_strings();
 	/* pt_fs_key_len is unsigned */
-        assert(ret == 0 || *pt_fs_key_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
+	assert(ret == 0 || *pt_fs_key_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	return ret;
 }
 
-#else // HAVE_LIBCRYPTO
+#else /* HAVE_LIBCRYPTO */
 
 int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
- const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
+    const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
 {
-    l0g("encrypted filesystem key not supported: no openssl\n");
-    return 0;
+	l0g("encrypted filesystem key not supported: no openssl\n");
+	return 0;
 }
 
-#endif // HAVE_LIBCRYPTO
-
-//=============================================================================
+#endif /* HAVE_LIBCRYPTO */

@@ -31,8 +31,9 @@ pair.c
 
     Verifies that thep air structure is consistent.
 */
-int pair_valid(const struct pair *p) {
-    return p != NULL && p->key != NULL && p->val != NULL;
+int pair_valid(const struct pair *p)
+{
+	return p != NULL && p->key != NULL && p->val != NULL;
 }
 
 
@@ -42,13 +43,13 @@ int pair_valid(const struct pair *p) {
     Fills @p with with @key, @val and the @destroy_k and @destroy_v functions.
 */
 void pair_init(struct pair *pair, void *key, void *val,
- void (*destroy_k)(void *), void (*destroy_v)(void *))
+    void (*destroy_k)(void *), void (*destroy_v)(void *))
 {
-    pair->key = key;
-    pair->val = val;
-    pair->destroy_k = destroy_k;
-    pair->destroy_v = destroy_v;
-    return;
+	pair->key = key;
+	pair->val = val;
+	pair->destroy_k = destroy_k;
+	pair->destroy_v = destroy_v;
+	return;
 }
 
 /*  pair_destroy
@@ -57,13 +58,12 @@ void pair_init(struct pair *pair, void *key, void *val,
     Destroy the pair pointed to by @pair.
     Note: This function is currently not called from anywhere.
 */
-void pair_destroy(struct pair *pair) {
-    if(pair->destroy_k != NULL)
-        pair->destroy_k(pair->key);
-    if(pair->destroy_v != NULL)
-        pair->destroy_v(pair->val);
-    free(pair);
-    return;
+void pair_destroy(struct pair *pair)
+{
+	if(pair->destroy_k != NULL)
+		pair->destroy_k(pair->key);
+	if(pair->destroy_v != NULL)
+		pair->destroy_v(pair->val);
+	free(pair);
+	return;
 }
-
-//=============================================================================

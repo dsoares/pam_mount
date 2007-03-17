@@ -28,7 +28,7 @@ spawn.c
 #include "misc.h"
 #include "spawn.h"
 
-// Variables
+/* Variables */
 static struct sigaction saved_handler = {.sa_handler = SIG_DFL};
 
 //-----------------------------------------------------------------------------
@@ -54,16 +54,16 @@ static struct sigaction saved_handler = {.sa_handler = SIG_DFL};
     zombies.
 */
 int spawn_apS(const char *wd, const char *const *argv, const char *const *envp,
- GSpawnFlags flags, GSpawnChildSetupFunc cs, void *data, int *pid, int *istdin,
- int *istdout, int *istderr, GError **err)
+    GSpawnFlags flags, GSpawnChildSetupFunc cs, void *data, int *pid,
+    int *istdin, int *istdout, int *istderr, GError **err)
 {
-    spawn_set_sigchld();
-    if(g_spawn_async_with_pipes(wd, const_cast(char **, argv),
-      const_cast(char **, envp), flags, cs, data, pid, istdin,
-      istdout, istderr, err))
-            return 1;
-    spawn_restore_sigchld();
-    return 0;
+	spawn_set_sigchld();
+	if(g_spawn_async_with_pipes(wd, const_cast(char **, argv),
+	  const_cast(char **, envp), flags, cs, data, pid, istdin,
+	  istdout, istderr, err))
+		return 1;
+	spawn_restore_sigchld();
+	return 0;
 }
 
 
@@ -73,18 +73,19 @@ int spawn_apS(const char *wd, const char *const *argv, const char *const *envp,
     against GDM which does not reap childs as we wanted in its SIGCHLD handler,
     so we install our own handler. Returns the value from sigaction().
 */
-int spawn_set_sigchld(void) {
-    struct sigaction nh;
+int spawn_set_sigchld(void)
+{
+	struct sigaction nh;
 
-    if(saved_handler.sa_handler != SIG_DFL) {
-        w4rn("saved_handler already grabbed, not overwriting\n");
-        return 0;
-    }
+	if(saved_handler.sa_handler != SIG_DFL) {
+		w4rn("saved_handler already grabbed, not overwriting\n");
+		return 0;
+	}
 
-    memset(&nh, 0, sizeof(nh));
-    nh.sa_handler = SIG_DFL;
-    sigemptyset(&nh.sa_mask);
-    return sigaction(SIGCHLD, &nh, &saved_handler);
+	memset(&nh, 0, sizeof(nh));
+	nh.sa_handler = SIG_DFL;
+	sigemptyset(&nh.sa_mask);
+	return sigaction(SIGCHLD, &nh, &saved_handler);
 }
 
 
@@ -93,13 +94,12 @@ int spawn_set_sigchld(void) {
     Restore the SIGCHLD handler that was saved during spawn_set_sigchld().
     Returns the value from sigaction().
 */
-int spawn_restore_sigchld(void) {
-    int ret;
-    if((ret = sigaction(SIGCHLD, &saved_handler, NULL)) == -1)
-        l0g("%s: sigaction: %s\n", __func__, strerror(errno));
-    else
-        saved_handler.sa_handler = NULL;
-    return ret;
+int spawn_restore_sigchld(void)
+{
+	int ret;
+	if((ret = sigaction(SIGCHLD, &saved_handler, NULL)) == -1)
+		l0g("%s: sigaction: %s\n", __func__, strerror(errno));
+	else
+		saved_handler.sa_handler = NULL;
+	return ret;
 }
-
-//=============================================================================

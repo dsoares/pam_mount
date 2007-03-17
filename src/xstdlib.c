@@ -34,12 +34,13 @@ xstdlib.c
     Wrapper around malloc() that warns when no new memory block could be
     obtained.
 */
-void *xmalloc(size_t n) {
-    void *ret;
-    if((ret = malloc(n)) == NULL)
-        l0g("xmalloc: Could not allocate %lu bytes\n",
-            static_cast(unsigned long, n));
-    return ret;
+void *xmalloc(size_t n)
+{
+	void *ret;
+	if((ret = malloc(n)) == NULL)
+		l0g("%s: Could not allocate %lu bytes\n",
+		    __func__, static_cast(unsigned long, n));
+	return ret;
 }
 
 
@@ -50,12 +51,13 @@ void *xmalloc(size_t n) {
     Wrapper around realloc() that warns when no new memory block could be
     obtained.
 */
-void *xrealloc(void *orig, size_t n) {
-    void *ret;
-    if((ret = realloc(orig, n)) == NULL)
-        l0g("xrealloc: Could not reallocate to %lu bytes\n",
-            static_cast(unsigned long, n));
-    return ret;
+void *xrealloc(void *orig, size_t n)
+{
+	void *ret;
+	if((ret = realloc(orig, n)) == NULL)
+		l0g("%s: Could not reallocate to %lu bytes\n",
+		    __func__, static_cast(unsigned long, n));
+	return ret;
 }
 
 
@@ -65,11 +67,12 @@ void *xrealloc(void *orig, size_t n) {
     Allocates @n bytes and clears them if the allocation succeded. Returns
     the pointer to the newly allocated memory if any, or %NULL on failure.
 */
-void *xzalloc(size_t n) {
-    void *ret;
-    if((ret = xmalloc(n)) != NULL)
-        memset(ret, 0, n);
-    return ret;
+void *xzalloc(size_t n)
+{
+	void *ret;
+	if((ret = xmalloc(n)) != NULL)
+		memset(ret, 0, n);
+	return ret;
 }
 
 
@@ -80,11 +83,12 @@ void *xzalloc(size_t n) {
     Allocates a new block of size @n and copies @n bytes from @src to it,
     and returns it. Returns %NULL on allocation failure.
 */
-void *xmemdup(const void *src, size_t n) {
-    void *ret;
-    if((ret = xmalloc(n)) == NULL)
-        return ret;
-    return memcpy(ret, src, n);
+void *xmemdup(const void *src, size_t n)
+{
+	void *ret;
+	if((ret = xmalloc(n)) == NULL)
+		return ret;
+	return memcpy(ret, src, n);
 }
 
 
@@ -94,8 +98,9 @@ void *xmemdup(const void *src, size_t n) {
     Basically just the usual strdup(), but with error reporting to fprintf()
     should allocation fail.
 */
-char *xstrdup(const char *src) {
-    return xmemdup(src, strlen(src) + 1);
+char *xstrdup(const char *src)
+{
+	return xmemdup(src, strlen(src) + 1);
 }
 
 
@@ -106,17 +111,16 @@ char *xstrdup(const char *src) {
     Basically just the usual strndup(), but with error reporting to fprintf()
     should allocation fail.
 */
-char *xstrndup(const char *src, size_t max) {
-    size_t s = strlen(src);
-    char *ret;
+char *xstrndup(const char *src, size_t max)
+{
+	size_t s = strlen(src);
+	char *ret;
 
-    if(max < s)
-        s = max;
-    if((ret = xmemdup(src, s + 1)) == NULL)
-        return NULL;
+	if(max < s)
+		s = max;
+	if((ret = xmemdup(src, s + 1)) == NULL)
+		return NULL;
 
-    ret[s] = '\0';
-    return ret;
+	ret[s] = '\0';
+	return ret;
 }
-
-//=============================================================================

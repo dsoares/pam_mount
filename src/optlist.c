@@ -31,7 +31,7 @@ optlist.c
 #include "private.h"
 #include "xstdlib.h"
 
-// Functions
+/* Functions */
 static int _compare(gconstpointer, gconstpointer);
 static int _parse_opt(const char *, size_t, optlist_t **);
 static int _parse_string_opt(const char *str, size_t, optlist_t **);
@@ -42,8 +42,7 @@ static int _parse_string_opt(const char *str, size_t, optlist_t **);
  * SIDE EFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
-static int _parse_string_opt(const char *str, size_t len,
-			     optlist_t ** optlist)
+static int _parse_string_opt(const char *str, size_t len, optlist_t **optlist)
 {
 	int ret = 1;
 	struct pair *pair;
@@ -51,9 +50,9 @@ static int _parse_string_opt(const char *str, size_t len,
 
 	assert(str != NULL);
 	/* a user could config "loop,,,foo=bar==..." */
-	if (len <= 0 || len > MAX_PAR) {
+	if(len <= 0 || len > MAX_PAR) {
 		ret = 0;
-		goto _return;
+		goto out;
 	}
 	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
 	assert(optlist != NULL);
@@ -61,22 +60,21 @@ static int _parse_string_opt(const char *str, size_t len,
 	delim = strchr(str, '=');
 	if(delim == NULL || delim - str >= len) {
 		ret = 0;
-		goto _return;
+		goto out;
 	}
 	pair = xmalloc(sizeof(struct pair));
-	key = xmalloc(delim - str + 1); // +1 for '='
-	val = xmalloc(len - (delim - str));
+	key  = xmalloc(delim - str + 1); /* +1 for '=' */
+	val  = xmalloc(len - (delim - str));
 	strncpy(key, str, delim - str);
 	key[delim - str] = '\0';
 	strncpy(val, delim + 1, len - (delim - str) - 1);
 	val[len - (delim - str) - 1] = '\0';
 	pair_init(pair, key, val, free, free);
 	*optlist = g_list_append(*optlist, pair);
-      _return:
 
-	assert(!ret || (optlist_exists(*optlist, key)
-			&& strcmp(optlist_value(*optlist, key), val) == 0));
-
+ out:
+	assert(!ret || (optlist_exists(*optlist, key) &&
+	       strcmp(optlist_value(*optlist, key), val) == 0));
 	return ret;
 }
 
@@ -86,7 +84,7 @@ static int _parse_string_opt(const char *str, size_t len,
  * SIDE EFFECTS: str[0 - len] has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
-static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
+static int _parse_opt(const char *str, size_t len, optlist_t **optlist)
 {
 	int ret = 1;
 	struct pair *pair;
@@ -94,26 +92,25 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
 
 	assert(str != NULL);
 	/* a user could config "loop,,,foo=bar==..." */
-	if (len <= 0 || len > MAX_PAR) {
+	if(len <= 0 || len > MAX_PAR) {
 		ret = 0;
-		goto _return;
+		goto out;
 	}
 	assert(len > 0 && len <= strlen(str) && len <= MAX_PAR);
 	assert(optlist != NULL);
 
 	pair = xmalloc(sizeof(struct pair));
-	key = xmalloc(len + 1);
-	val = xmalloc(1); // o_O waste
+	key  = xmalloc(len + 1);
+	val  = xmalloc(1); /* wasteful */
 	strncpy(key, str, len);
 	key[len] = '\0';
 	*val = '\0';
 	pair_init(pair, key, val, free, free);
 	*optlist = g_list_append(*optlist, pair);
-      _return:
 
-	assert(!ret || (optlist_exists(*optlist, key)
-			&& !strcmp(optlist_value(*optlist, key), val)));
-
+ out:
+	assert(!ret || (optlist_exists(*optlist, key) &&
+	       strcmp(optlist_value(*optlist, key), val) == 0));
 	return ret;
 }
 
@@ -122,7 +119,8 @@ static int _parse_opt(const char *str, size_t len, optlist_t ** optlist)
  * SIDE EFFECTS: str has been parsed and placed in optlist
  * OUTPUT: if error 0 else 1
  */
-bool str_to_optlist(optlist_t **optlist, const char *str) {
+bool str_to_optlist(optlist_t **optlist, const char *str)
+{
 	int ret = 1;
 	char *ptr;
 
@@ -132,25 +130,25 @@ bool str_to_optlist(optlist_t **optlist, const char *str) {
 	*optlist = NULL;
 	if(strlen(str) == 0) {
 		ret = 0;
-		goto _return;
+		goto out;
 	}
-	while ((ptr = strchr(str, ',')) != NULL) {
-            if(!_parse_string_opt(str, ptr - str, optlist) &&
-              !_parse_opt(str, ptr - str, optlist)) {
-                    ret = 0;
-                    goto _return;
-            }
-            str = ptr + 1;
+	while((ptr = strchr(str, ',')) != NULL) {
+		if(!_parse_string_opt(str, ptr - str, optlist) &&
+		  !_parse_opt(str, ptr - str, optlist)) {
+			ret = 0;
+			goto out;
+		}
+		str = ptr + 1;
 	}
-        if(!_parse_string_opt(str, strlen(str), optlist) &&
-          !_parse_opt(str, strlen(str), optlist)) {
-                ret = 0;
-                goto _return;
-        }
-      _return:
+	if(!_parse_string_opt(str, strlen(str), optlist) &&
+	  !_parse_opt(str, strlen(str), optlist)) {
+		ret = 0;
+		goto out;
+	}
 
-	assert(!ret || ((strlen(str) == 0 && *optlist == '\0') || *optlist != '\0'));
-
+ out:
+	assert(!ret || ((strlen(str) == 0 && *optlist == '\0') ||
+	       *optlist != '\0'));
 	return ret;
 }
 
@@ -160,11 +158,10 @@ bool str_to_optlist(optlist_t **optlist, const char *str) {
  */
 static int _compare(gconstpointer x, gconstpointer y)
 {
-        const struct pair *px = x;
+	const struct pair *px = x;
 	assert(x != NULL);
 	assert(px->key != NULL);
 	assert(y != NULL);
-
 	return strcmp(px->key, y);
 }
 
@@ -172,9 +169,9 @@ static int _compare(gconstpointer x, gconstpointer y)
 /* INPUT: optlist and str
  * OUTPUT: if optlist[str] exists 1 else 0
  */
-bool optlist_exists(optlist_t *optlist, const char *str) {
+bool optlist_exists(optlist_t *optlist, const char *str)
+{
 	assert(str != NULL);
-
 	if(optlist == NULL)
 		return 0;
 	return g_list_find_custom(optlist, str, _compare) ? 1 : 0;
@@ -213,19 +210,17 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 	*str = '\0';
 	if(optlist != NULL)
 		do {
-                        struct pair *pair = ptr->data;
+			struct pair *pair = ptr->data;
 			strncat(str, pair->key, MAX_PAR - strlen(str));
 			if(strlen(pair->val) > 0) {
 				strncat(str, "=", MAX_PAR - strlen(str));
-				strncat(str, pair->
-					val, MAX_PAR - strlen(str));
+				strncat(str, pair->val, MAX_PAR - strlen(str));
 			}
-			if ((ptr = g_list_next(ptr)) != NULL)
+			if((ptr = g_list_next(ptr)) != NULL)
 				strncat(str, ",", MAX_PAR - strlen(str));
-		} while (ptr);
+		} while(ptr != NULL);
 	str[MAX_PAR] = '\0';
 
 	assert((optlist == NULL && strlen(str) == 0) || strlen(str) > 0);
-
 	return str;
 }

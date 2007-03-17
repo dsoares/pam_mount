@@ -47,21 +47,21 @@ pam_mount.c
 #include "xstdlib.h"
 
 #if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
-#    define CONFIGFILE "/etc/pam_mount.conf.xml"
+#	define CONFIGFILE "/etc/pam_mount.conf.xml"
 #else
-#    define CONFIGFILE "/etc/security/pam_mount.conf.xml"
+#	define CONFIGFILE "/etc/security/pam_mount.conf.xml"
 #endif
 
-// Functions
+/* Functions */
 static void clean_config(pam_handle_t *, void *, int);
 static void clean_system_authtok(pam_handle_t *, void *, int);
 static int converse(pam_handle_t *, int, const struct pam_message **,
-    struct pam_response **);
+	struct pam_response **);
 static int modify_pm_count(struct config *, char *, char *);
 static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
-// Variables
+/* Variables */
 int Debug = 0;
 struct config Config = {};
 struct pam_args Args = {};
@@ -73,16 +73,17 @@ struct pam_args Args = {};
 
     Global @Args is initialized, based on @argv.
 */
-static void parse_pam_args(int argc, const char **argv) {
+static void parse_pam_args(int argc, const char **argv)
+{
 	int i;
 
 	assert(argc >= 0);
-	for (i = 0; i < argc; i++)
+	for(i = 0; i < argc; i++)
 		assert(argv[i] != NULL);
 
 	/* first, set default values */
 	Args.auth_type = GET_PASS;
-	for (i = 0; i < argc; i++) {
+	for(i = 0; i < argc; ++i) {
 		w4rn("pam_sm_open_session args: %s\n", argv[i]);
 		if(strcmp("use_first_pass", argv[i]) == 0)
 			Args.auth_type = USE_FIRST_PASS;
@@ -91,7 +92,7 @@ static void parse_pam_args(int argc, const char **argv) {
 		else
 			w4rn("bad pam_mount option\n");
 	}
-        return;
+	return;
 }
 
 
@@ -103,10 +104,11 @@ static void parse_pam_args(int argc, const char **argv) {
     Free data from a struct config variable.
     Note: This is registered as a PAM callback function and is called directly.
 */
-static void clean_config(pam_handle_t *pamh, void *data, int err) {
-    w4rn("Clean global config (%d)\n", err);
-    freeconfig(data);
-    return;
+static void clean_config(pam_handle_t *pamh, void *data, int err)
+{
+	w4rn("Clean global config (%d)\n", err);
+	freeconfig(data);
+	return;
 }
 
 
@@ -120,15 +122,16 @@ static void clean_config(pam_handle_t *pamh, void *data, int err) {
 
     FIXME: Not binary-password safe.
 */
-static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode) {
+static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode)
+{
 	w4rn("clean system authtok (%d)\n", errcode);
 /*
-	if (data) {
+	if(data != NULL) {
 		memset(data, 0, strlen(data));
 		free(data);
 	}
 */
-    return;
+	return;
 }
 
 
@@ -152,24 +155,22 @@ static int converse(pam_handle_t *pamh, int nargs,
 
 	*resp = NULL;
 	retval = pam_get_item(pamh, PAM_CONV, static_cast(const void **,
-                 static_cast(void *, &conv)));
+	         static_cast(void *, &conv)));
 
-        if(retval == PAM_SUCCESS) {
-            retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
-            if(retval != PAM_SUCCESS)
-                l0g("conv->conv(...): %s\n", pam_strerror(pamh, retval));
-        } else {
-            l0g("pam_get_item: %s\n", pam_strerror(pamh, retval));
-        }
+	if(retval == PAM_SUCCESS) {
+		retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
+		if(retval != PAM_SUCCESS)
+			l0g("conv->conv(...): %s\n", pam_strerror(pamh, retval));
+	} else {
+		l0g("pam_get_item: %s\n", pam_strerror(pamh, retval));
+	}
 
-        if(resp == NULL || *resp == NULL || (*resp)->resp == NULL)
+	if(resp == NULL || *resp == NULL || (*resp)->resp == NULL)
 		retval = PAM_AUTH_ERR;
 
-	assert(retval != PAM_SUCCESS
-	       || (resp != NULL && *resp != NULL
-		   && (*resp)->resp != NULL));
-
-	return retval;		/* propagate error status */
+	assert(retval != PAM_SUCCESS || (resp != NULL && *resp != NULL &&
+	       (*resp)->resp != NULL));
+	return retval; /* propagate error status */
 }
 
 
@@ -181,7 +182,8 @@ static int converse(pam_handle_t *pamh, int nargs,
     Returns PAM error code or %PAM_SUCCESS.
     Note: Adapted from pam_unix/support.c:_unix_read_password().
 */
-static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
+static int read_password(pam_handle_t *pamh, const char *prompt, char **pass)
+{
 	int retval;
 	struct pam_message msg;
 	const struct pam_message *pmsg = &msg;
@@ -196,11 +198,10 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
 	msg.msg_style = PAM_PROMPT_ECHO_OFF;
 	msg.msg = prompt;
 	retval = converse(pamh, 1, &pmsg, &resp);
-	if (retval == PAM_SUCCESS)
+	if(retval == PAM_SUCCESS)
 		*pass = xstrdup(resp->resp);
 
 	assert(retval != PAM_SUCCESS || (pass != NULL && *pass != NULL));
-
 	return retval;
 }
 
@@ -216,7 +217,7 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass) {
     access to the user's password. Returns the PAM error code or %PAM_SUCCESS.
 */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
- int argc, const char **argv)
+    int argc, const char **argv)
 {
 	int ret = PAM_SUCCESS;
 	char *authtok = NULL;
@@ -225,63 +226,69 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
 	assert(pamh != NULL);
 
-	/* FIXME: this is called again in pam_sm_open_session.  this is because
-         * pam_sm_authenticate is never called when root su's to another user.
+	/*
+	 * FIXME: this is called again in pam_sm_open_session. This is because
+	 * pam_sm_authenticate() is never called when root su's to another
+	 * user.
 	 */
 	initconfig(&Config);
 	parse_pam_args(argc, argv);
 	/* needed because gdm does not prompt for username as login does: */
-	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
+	if((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
 		l0g("could not get user\n");
-		/* do NOT return PAM_SERVICE_ERR or root will not be able
-		 * to su to other users */
-		goto _return;
+		/*
+		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
+		 * su to other users
+		 */
+		goto out;
 	}
-        /* FIXME: free me! the dup is required because result of pam_get_user
-        disappears (valgrind) */
+	/*
+	 * FIXME: free me! the dup is required because result of pam_get_user
+	 * disappears (valgrind)
+	 */
 	Config.user = relookup_user(pam_user);
-	if(Args.auth_type != GET_PASS) {	/* get password from PAM system */
+	if(Args.auth_type != GET_PASS) { /* get password from PAM system */
 		char *ptr = NULL;
-                ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
-                      static_cast(void *, &ptr)));
-                if(ret != PAM_SUCCESS || ptr == NULL) {
-                        if (ret == PAM_SUCCESS && ptr == NULL)
-                                ret = PAM_AUTHINFO_UNAVAIL;
+		ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
+		      static_cast(void *, &ptr)));
+		if(ret != PAM_SUCCESS || ptr == NULL) {
+			if(ret == PAM_SUCCESS && ptr == NULL)
+				ret = PAM_AUTHINFO_UNAVAIL;
 			l0g("could not get password from PAM system\n");
 			if(Args.auth_type == USE_FIRST_PASS)
-				goto _return;
-		} else
+				goto out;
+		} else {
 			authtok = xstrdup(ptr);
+		}
 	}
-	if (!authtok) {		/* get password directly */
+	if(!authtok) { /* get password directly */
 		if((ret = read_password(pamh, "pam_mount password:", &authtok)) != PAM_SUCCESS) {
 			l0g("error trying to read password\n");
-			goto _return;
+			goto out;
 		}
 		/* p_s_i copies to PAM-internal memory */
 		if((ret = pam_set_item(pamh, PAM_AUTHTOK, authtok)) != PAM_SUCCESS) {
 			l0g("error trying to export password\n");
-			goto _return;
+			goto out;
 		}
 	}
-	if (strlen(authtok) > MAX_PAR) {
+	if(strlen(authtok) > MAX_PAR) {
 		l0g("password too long\n");
 		ret = PAM_AUTH_ERR;
-		goto _return;
+		goto out;
 	}
 	w4rn("saving authtok for session code\n");
-        ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
-                           clean_system_authtok);
-        if(ret != PAM_SUCCESS) {
+	ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
+	                   clean_system_authtok);
+	if(ret != PAM_SUCCESS) {
 		l0g("error trying to save authtok for session code\n");
-		goto _return;
+		goto out;
 	}
-      _return:
-	assert(ret != PAM_SUCCESS
-	       || pam_get_data(pamh, "pam_mount_system_authtok",
-			       &tmp) == PAM_SUCCESS);
+ out:
+	assert(ret != PAM_SUCCESS ||
+	       pam_get_data(pamh, "pam_mount_system_authtok", &tmp) ==
+	       PAM_SUCCESS);
 	assert(ret != PAM_SUCCESS || tmp != NULL);
-
 	return ret;
 }
 
@@ -298,7 +305,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     Note: Modified version of pam_console.c:use_count()
 */
 static int modify_pm_count(struct config *config, char *user,
- char *operation)
+    char *operation)
 {
 	FILE *fp;
 	GError *err;
@@ -308,17 +315,17 @@ static int modify_pm_count(struct config *config, char *user,
 	pid_t pid;
 	struct sigaction sact, oldsact;
 
-        assert(config_valid(config));
-        assert(user != NULL);
-        assert(operation != NULL);
+	assert(config_valid(config));
+	assert(user != NULL);
+	assert(operation != NULL);
 
 	/* avoid bomb on command exiting before count read */
 	sact.sa_handler = SIG_DFL;
 	sact.sa_flags = 0;
-        sigemptyset(&sact.sa_mask);
-	if (sigaction(SIGPIPE, &sact, &oldsact) == -1) {
+	sigemptyset(&sact.sa_mask);
+	if(sigaction(SIGPIPE, &sact, &oldsact) < 0) {
 		fnval = -1;
-		goto _nosigact_return;
+		goto nosigactout;
 	}
 	vinfo = HXformat_init();
 	format_add(vinfo, "USER", user);
@@ -326,46 +333,47 @@ static int modify_pm_count(struct config *config, char *user,
 	misc_add_ntdom(vinfo, user);
 
 	for(i = 0; config->command[i][CMD_PMVARRUN] != NULL; i++)
-                add_to_argv(_argv, &_argc, config->command[i][CMD_PMVARRUN], vinfo);
+		add_to_argv(_argv, &_argc,
+		            config->command[i][CMD_PMVARRUN], vinfo);
 	HXformat_free(vinfo);
 	log_argv(_argv);
 
-        if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
-         NULL, &pid, NULL, &cstdout, NULL, &err)) {
+	if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
+	  NULL, &pid, NULL, &cstdout, NULL, &err)) {
 		l0g("error executing /usr/sbin/pmvarrun\n");
 		fnval = -1;
-		goto _return;
+		goto out;
 	}
-	if ((fp = fdopen(cstdout, "r")) == NULL) {
-                spawn_restore_sigchld();
+	if((fp = fdopen(cstdout, "r")) == NULL) {
+		spawn_restore_sigchld();
 		w4rn("error opening file: %s\n", strerror(errno));
 		fnval = -1;
-		goto _return;
+		goto out;
 	}
-	if (fscanf(fp, "%d", &fnval) == 0) {
-                spawn_restore_sigchld();
+	if(fscanf(fp, "%d", &fnval) != 1) {
+		spawn_restore_sigchld();
 		w4rn("error reading login count from pmvarrun\n");
 		fnval = -1;
-		goto _return;
+		goto out;
 	}
-	if (waitpid(pid, &child_exit, 0) == -1) {
-                spawn_restore_sigchld();
+	if(waitpid(pid, &child_exit, 0) < 0) {
+		spawn_restore_sigchld();
 		l0g("error waiting for child: %s\n", strerror(errno));
 		fnval = -1;
-		goto _return;
+		goto out;
 	}
-        spawn_restore_sigchld();
-	if (WEXITSTATUS(child_exit)) {
+	spawn_restore_sigchld();
+	if(WEXITSTATUS(child_exit)) {
 		l0g("pmvarrun failed\n");
 		fnval = -1;
-		goto _return;
+		goto out;
 	}
 	w4rn("pmvarrun says login count is %d\n", fnval);
-_return:
+ out:
 	sigaction(SIGPIPE, &oldsact, NULL);
-_nosigact_return:
+ nosigactout:
 
-        assert(config_valid(config));
+	assert(config_valid(config));
 	return fnval;
 }
 
@@ -381,118 +389,124 @@ _nosigact_return:
     code or %PAM_SUCCESS.
 */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
- int argc, const char **argv)
+    int argc, const char **argv)
 {
 	int vol;
 	int ret = PAM_SUCCESS;
 	char *system_authtok;
 	const char *pam_user = NULL;
-        const void *tmp;
-        int getval;
+	const void *tmp;
+	int getval;
 
 	assert(pamh != NULL);
 
 	initconfig(&Config);
-	/* call pam_get_user again because ssh calls PAM fns from seperate
+	/*
+	 * call pam_get_user again because ssh calls PAM fns from seperate
  	 * processes.
 	 */
-	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
+	if((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
 		l0g("could not get user");
-                /* do NOT return PAM_SERVICE_ERR or root will not be able
-                 * to su to other users */
-                goto _return;
+		/*
+		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
+		 * su to other users.
+		 */
+		goto out;
 	}
-	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
+	/*
+	 * FIXME: free me! the dup is requried because result of pam_get_user()
+	 * disappears (valgrind)
+	 */
 	Config.user = relookup_user(pam_user);
 	if(strlen(Config.user) > MAX_PAR) {
 		l0g("username %s is too long\n", Config.user);
 		ret = PAM_SERVICE_ERR;
-		goto _return;
+		goto out;
 	}
 
-        ret = pam_get_data(pamh, "pam_mount_system_authtok",
-              static_cast(const void **, static_cast(void *, &system_authtok)));
-        if(ret != PAM_SUCCESS) {
+	ret = pam_get_data(pamh, "pam_mount_system_authtok",
+	      static_cast(const void **, static_cast(void *, &system_authtok)));
+	if(ret != PAM_SUCCESS) {
 		l0g("error trying to retrieve authtok from auth code\n");
-                ret = read_password(pamh, "reenter password for pam_mount:", &system_authtok);
-                if(ret != PAM_SUCCESS) {
-                       l0g("error trying to read password\n");
-                       goto _return;
-                }
+		ret = read_password(pamh, "reenter password for pam_mount:", &system_authtok);
+		if(ret != PAM_SUCCESS) {
+			l0g("error trying to read password\n");
+			goto out;
+		}
 
 	}
 	if(!readconfig(CONFIGFILE, 1, &Config)) {
 		ret = PAM_SERVICE_ERR;
-		goto _return;
+		goto out;
 	}
 
-        /* Get the Kerberos CCNAME so we can make it available to the
-        mount command later on. */
-        if(setenv("KRB5CCNAME", pam_getenv(pamh, "KRB5CCNAME"), 1) < 0)
-            l0g("KRB5CCNAME setenv failed\n");
+	/* Get the Kerberos CCNAME so we can make it available to the
+	mount command later on. */
+	if(setenv("KRB5CCNAME", pam_getenv(pamh, "KRB5CCNAME"), 1) < 0)
+		l0g("KRB5CCNAME setenv failed\n");
 
-        // Store initialized config as PAM data
-        if((getval = pam_get_data(pamh, "pam_mount_config",
-         &tmp)) == PAM_NO_MODULE_DATA && (ret = pam_set_data(pamh,
-         "pam_mount_config", &Config, clean_config)) != PAM_SUCCESS) {
-            l0g("error trying to save config structure\n");
-            goto _return;
-        }
+	/* Store initialized config as PAM data */
+	if((getval = pam_get_data(pamh, "pam_mount_config",
+	  &tmp)) == PAM_NO_MODULE_DATA && (ret = pam_set_data(pamh,
+	  "pam_mount_config", &Config, clean_config)) != PAM_SUCCESS) {
+		l0g("error trying to save config structure\n");
+		goto out;
+	}
 
 	w4rn("back from global readconfig\n");
 	if(strlen(Config.luserconf) == 0)
 		w4rn("per-user configurations not allowed by pam_mount.conf.xml\n");
-        else if(exists(Config.luserconf) && owns(Config.user, Config.luserconf)) {
+	else if(exists(Config.luserconf) && owns(Config.user, Config.luserconf)) {
 		w4rn("going to readconfig user\n");
 		if(!readconfig(Config.luserconf, 0, &Config)) {
 			ret = PAM_SERVICE_ERR;
-			goto _return;
+			goto out;
 		}
 		w4rn("back from user readconfig\n");
 	} else
 		w4rn("%s does not exist or is not owned by user\n",
-                 Config.luserconf);
+		     Config.luserconf);
 	if(Config.volcount <= 0) {
 		w4rn("no volumes to mount\n");
-		goto _return;
+		goto out;
 	}
 	if(!expandconfig(&Config)) {
 		l0g("error expanding configuration\n");
 		ret = PAM_SERVICE_ERR;
-		goto _return;
+		goto out;
 	}
-        w4rn("%s: real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
-             __func__, static_cast(long, getuid()),
-             static_cast(long, getgid()), static_cast(long, geteuid()),
-             static_cast(long, getegid()));
-/* This code needs root priv. */
-	for(vol = 0; vol < Config.volcount; vol++) {
-		/* luserconf_volume_record_sane() is called here so that
-		 * a user can nest loopback images. otherwise ownership
-		 * tests will fail if parent loopback image not yet
-		 * mounted.  volume_record_sane() is here to be consistent */
-                if(!volume_record_sane(&Config, vol))
+	w4rn("%s: UID tuple (%ld, %ld, %ld, %ld)\n", __func__,
+	     static_cast(long, getuid()), static_cast(long, getgid()),
+	     static_cast(long, geteuid()), static_cast(long, getegid()));
+
+	/* This code needs root priv. */
+	for(vol = 0; vol < Config.volcount; ++vol) {
+		/*
+		 * luserconf_volume_record_sane() is called here so that a user
+		 * can nest loopback images. otherwise ownership tests will
+		 * fail if parent loopback image not yet mounted. 
+		 * volume_record_sane() is here to be consistent.
+		 */
+		if(!volume_record_sane(&Config, vol))
 			continue;
-                if(!Config.volume[vol].globalconf &&
-                  !luserconf_volume_record_sane(&Config, vol))
+		if(!Config.volume[vol].globalconf &&
+		  !luserconf_volume_record_sane(&Config, vol))
 			continue;
 		w4rn("about to perform mount operations\n");
 
-                if(!mount_op(do_mount, &Config, vol, system_authtok,
-                  Config.mkmntpoint)) {
-                        l0g("mount of %s failed\n",
-                          Config.volume[vol].volume);
-                        ret = PAM_SERVICE_ERR;
-                }
+		if(!mount_op(do_mount, &Config, vol, system_authtok,
+		  Config.mkmntpoint)) {
+			l0g("mount of %s failed\n", Config.volume[vol].volume);
+			ret = PAM_SERVICE_ERR;
+		}
 	}
-/* end root priv. */
+	/* end root priv. */
 	/* Paranoia? */
 	clean_system_authtok(pamh, system_authtok, 0);
-/* This code needs root priv. */
+	/* This code needs root priv. */
 	modify_pm_count(&Config, Config.user, "1");
-/* end root priv. */
-
-      _return:
+	/* end root priv. */
+ out:
 	w4rn("done opening session\n");
 	return ret;
 }
@@ -507,7 +521,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
     This is a placeholder function so PAM does not get mad.
 */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
- int argc, const char **argv)
+    int argc, const char **argv)
 {
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
@@ -527,7 +541,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
     attempted?
 */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
- int flags, int argc, const char **argv)
+    int flags, int argc, const char **argv)
 {
 	int vol;
 	int ret = PAM_SUCCESS;
@@ -536,39 +550,50 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	assert(pamh != NULL);
 
 	w4rn("received order to close things\n");
-	w4rn("real and effective user ID are %d and %d.\n",
-	     getuid(), geteuid());
-	/* call pam_get_user again because ssh calls PAM fns from seperate
+	w4rn("%s: UID tuple is (%ld, %ld, %ld, %ld)\n", __func__,
+	     static_cast(long, getuid()), static_cast(long, getgid()),
+	     static_cast(long, geteuid()), static_cast(long, getegid()));
+	/*
+	 * call pam_get_user() again because ssh calls PAM fns from seperate
  	 * processes.
 	 */
-	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
+	if((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
 		l0g("could not get user\n");
-		/* do NOT return PAM_SERVICE_ERR or root will not be able
-		 * to su to other users */
-		goto _return;
+		/*
+		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
+		 * su to other users.
+		 */
+		goto out;
 	}
-	/* FIXME: free me! the dup is requried because result of pam_get_user disappears (valgrind) */
+	/*
+	 * FIXME: free me! the dup is requried because result of pam_get_user
+	 * disappears (valgrind)
+	 */
 	Config.user = relookup_user(pam_user);
 	/* if our CWD is in the home directory, it might not get umounted */
 	if(chdir("/") != 0)
 		l0g("could not chdir\n");
 	if(Config.volcount <= 0)
 		w4rn("volcount is zero\n");
-/* This code needs root priv. */
+	/* This code needs root priv. */
 	if(modify_pm_count(&Config, Config.user, "-1") <= 0) {
 		/* Unmount in reverse order to facilitate nested mounting. */
-		for(vol = Config.volcount - 1; vol >= 0; vol--) {
+		for(vol = Config.volcount - 1; vol >= 0; --vol) {
 			w4rn("going to unmount\n");
-			if(!mount_op(do_unmount, &Config, vol, NULL, Config.mkmntpoint))
-				l0g("unmount of %s failed\n", Config.volume[vol].volume);
-                }
-/* end root priv. */
+			if(!mount_op(do_unmount, &Config, vol, NULL,
+			  Config.mkmntpoint))
+				l0g("unmount of %s failed\n",
+				    Config.volume[vol].volume);
+		}
+		/* end root priv. */
 	} else {
 		w4rn("%s seems to have other remaining open sessions\n",
-                 Config.user);
-        }
-      _return:
-        // Note that PMConfig is automatically freed later in clean_config().
+		     Config.user);
+	}
+ out:
+	/*
+	 * Note that PMConfig is automatically freed later in clean_config()
+	 */
 	w4rn("pam_mount execution complete\n");
 	return ret;
 }
@@ -583,7 +608,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
     This is a placeholder function so PAM does not get mad.
 */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_setcred(pam_handle_t *pamh, int flags,
- int argc, const char **argv)
+    int argc, const char **argv)
 {
 	return PAM_SUCCESS;
 }
@@ -598,22 +623,22 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_setcred(pam_handle_t *pamh, int flags,
     This is a placeholder function so PAM does not get mad.
 */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
- int argc, const char **argv)
+    int argc, const char **argv)
 {
-    return PAM_IGNORE;
+	return PAM_IGNORE;
 }
 
 #ifdef PAM_STATIC
 /* static module data */
 
 EXPORT_SYMBOL struct pam_module _pam_mount_modstruct = {
-    .name                 = "pam_mount",
-    .pam_sm_authenticate  = pam_sm_authenticate,
-    .pam_sm_setcred       = pam_sm_setcred,
-    .pam_sm_acct_mgmt     = pam_sm_acct_mgmt,
-    .pam_sm_open_sesion   = pam_sm_open_session,
-    .pam_sm_close_session = pam_sm_close_session,
-    .pam_sm_chauthtok     = pam_sm_chauthtok,
+	.name                 = "pam_mount",
+	.pam_sm_authenticate  = pam_sm_authenticate,
+	.pam_sm_setcred       = pam_sm_setcred,
+	.pam_sm_acct_mgmt     = pam_sm_acct_mgmt,
+	.pam_sm_open_sesion   = pam_sm_open_session,
+	.pam_sm_close_session = pam_sm_close_session,
+	.pam_sm_chauthtok     = pam_sm_chauthtok,
 };
 
 #endif

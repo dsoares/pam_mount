@@ -35,7 +35,7 @@ rdconf2.c
 #include "readconfig.h"
 #include "xstdlib.h"
 
-// Functions
+/* Functions */
 static int _options_ok(const struct config *, const struct vol *);
 static int options_allow_ok(optlist_t *, optlist_t *);
 static int options_deny_ok(optlist_t *, optlist_t *);
@@ -51,12 +51,12 @@ static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 {
 	optlist_t *e;
 
-	if (optlist_exists(allowed, "*") || !optlist_len(options))
+	if(optlist_exists(allowed, "*") || !optlist_len(options))
 		return 1;
 	for(e = options; e != NULL; e = optlist_next(e))
 		if(!optlist_exists(allowed, optlist_key(e))) {
-                    l0g("option %s not allowed\n", optlist_key(e));
-                    return 0;
+			l0g("option %s not allowed\n", optlist_key(e));
+			return 0;
 		}
 	return 1;
 }
@@ -72,8 +72,8 @@ static int options_required_ok(optlist_t * required, optlist_t * options)
 	optlist_t *e;
 	for(e = required; e != NULL; e = optlist_next(e))
 		if(!optlist_exists(options, optlist_key(e))) {
-                    l0g("option %s required\n", optlist_key(e));
-                    return 0;
+			l0g("option %s required\n", optlist_key(e));
+			return 0;
 		}
 	return 1;
 }
@@ -114,23 +114,21 @@ static int _options_ok(const struct config *config, const struct vol *volume) {
 	assert(volume != NULL);
 
 	if(optlist_len(config->options_allow) > 0 &&
-	    optlist_len(config->options_deny) > 0) {
+	  optlist_len(config->options_deny) > 0) {
 		l0g("possible conflicting option settings (use allow OR deny)\n");
 		return 0;
 	}
-        if(!volume->use_fstab) {
-		if (!options_required_ok
-		    (config->options_require, volume->options))
+	if(!volume->use_fstab) {
+		if(!options_required_ok(config->options_require,
+		  volume->options))
 			return 0;
 		else if(optlist_len(config->options_allow) > 0) {
-			if (!options_allow_ok(config->
-					      options_allow,
-					      volume->options))
+			if(!options_allow_ok(config->options_allow,
+			  volume->options))
 				return 0;
 		} else if(optlist_len(config->options_deny) > 0) {
-			if (!options_deny_ok(config->
-					     options_deny,
-					     volume->options))
+			if(!options_deny_ok(config->options_deny,
+			  volume->options))
 				return 0;
 		} else if(optlist_len(volume->options) > 0) {
 			l0g("user specified options denied by default\n");
@@ -146,20 +144,20 @@ static int _options_ok(const struct config *config, const struct vol *volume) {
 */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 bool luserconf_volume_record_sane(const struct config *config, int vol) {
-        const struct vol *vpt;
+	const struct vol *vpt;
 	assert(config != NULL);
 	assert(config->volume != NULL);
-        vpt = &config->volume[vol];
+	vpt = &config->volume[vol];
 
-        if(config->volume[vol].used_wildcard) {
+	if(config->volume[vol].used_wildcard) {
 		l0g("You may not use wildcards in user-defined volumes\n");
-		return FALSE;
+		return 0;
 	}
-	if (!_options_ok(config, &config->volume[vol])) {
+	if(!_options_ok(config, &config->volume[vol])) {
 		l0g("illegal option specified by user\n");
-		return FALSE;
+		return 0;
 	}
-	return TRUE;
+	return 1;
 }
 
 /* ============================ volume_record_sane () ====================== */
@@ -167,40 +165,40 @@ bool luserconf_volume_record_sane(const struct config *config, int vol) {
  * FN VAL: if error string error message else NULL */
 /* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
 bool volume_record_sane(const struct config *config, int vol) {
-        const struct vol *vpt;
+	const struct vol *vpt;
 
-        assert(config != NULL);
-        assert(config->volume != NULL);
-        vpt = &config->volume[vol];
+	assert(config != NULL);
+	assert(config->volume != NULL);
+	vpt = &config->volume[vol];
 
 	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
 	if(!config->command[0][vpt->type]) {
 		l0g("mount command not defined for this type\n");
-		return FALSE;
+		return 0;
 	}
-        if((vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
-         vpt->type == CMD_NCPMOUNT || vpt->type == CMD_NFSMOUNT) &&
-         strlen(vpt->server) == 0) {
+	if((vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
+	  vpt->type == CMD_NCPMOUNT || vpt->type == CMD_NFSMOUNT) &&
+	  strlen(vpt->server) == 0) {
 		l0g("remote mount type specified without server\n");
-		return FALSE;
+		return 0;
 	}
-        if(vpt->type == CMD_NCPMOUNT && !optlist_exists(vpt->options, "user")) {
+	if(vpt->type == CMD_NCPMOUNT && !optlist_exists(vpt->options, "user")) {
 		l0g("NCP volume definition missing user option\n");
-		return FALSE;
+		return 0;
 	}
 	if(config->command[0][CMD_UMOUNT] == NULL) {
 		l0g("umount command not defined\n");
-		return FALSE;
+		return 0;
 	}
-        if(strlen(vpt->fs_key_cipher) > 0 && strlen(vpt->fs_key_path) == 0) {
+	if(strlen(vpt->fs_key_cipher) > 0 && strlen(vpt->fs_key_path) == 0) {
 		l0g("fs_key_cipher defined without fs_key_path\n");
-		return FALSE;
+		return 0;
 	}
-        if(strlen(vpt->fs_key_cipher) == 0 && strlen(vpt->fs_key_path) > 0) {
+	if(strlen(vpt->fs_key_cipher) == 0 && strlen(vpt->fs_key_path) > 0) {
 		l0g("fs_key_path defined without fs_key_cipher\n");
-		return FALSE;
+		return 0;
 	}
-	return TRUE;
+	return 1;
 }
 
 //=============================================================================
