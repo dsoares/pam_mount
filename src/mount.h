@@ -22,7 +22,6 @@ mount.h
 #ifndef PMT_MOUNT_H
 #define PMT_MONUT_H 1
 
-#include "fmt_ptrn.h"
 #include "private.h"
 #include "xstdlib.h"
 
@@ -31,10 +30,9 @@ extern "C" {
 #endif
 
 struct config;
-struct fmt_ptrn;
 
 typedef int (mount_op_fn_t)(const struct config *, const unsigned int,
-    struct fmt_ptrn *, const char *, const bool);
+    struct HXbtree *, const char *, const bool);
 
 /*
  *      MOUNT.C

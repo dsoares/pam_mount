@@ -86,31 +86,6 @@ static const struct callbackmap cf_tags[];
 static const struct pmt_command default_command[];
 
 //-----------------------------------------------------------------------------
-/*@@@ Currently copied from libHX @@@*/
-
-/* noproto */ static inline
-char *HX_strlcat(char *dest, const char *src, size_t len)
-{
-    return strncat(dest, src, len - strlen(dest));
-}
-
-/* noproto */ static inline
-char *HX_strlcpy(char *dest, const char *src, size_t n)
-{
-    strncpy(dest, src, n);
-    dest[n - 1] = '\0';
-    return dest;
-}
-
-/* noproto */ static inline
-char *HX_strlncat(char *dest, const char *src, size_t dlen, size_t slen)
-{
-    size_t r = dlen - strlen(dest);
-    r = (slen < r) ? slen : r;
-    return strncat(dest, src, r);
-}
-
-//-----------------------------------------------------------------------------
 /*  expandconfig
     @config:    configuration structure
 

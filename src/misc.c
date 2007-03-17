@@ -34,8 +34,8 @@ misc.c
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <libHX.h>
 #include <pwd.h>
-#include "fmt_ptrn.h"
 #include "misc.h"
 #include "pam_mount.h"
 #include "private.h"
@@ -279,7 +279,7 @@ void log_argv(const char *const *argv) {
     elements in the @argv vector.
 */
 void add_to_argv(const char **argv, int *const argc, const char *const arg,
- struct fmt_ptrn *vinfo)
+    struct HXbtree *vinfo)
 {
 	char *filled;
 
@@ -293,20 +293,15 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 		l0g(PMPREFIX "too many arguments to mount command\n");
 		return;
 	}
-	if ((filled = fmt_ptrn_filled(vinfo, arg)) == NULL) {
+	if(HXformat_aprintf(vinfo, &filled, arg) == 0) {
                 /* This case may happen with e.g. %(before="-o" OPTIONS)
                 where OPTIONS is empty. And empty options is certainly
                 valid. */
 		w4rn(PMPREFIX "could not fill %s\n", arg);
-		while (fmt_ptrn_parse_err(vinfo) != 0)
-			l0g(PMPREFIX "%s\n",
-			    fmt_ptrn_parse_strerror(vinfo));
 		/* [??] hopefully "key has no value" -- for example:
 		 *  %(before=\"-k\" KEYBITS) */
 		return;
 	}
-	while (fmt_ptrn_parse_err(vinfo) != 0)
-		l0g(PMPREFIX "%s\n", fmt_ptrn_parse_strerror(vinfo));
 
 	argv[*argc] = filled;
 	argv[++*argc] = NULL;

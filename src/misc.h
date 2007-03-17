@@ -29,14 +29,13 @@ extern "C" {
 #endif
 
 struct config;
-struct fmt_ptrn;
 struct vol;
 
 /*
  *      MISC.C
  */
 extern void add_to_argv(const char **, int * const, const char * const,
-    struct fmt_ptrn *);
+    struct HXbtree *);
 extern int config_valid(const struct config *);
 extern int exists(const char *);
 extern void l0g(const char *, ...);

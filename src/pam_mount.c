@@ -36,8 +36,8 @@ pam_mount.c
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX.h>
 #include "compiler.h"
-#include "fmt_ptrn.h"
 #include "misc.h"
 #include "mount.h"
 #include "pam_mount.h"
@@ -302,7 +302,7 @@ static int modify_pm_count(struct config *config, char *user,
 {
 	FILE *fp;
 	GError *err;
-	struct fmt_ptrn vinfo;
+	struct HXbtree *vinfo;
 	int _argc = 0, child_exit, cstdout = -1, fnval = -1, i;
 	const char *_argv[MAX_PAR + 1];
 	pid_t pid;
@@ -320,12 +320,12 @@ static int modify_pm_count(struct config *config, char *user,
 		fnval = -1;
 		goto _nosigact_return;
 	}
-	fmt_ptrn_init(&vinfo);
-	fmt_ptrn_update_kv(&vinfo, "USER", user);
-	fmt_ptrn_update_kv(&vinfo, "OPERATION", operation);
+	vinfo = HXformat_init();
+	format_add(vinfo, "USER", user);
+	format_add(vinfo, "OPERATION", operation);
 	for(i = 0; config->command[i][CMD_PMVARRUN] != NULL; i++)
-                add_to_argv(_argv, &_argc, config->command[i][CMD_PMVARRUN], &vinfo);
-	fmt_ptrn_close(&vinfo);
+                add_to_argv(_argv, &_argc, config->command[i][CMD_PMVARRUN], vinfo);
+	HXformat_free(vinfo);
 	log_argv(_argv);
 
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,

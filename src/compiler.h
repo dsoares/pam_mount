@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 #include <config.h>
+#include <libHX.h>
 
 #ifdef HAVE_VISIBILITY_HIDDEN
 #    define EXPORT_SYMBOL __attribute__((visibility("default")))
@@ -39,6 +40,14 @@ extern "C" {
 #define signed_cast(type, expr)         ((type)(expr))
 #define reinterpret_cast(type, expr)    ((type)(expr))
 #define static_cast(type, expr)         ((type)(expr))
+
+/* Short wrappers */
+static inline void format_add(struct HXbtree *table, const char *key,
+    const char *value)
+{
+	HXformat_add(table, key, value, HXTYPE_STRING | HXFORMAT_IMMED);
+	return;
+}
 
 #ifdef __cplusplus
 } // extern "C"

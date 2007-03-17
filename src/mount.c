@@ -35,10 +35,10 @@ mount.c
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX.h>
 #include <pwd.h>
 #include "compiler.h"
 #include "crypto.h"
-#include "fmt_ptrn.h"
 #include "misc.h"
 #include "mount.h"
 #include "optlist.h"
@@ -65,16 +65,16 @@ mount.c
 #endif
 
 // Functions
-static int already_mounted(const struct config * const, const unsigned int, char * const, struct fmt_ptrn *);
-static int check_filesystem(const struct config *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
-static int do_losetup(const struct config *, const unsigned int, struct fmt_ptrn *, const unsigned char *, size_t);
-static int do_unlosetup(const struct config *, struct fmt_ptrn *);
+static int already_mounted(const struct config * const, const unsigned int, char * const, struct HXbtree *);
+static int check_filesystem(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
+static int do_losetup(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
+static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
 static void log_output(int);
 static void log_pm_input(const struct config * const, const unsigned int);
 static int mkmountpoint(struct vol * const, const char * const);
 static int pipewrite(int, const void *, size_t);
-static void run_lsof(const struct config * const, struct fmt_ptrn *);
+static void run_lsof(const struct config * const, struct HXbtree *);
 static void vol_to_dev(char *, size_t, const struct vol *);
 
 #ifdef __linux__
@@ -118,7 +118,7 @@ static void log_output(int fd) {
     purposes.
 */
 static void run_lsof(const struct config *const config,
- struct fmt_ptrn *vinfo)
+    struct HXbtree *vinfo)
 {
 	int i, _argc = 0, cstdout = -1, child_exit;
 	const char *_argv[MAX_PAR + 1];
@@ -159,7 +159,7 @@ static void run_lsof(const struct config *const config,
     cleared. Returns -1 on error.
 */
 static int already_mounted(const struct config *const config,
- const unsigned int vol, char *const mntpt, struct fmt_ptrn *vinfo)
+    const unsigned int vol, char *const mntpt, struct HXbtree *vinfo)
 #if defined(__linux__)
 {
     char dev[PATH_MAX+1] = {}, real_mpt[PATH_MAX+1];
@@ -438,11 +438,10 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 }
 
 int do_unmount(const struct config *config, const unsigned int vol,
- struct fmt_ptrn *vinfo, const char *const password, const bool mkmntpoint)
+    struct HXbtree *vinfo, const char *const password, const bool mkmntpoint)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
- *         vinfo is a valid struct fmt_ptrn
  *         mkmntpoint is true if mount point should be rmdir'ed
  * POST:   volume is unmounted
  * FN VAL: if error 0 else 1, errors are logged
@@ -545,11 +544,10 @@ _return:
 }
 
 static int do_losetup(const struct config *config, const unsigned int vol,
- struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
+    struct HXbtree *vinfo, const unsigned char *password, size_t password_len)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
- *         vinfo is a valid struct fmt_ptrn
  *         config->volume[vol].options is valid
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
@@ -578,9 +576,9 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	/* FIXME: support OpenBSD */
 	/* FIXME: NEW */
 	if(cipher != NULL) {
-		fmt_ptrn_update_kv(vinfo, "CIPHER", cipher);
+		format_add(vinfo, "CIPHER", cipher);
 		if(keybits != NULL)
-			fmt_ptrn_update_kv(vinfo, "KEYBITS", keybits);
+			format_add(vinfo, "KEYBITS", keybits);
 	}
 	for(i = 0; config->command[i][CMD_LOSETUP] != NULL; ++i)
             add_to_argv(_argv, &_argc, config->command[i][CMD_LOSETUP], vinfo);
@@ -615,9 +613,9 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	return ret;
 }
 
-static int do_unlosetup(const struct config *config, struct fmt_ptrn *vinfo) {
+static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
+{
 /* PRE:    config points to a valid struct config
- *         vinfo is a valid struct fmt_ptrn
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
  */
@@ -654,11 +652,10 @@ static int do_unlosetup(const struct config *config, struct fmt_ptrn *vinfo) {
 }
 
 static int check_filesystem(const struct config *config, const unsigned int vol,
- struct fmt_ptrn *vinfo, const unsigned char *password, size_t password_len)
+    struct HXbtree *vinfo, const unsigned char *password, size_t password_len)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
- *         vinfo is a valid struct fmt_ptrn
  * POST:   integrity of volume has been checked
  * FN VAL: if error 0 else 1, errors are logged
  */
@@ -699,7 +696,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 		     optlist_to_str(options, vpt->options));
 	/* FIXME: NEW */
 	/* FIXME: need to fsck /dev/mapper/whatever... */
-	fmt_ptrn_update_kv(vinfo, "FSCKTARGET", fsck_target);
+	format_add(vinfo, "FSCKTARGET", fsck_target);
 	for (i = 0; config->command[i][CMD_FSCK]; i++)
             add_to_argv(_argv, &_argc, config->command[i][CMD_FSCK], vinfo);
 
@@ -733,14 +730,14 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 /*  do_mount
     @config:    current config
     @vol:       volume index into @config->vol[]
-    @vinfo:     valid struct fmt_ptrn
+    @vinfo:
     @password:
     @mkmntpoint: whether to create mountpoint if it does not exist
 
     Returns zero on error, positive non-zero for success.
 */
 int do_mount(const struct config *config, const unsigned int vol,
- struct fmt_ptrn *vinfo, const char *password, const bool mkmntpoint)
+    struct HXbtree *vinfo, const char *password, const bool mkmntpoint)
 {
 	const char *_argv[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];
@@ -789,7 +786,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 			return 0;
 		}
 		/* FIXME: NEW */
-		fmt_ptrn_update_kv(vinfo, "PREVMNTPT", prev_mntpt);
+		format_add(vinfo, "PREVMNTPT", prev_mntpt);
 		for(i = 0; config->command[i][CMD_MNTAGAIN] != NULL; i++)
 			add_to_argv(_argv, &_argc,
 				    config->command[i][CMD_MNTAGAIN], vinfo);
@@ -892,7 +889,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
  const unsigned int vol, const char *password, const int mkmntpoint)
 {
 	int fnval;
-	struct fmt_ptrn vinfo;
+	struct HXbtree *vinfo;
 	char options[MAX_PAR + 1], uuid[16], ugid[16];
         const struct vol *vpt;
         struct passwd *pe;
@@ -901,47 +898,33 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 
         vpt = &config->volume[vol];
 
-	fmt_ptrn_init(&vinfo);
-	fmt_ptrn_update_kv(&vinfo, "MNTPT", vpt->mountpoint);
-	fmt_ptrn_update_kv(&vinfo, "FSCKLOOP", config->fsckloop);
-        fmt_ptrn_update_kv(&vinfo, "FSTYPE", vpt->fstype);
-	fmt_ptrn_update_kv(&vinfo, "VOLUME", vpt->volume);
-	fmt_ptrn_update_kv(&vinfo, "SERVER", vpt->server);
-	fmt_ptrn_update_kv(&vinfo, "USER", vpt->user);
+	vinfo = HXformat_init();
+	format_add(vinfo, "MNTPT",    vpt->mountpoint);
+	format_add(vinfo, "FSCKLOOP", config->fsckloop);
+        format_add(vinfo, "FSTYPE",   vpt->fstype);
+	format_add(vinfo, "VOLUME",   vpt->volume);
+	format_add(vinfo, "SERVER",   vpt->server);
+	format_add(vinfo, "USER",     vpt->user);
         if((pe = getpwnam(vpt->user)) == NULL) {
             w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
              Config.user, strerror(errno));
         } else {
             snprintf(uuid, sizeof(uuid), "%ld", static_cast(long, pe->pw_uid));
             snprintf(ugid, sizeof(ugid), "%ld", static_cast(long, pe->pw_gid));
-            fmt_ptrn_update_kv(&vinfo, "USERUID", uuid);
-            fmt_ptrn_update_kv(&vinfo, "USERGID", ugid);
+		format_add(vinfo, "USERUID", uuid);
+		format_add(vinfo, "USERGID", ugid);
         }
 
 	/* FIXME: should others remain undefined if == ""? */
 	optlist_to_str(options, vpt->options);
-	fmt_ptrn_update_kv(&vinfo, "OPTIONS", options);
+	format_add(vinfo, "OPTIONS", options);
 
 	if(Debug)
 		log_pm_input(config, vol);
 
-	fnval = mnt(config, vol, &vinfo, password, mkmntpoint);
-	fmt_ptrn_close(&vinfo);
+	fnval = mnt(config, vol, vinfo, password, mkmntpoint);
+	HXformat_free(vinfo);
 	return fnval;
-}
-
-
-/* copied from libHX */
-/* noproto */ static
-char *HX_chomp(char *s) {
-    size_t len = strlen(s);
-    char *p = s + len - 1;
-    while(p >= s) {
-        if(*p != '\n' && *p != '\r')
-            break;
-        *p-- = '\0';
-    }
-    return s;
 }
 
 
