@@ -223,12 +223,24 @@ static char *expand_home(const char *user, char *path, size_t size)
 static char *expand_user(const char *user, char *dest, size_t size)
 {
 	struct HXbtree *vinfo;
+	const char *ptr, *domain_user;
+	char domain[32];
 
     if(dest == NULL)
         l0g(PMPREFIX "expand_user_wildcard(dest=NULL), please fix\n");
 
+	*domain = '\0';
+	if((ptr = strchr(user, '\\')) != NULL) {
+		snprintf(domain, sizeof(domain), "%.*s", ptr - user - 1, user);
+		domain_user = ptr + 1;
+	} else {
+		domain_user = user;
+	}
+
 	vinfo = HXformat_init();
 	HXformat_add(vinfo, "USER", user, HXTYPE_STRING);
+	HXformat_add(vinfo, "DOMAIN_NAME", domain, HXTYPE_STRING);
+	HXformat_add(vinfo, "DOMAIN_USER", domain_user, HXTYPE_STRING);
 	HXformat_sprintf(vinfo, dest, size, dest);
 	HXformat_free(vinfo);
     return dest;
