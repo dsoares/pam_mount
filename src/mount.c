@@ -879,7 +879,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 {
 	int fnval;
 	struct HXbtree *vinfo;
-	char options[MAX_PAR + 1], uuid[16], ugid[16];
+	char options[MAX_PAR + 1];
         const struct vol *vpt;
         struct passwd *pe;
 
@@ -900,10 +900,8 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
             w4rn("getpwnam(\"%s\") failed: %s\n",
              Config.user, strerror(errno));
         } else {
-            snprintf(uuid, sizeof(uuid), "%ld", static_cast(long, pe->pw_uid));
-            snprintf(ugid, sizeof(ugid), "%ld", static_cast(long, pe->pw_gid));
-		format_add(vinfo, "USERUID", uuid);
-		format_add(vinfo, "USERGID", ugid);
+		HXformat_add(vinfo, "USERUID", &pe->pw_uid, HXTYPE_LONG);
+		HXformat_add(vinfo, "USERGID", &pe->pw_gid, HXTYPE_LONG);
         }
 
 	/* FIXME: should others remain undefined if == ""? */
