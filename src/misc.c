@@ -254,13 +254,13 @@ void log_argv(const char *const *argv) {
 		return;
 	g_strlcpy(str, argv[0], sizeof(str));
 	g_strlcat(str, " ", sizeof(str));
-	str[sizeof(str)-1] = '\0';
+	str[sizeof_z(str)] = '\0';
 	for (i = 1; argv[i] != NULL && strlen(str) < sizeof(str) - 2; i++) {
 		g_strlcat(str, "[", sizeof(str));
 		g_strlcat(str, argv[i], sizeof(str));
 		g_strlcat(str, "] ", sizeof(str));
-		str[sizeof(str)-1] = '\0';
-		if(strlen(str) >= sizeof(str) - 1) /* Should never be greater */
+		str[sizeof_z(str)] = '\0';
+		if(strlen(str) >= sizeof_z(str)) /* Should never be greater */
 			break;
 	}
 	w4rn("command: %s\n", str);
