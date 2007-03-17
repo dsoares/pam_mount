@@ -462,7 +462,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		goto _return;
 	}
         w4rn("%s: real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
-             __FUNCTION__, static_cast(long, getuid()),
+             __func__, static_cast(long, getuid()),
              static_cast(long, getgid()), static_cast(long, geteuid()),
              static_cast(long, getegid()));
 /* This code needs root priv. */

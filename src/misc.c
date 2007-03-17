@@ -336,7 +336,7 @@ void set_myuid(void *data) {
     chdir("/");
     if(user == NULL) {
         w4rn("%s(pre): real uid/gid=%ld:%ld, "
-             "effective uid/gid=%ld:%ld\n", __FUNCTION__,
+             "effective uid/gid=%ld:%ld\n", __func__,
              static_cast(long, getuid()), static_cast(long, getgid()),
              static_cast(long, geteuid()), static_cast(long, getegid()));
         if(setuid(0) == -1) {
@@ -371,7 +371,7 @@ void set_myuid(void *data) {
         setenv("USER", real_user->pw_name, 1);
     }
     w4rn("%s(post): real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
-         __FUNCTION__, static_cast(long, getuid()), static_cast(long, getgid()),
+         __func__, static_cast(long, getuid()), static_cast(long, getgid()),
          static_cast(long, geteuid()), static_cast(long, getegid()));
     return;
 }

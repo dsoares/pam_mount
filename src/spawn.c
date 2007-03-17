@@ -96,7 +96,7 @@ int spawn_set_sigchld(void) {
 int spawn_restore_sigchld(void) {
     int ret;
     if((ret = sigaction(SIGCHLD, &saved_handler, NULL)) == -1)
-        l0g("%s: sigaction: %s\n", __FUNCTION__, strerror(errno));
+        l0g("%s: sigaction: %s\n", __func__, strerror(errno));
     else
         saved_handler.sa_handler = NULL;
     return ret;
