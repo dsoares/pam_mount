@@ -44,7 +44,7 @@ struct pam_args {
 /*
  *      PAM_MOUNT.C
  */
-#if defined(__GNUC__) && __GNUC__ < 4
+#ifndef HAVE_VISIBILITY_HIDDEN
 #    define Debug pmt_debug
 #endif
 extern int Debug;
