@@ -222,23 +222,15 @@ static char *expand_home(const char *user, char *path, size_t size)
 */
 static char *expand_user(const char *user, char *dest, size_t size)
 {
-    const char *w_begin = dest, *w_end;
-    char *buf;
+	struct HXbtree *vinfo;
 
     if(dest == NULL)
         l0g(PMPREFIX "expand_user_wildcard(dest=NULL), please fix\n");
 
-    buf  = alloca(size);
-    *buf = '\0';
-    while((w_end = strstr(w_begin, "%(USER)")) != NULL) {
-        HX_strlncat(buf, w_begin, size, w_end - w_begin);
-        HX_strlcat(buf, user, size);
-        w_begin = w_end + sizeof_z("%(USER)");
-    }
-    if(*w_begin != '\0')
-        HX_strlcat(buf, w_begin, size);
-
-    strncpy(dest, buf, size);
+	vinfo = HXformat_init();
+	HXformat_add(vinfo, "USER", user, HXTYPE_STRING);
+	HXformat_sprintf(vinfo, dest, size, dest);
+	HXformat_free(vinfo);
     return dest;
 }
 
