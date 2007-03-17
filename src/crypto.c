@@ -29,11 +29,6 @@ crypto.c
 #    include <openssl/ssl.h>
 #    include <openssl/evp.h>
 #    include <openssl/err.h>
-#    ifndef EVP_MAX_BLOCK_LENGTH
-#        define EVP_MAX_BLOCK_LENGTH 32	/* some older openssl versions need this */
-#    endif
-#else
-#    define EVP_MAX_BLOCK_LENGTH 0	/* FIXME: this is ugly, but needed */
 #endif
 #include "compiler.h"
 #include "crypto.h"

@@ -56,14 +56,6 @@ mount.c
 #    include <linux/loop.h>
 #    include <linux/major.h>
 #endif
-#ifdef HAVE_LIBCRYPTO
-#    ifndef EVP_MAX_BLOCK_LENGTH
-#        define EVP_MAX_BLOCK_LENGTH 32 // some older openssl versions need this
-#    endif
-#else
-#    define EVP_MAX_BLOCK_LENGTH 0 // FIXME: this is ugly, but needed
-#endif
-
 // Functions
 static int already_mounted(const struct config * const, const unsigned int, char * const, struct HXbtree *);
 static int check_filesystem(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
