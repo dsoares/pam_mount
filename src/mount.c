@@ -99,13 +99,13 @@ static void log_output(int fd) {
     FILE *fp;
 
     if((fp = fdopen(fd, "r")) == NULL) {
-    	w4rn(PMPREFIX "error opening file: %s\n", strerror(errno));
+    	w4rn("error opening file: %s\n", strerror(errno));
     	return;
     }
 
     setvbuf(fp, NULL, _IOLBF, 0);
     while(fgets(buf, sizeof(buf), fp) != NULL)
-        w4rn(PMPREFIX "%s", buf);
+        w4rn("%s", buf);
     return;
 }
 
@@ -125,7 +125,7 @@ static void run_lsof(const struct config *const config,
 	GError *err = NULL;
 	pid_t pid;
 	if(config->command[0][CMD_LSOF] == NULL)
-		l0g(PMPREFIX "lsof not defined in pam_mount.conf.xml\n");
+		l0g("lsof not defined in pam_mount.conf.xml\n");
 	/* FIXME: NEW */
 	for(i = 0; config->command[i][CMD_LSOF] != NULL; i++)
 		add_to_argv(_argv, &_argc, config->command[i][CMD_LSOF], vinfo);
@@ -133,15 +133,15 @@ static void run_lsof(const struct config *const config,
 
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 	  &pid, NULL, &cstdout, NULL, &err)) {
-		l0g(PMPREFIX "%s\n", err->message);
+		l0g("%s\n", err->message);
 		g_error_free(err);
 		return;
 	}
-	w4rn(PMPREFIX "lsof output (should be empty)...\n");
+	w4rn("lsof output (should be empty)...\n");
 	log_output(cstdout);
-	w4rn(PMPREFIX "waiting for lsof\n");
+	w4rn("waiting for lsof\n");
 	if (waitpid(pid, &child_exit, 0) == -1)
-		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
+		l0g("error waiting for child: %s\n", strerror(errno));
         spawn_restore_sigchld();
 	CLOSE(cstdout);
 }
@@ -173,22 +173,22 @@ static int already_mounted(const struct config *const config,
     vol_to_dev(dev, sizeof(dev), vpt);
 
     if((mtab = setmntent("/etc/mtab", "r")) == NULL) {
-        l0g(PMPREFIX "could not open /etc/mtab\n");
+        l0g("could not open /etc/mtab\n");
         return -1;
     }
     if(realpath(vpt->mountpoint, real_mpt) == NULL) {
-        w4rn(PMPREFIX "can't get realpath of volume %s: %s\n",
+        w4rn("can't get realpath of volume %s: %s\n",
              vpt->mountpoint, strerror(errno));
         strncpy(real_mpt, vpt->mountpoint, sizeof_z(real_mpt));
         real_mpt[sizeof_z(real_mpt)] = '\0';
     } else {
         real_mpt[sizeof_z(real_mpt)] = '\0';
-        l0g(PMPREFIX "realpath of volume \"%s\" is \"%s\"\n",
+        l0g("realpath of volume \"%s\" is \"%s\"\n",
             vpt->mountpoint, real_mpt);
     }
 
     *mntpt = '\0';
-    w4rn(PMPREFIX "checking to see if %s is already mounted at %s\n",
+    w4rn("checking to see if %s is already mounted at %s\n",
          dev, vpt->mountpoint);
 
     while((mtab_record = getmntent(mtab)) != NULL) {
@@ -238,7 +238,7 @@ static int already_mounted(const struct config *const config,
     // FIXME: I am not overly fond of using mount, but BSD has no /etc/mtab?
     // "WONTFIX" I would say, eh?
     if(config->command[0][CMD_MNTCHECK] == NULL) {
-        l0g(PMPREFIX "mntcheck not defined in pam_mount.conf.xml\n");
+        l0g("mntcheck not defined in pam_mount.conf.xml\n");
         return -1;
     }
 
@@ -250,7 +250,7 @@ static int already_mounted(const struct config *const config,
     // FIXME: replace by popen() if available on BSD
     if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
      &pid, NULL, &cstdout, NULL, &err)) {
-        l0g(PMPREFIX "%s\n", err->message);
+        l0g("%s\n", err->message);
         g_error_free(err);
         return -1;
     }
@@ -261,7 +261,7 @@ static int already_mounted(const struct config *const config,
         int (*xcmp)(const char *, const char *);
         const char *fsname, *fstype, *fspt;
 
-        w4rn(PMPREFIX "mounted filesystem: %s", mte); // @mte includes '\n'
+        w4rn("mounted filesystem: %s", mte); // @mte includes '\n'
         if(!split_bsd_mount(mte, &fsname, &fspt, &fstype)) {
             mounted = -1;
             break;
@@ -285,14 +285,14 @@ static int already_mounted(const struct config *const config,
 
     fclose(fp); // automatically closes cstdout, too
     if(waitpid(pid, NULL, 0) != 0)
-        l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
+        l0g("error waiting for child: %s\n", strerror(errno));
     spawn_restore_sigchld();
     return mounted;
 }
 #else
 {
     // FIXME
-    l0g(PMPREFIX "check for previous mount not implemented on arch.\n");
+    l0g("check for previous mount not implemented on arch.\n");
     return -1;
 }
 #endif
@@ -376,20 +376,20 @@ static void log_pm_input(const struct config *const config,
         const struct vol *vpt = &config->volume[vol];
 	char options[MAX_PAR + 1];
 
-	w4rn(PMPREFIX "information for mount:\n");
-	w4rn(PMPREFIX "----------------------\n");
-	w4rn(PMPREFIX "%s\n",
+	w4rn("information for mount:\n");
+	w4rn("----------------------\n");
+	w4rn("%s\n",
              vpt->globalconf ? "(defined by globalconf)"
                              : "(defined by luserconf)");
-	w4rn(PMPREFIX "user:          %s\n", vpt->user);
-	w4rn(PMPREFIX "server:        %s\n", vpt->server);
-	w4rn(PMPREFIX "volume:        %s\n", vpt->volume);
-	w4rn(PMPREFIX "mountpoint:    %s\n", vpt->mountpoint);
-	w4rn(PMPREFIX "options:       %s\n", optlist_to_str(options, vpt->options));
-	w4rn(PMPREFIX "fs_key_cipher: %s\n", vpt->fs_key_cipher);
-	w4rn(PMPREFIX "fs_key_path:   %s\n", vpt->fs_key_path);
-	w4rn(PMPREFIX "use_fstab:   %d\n", vpt->use_fstab);
-	w4rn(PMPREFIX "----------------------\n");
+	w4rn("user:          %s\n", vpt->user);
+	w4rn("server:        %s\n", vpt->server);
+	w4rn("volume:        %s\n", vpt->volume);
+	w4rn("mountpoint:    %s\n", vpt->mountpoint);
+	w4rn("options:       %s\n", optlist_to_str(options, vpt->options));
+	w4rn("fs_key_cipher: %s\n", vpt->fs_key_cipher);
+	w4rn("fs_key_path:   %s\n", vpt->fs_key_path);
+	w4rn("use_fstab:   %d\n", vpt->use_fstab);
+	w4rn("----------------------\n");
         return;
 }
 
@@ -405,7 +405,7 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 	assert(vol_valid(volume));
 	assert(d != NULL);
 
-	w4rn(PMPREFIX "creating mount point %s\n", d);
+	w4rn("creating mount point %s\n", d);
 	strncpy(dcopy, d, sizeof_z(dcopy));
 	dcopy[sizeof_z(dcopy)] = '\0';
 	parent = g_path_get_dirname(dcopy);
@@ -415,19 +415,19 @@ static int mkmountpoint(struct vol *const volume, const char *const d) {
 	}
 	if((passwd_ent = getpwnam(volume->user)) != NULL) {
 		if (mkdir(d, 0700) != 0) {
-			l0g(PMPREFIX "tried to create %s but failed\n",
+			l0g("tried to create %s but failed\n",
 			    d);
 			ret = 0;
 			goto _return;
 		}
 		if(chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid) != 0) {
-			l0g(PMPREFIX "could not chown %s to %s\n",
+			l0g("could not chown %s to %s\n",
 			    d, volume->user);
 			ret = 0;
 			goto _return;
 		}
 	} else {
-		l0g(PMPREFIX "could not determine uid from %s to make %s\n", volume->user, d);
+		l0g("could not determine uid from %s to make %s\n", volume->user, d);
 		ret = 0;
 		goto _return;
 	}
@@ -474,7 +474,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
         }
 
         if(config->command[0][type] == NULL)
-            l0g(PMPREFIX "{smb,ncp}umount not defined in pam_count.conf.xml\n");
+            l0g("{smb,ncp}umount not defined in pam_count.conf.xml\n");
 
         for(i = 0; config->command[i][type] != NULL; ++i)
             add_to_argv(_argv, &_argc, config->command[i][type], vinfo);
@@ -489,17 +489,17 @@ int do_unmount(const struct config *config, const unsigned int vol,
 	log_argv(_argv);
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
           NULL, &pid, NULL, NULL, &cstderr, &err)) {
-		l0g(PMPREFIX "%s\n", err->message);
+		l0g("%s\n", err->message);
 		g_error_free(err);
 		ret = 0;
 		goto _return;
 	}
-	w4rn(PMPREFIX "umount errors (should be empty):\n");
+	w4rn("umount errors (should be empty):\n");
 	log_output(cstderr);
 	CLOSE(cstderr);
-	w4rn(PMPREFIX "waiting for umount\n");
+	w4rn("waiting for umount\n");
 	if (waitpid(pid, &child_exit, 0) == -1) {
-		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
+		l0g("error waiting for child: %s\n", strerror(errno));
 		ret = 0;
 		goto _return;
 	} else {
@@ -510,7 +510,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
         spawn_restore_sigchld();
         if(mkmntpoint != 0 && vpt->created_mntpt &&
           rmdir(vpt->mountpoint) == -1) /* non-fatal */
-		w4rn(PMPREFIX "could not remove %s\n", vpt->mountpoint);
+		w4rn("could not remove %s\n", vpt->mountpoint);
 	return ret;
 }
 
@@ -570,7 +570,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
         keybits = optlist_value(vpt->options, "keybits");
 
 	if(config->command[0][CMD_LOSETUP] == NULL) {
-		l0g(PMPREFIX "losetup not defined in pam_mount.conf.xml\n");
+		l0g("losetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
@@ -586,24 +586,24 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	log_argv(_argv);
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
           NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
-		l0g(PMPREFIX "%s\n", err->message);
+		l0g("%s\n", err->message);
 		g_error_free(err);
                 return 0;
 	}
 
         // note to self: password is decrypted
         if(pipewrite(cstdin, password, password_len) != password_len) {
-            l0g(PMPREFIX "error sending password to losetup\n");
+            l0g("error sending password to losetup\n");
             ret = 0;
         }
         CLOSE(cstdin);
-        w4rn(PMPREFIX "losetup errors (should be empty):\n");
+        w4rn("losetup errors (should be empty):\n");
 
 	log_output(cstderr);
 	CLOSE(cstderr);
-	w4rn(PMPREFIX "waiting for losetup\n");
+	w4rn("waiting for losetup\n");
 	if (waitpid(pid, &child_exit, 0) == -1) {
-		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
+		l0g("error waiting for child: %s\n", strerror(errno));
 		ret = 0;
 	} else if(ret > 0) {
 		/* pass on through the result from the losetup process */
@@ -628,7 +628,7 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 	assert(vinfo != NULL);
 
 	if(config->command[0][CMD_UNLOSETUP] == NULL) {
-		l0g(PMPREFIX "unlosetup not defined in pam_mount.conf.xml\n");
+		l0g("unlosetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
@@ -639,13 +639,13 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 	log_argv(_argv);
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
           &pid, NULL, NULL, NULL, &err)) {
-		l0g(PMPREFIX "%s\n", err->message);
+		l0g("%s\n", err->message);
 		g_error_free(err);
 		return 0;
 	}
-	w4rn(PMPREFIX "waiting for losetup delete\n");
+	w4rn("waiting for losetup delete\n");
         if(waitpid(pid, &child_exit, 0) != 0)
-            l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
+            l0g("error waiting for child: %s\n", strerror(errno));
         spawn_restore_sigchld();
 	/* pass on through the result */
 	return !WEXITSTATUS(child_exit);
@@ -678,7 +678,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
         fsck_target = vpt->volume;
 
 	if(config->command[0][CMD_FSCK] == NULL) {
-		l0g(PMPREFIX "fsck not defined in pam_mount.conf.xml\n");
+		l0g("fsck not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 
@@ -692,7 +692,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 			return 0;
 		fsck_target = config->fsckloop;
 	} else
-		w4rn(PMPREFIX "volume not a loopback (options: %s)\n",
+		w4rn("volume not a loopback (options: %s)\n",
 		     optlist_to_str(options, vpt->options));
 	/* FIXME: NEW */
 	/* FIXME: need to fsck /dev/mapper/whatever... */
@@ -703,16 +703,16 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	log_argv(_argv);
         if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
           &pid, NULL, &cstdout, &cstderr, &err)) {
-		l0g(PMPREFIX "%s\n", err->message);
+		l0g("%s\n", err->message);
 		g_error_free(err);
 		return 0;
 	}
 	log_output(cstdout);	/* stdout and stderr most be logged for fsck */
 	log_output(cstderr);
 	CLOSE(cstderr);
-	w4rn(PMPREFIX "waiting for filesystem check\n");
+	w4rn("waiting for filesystem check\n");
         if(waitpid(pid, &child_exit, 0) != 0)
-            l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
+            l0g("error waiting for child: %s\n", strerror(errno));
         spawn_restore_sigchld();
 	if(optlist_exists(vpt->options, "loop"))
 		if (!do_unlosetup(config, vinfo))
@@ -721,7 +721,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	 * or 1 (errors corrected) */
 	return WEXITSTATUS(child_exit) == 0 || WEXITSTATUS(child_exit) == 1;
 #else
-	l0g(PMPREFIX "checking filesystem not implemented on arch.\n");
+	l0g("checking filesystem not implemented on arch.\n");
 	return 1;
 #endif
 }
@@ -757,13 +757,13 @@ int do_mount(const struct config *config, const unsigned int vol,
 	/* FIXME: This is a little ugly, especially check for != LCLMOUNT */
 	if((mount_again = already_mounted(config, vol, prev_mntpt, vinfo)) != 0) {
 		if (mount_again == -1) {
-			l0g(PMPREFIX "could not determine if %s is already mounted, failing\n", config->volume[vol].volume);
+			l0g("could not determine if %s is already mounted, failing\n", config->volume[vol].volume);
 			return 0;
 		} else if(strcmp(prev_mntpt, vpt->mountpoint) == 0) {
-			w4rn(PMPREFIX "%s already seems to be mounted at %s, skipping\n", config->volume[vol].volume, prev_mntpt);
+			w4rn("%s already seems to be mounted at %s, skipping\n", config->volume[vol].volume, prev_mntpt);
 			return 1;
 		} else {
-			w4rn(PMPREFIX "%s already mounted elsewhere at %s\n", config->volume[vol].volume, prev_mntpt);
+			w4rn("%s already mounted elsewhere at %s\n", config->volume[vol].volume, prev_mntpt);
 			/* FIXME: ugly hack to support umount.crypt script.  I hope that
 			 * util-linux will have native dm_crypt support some day */
                         if(vpt->type != CMD_LCLMOUNT && vpt->type != CMD_CRYPTMOUNT)
@@ -775,14 +775,14 @@ int do_mount(const struct config *config, const unsigned int vol,
                         if(!mkmountpoint(vpt, vpt->mountpoint))
 				return 0;
 		} else {
-			l0g(PMPREFIX "mount point %s does not exist (pam_mount not configured to make it)\n", config->volume[vol].mountpoint);
+			l0g("mount point %s does not exist (pam_mount not configured to make it)\n", config->volume[vol].mountpoint);
 			return 0;
 		}
 	}
 	if (mount_again) {
 		GError *err = NULL;
 		if(config->command[0][CMD_MNTAGAIN] == NULL) {
-			l0g(PMPREFIX "mntagain not defined in pam_mount.conf.xml\n");
+			l0g("mntagain not defined in pam_mount.conf.xml\n");
 			return 0;
 		}
 		/* FIXME: NEW */
@@ -793,7 +793,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 		log_argv(_argv);
                 if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
                   set_myuid, NULL, &pid, NULL, NULL, &cstderr, &err)) {
-			l0g(PMPREFIX "%s\n", err->message);
+			l0g("%s\n", err->message);
 			g_error_free(err);
 			return 0;
 		}
@@ -801,14 +801,14 @@ int do_mount(const struct config *config, const unsigned int vol,
 		GError *err = NULL;
                 char *mount_user;
 		if(config->command[0][vpt->type] == NULL) {
-			l0g(PMPREFIX "proper mount command not defined in pam_mount.conf.xml\n");
+			l0g("proper mount command not defined in pam_mount.conf.xml\n");
 			return 0;
 		}
-		w4rn(PMPREFIX "checking for encrypted filesystem key configuration\n");
+		w4rn("checking for encrypted filesystem key configuration\n");
 		password = (password != NULL) ? password : "";	/* FIXME: better done elsewhere? */
 		if(strlen(vpt->fs_key_cipher) > 0) {
 			/* _password is binary data -- no strlen, strcpy, etc! */
-			w4rn(PMPREFIX "decrypting FS key using system auth. token and %s\n", config->volume[vol].fs_key_cipher);
+			w4rn("decrypting FS key using system auth. token and %s\n", config->volume[vol].fs_key_cipher);
 			/*
 			 * config->volume[vol].fs_key_path contains real filesystem
 			 * key.
@@ -824,10 +824,10 @@ int do_mount(const struct config *config, const unsigned int vol,
 			_password[MAX_PAR] = '\0';
 			_password_len = strlen(password);
 		}
-		w4rn(PMPREFIX "about to start building mount command\n");
+		w4rn("about to start building mount command\n");
 		/* FIXME: NEW */
 		/* FIXME:
-		   l0g(PMPREFIX "volume type (%d) is unknown\n", vpt->type);
+		   l0g("volume type (%d) is unknown\n", vpt->type);
 		   return 0;
 		 */
                 for(i = 0; config->command[i][vpt->type] != NULL; ++i)
@@ -835,7 +835,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 
                 if(vpt->type == CMD_LCLMOUNT &&
                   !check_filesystem(config, vol, vinfo, _password, _password_len))
-			l0g(PMPREFIX "error checking filesystem but will continue\n");
+			l0g("error checking filesystem but will continue\n");
 		/* send password down pipe to mount process */
                 if(vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
 			setenv("PASSWD_FD", "0", 1);
@@ -843,26 +843,26 @@ int do_mount(const struct config *config, const unsigned int vol,
                 mount_user = strcmp(vpt->fstype, "fuse") == 0 ? vpt->user : NULL;
                 if(!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
                   set_myuid, mount_user, &pid, &cstdin, NULL, &cstderr, &err)) {
-			l0g(PMPREFIX "%s\n", err->message);
+			l0g("%s\n", err->message);
 			g_error_free(err);
 			return 0;
 		}
                 if(vpt->type != CMD_NFSMOUNT) {
 			if(pipewrite(cstdin, _password, _password_len) != _password_len)
 				/* FIXME: clean: returns value of exit below */
-				l0g(PMPREFIX "error sending password to mount\n");
+				l0g("error sending password to mount\n");
 		}
                 close(cstdin);
 	}
 	/* Paranoia? */
 	memset(_password, 0, sizeof(_password));
-	w4rn(PMPREFIX "mount errors (should be empty):\n");
+	w4rn("mount errors (should be empty):\n");
 	log_output(cstderr);
 	CLOSE(cstderr);
-	w4rn(PMPREFIX "waiting for mount\n");
+	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) == -1) {
                 spawn_restore_sigchld();
-		l0g(PMPREFIX "error waiting for child: %s\n", strerror(errno));
+		l0g("error waiting for child: %s\n", strerror(errno));
 		return 0;
 	}
 
@@ -908,7 +908,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	misc_add_ntdom(vinfo, vpt->user);
 
         if((pe = getpwnam(vpt->user)) == NULL) {
-            w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
+            w4rn("getpwnam(\"%s\") failed: %s\n",
              Config.user, strerror(errno));
         } else {
             snprintf(uuid, sizeof(uuid), "%ld", static_cast(long, pe->pw_uid));

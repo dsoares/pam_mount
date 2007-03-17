@@ -57,7 +57,7 @@ static void sslerror(const char *);
 static void sslerror(const char *msg) {
 	unsigned long err = ERR_get_error();
 	if(err != 0)
-		l0g(PMPREFIX "%s: %s", msg, ERR_error_string(err, NULL));
+		l0g("%s: %s", msg, ERR_error_string(err, NULL));
 }
 
 
@@ -85,18 +85,18 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 
 	if(fread(magic, 1, sizeof(magic), fp) != sizeof_z("Salted__")
 	    || fread(salt, 1, sizeof(salt), fp) != PKCS5_SALT_LEN) {
-		l0g(PMPREFIX "error reading salt from encrypted filesystem key\n");
+		l0g("error reading salt from encrypted filesystem key\n");
 		return 0;
 	}
 	if(memcmp(magic, "Salted__", sizeof(magic)) != 0) {
-		l0g(PMPREFIX "magic string Salted__ not in filesystem key file\n");
+		l0g("magic string Salted__ not in filesystem key file\n");
 		return 0;
 	}
 	md = EVP_md5();
         if(EVP_BytesToKey(cipher, md, salt,
           signed_cast(const unsigned char *, authtok),
           strlen(authtok), 1, hash, iv) <= 0) {
-		l0g(PMPREFIX "failed to hash system password\n");
+		l0g("failed to hash system password\n");
 		return 0;
 	}
 
@@ -147,12 +147,12 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 	EVP_CIPHER_CTX_init(&ctx);
 	SSL_load_error_strings();
 	if((fs_key_fp = fopen(fs_key_path, "r")) == NULL) {
-		l0g(PMPREFIX "error opening %s\n", fs_key_path);
+		l0g("error opening %s\n", fs_key_path);
 		ret = 0;
 		goto _return_no_close;
 	}
 	if((cipher = EVP_get_cipherbyname(fs_key_cipher)) == NULL) {
-		l0g(PMPREFIX "error getting cipher \"%s\"\n",
+		l0g("error getting cipher \"%s\"\n",
 		    fs_key_cipher);
 		ret = 0;
 		goto _return;
@@ -162,7 +162,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 		goto _return;
 	}
 	if ((ct_fs_key_len = fread(ct_fs_key, 1, sizeof(ct_fs_key), fs_key_fp)) == 0) {
-		l0g(PMPREFIX "failed to read encrypted filesystem key from %s\n", fs_key_path);
+		l0g("failed to read encrypted filesystem key from %s\n", fs_key_path);
 		ret = 0;
 		goto _return;
 	}
@@ -190,7 +190,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 	*pt_fs_key_len += segment_len;
       _return:
 	if (fclose(fs_key_fp) != 0) {
-		l0g(PMPREFIX "error closing file pointer\n");
+		l0g("error closing file pointer\n");
 		ret = 0;
 	}
       _return_no_close:
@@ -211,7 +211,7 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
  const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
 {
-    l0g(PMPREFIX "encrypted filesystem key not supported: no openssl\n");
+    l0g("encrypted filesystem key not supported: no openssl\n");
     return 0;
 }
 

@@ -46,14 +46,15 @@ misc.c
 static int static_string_valid(const char *, const size_t);
 
 //-----------------------------------------------------------------------------
-/*  l0g
+/*  misc_log
     @format:    printf(3)-style format specifier
 
     Message is logged to syslog, and, if debugging is turned on, printed to
     %stderr. Use this for critical messages or issues that cause(d) pam_mount
     to fail.
 */
-void l0g(const char *format, ...) {
+void misc_log(const char *format, ...)
+{
 	va_list args, arg2;
 
 	assert(format != NULL);
@@ -69,13 +70,14 @@ void l0g(const char *format, ...) {
 }
 
 
-/*  w4rn
+/*  misc_warn
     @format:    printf(3)-style format specifier
 
     If debugging is turned on, the message is logged to syslog and %stderr.
     Use this for debugging messages.
 */
-void w4rn(const char *format, ...) {
+void misc_warn(const char *format, ...)
+{
     va_list args, arg2;
 
     assert(format != NULL);
@@ -122,13 +124,13 @@ int owns(const char *user, const char *file) {
 	assert(file != NULL);
 
 	if((userinfo = getpwnam(user)) == NULL) {
-		l0g(PMPREFIX "user %s could not be translated to UID\n",
+		l0g("user %s could not be translated to UID\n",
 		    user);
 		return FALSE;
 	}
 
 	if (stat(file, &filestat) != 0) {
-		w4rn(PMPREFIX "file %s could not be stat'ed\n", file);
+		w4rn("file %s could not be stat'ed\n", file);
 		return FALSE;
 	}
 
@@ -148,12 +150,12 @@ long str_to_long(const char *n) {
 	long val;
 	char *endptr = NULL;
 	if(n == NULL) {
-		l0g(PMPREFIX "count string is NULL\n");
+		l0g("count string is NULL\n");
 		return LONG_MAX;
 	}
 	val = strtol(n, &endptr, 10);
 	if(*endptr != '\0') {
-		l0g(PMPREFIX "count string is not valid\n");
+		l0g("count string is not valid\n");
 		return LONG_MAX;
 	}
 	return val;
@@ -261,7 +263,7 @@ void log_argv(const char *const *argv) {
 		if(strlen(str) >= sizeof(str) - 1) /* Should never be greater */
 			break;
 	}
-	w4rn(PMPREFIX "command: %s\n", str);
+	w4rn("command: %s\n", str);
         return;
 }
 
@@ -290,14 +292,14 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 	assert(vinfo != NULL);
 
 	if (*argc == MAX_PAR) { /* FIXME: this is protected by assert above */
-		l0g(PMPREFIX "too many arguments to mount command\n");
+		l0g("too many arguments to mount command\n");
 		return;
 	}
 	if(HXformat_aprintf(vinfo, &filled, arg) == 0) {
                 /* This case may happen with e.g. %(before="-o" OPTIONS)
                 where OPTIONS is empty. And empty options is certainly
                 valid. */
-		w4rn(PMPREFIX "could not fill %s\n", arg);
+		w4rn("could not fill %s\n", arg);
 		/* [??] hopefully "key has no value" -- for example:
 		 *  %(before=\"-k\" KEYBITS) */
 		return;
@@ -333,42 +335,42 @@ void set_myuid(void *data) {
     setsid();
     chdir("/");
     if(user == NULL) {
-        w4rn(PMPREFIX "%s(pre): real uid/gid=%ld:%ld, "
+        w4rn("%s(pre): real uid/gid=%ld:%ld, "
              "effective uid/gid=%ld:%ld\n", __FUNCTION__,
              static_cast(long, getuid()), static_cast(long, getgid()),
              static_cast(long, geteuid()), static_cast(long, getegid()));
         if(setuid(0) == -1) {
-            l0g(PMPREFIX "error setting uid to 0\n");
+            l0g("error setting uid to 0\n");
             return;
         }
 #ifdef HAVE_SETFSUID
         if(setfsuid(0) == -1) {
-            l0g(PMPREFIX "error setting fsuid to 0\n");
+            l0g("error setting fsuid to 0\n");
             return;
         }
 #endif
     } else {
         // Set UID and GID to the user's one.
         const struct passwd *real_user;
-        w4rn(PMPREFIX "setting uid to user %s\n", user);
+        w4rn("setting uid to user %s\n", user);
         if((real_user = getpwnam(user)) == NULL) {
-            l0g(PMPREFIX "could not get passwd entry for user %s\n", user);
+            l0g("could not get passwd entry for user %s\n", user);
             return;
         }
         if(setgid(real_user->pw_gid) == -1) {
-            l0g(PMPREFIX "could not set gid to %ld\n",
+            l0g("could not set gid to %ld\n",
                 static_cast(long, real_user->pw_gid));
             return;
         }
         if(setuid(real_user->pw_uid) == -1) {
-            l0g(PMPREFIX "could not set uid to %ld\n",
+            l0g("could not set uid to %ld\n",
                 static_cast(long, real_user->pw_uid));
             return;
         }
         setenv("HOME", real_user->pw_dir, 1);
         setenv("USER", real_user->pw_name, 1);
     }
-    w4rn(PMPREFIX "%s(post): real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
+    w4rn("%s(post): real uid/gid=%ld:%ld, effective uid/gid=%ld:%ld\n",
          __FUNCTION__, static_cast(long, getuid()), static_cast(long, getgid()),
          static_cast(long, geteuid()), static_cast(long, getegid()));
     return;

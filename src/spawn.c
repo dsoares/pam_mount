@@ -77,7 +77,7 @@ int spawn_set_sigchld(void) {
     struct sigaction nh;
 
     if(saved_handler.sa_handler != SIG_DFL) {
-        w4rn("%s: saved_handler already grabbed, not overwriting\n");
+        w4rn("saved_handler already grabbed, not overwriting\n");
         return 0;
     }
 

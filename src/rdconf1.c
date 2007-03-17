@@ -198,13 +198,13 @@ static char *expand_home(const char *user, char *path, size_t size)
         return path;
 
     if((pe = getpwnam(user)) == NULL) {
-        l0g(PMPREFIX "Could not lookup account information for %s\n", user);
+        l0g("Could not lookup account information for %s\n", user);
         return NULL;
     }
 
     buf = alloca(size);
     if(snprintf(buf, size, "%s%s", pe->pw_dir, path + 1) >= size)
-        l0g(PMPREFIX "Warning: Not enough buffer space in expand_home()\n");
+        l0g("Warning: Not enough buffer space in expand_home()\n");
 
     strncpy(path, buf, size);
     return path;
@@ -226,7 +226,7 @@ static char *expand_user(const char *user, char *dest, size_t size)
 	struct HXbtree *vinfo;
 
     if(dest == NULL)
-        l0g(PMPREFIX "expand_user_wildcard(dest=NULL), please fix\n");
+        l0g("expand_user_wildcard(dest=NULL), please fix\n");
 
 	vinfo = HXformat_init();
 	HXformat_add(vinfo, "USER", user, HXTYPE_STRING);
@@ -254,7 +254,7 @@ static int fstab_value(const char *volume, const enum fstab_field field,
     FILE *fstab;
 
     if((fstab = setmntent("/etc/fstab", "r")) == NULL) {
-    	l0g(PMPREFIX "could not open fstab\n");
+    	l0g("could not open fstab\n");
     	return 0;
     }
 
@@ -266,7 +266,7 @@ static int fstab_value(const char *volume, const enum fstab_field field,
             /* skip fstab entries until a match is found */;
 
     if(fstab_record == NULL) {
-        l0g(PMPREFIX "could not get %dth fstab field for %s\n", field, volume);
+        l0g("could not get %dth fstab field for %s\n", field, volume);
 	return 0;
     }
 
@@ -284,18 +284,18 @@ static int fstab_value(const char *volume, const enum fstab_field field,
             val = fstab_record->mnt_opts;
             break;
         default:
-            l0g(PMPREFIX "field of %d invalid\n", field);
+            l0g("field of %d invalid\n", field);
             return 0;
     }
 #elif defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
     struct fstab *fstab_record;
 
     if(!setfsent()) {
-        l0g(PMPREFIX "could not open fstab\n");
+        l0g("could not open fstab\n");
         return 0;
     }
     if((fstab_record = getfsspec(volume)) == NULL) {
-        l0g(PMPREFIX "could not get %dth fstab field for %s\n", field, volume);
+        l0g("could not get %dth fstab field for %s\n", field, volume);
         return 0;
     }
 
@@ -313,11 +313,11 @@ static int fstab_value(const char *volume, const enum fstab_field field,
             val = fstab_record->fs_mntops;
             break;
         default:
-            l0g(PMPREFIX "field of %d invalid\n", field);
+            l0g("field of %d invalid\n", field);
             return 0;
     }
 #else
-    l0g(PMPREFIX "reading fstab not implemented on arch.\n");
+    l0g("reading fstab not implemented on arch.\n");
     return 0;
 #endif
 
@@ -403,7 +403,7 @@ static int user_in_sgrp(const char *user, const char *grp)
     const char **wp;
 
     if((gent = getgrnam(grp)) == NULL) {
-        w4rn(PMPREFIX "getgrnam(\"%s\") failed: %s\n", grp, strerror(errno));
+        w4rn("getgrnam(\"%s\") failed: %s\n", grp, strerror(errno));
         return -1;
     }
 
@@ -497,7 +497,7 @@ static const char *rc_luserconf(xmlNode *node, struct config *config, int cmd)
     HX_strlcpy(config->luserconf, pent->pw_dir, sizeof(config->luserconf));
     HX_strlcat(config->luserconf, "/", sizeof(config->luserconf));
     HX_strlcat(config->luserconf, s, sizeof(config->luserconf));
-    w4rn(PMPREFIX "path to luserconf set to %s\n", config->luserconf),
+    w4rn("path to luserconf set to %s\n", config->luserconf),
     free(s);
     return NULL;
 }
@@ -562,7 +562,7 @@ static const char *rc_volume_inter(struct config *config,
             return "command too long";
 
     if((pent = getpwnam(config->user)) == NULL) {
-        w4rn(PMPREFIX "getpwnam(\"%s\") failed: %s\n",
+        w4rn("getpwnam(\"%s\") failed: %s\n",
              Config.user, strerror(errno));
         return NULL;
     }
@@ -577,7 +577,7 @@ static const char *rc_volume_inter(struct config *config,
     if(wildcard != WC_NONE && (strcmp(config->user, "root") == 0 ||
      pent->pw_uid == 0)) {
         /* One day, when SELinux becomes a daily thing, remove this. */
-        w4rn(PMPREFIX "volume wildcards ignored for \"root\" and uid0\n");
+        w4rn("volume wildcards ignored for \"root\" and uid0\n");
         return NULL;
     }
 
@@ -589,7 +589,7 @@ static const char *rc_volume_inter(struct config *config,
         struct group *gent;
 
         if((gent = getgrgid(pent->pw_gid)) == NULL) {
-            w4rn(PMPREFIX "getgrgid(%ld) failed: %s\n",
+            w4rn("getgrgid(%ld) failed: %s\n",
                  static_cast(long, pent->pw_gid), strerror(errno));
             return NULL;
         }
@@ -665,7 +665,7 @@ static const char *rc_volume_inter(struct config *config,
     return NULL;
 
  notforme:
-    w4rn(PMPREFIX "ignoring volume record... (not for me)\n");
+    w4rn("ignoring volume record... (not for me)\n");
     return NULL;
 }
 

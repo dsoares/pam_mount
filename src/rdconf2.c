@@ -55,7 +55,7 @@ static int options_allow_ok(optlist_t * allowed, optlist_t * options)
 		return 1;
 	for(e = options; e != NULL; e = optlist_next(e))
 		if(!optlist_exists(allowed, optlist_key(e))) {
-                    l0g(PMPREFIX "option %s not allowed\n", optlist_key(e));
+                    l0g("option %s not allowed\n", optlist_key(e));
                     return 0;
 		}
 	return 1;
@@ -72,7 +72,7 @@ static int options_required_ok(optlist_t * required, optlist_t * options)
 	optlist_t *e;
 	for(e = required; e != NULL; e = optlist_next(e))
 		if(!optlist_exists(options, optlist_key(e))) {
-                    l0g(PMPREFIX "option %s required\n", optlist_key(e));
+                    l0g("option %s required\n", optlist_key(e));
                     return 0;
 		}
 	return 1;
@@ -88,15 +88,15 @@ static int options_deny_ok(optlist_t * denied, optlist_t * options)
 {
 	optlist_t *e;
 	if (!optlist_len(denied)) {
-		w4rn(PMPREFIX "no denied options\n");
+		w4rn("no denied options\n");
 		return 1;
 	} else if(optlist_exists(denied, "*") && optlist_len(options) > 0) {
-		l0g(PMPREFIX "all mount options denied, user tried to specify one\n");
+		l0g("all mount options denied, user tried to specify one\n");
 		return 0;
 	}
 	for(e = denied; e != NULL; e = optlist_next(e))
 		if(optlist_exists(options, optlist_key(e))) {
-			l0g(PMPREFIX "option %s denied\n", optlist_key(e));
+			l0g("option %s denied\n", optlist_key(e));
 			return 0;
 		}
 	return 1;
@@ -115,7 +115,7 @@ static int _options_ok(const struct config *config, const struct vol *volume) {
 
 	if(optlist_len(config->options_allow) > 0 &&
 	    optlist_len(config->options_deny) > 0) {
-		l0g(PMPREFIX "possible conflicting option settings (use allow OR deny)\n");
+		l0g("possible conflicting option settings (use allow OR deny)\n");
 		return 0;
 	}
         if(!volume->use_fstab) {
@@ -133,7 +133,7 @@ static int _options_ok(const struct config *config, const struct vol *volume) {
 					     volume->options))
 				return 0;
 		} else if(optlist_len(volume->options) > 0) {
-			l0g(PMPREFIX "user specified options denied by default\n");
+			l0g("user specified options denied by default\n");
 			return 0;
 		}
 	}
@@ -152,11 +152,11 @@ bool luserconf_volume_record_sane(const struct config *config, int vol) {
         vpt = &config->volume[vol];
 
         if(config->volume[vol].used_wildcard) {
-		l0g(PMPREFIX "You may not use wildcards in user-defined volumes\n");
+		l0g("You may not use wildcards in user-defined volumes\n");
 		return FALSE;
 	}
 	if (!_options_ok(config, &config->volume[vol])) {
-		l0g(PMPREFIX "illegal option specified by user\n");
+		l0g("illegal option specified by user\n");
 		return FALSE;
 	}
 	return TRUE;
@@ -173,7 +173,7 @@ bool volume_record_sane(const struct config *config, int vol) {
         assert(config->volume != NULL);
         vpt = &config->volume[vol];
 
-	w4rn(PMPREFIX "checking sanity of volume record (%s)\n", vpt->volume);
+	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
 	if(!config->command[0][vpt->type]) {
 		l0g("mount command not defined for this type\n");
 		return FALSE;

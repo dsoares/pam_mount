@@ -37,7 +37,7 @@ xstdlib.c
 void *xmalloc(size_t n) {
     void *ret;
     if((ret = malloc(n)) == NULL)
-        l0g(PMPREFIX "xmalloc: Could not allocate %lu bytes\n",
+        l0g("xmalloc: Could not allocate %lu bytes\n",
             static_cast(unsigned long, n));
     return ret;
 }
@@ -53,7 +53,7 @@ void *xmalloc(size_t n) {
 void *xrealloc(void *orig, size_t n) {
     void *ret;
     if((ret = realloc(orig, n)) == NULL)
-        l0g(PMPREFIX "xrealloc: Could not reallocate to %lu bytes\n",
+        l0g("xrealloc: Could not reallocate to %lu bytes\n",
             static_cast(unsigned long, n));
     return ret;
 }
