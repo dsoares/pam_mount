@@ -77,10 +77,7 @@ static int pipewrite(int, const void *, size_t);
 static void run_lsof(const struct config * const, struct HXbtree *);
 static void vol_to_dev(char *, size_t, const struct vol *);
 
-#ifdef __linux__
-#    define HAVE_LINUX_LOOP 1
-#endif
-#ifdef HAVE_LINUX_LOOP
+#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
 static inline const char *loop_bk(const char *, struct loop_info64 *);
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -199,7 +196,7 @@ static int already_mounted(const struct config *const config,
         struct loop_info64 loopdev;
         struct stat statbuf;
 
-#ifdef HAVE_LINUX_LOOP
+#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
         if(stat(fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
          major(statbuf.st_rdev) == LOOP_MAJOR)
             /* If /etc/mtab is a link to /proc/mounts then the loop device
@@ -959,7 +956,7 @@ static int fstype_nodev(const char *name) {
 }
 
 
-#ifdef HAVE_LINUX_LOOP
+#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
 /*  loop_bk
     @filename:  block device to query
     @i:         pointer to result storage
@@ -975,14 +972,6 @@ static inline const char *loop_bk(const char *filename,
     if((fd = open(filename, O_RDONLY)) < 0)
         return filename;
 
-#ifndef LOOP_GET_STATUS64
-#    error -------------------------------------------------------------------
-#    error Your userspace kernel headers (/usr/include/linux/) are out of date
-#    error This is NOT a pam-mount bug, but one of your distribution.
-#    error See www.sourceforge.net/mailarchive/message.php?msg_id=13974728
-#    error for details.
-#    error -------------------------------------------------------------------
-#endif
     if(ioctl(fd, LOOP_GET_STATUS64, i) != 0) {
         close(fd);
         return filename;
