@@ -46,8 +46,9 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include "private.h"
 
 // Definitions
+#undef PMPREFIX
+#define PMPREFIX        "pmvarrun: "
 #define ASCIIZ_LLX      sizeof("0xFFFFFFFF""FFFFFFFF")
-#define PREFIX          "pmvarrun: "
 #define VAR_RUN         "/var/run"
 #define VAR_RUN_PMT     VAR_RUN "/pam_mount"
 
@@ -79,7 +80,7 @@ int Debug = 0;
 static void usage(const int exitcode, const char *error) {
     fprintf(stderr, "Usage: pmvarrun -u USER [-o NUMBER] [-d]\n");
     if(error != NULL)
-        fprintf(stderr, PREFIX ": %s\n\n", error);
+        fprintf(stderr, PMPREFIX ": %s\n\n", error);
     exit(exitcode);
 }
 
@@ -162,14 +163,14 @@ static int modify_pm_count(const char *user, long amount) {
 
     if((pent = getpwnam(user)) == NULL) {
         ret = -errno;
-        l0g(PREFIX "could not resolve user %s\n", user);
+        l0g("could not resolve user %s\n", user);
         return ret;
     }
 
     if(stat(VAR_RUN_PMT, &sb) != 0) {
         if(errno != ENOENT) {
             ret = -errno;
-            l0g(PREFIX "unable to stat " VAR_RUN_PMT ": %s\n", strerror(errno));
+            l0g("unable to stat " VAR_RUN_PMT ": %s\n", strerror(errno));
             return ret;
         }
         if((ret = create_var_run()) < 0)
@@ -187,7 +188,7 @@ static int modify_pm_count(const char *user, long amount) {
         return val;
     }
 
-    w4rn(PREFIX "parsed count value %ld\n", val);
+    w4rn("parsed count value %ld\n", val);
     /* amount == 0 implies query */
     ret = 1;
     if(amount != 0)
@@ -231,16 +232,16 @@ int main(int argc, const char **argv) {
 static int create_var_run(void) {
     int ret;
 
-    w4rn(PREFIX "creating " VAR_RUN_PMT);
+    w4rn("creating " VAR_RUN_PMT);
     if(mkdir(VAR_RUN_PMT, 0000) != 0) {
         ret = -errno;
-        l0g(PREFIX "unable to create " VAR_RUN_PMT ": %s\n", strerror(errno));
+        l0g("unable to create " VAR_RUN_PMT ": %s\n", strerror(errno));
         return ret;
     }
 
     if(chown(VAR_RUN_PMT, 0, 0) != 0) {
         ret = -errno;
-        l0g(PREFIX "unable to chown " VAR_RUN_PMT ": %s\n", strerror(errno));
+        l0g("unable to chown " VAR_RUN_PMT ": %s\n", strerror(errno));
         return ret;
     }
 
@@ -249,7 +250,7 @@ static int create_var_run(void) {
 
     if(chmod(VAR_RUN_PMT, S_IRWXU | S_IRXG | S_IRXO) != 0) {
         ret = -errno;
-        l0g(PREFIX "unable to chmod " VAR_RUN_PMT ": %s\n", strerror(errno));
+        l0g("unable to chmod " VAR_RUN_PMT ": %s\n", strerror(errno));
         return ret;
     }
 
@@ -277,12 +278,12 @@ static int open_and_lock(const char *filename, long uid) {
 
     if((fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0) {
         ret = -errno;
-        l0g(PREFIX "unable to open %s: %s\n", filename, strerror(errno));
+        l0g("unable to open %s: %s\n", filename, strerror(errno));
         return ret;
     }
     if((fchown(fd, uid, 0)) != 0) {
         ret = -errno;
-        l0g(PREFIX "unable to chown %s: %s\n", filename, strerror(errno));
+        l0g("unable to chown %s: %s\n", filename, strerror(errno));
         return ret;
     }
 
@@ -305,7 +306,7 @@ static int open_and_lock(const char *filename, long uid) {
         responding - though /var/run should at best not be on an NFS mount).
         Continue, let user log in, do not change anything. */
 
-        w4rn(PREFIX "stale lock on file %s - continuing without increasing"
+        w4rn("stale lock on file %s - continuing without increasing"
              "pam_mount reference count\n", filename);
         close(fd);
         return -ESTALE;
@@ -338,7 +339,7 @@ static long read_current_count(int fd, const char *filename) {
 
     if((ret = read(fd, buf, sizeof(buf))) < 0) {
         ret = -errno;
-        l0g(PREFIX "read error on %s: %s\n", filename, strerror(errno));
+        l0g("read error on %s: %s\n", filename, strerror(errno));
         close(fd);
         return ret;
     } else if(ret == 0) {
@@ -346,12 +347,12 @@ static long read_current_count(int fd, const char *filename) {
     } else if(ret < sizeof(buf)) {
         char *p;
         if((ret = strtol(buf, &p, 0)) >= LONG_MAX || p == buf) {
-            l0g(PREFIX "parse problem / session count corrupt (overflow), "
+            l0g("parse problem / session count corrupt (overflow), "
                 "check your refcount file\n");
             return -EOVERFLOW;
         }
     } else if(ret >= sizeof(buf)) {
-        l0g(PREFIX "session count corrupt (overflow)\n");
+        l0g("session count corrupt (overflow)\n");
         return -EOVERFLOW;
     }
 
@@ -372,20 +373,20 @@ static int write_count(int fd, long nv, const char *filename) {
     int wrt, len, ret;
 
     if(nv <= 0 && unlink(filename) != 0) {
-        l0g(PREFIX "could not unlink %s: %s\n", filename, strerror(errno));
+        l0g("could not unlink %s: %s\n", filename, strerror(errno));
         return 1; // let user log in
     }
 
     if((ret = lseek(fd, 0, SEEK_SET)) != 0) {
         ret = -errno;
-        l0g(PREFIX, "failed to seek in %s: %s\n", filename, strerror(errno));
+        l0g("failed to seek in %s: %s\n", filename, strerror(errno));
         return ret;
     }
 
     len = snprintf(buf, sizeof(buf), "0x%lX", nv);
     if((wrt = write(fd, buf, len)) != len) {
         ret = -errno;
-        l0g(PREFIX "wrote %d of %d bytes; write error on %s: %s\n",
+        l0g("wrote %d of %d bytes; write error on %s: %s\n",
             (wrt < 0) ? 0 : wrt, len, filename, strerror(errno));
         close(fd);
         return ret;
