@@ -72,6 +72,7 @@ struct pmt_command {
 struct volume_attrs {
 	char *user, *pgrp, *sgrp, *fstype, *server, *path, *mntpt,
 	     *options, *fskeycipher, *fskeypath;
+	unsigned int invert;
 };
 
 /* Functions */
@@ -583,7 +584,8 @@ static const char *rc_volume_inter(struct config *config,
 		return NULL;
 	}
 
-	if(wildcard == WC_NONE && strcmp(config->user, attr->user) != 0)
+	if(wildcard == WC_NONE && (strcmp(config->user, attr->user) != 0) ^
+	  attr->invert)
 		goto notforme;
 
 	if(wildcard == WC_PGRP) {
@@ -595,7 +597,7 @@ static const char *rc_volume_inter(struct config *config,
 			     static_cast(long, pent->pw_gid), strerror(errno));
 			return NULL;
 		}
-		if(strcmp(grp_name, gent->gr_name) != 0)
+		if((strcmp(grp_name, gent->gr_name) != 0) ^ attr->invert)
 			goto notforme;
 	} else if(wildcard == WC_SGRP) {
 		const char *grp_name = attr->sgrp;
@@ -606,7 +608,7 @@ static const char *rc_volume_inter(struct config *config,
 			     static_cast(long, pent->pw_gid), strerror(errno));
 			return NULL;
 		}
-		if(!user_in_sgrp(config->user, grp_name))
+		if(!user_in_sgrp(config->user, grp_name) ^ attr->invert)
 			goto notforme;
 	}
 
@@ -699,6 +701,11 @@ static const char *rc_volume(xmlNode *node, struct config *config, int cmd)
 		.fskeypath   = xmlGetProp_2s(node, "fskeypath"),
 	};
 	const char *ret;
+	char *invert;
+	if((invert = xmlGetProp_2s(node, "invert")) != NULL) {
+		orig.invert = strtoul(invert, NULL, 0);
+		free(invert);
+	}
 	memcpy(&norm, &orig, sizeof(norm));
 	if(norm.user        == NULL) norm.user        = "";
 	if(norm.pgrp        == NULL) norm.pgrp        = "";

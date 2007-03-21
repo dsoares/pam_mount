@@ -157,6 +157,7 @@ Volumes that will be mounted when user triggers the pam_mount module
 
     <volume
         user="*" | pgrp="foo" | sgrp="bar"
+        invert="1"
         fstype="auto"
         server="..."
         path="..."
@@ -175,6 +176,9 @@ be mounted when the user has the group as either primary or secondary.
 
 USER, PGRP and SGRP are mutually exclusive. If neither is present,
 USER="*" is assumed.
+
+INVERT will invert the sense of the USER, PGRP or SGRP selector, thereby
+making it possible to specify, e.g. "all users not in group xyz".
 
 
 FSTYPE can be any filesystem type. If /bin/mount or the kernel does not
