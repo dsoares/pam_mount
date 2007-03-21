@@ -30,13 +30,13 @@ USAGE="[USER] [OPTION]...
 
 while :; do
 	case "$1" in
-		-h | "-?" )
+		(-h|"-?")
 			echo -e usage: ${0##*/} "$USAGE" >&2
 			exit 1 ;;
-		-?* )
+		(-?*)
 			echo "${0##*/}: unrecognized option: $1" >&2;
 			exit 1 ;;
-		* )
+		(*)
 			break ;;
 	esac
 	shift
@@ -54,8 +54,8 @@ fi
 REGEX="^volume[[:space:]]\+\($USER\|*\|@$GROUP\)[[:space:]]\+";
 LINE=`grep -m1 "$REGEX" "$CONF"`;
 if [ -z "$LINE" ]; then
-    echo "${0##*/}: could not find configuration for $USER in $CONF" >&2;
-    exit 1;
+	echo "${0##*/}: could not find configuration for $USER in $CONF" >&2;
+	exit 1;
 fi
 
 MNTPT=`echo "$LINE" | awk '{ print $6 }'`;

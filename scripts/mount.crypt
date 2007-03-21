@@ -33,7 +33,11 @@ USAGE="dev dir [-o options]
 
   -o options  set the mount options  [ $OPTIONS ]"
 
-_losetup() {
+function _losetup()
+{
+	local DEVICE;
+	local LOOPDEV;
+
 	DEVICE="$1";
 	LOOPDEV=0
 	while [ "$LOOPDEV" -le 15 ]; do
@@ -53,16 +57,16 @@ shift 2;
 
 while :; do
 	case "$1" in
-		-h | "-?" )
+		(-h|"-?")
 			echo -e usage: ${0##*/} "$USAGE" >&2
 			exit 1 ;;
-		-o )
+		(-o)
 			OPTIONS="$2";
 			shift ;;
-		-?* )
+		(-?*)
 			echo "${0##*/}: unrecognized option: $1" >&2
 			exit 1 ;;
-		* )
+		(*)
 			break ;;
 	esac
 	shift
@@ -91,29 +95,18 @@ DOFSCK=false;
 MOUNTOPTIONS=""
 OLDIFS="$IFS";
 IFS=", ";
+
 for opt in $OPTIONS; do
-    KEY=${opt%=*};
-    VAL=${opt#*=};
+	KEY="${opt%=*}";
+	VAL="${opt#*=}";
 	case "$KEY" in
-		cipher )
-			CIPHER="$VAL"
-			;;
-		keysize )
-			KEYSIZE="$VAL"
-			;;
-		hash )
-			HASH="$VAL"
-			;;
-		loop )
-			LOOP=true
-			;;
-                fstype)
-                        FSTYPE="$VAL";
-                        ;;
-                fsck)
-                        DOFSCK=true;
-                        ;;
-		* )
+		(cipher)  CIPHER="$VAL";;
+		(keysize) KEYSIZE="$VAL";;
+		(hash)    HASH="$VAL";;
+		(loop)    LOOP="true";;
+		(fstype)  FSTYPE="$VAL";;
+		(fsck)    DOFSCK="true";;
+		(*)
 			if [ -z "$MOUNTOPTIONS" ]; then
 				MOUNTOPTIONS="$opt"
 			else
@@ -125,13 +118,13 @@ done
 IFS="$OLDIFS";
 
 if [ "$LOOP" == true ]; then
-    DEVICE=`_losetup "$DEVICE"`;
+	DEVICE=`_losetup "$DEVICE"`;
 fi
 
 # if loop device, make device mapper name based on file pointed to
 case "$DEVICE" in
     /dev/loop*)
-        DMDEVICE=`losetup "$DEVICE" 2>/dev/null | sed 's/.*(\(.\+\)).*/\1/'`;
+	DMDEVICE=`losetup "$DEVICE" 2>/dev/null | sed 's/.*(\(.\+\)).*/\1/'`;
 esac;
 # if not a loop device or previous command fails use $DEVICE
 : ${DMDEVICE:=$DEVICE}
@@ -141,12 +134,12 @@ DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
 
 # Check for LUKS
 if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
-    LUKS=true;
-    cryptsetup luksOpen "$DEVICE" "$DMDEVICE";
+	LUKS=true;
+	cryptsetup luksOpen "$DEVICE" "$DMDEVICE";
 else
-    LUKS=false;
-    cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
-      -s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
+	LUKS=false;
+	cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
+		-s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
 fi;
 
 if [ $? -ne 0 ]; then
@@ -156,29 +149,30 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ "$DOFSCK" == "true" ]; then
-    fsck -p "/dev/mapper/$DMDEVICE";
-    if [ $? -gt 1 ]; then
-        echo "${0##*/}: filesystem $DMDEVICE has errors" >&2;
-        if [ "$LUKS" == true ]; then
-            cryptsetup luksClose "$DMDEVICE";
-        else
-            cryptsetup remove "$DMDEVICE";
-        fi;
-        [ "$LOOP" == true ] && losetup -d "$DEVICE";
-        exit 1;
-    fi;
+	fsck -p "/dev/mapper/$DMDEVICE";
+	if [ $? -gt 1 ]; then
+		echo "${0##*/}: filesystem $DMDEVICE has errors" >&2;
+		if [ "$LUKS" == true ]; then
+			cryptsetup luksClose "$DMDEVICE";
+		else
+			cryptsetup remove "$DMDEVICE";
+		fi;
+		[ "$LOOP" == true ] && losetup -d "$DEVICE";
+		exit 1;
+	fi;
 fi;
 
 # $MOUNT_POINT might not exist as mount can try to read it from /etc/fstab
 mount ${FSTYPE:+-t "$FSTYPE"} ${MOUNTOPTIONS:+-o "$MOUNTOPTIONS"} \
- "/dev/mapper/$DMDEVICE" "$MOUNT_POINT";
+	"/dev/mapper/$DMDEVICE" "$MOUNT_POINT";
+
 if [ $? -ne 0 ]; then
-    echo "${0##*/}: error mounting $DMDEVICE" >&2;
-    if [ "$LUKS" == true ]; then
-        cryptsetup luksClose "$DMDEVICE";
-    else
-        cryptsetup remove "$DMDEVICE";
-    fi;
-    [ "$LOOP" == true ] && losetup -d "$DEVICE";
-    exit 1;
+	echo "${0##*/}: error mounting $DMDEVICE" >&2;
+	if [ "$LUKS" == true ]; then
+		cryptsetup luksClose "$DMDEVICE";
+	else
+		cryptsetup remove "$DMDEVICE";
+	fi;
+	[ "$LOOP" == true ] && losetup -d "$DEVICE";
+	exit 1;
 fi;

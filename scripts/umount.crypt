@@ -42,16 +42,16 @@ if [ ! -d "$1" ]; then
 fi
 
 if [ -x "$READLINK" ]; then
-    DEVICEDIR=` "$READLINK" -f "$1"`;
+	DEVICEDIR=` "$READLINK" -f "$1"`;
 else
-    DEVICEDIR="$1";
+	DEVICEDIR="$1";
 fi;
 DEVICEDIR="${DEVICEDIR%/}";
 DMDEVICE=`mount | grep " $DEVICEDIR " | awk '{ print $1 }' | sed 's/^\/dev\/mapper\///g'`;
 
 if [ -z "$DMDEVICE" ]; then
-    echo "Could not map $DEVICEDIR to a DM device";
-    exit 1;
+	echo "Could not map $DEVICEDIR to a DM device";
+	exit 1;
 fi;
 
 # ask cryptsetup about the underlying device
@@ -67,9 +67,9 @@ fi
 # Check for LUKS
 #
 if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
-    cryptsetup luksClose "$DMDEVICE";
+	cryptsetup luksClose "$DMDEVICE";
 else
-    cryptsetup remove "$DMDEVICE";
+	cryptsetup remove "$DMDEVICE";
 fi;
 
 if [ $? -ne 0 ]; then
