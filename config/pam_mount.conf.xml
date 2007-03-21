@@ -156,7 +156,7 @@ Volumes that will be mounted when user triggers the pam_mount module
 (usually at login).
 
     <volume
-        user="*"
+        user="*" | pgrp="foo" | sgrp="bar"
         fstype="auto"
         server="..."
         path="..."
@@ -167,10 +167,14 @@ Volumes that will be mounted when user triggers the pam_mount module
     />
 
 
-USER is a user for which a volume rule applies. "*" selects all users,
-"@xyz" selects all users who have xyz as their primary group, and "@@xyz"
-selects all users who either have xyz as their primary or secondary group.
-If this attribute is not present, "*" is assumed.
+USER is a user for which a volume rule applies, "*" selects all users.
+
+A volume with PGRP attribute will be mounted when a user has that
+particular group as its primary group. A volume with SGRP attribute will
+be mounted when the user has the group as either primary or secondary.
+
+USER, PGRP and SGRP are mutually exclusive. If neither is present,
+USER="*" is assumed.
 
 
 FSTYPE can be any filesystem type. If /bin/mount or the kernel does not

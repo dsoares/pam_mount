@@ -70,7 +70,7 @@ struct pmt_command {
 };
 
 struct volume_attrs {
-	char *user, *fstype, *server, *path, *mntpt,
+	char *user, *pgrp, *sgrp, *fstype, *server, *path, *mntpt,
 	     *options, *fskeycipher, *fskeypath;
 };
 
@@ -569,10 +569,12 @@ static const char *rc_volume_inter(struct config *config,
 
 	if(strcmp(attr->user, "*") == 0)
 		wildcard = WC_ANYUSER;
-	else if(strncmp(attr->user, "@@", 2) == 0)
-		wildcard = WC_SGRP;
-	else if(*attr->user == '@')
+	else if(*attr->pgrp != '\0')
 		wildcard = WC_PGRP;
+	else if(*attr->sgrp != '\0')
+		wildcard = WC_SGRP;
+	else if(*attr->user == '\0')
+		wildcard = WC_ANYUSER;
 
 	if(wildcard != WC_NONE && (strcmp(config->user, "root") == 0 ||
 	  pent->pw_uid == 0)) {
@@ -584,8 +586,8 @@ static const char *rc_volume_inter(struct config *config,
 	if(wildcard == WC_NONE && strcmp(config->user, attr->user) != 0)
 		goto notforme;
 
-	if(wildcard == WC_PGRP || wildcard == WC_SGRP) {
-		const char *grp_name = attr->user + strspn(attr->user, "@");
+	if(wildcard == WC_PGRP) {
+		const char *grp_name = attr->pgrp;
 		struct group *gent;
 
 		if((gent = getgrgid(pent->pw_gid)) == NULL) {
@@ -593,9 +595,18 @@ static const char *rc_volume_inter(struct config *config,
 			     static_cast(long, pent->pw_gid), strerror(errno));
 			return NULL;
 		}
-		if(strcmp(grp_name, gent->gr_name) != 0 &&
-		  !(wildcard == WC_SGRP &&
-		  user_in_sgrp(config->user, grp_name)))
+		if(strcmp(grp_name, gent->gr_name) != 0)
+			goto notforme;
+	} else if(wildcard == WC_SGRP) {
+		const char *grp_name = attr->sgrp;
+		struct group *gent;
+
+		if((gent = getgrgid(pent->pw_gid)) == NULL) {
+			w4rn("getgrgid(%ld) failed: %s\n",
+			     static_cast(long, pent->pw_gid), strerror(errno));
+			return NULL;
+		}
+		if(!user_in_sgrp(config->user, grp_name))
 			goto notforme;
 	}
 
@@ -677,6 +688,8 @@ static const char *rc_volume(xmlNode *node, struct config *config, int cmd)
 {
 	struct volume_attrs norm, orig = {
 		.user        = xmlGetProp_2s(node, "user"),
+		.pgrp        = xmlGetProp_2s(node, "pgrp"),
+		.sgrp        = xmlGetProp_2s(node, "sgrp"),
 		.fstype      = xmlGetProp_2s(node, "fstype"),
 		.server      = xmlGetProp_2s(node, "server"),
 		.path        = xmlGetProp_2s(node, "path"),
@@ -687,7 +700,9 @@ static const char *rc_volume(xmlNode *node, struct config *config, int cmd)
 	};
 	const char *ret;
 	memcpy(&norm, &orig, sizeof(norm));
-	if(norm.user        == NULL) norm.user        = "*";
+	if(norm.user        == NULL) norm.user        = "";
+	if(norm.pgrp        == NULL) norm.pgrp        = "";
+	if(norm.sgrp        == NULL) norm.sgrp        = "";
 	if(norm.fstype      == NULL) norm.fstype      = "auto";
 	if(norm.server      == NULL) norm.server      = "";
 	if(norm.path        == NULL) norm.path        = "";
