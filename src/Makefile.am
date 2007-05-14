@@ -36,3 +36,6 @@ AM_CFLAGS = $(GLIB_CFLAGS) $(XML_CPPFLAGS) -DG_DISABLE_DEPRECATED \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
 	-Winline -pipe @GCC_FVISIBILITY_HIDDEN@
+
+install-data-hook:
+	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;
