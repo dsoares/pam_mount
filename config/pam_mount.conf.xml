@@ -58,7 +58,7 @@ You may use the wildcard '*' to match all options. I recommend not
 permitting the suid and dev options.
 -->
 
-<mntoptions allow="nosuid,nodev,loop,encryption,fsck" />
+<mntoptions allow="nosuid,nodev,loop,encryption,fsck,nonempty,allow_root,allow_other" />
 <!--
 <mntoptions deny="suid,dev" />
 <mntoptions allow="*" />
