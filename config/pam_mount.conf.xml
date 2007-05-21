@@ -241,7 +241,7 @@ useful for pam_chroot:
 
 For FUSE mounts, use something like this:
 
-    <volume ftype="fuse" path="sshfs#%(USER)@fileserver:"
+    <volume fstype="fuse" path="sshfs#%(USER)@fileserver:"
         mountpoint="~" />
 
     <volume fstype="nfs" server="fileserver" path="/home/%(USER)"
