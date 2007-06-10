@@ -1,5 +1,5 @@
 /*=============================================================================
-optlist.c
+pam_mount - optlist.c
   Copyright (C) W. Michael Putello <mike@flyn.org>, 2003
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
 

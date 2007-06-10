@@ -1,5 +1,5 @@
 /*=============================================================================
-pam_mount.c
+pam_mount - pam_mount.c
   Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005

@@ -1,5 +1,5 @@
 /*=============================================================================
-spawn.c
+pam_mount - spawn.c
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2006 - 2007
 
   This program is free software; you can redistribute it and/or modify

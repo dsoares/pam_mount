@@ -1,5 +1,5 @@
 /*=============================================================================
-buffer.c
+pam_mount - buffer.c
   Copyright (C) W. Michael Putello <mike@flyn.org>, 1999 - 2001
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
 

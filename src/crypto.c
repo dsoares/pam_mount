@@ -1,5 +1,5 @@
 /*=============================================================================
-crypto.c
+pam_mount - crypto.c
   Copyright (C) W. Michael Putello <mike@flyn.org>, 2002
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
 

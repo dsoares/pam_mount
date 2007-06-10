@@ -1,5 +1,5 @@
 /*=============================================================================
-pair.c
+pam_mount - pair.c
   Copyright (C) W. Michael Putello <mike@flyn.org>, 1999 - 2000
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
 
