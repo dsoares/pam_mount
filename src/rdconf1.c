@@ -735,6 +735,7 @@ static const struct pmt_command default_command[] = {
 	{CMD_SMBMOUNT,   "smbfs", "smbmount",   {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_SMBUMOUNT,  "smbfs", "smbumount",  {"/usr/bin/smbumount", "%(MNTPT)", NULL}},
 	{CMD_CIFSMOUNT,  "cifs",  "cifsmount",  {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_DAVMOUNT,   "davfs", "davmount",   {"/bin/mount", "-t", "davfs", "%(SERVER)%(VOLUME)", "%(MNTPT)", "-o", "uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_NCPMOUNT,   "ncpfs", "ncpmount",   {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_NCPUMOUNT,  "ncpfs", "ncpumount",  {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
 	{CMD_FUSEMOUNT,  "fuse",  "fusemount",  {"/sbin/mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
@@ -762,6 +763,7 @@ static const struct pmt_command default_command[] = {
 static const struct callbackmap cf_tags[] = {
 	{"cifsmount",       rc_command,             CMD_CIFSMOUNT},
 	{"cryptmount",      rc_command,             CMD_CRYPTMOUNT},
+	{"davmount",        rc_command,             CMD_DAVMOUNT},
 	{"debug",           rc_debug,               CMD_NONE},
 	{"fsckloop",        rc_fsckloop,            CMD_NONE},
 	{"fsck",            rc_command,             CMD_FSCK},
