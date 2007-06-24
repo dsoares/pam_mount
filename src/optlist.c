@@ -36,11 +36,13 @@ static int _compare(gconstpointer, gconstpointer);
 static int _parse_opt(const char *, size_t, optlist_t **);
 static int _parse_string_opt(const char *str, size_t, optlist_t **);
 
-/* ============================ _parse_string_opt () ======================= */
-/* INPUT: str, string to parse
- *        len, should be length up to first ',' or terminating '\0'
- * SIDE EFFECTS: str[0 - len] has been parsed and placed in optlist
- * OUTPUT: if error 0 else 1
+/*
+ * _parse_string_opt -
+ * @str:	string to pase
+ * @len:	the length up to first ',' or terminating '\0'
+ * @optlist:
+ *
+ * Parses @str[0-len] and placed in optlist. Returns 1 on success, otherwise 0.
  */
 static int _parse_string_opt(const char *str, size_t len, optlist_t **optlist)
 {
@@ -50,7 +52,7 @@ static int _parse_string_opt(const char *str, size_t len, optlist_t **optlist)
 
 	assert(str != NULL);
 	/* a user could config "loop,,,foo=bar==..." */
-	if(len <= 0 || len > MAX_PAR) {
+	if (len <= 0 || len > MAX_PAR) {
 		ret = 0;
 		goto out;
 	}
@@ -58,7 +60,7 @@ static int _parse_string_opt(const char *str, size_t len, optlist_t **optlist)
 	assert(optlist != NULL);
 
 	delim = strchr(str, '=');
-	if(delim == NULL || delim - str >= len) {
+	if (delim == NULL || delim - str >= len) {
 		ret = 0;
 		goto out;
 	}
@@ -78,11 +80,13 @@ static int _parse_string_opt(const char *str, size_t len, optlist_t **optlist)
 	return ret;
 }
 
-/* ============================ _parse_opt () ============================== */
-/* INPUT: str, string to parse
- *        len, should be length up to first ',' or terminating '\0'
- * SIDE EFFECTS: str[0 - len] has been parsed and placed in optlist
- * OUTPUT: if error 0 else 1
+/*
+ * _parse_opt -
+ * @str:	str, string to parse
+ * @len:	the length up to first ',' or terminating '\0'
+ *
+ * Parses @str[0-len] and places it in optlist.
+ * Returns 1 on success, otherwise 0.
  */
 static int _parse_opt(const char *str, size_t len, optlist_t **optlist)
 {
@@ -92,7 +96,7 @@ static int _parse_opt(const char *str, size_t len, optlist_t **optlist)
 
 	assert(str != NULL);
 	/* a user could config "loop,,,foo=bar==..." */
-	if(len <= 0 || len > MAX_PAR) {
+	if (len <= 0 || len > MAX_PAR) {
 		ret = 0;
 		goto out;
 	}
@@ -114,10 +118,10 @@ static int _parse_opt(const char *str, size_t len, optlist_t **optlist)
 	return ret;
 }
 
-/* ============================ str_to_optlist () ========================== */
-/* INPUT: str, string to parse
- * SIDE EFFECTS: str has been parsed and placed in optlist
- * OUTPUT: if error 0 else 1
+/*
+ * str_to_oplist -
+ * @optlist:
+ * @str:	string to parse
  */
 bool str_to_optlist(optlist_t **optlist, const char *str)
 {
@@ -128,20 +132,20 @@ bool str_to_optlist(optlist_t **optlist, const char *str)
 	assert(str != NULL);
 
 	*optlist = NULL;
-	if(strlen(str) == 0) {
+	if (strlen(str) == 0) {
 		ret = 0;
 		goto out;
 	}
-	while((ptr = strchr(str, ',')) != NULL) {
-		if(!_parse_string_opt(str, ptr - str, optlist) &&
-		  !_parse_opt(str, ptr - str, optlist)) {
+	while ((ptr = strchr(str, ',')) != NULL) {
+		if (!_parse_string_opt(str, ptr - str, optlist) &&
+		    !_parse_opt(str, ptr - str, optlist)) {
 			ret = 0;
 			goto out;
 		}
 		str = ptr + 1;
 	}
-	if(!_parse_string_opt(str, strlen(str), optlist) &&
-	  !_parse_opt(str, strlen(str), optlist)) {
+	if (!_parse_string_opt(str, strlen(str), optlist) &&
+	    !_parse_opt(str, strlen(str), optlist)) {
 		ret = 0;
 		goto out;
 	}
@@ -152,10 +156,6 @@ bool str_to_optlist(optlist_t **optlist, const char *str)
 	return ret;
 }
 
-/* ============================ _compare () ================================ */
-/* INPUT: x and y
- * OUTPUT: if x->key is the same string as y then 0, else non-0
- */
 static int _compare(gconstpointer x, gconstpointer y)
 {
 	const struct pair *px = x;
@@ -165,20 +165,16 @@ static int _compare(gconstpointer x, gconstpointer y)
 	return strcmp(px->key, y);
 }
 
-/* ============================ optlist_exists () ========================== */
-/* INPUT: optlist and str
- * OUTPUT: if optlist[str] exists 1 else 0
- */
 bool optlist_exists(optlist_t *optlist, const char *str)
 {
 	assert(str != NULL);
-	if(optlist == NULL)
+	if (optlist == NULL)
 		return 0;
 	return g_list_find_custom(optlist, str, _compare) ? 1 : 0;
 }
 
-/* ============================ optlist_value () =========================== */
-/* INPUT: optlist and str
+/*
+ * optlist_value -
  * OUTPUT: optlist[str] ("" if no value) else NULL
  */
 const char *optlist_value(optlist_t * optlist, const char *str)
@@ -187,7 +183,7 @@ const char *optlist_value(optlist_t * optlist, const char *str)
 
 	assert(str != NULL);
 
-	if(optlist == NULL)
+	if (optlist == NULL)
 		return NULL;
 	ptr = g_list_find_custom(optlist, str, _compare);
 
@@ -208,17 +204,17 @@ char *optlist_to_str(char *str, const optlist_t * optlist)
 	assert(str != NULL);
 
 	*str = '\0';
-	if(optlist != NULL)
+	if (optlist != NULL)
 		do {
 			struct pair *pair = ptr->data;
 			strncat(str, pair->key, MAX_PAR - strlen(str));
-			if(strlen(pair->val) > 0) {
+			if (strlen(pair->val) > 0) {
 				strncat(str, "=", MAX_PAR - strlen(str));
 				strncat(str, pair->val, MAX_PAR - strlen(str));
 			}
-			if((ptr = g_list_next(ptr)) != NULL)
+			if ((ptr = g_list_next(ptr)) != NULL)
 				strncat(str, ",", MAX_PAR - strlen(str));
-		} while(ptr != NULL);
+		} while (ptr != NULL);
 	str[MAX_PAR] = '\0';
 
 	assert((optlist == NULL && strlen(str) == 0) || strlen(str) > 0);

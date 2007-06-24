@@ -19,6 +19,7 @@ struct pam_args {
  *	PAM_MOUNT.C
  */
 #ifndef HAVE_VISIBILITY_HIDDEN
+	/* Workaround Xserver issue */
 #	define Debug pmt_debug
 #endif
 extern int Debug;

@@ -25,23 +25,23 @@ pam_mount - pair.c
 #include <glib.h>
 #include "pair.h"
 
-//-----------------------------------------------------------------------------
-/*  pair_valid
-    @p: pair to analyze
-
-    Verifies that thep air structure is consistent.
-*/
+/*
+ * pair_valid -
+ * @p:	pair to analyze
+ *
+ * Verifies that thep air structure is consistent.
+ */
 int pair_valid(const struct pair *p)
 {
 	return p != NULL && p->key != NULL && p->val != NULL;
 }
 
-
-/*  pair_init
-    @p: pair structure to initialize
-
-    Fills @p with with @key, @val and the @destroy_k and @destroy_v functions.
-*/
+/*
+ * pair_init -
+ * @p:	pair structure to initialize
+ *
+ * Fills @p with with @key, @val and the @destroy_k and @destroy_v functions.
+ */
 void pair_init(struct pair *pair, void *key, void *val,
     void (*destroy_k)(void *), void (*destroy_v)(void *))
 {
@@ -52,17 +52,18 @@ void pair_init(struct pair *pair, void *key, void *val,
 	return;
 }
 
-/*  pair_destroy
-    @pair:      pair to destroy
-
-    Destroy the pair pointed to by @pair.
-    Note: This function is currently not called from anywhere.
-*/
+/*
+ * pair_destroy
+ * @pair:	pair to destroy
+ *
+ * Destroy the pair pointed to by @pair.
+ * Note: This function is currently not called from anywhere.
+ */
 void pair_destroy(struct pair *pair)
 {
-	if(pair->destroy_k != NULL)
+	if (pair->destroy_k != NULL)
 		pair->destroy_k(pair->key);
-	if(pair->destroy_v != NULL)
+	if (pair->destroy_v != NULL)
 		pair->destroy_v(pair->val);
 	free(pair);
 	return;

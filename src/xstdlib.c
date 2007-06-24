@@ -28,97 +28,98 @@ pam_mount - xstdlib.c
 #include "xstdlib.h"
 
 //-----------------------------------------------------------------------------
-/*  xmalloc
-    @n: size of the new buffer
-
-    Wrapper around malloc() that warns when no new memory block could be
-    obtained.
-*/
+/*
+ * xmalloc - allocate memory
+ * @n:	size of the new buffer
+ *
+ * Wrapper around malloc() that warns when no new memory block could be
+ * obtained.
+ */
 void *xmalloc(size_t n)
 {
 	void *ret;
-	if((ret = malloc(n)) == NULL)
+	if ((ret = malloc(n)) == NULL)
 		l0g("%s: Could not allocate %lu bytes\n",
 		    __func__, static_cast(unsigned long, n));
 	return ret;
 }
 
-
-/*  xrealloc
-    @orig:      original address of the buffer
-    @n:         new size of the buffer
-
-    Wrapper around realloc() that warns when no new memory block could be
-    obtained.
-*/
+/*
+ * xrealloc - resize memory block
+ * @orig:	original address of the buffer
+ * @n:		new size of the buffer
+ *
+ * Wrapper around realloc() that warns when no new memory block could be
+ * obtained.
+ */
 void *xrealloc(void *orig, size_t n)
 {
 	void *ret;
-	if((ret = realloc(orig, n)) == NULL)
+	if ((ret = realloc(orig, n)) == NULL)
 		l0g("%s: Could not reallocate to %lu bytes\n",
 		    __func__, static_cast(unsigned long, n));
 	return ret;
 }
 
-
-/*  xzalloc
-    @n: bytes to allocate
-
-    Allocates @n bytes and clears them if the allocation succeded. Returns
-    the pointer to the newly allocated memory if any, or %NULL on failure.
-*/
+/*
+ * xzalloc -
+ * @n:	bytes to allocate
+ *
+ * Allocates @n bytes and clears them if the allocation succeded. Returns
+ * the pointer to the newly allocated memory if any, or %NULL on failure.
+ */
 void *xzalloc(size_t n)
 {
 	void *ret;
-	if((ret = xmalloc(n)) != NULL)
+	if ((ret = xmalloc(n)) != NULL)
 		memset(ret, 0, n);
 	return ret;
 }
 
-
-/*  xmemdup
-    @src:       pointer to source data
-    @n:         amount of bytes to copy
-
-    Allocates a new block of size @n and copies @n bytes from @src to it,
-    and returns it. Returns %NULL on allocation failure.
-*/
+/*
+ * xmemdup -
+ * @src:	pointer to source data
+ * @n:		amount of bytes to copy
+ *
+ * Allocates a new block of size @n and copies @n bytes from @src to it,
+ * and returns it. Returns %NULL on allocation failure.
+ */
 void *xmemdup(const void *src, size_t n)
 {
 	void *ret;
-	if((ret = xmalloc(n)) == NULL)
+	if ((ret = xmalloc(n)) == NULL)
 		return ret;
 	return memcpy(ret, src, n);
 }
 
-
-/*  xstrdup
-    @src:       source string
-
-    Basically just the usual strdup(), but with error reporting to fprintf()
-    should allocation fail.
-*/
+/*
+ * xstrdup -
+ * @src:	source string
+ *
+ * Basically just the usual strdup(), but with error reporting to fprintf()
+ * should allocation fail.
+ */
 char *xstrdup(const char *src)
 {
 	return xmemdup(src, strlen(src) + 1);
 }
 
-
-/*  xstrndup
-    @src:       source string
-    @max:       maximum number of characters to copy
-
-    Basically just the usual strndup(), but with error reporting to fprintf()
-    should allocation fail.
-*/
+/*
+ * xstrndup -
+ * @src:	source string
+ * @max:	maximum number of characters to copy
+ *
+ * Basically just the usual strndup(), but with error reporting to fprintf()
+ * should allocation fail.
+ */
 char *xstrndup(const char *src, size_t max)
 {
 	size_t s = strlen(src);
 	char *ret;
 
-	if(max < s)
+	if (max < s)
 		s = max;
-	if((ret = xmemdup(src, s + 1)) == NULL)
+	if ((ret = xmemdup(src, s + 1)) == NULL)
 		return NULL;
 
 	ret[s] = '\0';
