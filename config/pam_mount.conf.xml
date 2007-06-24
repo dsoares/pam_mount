@@ -102,6 +102,10 @@ the child process - look for STDIN_FILENO).
 <cifsmount>/bin/mount -t cifs //%(SERVER)/%(VOLUME) %(MNTPT) -o
     "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</cifsmount>
 
+<davmount>/bin/mount -t davfs %(SERVER)/%(VOLUME) %(MNTPT) -o
+	"username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\"
+	OPTIONS)"</davmount>
+
 <smbmount>/usr/bin/smbmount //%(SERVER)/%(VOLUME) %(MNTPT) -o
     "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</smbmount>
 
@@ -189,14 +193,14 @@ filesystems (listed in /proc/filesystem), so you will have to load the
 necessary modules _first_ for them to be recognized with "auto". If this
 attribute is not present, "auto" is assumed.
 
-The "cifs", "smbfs", "ncpfs" and "fuse" types override the
+The "cifs", "davfs", "smbfs", "ncpfs" and "fuse" types override the
 identically-named kernel filesystems and use the smbmount/ncpmount
 programs, as defined above, instead of `mount -t smbfs ...`.
 
 
 SERVER defines the server from which to source. The exact volume path
-depends on the filesystem type (SMB uses //SERVER/VOLUME, NFS uses
-SERVER:VOLUME). The attribute may be absent.
+depends on the filesystem type. SMB uses //SERVER/VOLUME, NFS uses
+SERVER:VOLUME. davfs uses SERVER/VOLUME. The attribute may be absent.
 
 
 PATH specifies the location of the volume, locally or on the server (if
@@ -232,6 +236,9 @@ General examples:
 
     <volume fstype="smbfs" server="krueger" path="homes"
         mountpoint="/home/%(USER)/remote" options="dmask=0711" />
+
+    <volume fstype="davfs" server="https://dev.computergmbh.de/"
+        path="/svn/libHX/trunk" mountpoint="/projects/libHX" />
 
 You can use ~ to use whatever home directory the user has (therefore you
 can distribute home directories along more than one location. This is
