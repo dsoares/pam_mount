@@ -121,6 +121,9 @@ the child process - look for STDIN_FILENO).
 
 <fuseumount>/usr/bin/fusermount -u %(MNTPT)</fuseumount>
 
+<truecryptmount>/usr/bin/truecrypt %(VOLUME) %(MNTPT)</truecryptmount>
+
+<truecryptumount>/usr/bin/truecrypt -d %(MNTPT)</truecryptumount>
 
 <!-- Linux supports lazy unmounting (-l). May be dangerous for encrypted
 volumes. May also break loopback mounts because loopback devices are not
