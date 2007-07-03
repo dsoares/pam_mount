@@ -98,6 +98,35 @@ static void set_defaults(struct settings *settings)
 }
 
 /*
+ * from https://vitalnix.svn.sourceforge.net/svnroot/vitalnix/
+ * /trunk/src/libvxutil/util.c
+ */
+static int valid_username(const char *n)
+{
+	if (*n == '\0')
+		return 0;
+	if (!((*n >= 'A' && *n <= 'Z') || (*n >= 'a' && *n <= 'z') ||
+	    *n == '_'))
+		return 0;
+
+	while (*n != '\0') {
+		int valid;
+
+		if (*n == '$' && *(n+1) == '\0') /* Samba accounts */
+			return 1;
+
+		valid = (*n >= 'A' && *n <= 'Z') || (*n >= 'a' && *n <= 'z') ||
+		        (*n >= '0' && *n <= '9') || *n == '_' || *n == '.' ||
+		        *n == '-';
+		if (!valid)
+			return 0;
+		++n;
+	}
+
+	return 1;
+}
+
+/*
  * parse_args
  * @argc:	number of elements in @argv
  * @argv:	NULL-terminated argument vector
@@ -108,15 +137,9 @@ static void set_defaults(struct settings *settings)
 static void parse_args(int argc, const char **argv, struct settings *settings)
 {
 	int c;
-	int opt_index = 0;
-	const struct option opts[] = {
-		{"help", 0, 0, 'h'},
-		{"user", 1, 0, 'u'},
-		{"operation", 1, 0, 'o'},
-		{NULL},
-	};
-	while ((c = getopt_long(argc, reinterpret_cast(char * const *, argv),
-	    "hdo:u:", opts, &opt_index)) >= 0) {
+
+	while ((c = getopt(argc, reinterpret_cast(char * const *, argv),
+	    "hdo:u:")) >= 0) {
 		switch (c) {
 		case 'h':
 			usage(EXIT_SUCCESS, NULL);
@@ -129,8 +152,12 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 			if (settings->operation == LONG_MAX ||
 			    settings->operation == LONG_MIN)
 				usage(EXIT_FAILURE, "count string is not valid");
-				break;
+			break;
 		case 'u':
+			if (!valid_username(optarg)) {
+				fprintf(stderr, "Invalid user name\n");
+				exit(EXIT_FAILURE);
+			}
 			g_strlcpy(settings->user, optarg,
 			          sizeof(settings->user));
 			break;
