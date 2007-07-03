@@ -396,6 +396,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 {
 	int vol;
 	int ret = PAM_SUCCESS;
+	unsigned int krb5_set;
 	char *system_authtok;
 	const char *pam_user = NULL;
 	const void *tmp;
@@ -448,6 +449,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	 * Get the Kerberos CCNAME so we can make it available to the
 	 * mount command later on.
 	 */
+	krb5_set = getenv("KRB5CCNAME") != NULL;
 	if (setenv("KRB5CCNAME", pam_getenv(pamh, "KRB5CCNAME"), 1) < 0)
 		l0g("KRB5CCNAME setenv failed\n");
 
@@ -512,6 +514,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	/* end root priv. */
 	/* Paranoia? */
 	clean_system_authtok(pamh, system_authtok, 0);
+	if (krb5_set)
+		unsetenv("KRB5CCNAME");
 	/* This code needs root priv. */
 	modify_pm_count(&Config, Config.user, "1");
 	/* end root priv. */
