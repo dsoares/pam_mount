@@ -174,7 +174,7 @@ int readconfig(const char *file, int global_conf, struct config *config)
 			if (strcmp_1u(ptr->name, cmp->name) == 0) {
 				err = (*cmp->func)(ptr, config, cmp->cmd);
 				if (err != NULL)
-					l0g(PMPREFIX "%s\n", err);
+					l0g("%s\n", err);
 				break;
 			}
 	}
