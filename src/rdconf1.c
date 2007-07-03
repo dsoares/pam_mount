@@ -765,7 +765,7 @@ static const struct pmt_command default_command[] = {
 	{CMD_FSCK,       NULL,    "fsck",       {"/sbin/fsck", "-p", "%(FSCKTARGET)", NULL}},
 	{CMD_LOSETUP,    NULL,    "losetup",    {"/sbin/losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
 	{CMD_UNLOSETUP,  NULL,    "unlosetup",  {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
-	{CMD_PMVARRUN,   NULL,    "pmvarrun",   {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
+	{CMD_PMVARRUN,   NULL,    "pmvarrun",   {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
 	{-1},
 };
 
