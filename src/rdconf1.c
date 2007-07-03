@@ -155,6 +155,7 @@ void initconfig(struct config *config)
 int readconfig(const char *file, int global_conf, struct config *config)
 {
 	const struct callbackmap *cmp;
+	const char *err;
 	xmlDoc *doc;
 	xmlNode *ptr;
 
@@ -171,7 +172,9 @@ int readconfig(const char *file, int global_conf, struct config *config)
 			continue;
 		for (cmp = cf_tags; cmp->name != NULL; ++cmp)
 			if (strcmp_1u(ptr->name, cmp->name) == 0) {
-				cmp->func(ptr, config, cmp->cmd);
+				err = (*cmp->func)(ptr, config, cmp->cmd);
+				if (err != NULL)
+					l0g(PMPREFIX "%s\n", err);
 				break;
 			}
 	}
