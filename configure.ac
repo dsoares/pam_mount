@@ -48,6 +48,16 @@ AC_CHECK_FUNCS(setfsuid)
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 
+AC_CHECK_HEADER([libHX.h], [], AC_MSG_ERROR([Need at least libHX 1.10]), [
+#include <libHX.h>
+#if !defined(_LIBHX_H) || _LIBHX_H < 20070701
+#	error ----------------------------------------
+#	error You need a newer version of libHX
+#	error (at least 1.10.0)
+#	error URL: jengelh.hopto.org/p/libHX/
+#	error ----------------------------------------
+#endif
+])
 AC_CHECK_HEADER(security/pam_modules.h,[have_pamheader="yes"],)
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
 AC_CHECK_HEADER(pam/pam_modules.h,[have_pamheader="yes"],)
