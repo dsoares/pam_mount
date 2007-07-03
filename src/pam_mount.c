@@ -311,7 +311,7 @@ static int modify_pm_count(struct config *config, char *user,
     char *operation)
 {
 	FILE *fp;
-	GError *err;
+	GError *err = NULL;
 	struct HXbtree *vinfo;
 	int _argc = 0, child_exit, cstdout = -1, fnval = -1, i;
 	const char *_argv[MAX_PAR + 1];
