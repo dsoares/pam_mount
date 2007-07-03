@@ -565,7 +565,6 @@ static const char *rc_volume_inter(struct config *config,
 	    strlen(attr->server) > sizeof_z(vpt->server) ||
 	    strlen(attr->path) > sizeof_z(vpt->volume) ||
 	    strlen(attr->mntpt) > sizeof_z(vpt->mountpoint) ||
-	    strlen(attr->options) > sizeof_z(vpt->options) ||
 	    strlen(attr->fskeycipher) > sizeof_z(vpt->fs_key_cipher) ||
 	    strlen(attr->fskeypath) > sizeof_z(vpt->fs_key_path))
 		return "command too long";
