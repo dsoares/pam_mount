@@ -28,7 +28,7 @@ be mounted using the standard mount command.
 
 %build
 autoreconf -fi;
-%configure --disable-static --with-slibdir=/%_lib
+%configure --disable-static --with-ssbindir=/sbin --with-slibdir=/%_lib
 make;
 
 %install
