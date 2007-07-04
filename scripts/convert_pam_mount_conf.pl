@@ -312,9 +312,8 @@ sub callback_volume(@)
 	# search for wrong splits 
 	# happens at 'a value' or "a value"
 	# and remove quotes around a single value. "value" or 'value'
-	my @new_fields = ();
-	my $nf         = undef;
-	my $char       = undef;
+	my @new_fields;
+	my($nf, $char);
 	
 	foreach my $f (@fields) {
 		if (!defined $nf && $f =~ /^'(.+)'$/) {
@@ -375,8 +374,8 @@ sub callback_volume(@)
 
 sub parse_conf()
 {
-	my @file = ();
-	open(OUT, "< $OLD_CONF") or die "Cannot open $OLD_CONF:$!";
+	my @file;
+	open(OUT, "< $OLD_CONF") || die "Cannot open $OLD_CONF: $!\n";
 	@file = <OUT>;
 	close OUT;
 	
