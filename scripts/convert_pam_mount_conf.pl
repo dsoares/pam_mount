@@ -60,7 +60,7 @@ $writer->xmlDecl("UTF-8");
 $writer->startTag("pam_mount");
 $writer->raw("\n");
 
-sub callback_debug
+sub callback_debug(@)
 {
 	my @fields = @_;
 
@@ -68,7 +68,7 @@ sub callback_debug
 	$writer->raw("\n");
 }
 
-sub callback_mkmountpoint
+sub callback_mkmountpoint(@)
 {
 	my @fields = @_;
 
@@ -76,7 +76,7 @@ sub callback_mkmountpoint
 	$writer->raw("\n");
 }
 
-sub callback_fsckloop
+sub callback_fsckloop(@)
 {
 	my @fields = @_;
 
@@ -84,7 +84,7 @@ sub callback_fsckloop
 	$writer->raw("\n");
 }
 
-sub callback_luserconf
+sub callback_luserconf(@)
 {
 	my @fields = @_;
 
@@ -92,7 +92,7 @@ sub callback_luserconf
 	$writer->raw("\n");
 }
 
-sub callback_options_allow
+sub callback_options_allow(@)
 {
 	my @fields = @_;
 
@@ -100,7 +100,7 @@ sub callback_options_allow
 	$writer->raw("\n");
 }
 
-sub callback_options_deny
+sub callback_options_deny(@)
 {
 	my @fields = @_;
 
@@ -108,7 +108,7 @@ sub callback_options_deny
 	$writer->raw("\n");
 }
 
-sub callback_options_require
+sub callback_options_require(@)
 {
 	my @fields = @_;
 
@@ -116,7 +116,7 @@ sub callback_options_require
 	$writer->raw("\n");
 }
 
-sub callback_lsof
+sub callback_lsof(@)
 {
 	my @fields = @_;
 
@@ -128,7 +128,7 @@ sub callback_lsof
 	$writer->raw("\n");
 }
 
-sub callback_fsck
+sub callback_fsck(@)
 {
 	my @fields = @_;
 
@@ -139,7 +139,7 @@ sub callback_fsck
 	$writer->raw("\n");
 }
 
-sub callback_losetup
+sub callback_losetup(@)
 {
 	my @fields = @_;
 
@@ -150,7 +150,7 @@ sub callback_losetup
 	$writer->raw("\n");
 }
 
-sub callback_unlosetup
+sub callback_unlosetup(@)
 {
 	my @fields = @_;
 
@@ -161,7 +161,7 @@ sub callback_unlosetup
 	$writer->raw("\n");
 }
 
-sub callback_cifsmount
+sub callback_cifsmount(@)
 {
 	my @fields = @_;
 
@@ -172,7 +172,7 @@ sub callback_cifsmount
 	$writer->raw("\n");
 }
 
-sub callback_smbmount
+sub callback_smbmount(@)
 {
 	my @fields = @_;
 
@@ -183,7 +183,7 @@ sub callback_smbmount
 	$writer->raw("\n");
 }
 
-sub callback_ncpmount
+sub callback_ncpmount(@)
 {
 	my @fields = @_;
 
@@ -194,7 +194,7 @@ sub callback_ncpmount
 	$writer->raw("\n");
 }
 
-sub callback_smbumount
+sub callback_smbumount(@)
 {
 	my @fields = @_;
 
@@ -205,7 +205,7 @@ sub callback_smbumount
 	$writer->raw("\n");
 }
 
-sub callback_ncpumount
+sub callback_ncpumount(@)
 {
 	my @fields = @_;
 
@@ -216,7 +216,7 @@ sub callback_ncpumount
 	$writer->raw("\n");
 }
 
-sub callback_fusemount
+sub callback_fusemount(@)
 {
 	my @fields = @_;
 
@@ -227,7 +227,7 @@ sub callback_fusemount
 	$writer->raw("\n");
 }
 
-sub callback_fuseumount
+sub callback_fuseumount(@)
 {
 	my @fields = @_;
 
@@ -238,7 +238,7 @@ sub callback_fuseumount
 	$writer->raw("\n");
 }
 
-sub callback_umount
+sub callback_umount(@)
 {
 	my @fields = @_;
 
@@ -249,7 +249,7 @@ sub callback_umount
 	$writer->raw("\n");
 }
 
-sub callback_lclmount
+sub callback_lclmount(@)
 {
 	my @fields = @_;
 
@@ -260,7 +260,7 @@ sub callback_lclmount
 	$writer->raw("\n");
 }
 
-sub callback_cryptmount
+sub callback_cryptmount(@)
 {
 	my @fields = @_;
 
@@ -271,7 +271,7 @@ sub callback_cryptmount
 	$writer->raw("\n");
 }
 
-sub callback_nfsmount
+sub callback_nfsmount(@)
 {
 	my @fields = @_;
 
@@ -282,7 +282,7 @@ sub callback_nfsmount
 	$writer->raw("\n");
 }
 
-sub callback_mntagain
+sub callback_mntagain(@)
 {
 	my @fields = @_;
 
@@ -293,7 +293,7 @@ sub callback_mntagain
 	$writer->raw("\n");
 }
 
-sub callback_mntcheck
+sub callback_mntcheck(@)
 {
 	my @fields = @_;
 
@@ -304,7 +304,7 @@ sub callback_mntcheck
 	$writer->raw("\n");
 }
 
-sub callback_pmvarrun
+sub callback_pmvarrun(@)
 {
 	my @fields = @_;
 
@@ -315,7 +315,7 @@ sub callback_pmvarrun
 	$writer->raw("\n");
 }
 
-sub callback_volume
+sub callback_volume(@)
 {
 	my @fields = @_;
 
@@ -399,7 +399,7 @@ sub callback_volume
 	$writer->raw("\n");
 }
 
-sub parse_conf
+sub parse_conf()
 {
 	my @file = ();
 	open(OUT, "<$OLD_CONF") or die "Cannot open $OLD_CONF:$!";
@@ -426,7 +426,7 @@ sub parse_conf
 	}
 }
 
-parse_conf();
+&parse_conf();
 
 $writer->endTag("pam_mount");
 $writer->end();
