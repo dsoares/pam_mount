@@ -419,7 +419,7 @@ sub parse_conf
 				      join(" ", @fields), "\n";
 			}
 
-			$callbacks{$fields[0]}(@fields);
+			$callbacks{$fields[0]}->(@fields);
 		} else {
 			print STDERR "Unknown command: $fields[0]\n";
 		}
