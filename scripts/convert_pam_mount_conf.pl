@@ -64,8 +64,6 @@ sub callback_debug
 {
 	my @fields = @_;
 
-	print STDERR "callback_debug called: ".join (" ", @fields)."\n" if($debug);
-
 	$writer->emptyTag("debug", "enable" => $fields[1]);
 	$writer->raw("\n");
 }
@@ -73,8 +71,6 @@ sub callback_debug
 sub callback_mkmountpoint
 {
 	my @fields = @_;
-
-	print STDERR "callback_mkmountpoint called: ".join (" ", @fields)."\n" if($debug);
 
 	$writer->emptyTag("mkmountpoint", "enable" => $fields[1]);
 	$writer->raw("\n");
@@ -84,8 +80,6 @@ sub callback_fsckloop
 {
 	my @fields = @_;
 
-	print STDERR "callback_fsckloop called: ".join (" ", @fields)."\n" if($debug);
-
 	$writer->emptyTag("fsckloop", "device" => $fields[1]);
 	$writer->raw("\n");
 }
@@ -93,8 +87,6 @@ sub callback_fsckloop
 sub callback_luserconf
 {
 	my @fields = @_;
-
-	print STDERR "callback_luserconf called: ".join (" ", @fields)."\n" if($debug);
 
 	$writer->emptyTag("luserconf", "name" => $fields[1]);
 	$writer->raw("\n");
@@ -104,8 +96,6 @@ sub callback_options_allow
 {
 	my @fields = @_;
 
-	print STDERR "callback_options_allow called: ".join (" ", @fields)."\n" if($debug);
-
 	$writer->emptyTag("mntoptions", "allow" => $fields[1]);
 	$writer->raw("\n");
 }
@@ -113,8 +103,6 @@ sub callback_options_allow
 sub callback_options_deny
 {
 	my @fields = @_;
-
-	print STDERR "callback_options_deny called: ".join (" ", @fields)."\n" if($debug);
 
 	$writer->emptyTag("mntoptions", "deny" => $fields[1]);
 	$writer->raw("\n");
@@ -124,8 +112,6 @@ sub callback_options_require
 {
 	my @fields = @_;
 
-	print STDERR "callback_options_require called: ".join (" ", @fields)."\n" if($debug);
-
 	$writer->emptyTag("mntoptions", "require" => $fields[1]);
 	$writer->raw("\n");
 }
@@ -133,8 +119,6 @@ sub callback_options_require
 sub callback_lsof
 {
 	my @fields = @_;
-
-	print STDERR "callback_lsof called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 
@@ -148,8 +132,6 @@ sub callback_fsck
 {
 	my @fields = @_;
 
-	print STDERR "callback_fsck called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("fsck");
 	$writer->characters(join(" ", @fields));
@@ -160,8 +142,6 @@ sub callback_fsck
 sub callback_losetup
 {
 	my @fields = @_;
-
-	print STDERR "callback_losetup called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("losetup");
@@ -174,8 +154,6 @@ sub callback_unlosetup
 {
 	my @fields = @_;
 
-	print STDERR "callback_unlosetup called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("unlosetup");
 	$writer->characters(join(" ", @fields));
@@ -186,8 +164,6 @@ sub callback_unlosetup
 sub callback_cifsmount
 {
 	my @fields = @_;
-
-	print STDERR "callback_cifsmount called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("cifsmount");
@@ -200,8 +176,6 @@ sub callback_smbmount
 {
 	my @fields = @_;
 
-	print STDERR "callback_smbmount called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("smbmount");
 	$writer->characters(join(" ", @fields));
@@ -212,8 +186,6 @@ sub callback_smbmount
 sub callback_ncpmount
 {
 	my @fields = @_;
-
-	print STDERR "callback_ncpmount called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("ncpmount");
@@ -226,8 +198,6 @@ sub callback_smbumount
 {
 	my @fields = @_;
 
-	print STDERR "callback_smbumount called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("smbumount");
 	$writer->characters(join(" ", @fields));
@@ -238,8 +208,6 @@ sub callback_smbumount
 sub callback_ncpumount
 {
 	my @fields = @_;
-
-	print STDERR "callback_ncpumount called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("ncpumount");
@@ -252,8 +220,6 @@ sub callback_fusemount
 {
 	my @fields = @_;
 
-	print STDERR "callback_fusemount called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("fusemount");
 	$writer->characters(join(" ", @fields));
@@ -264,8 +230,6 @@ sub callback_fusemount
 sub callback_fuseumount
 {
 	my @fields = @_;
-
-	print STDERR "callback_fuseumount called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("fuseumount");
@@ -278,8 +242,6 @@ sub callback_umount
 {
 	my @fields = @_;
 
-	print STDERR "callback_umount called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("umount");
 	$writer->characters(join(" ", @fields));
@@ -290,8 +252,6 @@ sub callback_umount
 sub callback_lclmount
 {
 	my @fields = @_;
-
-	print STDERR "callback_lclmount called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("lclmount");
@@ -304,8 +264,6 @@ sub callback_cryptmount
 {
 	my @fields = @_;
 
-	print STDERR "callback_cryptmount called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("cryptmount");
 	$writer->characters(join(" ", @fields));
@@ -316,8 +274,6 @@ sub callback_cryptmount
 sub callback_nfsmount
 {
 	my @fields = @_;
-
-	print STDERR "callback_nfsmount called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("nfsmount");
@@ -330,8 +286,6 @@ sub callback_mntagain
 {
 	my @fields = @_;
 
-	print STDERR "callback_mntagain called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("mntagain");
 	$writer->characters(join(" ", @fields));
@@ -342,8 +296,6 @@ sub callback_mntagain
 sub callback_mntcheck
 {
 	my @fields = @_;
-
-	print STDERR "callback_mntcheck called: ".join (" ", @fields)."\n" if($debug);
 
 	shift @fields;
 	$writer->startTag("mntcheck");
@@ -356,8 +308,6 @@ sub callback_pmvarrun
 {
 	my @fields = @_;
 
-	print STDERR "callback_pmvarrun called: ".join (" ", @fields)."\n" if($debug);
-
 	shift @fields;
 	$writer->startTag("pmvarrun");
 	$writer->characters(join(" ", @fields));
@@ -369,7 +319,6 @@ sub callback_volume
 {
 	my @fields = @_;
 
-	print STDERR "callback_volume called: ".join (" ", @fields)."\n" if($debug);
 	shift @fields;
 
 	my %attr = (
@@ -465,6 +414,11 @@ sub parse_conf
 		chomp(@fields);
 
 		if (exists $callbacks{$fields[0]}) {
+			if ($debug) {
+				print STDERR "callback_$fields[0] called: ",
+				      join(" ", @fields), "\n";
+			}
+
 			$callbacks{$fields[0]}(@fields);
 		} else {
 			print STDERR "Unknown command: $fields[0]\n";
