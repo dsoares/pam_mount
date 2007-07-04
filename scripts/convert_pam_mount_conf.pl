@@ -348,25 +348,25 @@ sub callback_volume(@)
 		$fields[$i] =~ s/\\\s/ /g;
 	}
 
-	if (exists $fields[1] && defined $fields[1]) {
+	if (defined($fields[1])) {
 		$attr{fstype}     = $fields[1];
 	}
-	if (exists $fields[2] && defined $fields[2]) {
+	if (defined($fields[2])) {
 		$attr{server}     = $fields[2];
 	}
-	if (exists $fields[3] && defined $fields[3]) {
+	if (defined($fields[3])) {
 		$attr{path}       = $fields[3];
 	}
-	if (exists $fields[4] && defined $fields[4]) {
+	if (defined($fields[4])) {
 		$attr{mountpoint} = $fields[4];
 	}
-	if (exists $fields[5] && defined $fields[5]) {
+	if (defined($fields[5])) {
 		$attr{options}    = $fields[5];
 	}
-	if (exists $fields[6] && defined $fields[6]) {
+	if (defined($fields[6])) {
 		$attr{fskeycipher}= $fields[6];
 	}
-	if (exists $fields[7] && defined $fields[7]) {
+	if (defined($fields[7])) {
 		$attr{fskeypath}  = $fields[7];
 	}
 
