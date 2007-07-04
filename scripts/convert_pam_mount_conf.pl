@@ -381,11 +381,12 @@ sub parse_conf()
 	close OUT;
 	
 	foreach my $line (@file) {
+		chomp $line;
+
 		next if ($line =~ /^\s*#/);
 		next if ($line =~ /^\s*$/);
 
 		my @fields = split(/(?<!\\)\s/, $line);
-		chomp(@fields);
 
 		if (exists $callbacks{$fields[0]}) {
 			if ($debug) {
