@@ -387,6 +387,16 @@ sub parse_conf()
 		next if ($line =~ /^\s*$/);
 
 		my @fields = split(/(?<!\\)\s+/, $line);
+		for (my $i = 0; $i <= $#fields; ++$i) {
+			if ($fields[$i] eq "#") {
+				#
+				# Old-style config file had this oddity in
+				# one spot, so need to trim it.
+				#
+				splice(@fields, $i);
+				last;
+			}
+		}
 
 		if (exists $callbacks{$fields[0]}) {
 			if ($debug) {
