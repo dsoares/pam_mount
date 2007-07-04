@@ -741,34 +741,34 @@ static const char *rc_volume(xmlNode *node, struct config *config, int cmd)
 
 //-----------------------------------------------------------------------------
 static const struct pmt_command default_command[] = {
-	{CMD_SMBMOUNT,   "smbfs", "smbmount",   {"/usr/bin/smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_SMBUMOUNT,  "smbfs", "smbumount",  {"/usr/bin/smbumount", "%(MNTPT)", NULL}},
-	{CMD_CIFSMOUNT,  "cifs",  "cifsmount",  {"/bin/mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_DAVMOUNT,   "davfs", "davmount",   {"/bin/mount", "-t", "davfs", "%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_NCPMOUNT,   "ncpfs", "ncpmount",   {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_NCPUMOUNT,  "ncpfs", "ncpumount",  {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
-	{CMD_FUSEMOUNT,  "fuse",  "fusemount",  {"/sbin/mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
-	{CMD_FUSEUMOUNT, "fuse",  "fuseumount", {"/usr/bin/fusermount", "-u", "%(MNTPT)", NULL}},
+	{CMD_SMBMOUNT,   "smbfs", "smbmount",   {"smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_SMBUMOUNT,  "smbfs", "smbumount",  {"smbumount", "%(MNTPT)", NULL}},
+	{CMD_CIFSMOUNT,  "cifs",  "cifsmount",  {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_DAVMOUNT,   "davfs", "davmount",   {"mount", "-t", "davfs", "%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_NCPMOUNT,   "ncpfs", "ncpmount",   {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_NCPUMOUNT,  "ncpfs", "ncpumount",  {"ncpumount", "%(MNTPT)", NULL}},
+	{CMD_FUSEMOUNT,  "fuse",  "fusemount",  {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
+	{CMD_FUSEUMOUNT, "fuse",  "fuseumount", {"fusermount", "-u", "%(MNTPT)", NULL}},
 	/* Do not use LCLMOUNT to avoid calling fsck */
-	{CMD_NFSMOUNT,   "nfs",   "nfsmount",   {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}},
-	{CMD_LCLMOUNT,   NULL,    "lclmount",   {"/bin/mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
+	{CMD_NFSMOUNT,   "nfs",   "nfsmount",   {"mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}},
+	{CMD_LCLMOUNT,   NULL,    "lclmount",   {"mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
 	/* Hope to have this in util-linux (LCLMOUNT) some day: */
-	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_UMOUNT,     NULL,    "umount",     {"/bin/umount", "%(MNTPT)", NULL}},
-	{CMD_LSOF,       NULL,    "lsof",       {"/usr/bin/lsof", "%(MNTPT)", NULL}},
-	{CMD_MNTAGAIN,   NULL,    "mntagain",   {"/bin/mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_UMOUNT,     NULL,    "umount",     {"umount", "%(MNTPT)", NULL}},
+	{CMD_LSOF,       NULL,    "lsof",       {"lsof", "%(MNTPT)", NULL}},
+	{CMD_MNTAGAIN,   NULL,    "mntagain",   {"mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
 	/*
 	 *  Leave mntcheck available on GNU/Linux so I can ship one
 	 *  config file example
 	 */
-	{CMD_MNTCHECK,   NULL,    "mntcheck",   {"/bin/mount", NULL}},
-	{CMD_FSCK,       NULL,    "fsck",       {"/sbin/fsck", "-p", "%(FSCKTARGET)", NULL}},
-	{CMD_LOSETUP,    NULL,    "losetup",    {"/sbin/losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
-	{CMD_UNLOSETUP,  NULL,    "unlosetup",  {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
-	{CMD_PMVARRUN,   NULL,    "pmvarrun",   {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
+	{CMD_MNTCHECK,   NULL,    "mntcheck",   {"mount", NULL}},
+	{CMD_FSCK,       NULL,    "fsck",       {"fsck", "-p", "%(FSCKTARGET)", NULL}},
+	{CMD_LOSETUP,    NULL,    "losetup",    {"losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
+	{CMD_UNLOSETUP,  NULL,    "unlosetup",  {"losetup", "-d", "%(FSCKLOOP)", NULL}},
+	{CMD_PMVARRUN,   NULL,    "pmvarrun",   {"pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
 
-	{CMD_TRUECRYPTMOUNT,  "truecrypt", "truecrypt", {"/usr/bin/truecryptmount", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_TRUECRYPTUMOUNT, "truecrypt", "truecrypt", {"/usr/bin/truecryptumount", "-d", "%(MNTPT)", NULL}},
+	{CMD_TRUECRYPTMOUNT,  "truecrypt", "truecrypt", {"truecryptmount", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_TRUECRYPTUMOUNT, "truecrypt", "truecrypt", {"truecryptumount", "-d", "%(MNTPT)", NULL}},
 
 	{-1},
 };

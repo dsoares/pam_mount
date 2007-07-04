@@ -60,8 +60,8 @@ int spawn_apS(const char *wd, const char *const *argv, const char *const *envp,
 {
 	spawn_set_sigchld();
 	if (g_spawn_async_with_pipes(wd, const_cast(char **, argv),
-	    const_cast(char **, envp), flags, cs, data, pid, istdin,
-	    istdout, istderr, err))
+	    const_cast(char **, envp), flags | G_SPAWN_SEARCH_PATH, cs, data,
+	    pid, istdin, istdout, istderr, err))
 		return 1;
 	spawn_restore_sigchld();
 	return 0;

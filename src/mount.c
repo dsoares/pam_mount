@@ -350,7 +350,8 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 {
 	/*
 	 * mntcheck is currently defined as "/bin/mount" in pam_mount.conf.xml
-	 * so a line is like "/dev/ad0s1 on / (ufs, local)".
+	 * so a line that we read is going to look like
+	 * "/dev/ad0s1 on / (ufs, local)".
 	 */
 
 	*fsname = wp;
