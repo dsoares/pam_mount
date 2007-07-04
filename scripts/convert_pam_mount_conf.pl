@@ -58,14 +58,13 @@ my $writer = new XML::Writer(OUTPUT => $output, UNSAFE => 1);
 
 $writer->xmlDecl("UTF-8");
 $writer->startTag("pam_mount");
-$writer->raw("\n");
+$writer->raw("\n\n");
 
 sub callback_debug(@)
 {
 	my @fields = @_;
 
 	$writer->emptyTag("debug", "enable" => $fields[1]);
-	$writer->raw("\n");
 }
 
 sub callback_mkmountpoint(@)
@@ -73,7 +72,6 @@ sub callback_mkmountpoint(@)
 	my @fields = @_;
 
 	$writer->emptyTag("mkmountpoint", "enable" => $fields[1]);
-	$writer->raw("\n");
 }
 
 sub callback_fsckloop(@)
@@ -81,7 +79,6 @@ sub callback_fsckloop(@)
 	my @fields = @_;
 
 	$writer->emptyTag("fsckloop", "device" => $fields[1]);
-	$writer->raw("\n");
 }
 
 sub callback_luserconf(@)
@@ -89,7 +86,6 @@ sub callback_luserconf(@)
 	my @fields = @_;
 
 	$writer->emptyTag("luserconf", "name" => $fields[1]);
-	$writer->raw("\n");
 }
 
 sub callback_options_allow(@)
@@ -97,7 +93,6 @@ sub callback_options_allow(@)
 	my @fields = @_;
 
 	$writer->emptyTag("mntoptions", "allow" => $fields[1]);
-	$writer->raw("\n");
 }
 
 sub callback_options_deny(@)
@@ -105,7 +100,6 @@ sub callback_options_deny(@)
 	my @fields = @_;
 
 	$writer->emptyTag("mntoptions", "deny" => $fields[1]);
-	$writer->raw("\n");
 }
 
 sub callback_options_require(@)
@@ -113,7 +107,6 @@ sub callback_options_require(@)
 	my @fields = @_;
 
 	$writer->emptyTag("mntoptions", "require" => $fields[1]);
-	$writer->raw("\n");
 }
 
 sub callback_lsof(@)
@@ -125,7 +118,6 @@ sub callback_lsof(@)
 	$writer->startTag("lsof");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("lsof");
-	$writer->raw("\n");
 }
 
 sub callback_fsck(@)
@@ -136,7 +128,6 @@ sub callback_fsck(@)
 	$writer->startTag("fsck");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("fsck");
-	$writer->raw("\n");
 }
 
 sub callback_losetup(@)
@@ -147,7 +138,6 @@ sub callback_losetup(@)
 	$writer->startTag("losetup");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("losetup");
-	$writer->raw("\n");
 }
 
 sub callback_unlosetup(@)
@@ -158,7 +148,6 @@ sub callback_unlosetup(@)
 	$writer->startTag("unlosetup");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("unlosetup");
-	$writer->raw("\n");
 }
 
 sub callback_cifsmount(@)
@@ -169,7 +158,6 @@ sub callback_cifsmount(@)
 	$writer->startTag("cifsmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("cifsmount");
-	$writer->raw("\n");
 }
 
 sub callback_smbmount(@)
@@ -180,7 +168,6 @@ sub callback_smbmount(@)
 	$writer->startTag("smbmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("smbmount");
-	$writer->raw("\n");
 }
 
 sub callback_ncpmount(@)
@@ -191,7 +178,6 @@ sub callback_ncpmount(@)
 	$writer->startTag("ncpmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("ncpmount");
-	$writer->raw("\n");
 }
 
 sub callback_smbumount(@)
@@ -202,7 +188,6 @@ sub callback_smbumount(@)
 	$writer->startTag("smbumount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("smbumount");
-	$writer->raw("\n");
 }
 
 sub callback_ncpumount(@)
@@ -213,7 +198,6 @@ sub callback_ncpumount(@)
 	$writer->startTag("ncpumount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("ncpumount");
-	$writer->raw("\n");
 }
 
 sub callback_fusemount(@)
@@ -224,7 +208,6 @@ sub callback_fusemount(@)
 	$writer->startTag("fusemount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("fusemount");
-	$writer->raw("\n");
 }
 
 sub callback_fuseumount(@)
@@ -235,7 +218,6 @@ sub callback_fuseumount(@)
 	$writer->startTag("fuseumount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("fuseumount");
-	$writer->raw("\n");
 }
 
 sub callback_umount(@)
@@ -246,7 +228,6 @@ sub callback_umount(@)
 	$writer->startTag("umount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("umount");
-	$writer->raw("\n");
 }
 
 sub callback_lclmount(@)
@@ -257,7 +238,6 @@ sub callback_lclmount(@)
 	$writer->startTag("lclmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("lclmount");
-	$writer->raw("\n");
 }
 
 sub callback_cryptmount(@)
@@ -268,7 +248,6 @@ sub callback_cryptmount(@)
 	$writer->startTag("cryptmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("cryptmount");
-	$writer->raw("\n");
 }
 
 sub callback_nfsmount(@)
@@ -279,7 +258,6 @@ sub callback_nfsmount(@)
 	$writer->startTag("nfsmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("nfsmount");
-	$writer->raw("\n");
 }
 
 sub callback_mntagain(@)
@@ -290,7 +268,6 @@ sub callback_mntagain(@)
 	$writer->startTag("mntagain");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("mntagain");
-	$writer->raw("\n");
 }
 
 sub callback_mntcheck(@)
@@ -301,7 +278,6 @@ sub callback_mntcheck(@)
 	$writer->startTag("mntcheck");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("mntcheck");
-	$writer->raw("\n");
 }
 
 sub callback_pmvarrun(@)
@@ -312,7 +288,6 @@ sub callback_pmvarrun(@)
 	$writer->startTag("pmvarrun");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("pmvarrun");
-	$writer->raw("\n");
 }
 
 sub callback_volume(@)
@@ -396,7 +371,6 @@ sub callback_volume(@)
 	}
 
 	$writer->emptyTag("volume", %attr );
-	$writer->raw("\n");
 }
 
 sub parse_conf()
@@ -420,6 +394,7 @@ sub parse_conf()
 			}
 
 			$callbacks{$fields[0]}->(@fields);
+			$writer->raw("\n\n");
 		} else {
 			print STDERR "Unknown command: $fields[0]\n";
 		}
