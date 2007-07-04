@@ -386,7 +386,7 @@ sub parse_conf()
 		next if ($line =~ /^\s*#/);
 		next if ($line =~ /^\s*$/);
 
-		my @fields = split(/(?<!\\)\s/, $line);
+		my @fields = split(/(?<!\\)\s+/, $line);
 
 		if (exists $callbacks{$fields[0]}) {
 			if ($debug) {
