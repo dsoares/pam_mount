@@ -53,7 +53,7 @@ my %callbacks = (
 	"volume"          => \&callback_volume,
 );
 
-my $output = new IO::File(">$NEW_CONF");
+my $output = new IO::File("> $NEW_CONF");
 my $writer = new XML::Writer(OUTPUT => $output, UNSAFE => 1);
 
 $writer->xmlDecl("UTF-8");
@@ -376,7 +376,7 @@ sub callback_volume(@)
 sub parse_conf()
 {
 	my @file = ();
-	open(OUT, "<$OLD_CONF") or die "Cannot open $OLD_CONF:$!";
+	open(OUT, "< $OLD_CONF") or die "Cannot open $OLD_CONF:$!";
 	@file = <OUT>;
 	close OUT;
 	
