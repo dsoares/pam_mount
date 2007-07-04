@@ -365,7 +365,7 @@ sub callback_volume
 	}
 	@fields = @new_fields;
 	if ($debug) {
-		print Data::Dumper->Dump([@new_fields])
+		print STDERR Data::Dumper->Dump([@new_fields])
 	}
 	
 	foreach my $i (2..7) {
