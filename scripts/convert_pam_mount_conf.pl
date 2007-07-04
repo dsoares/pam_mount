@@ -8,14 +8,21 @@
 #	Please submit bugfixes or comments via http://bugs.opensuse.org/
 #
 use Data::Dumper;
+use Getopt::Long;
 use IO::File;
 use XML::Writer;
 use strict;
 
-my $OLD_CONF = "/etc/security/pam_mount.conf";
-my $NEW_CONF = "/etc/security/pam_mount.conf.xml";
-
+my $OLD_CONF = "-";
+my $NEW_CONF = "-";
 my $debug = 0;
+
+&Getopt::Long::Configure(qw(bundling));
+&GetOptions(
+	"i=s" => \$OLD_CONF,
+	"o=s" => \$NEW_CONF,
+	"d"   => \$debug,
+);
 
 my %callbacks = (
 	"debug"           => \&callback_debug,
