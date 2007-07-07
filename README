@@ -60,6 +60,14 @@ NASTY DETAILS
                   session  optional  pam_console.so
               +++ session  optional  pam_mount.so
 
+       When "sufficient" is used in the second column, you must make sure that
+       pam_mount  is added before this entry. Otherwise pam_mount will not get
+       executed should a previous PAM module succeed. Also  be  aware  of  the
+       "include"  statements.  These make PAM look into the specified file. If
+       there is a "sufficient" statement, then the pam_mount entry must either
+       be in the included file before the "sufficient" statement or before the
+       "include" statement.
+
        If you use pam_ldap, pam_winbind, or any other authentication  services
        that make use of PAM's sufficient keyword then model your configuration
        on the following:
@@ -121,9 +129,9 @@ NASTY DETAILS
        security  flaw  so  user-defined volumes are not allowed by the example
        pam_mount.conf.xml distributed with pam_mount.
 
-       In general, you will leave all the first (general) parameters  as  pro‐
-       vided  by default. You only have to provide the user/volume list in the
-       end of the file, following the examples.
+       In general, you will  leave  all  the  first  (general)  parameters  as
+       provided  by  default. You only have to provide the user/volume list in
+       the end of the file, following the examples.
 
        To ensure that your system and, possibly, the  remote  server  are  all
        properly configured, you should try to mount all or some of the volumes

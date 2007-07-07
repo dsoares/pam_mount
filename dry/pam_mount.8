@@ -57,6 +57,13 @@ In addition, you must include two entries in the system's applicable
 +++ session  optional  pam_mount.so
 .fi
 .PP
+When "sufficient" is used in the second column, you must make sure that
+pam_mount is added before this entry. Otherwise pam_mount will not get executed
+should a previous PAM module succeed. Also be aware of the "include"
+statements. These make PAM look into the specified file. If there is a
+"sufficient" statement, then the pam_mount entry must either be in the included
+file before the "sufficient" statement or before the "include" statement.
+.PP
 If you use pam_ldap, pam_winbind, or any other authentication services that
 make use of PAM's sufficient keyword then model your configuration on the
 following:
