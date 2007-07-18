@@ -199,7 +199,8 @@ int vol_valid(const struct vol *v) {
 	/* should be guaranteed by volume_record_sane() */
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
 	if (!(v->type == CMD_LCLMOUNT || v->type == CMD_CRYPTMOUNT ||
-	    v->type == CMD_FUSEMOUNT || strlen(v->server) > 0))
+	    v->type == CMD_FUSEMOUNT || v->type == CMD_TRUECRYPTMOUNT ||
+	    strlen(v->server) > 0))
 		return 0;
 	/* bool globalconf; */
 	/* bool created_mntpt; */
