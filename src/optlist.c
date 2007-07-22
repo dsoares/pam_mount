@@ -23,6 +23,7 @@ pam_mount - optlist.c
 #include <sys/types.h>
 #include <assert.h>
 #include <glib.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "compiler.h"

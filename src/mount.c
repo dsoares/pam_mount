@@ -31,6 +31,7 @@ pam_mount - mount.c
 #include <glib.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +47,6 @@ pam_mount - mount.c
 #include "private.h"
 #include "readconfig.h"
 #include "spawn.h"
-#include "xstdlib.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #	include <fstab.h>
 #elif defined(__linux__)
@@ -924,7 +924,7 @@ int do_mount(const struct config *config, const unsigned int vol,
  * Note: Checked by volume_record_sane() and read_volume()
  */
 int mount_op(mount_op_fn_t *mnt, const struct config *config,
-    const unsigned int vol, const char *password, const int mkmntpoint)
+    const unsigned int vol, const char *password, bool mkmntpoint)
 {
 	int fnval;
 	struct HXbtree *vinfo;

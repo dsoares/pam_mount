@@ -23,6 +23,7 @@ pam_mount - rdconf2.c
 =============================================================================*/
 #include <sys/types.h>
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,7 +34,6 @@ pam_mount - rdconf2.c
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
-#include "xstdlib.h"
 
 /* Functions */
 static int _options_ok(const struct config *, const struct vol *);

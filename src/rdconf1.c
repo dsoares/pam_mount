@@ -38,6 +38,7 @@ pam_mount - rdconf1.c
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
+#include "xstdlib.h"
 
 /* Definitions */
 enum {

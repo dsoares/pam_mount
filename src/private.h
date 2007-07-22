@@ -1,8 +1,8 @@
 #ifndef PMT_PRIVATE_H
 #define PMT_PRIVATE_H 1
 
+#include <stdbool.h>
 #include "optlist.h"
-#include "xstdlib.h"
 
 #define CLOSE(a) do { \
 	if(close(a) == -1) { \

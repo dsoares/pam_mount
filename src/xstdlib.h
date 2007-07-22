@@ -3,8 +3,6 @@
 
 #include <sys/types.h>
 
-typedef int bool;
-
 /*
  *	XSTDLIB.C
  */

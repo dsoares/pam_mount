@@ -2,9 +2,9 @@
 #define PMT_OPTLIST_H 1
 
 #include <glib.h>
+#include <stdbool.h>
 #include "compiler.h"
 #include "pair.h"
-#include "xstdlib.h"
 
 #define optlist_next(element)   g_list_next(element)
 #define optlist_key(element) \

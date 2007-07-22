@@ -1,7 +1,7 @@
 #ifndef PMT_READCONFIG_H
 #define PMT_READCONFIG_H 1
 
-#include "xstdlib.h"
+#include <stdbool.h>
 
 struct config;
 
