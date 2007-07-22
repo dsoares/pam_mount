@@ -207,7 +207,7 @@ static char *expand_home(const char *user, char *path, size_t size)
 		return NULL;
 	}
 
-	if ((buf = malloc(size)) == NULL) {
+	if ((buf = xmalloc(size)) == NULL) {
 		l0g("%s\n", strerror(errno));
 		return NULL;
 	}
