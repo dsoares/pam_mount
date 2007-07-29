@@ -477,10 +477,21 @@ int do_unmount(const struct config *config, const unsigned int vol,
 		run_lsof(config, vinfo);
 
 	switch (vpt->type) {
-		case CMD_SMBMOUNT:  type = CMD_SMBUMOUNT;  break;
-		case CMD_NCPMOUNT:  type = CMD_NCPUMOUNT;  break;
-		case CMD_FUSEMOUNT: type = CMD_FUSEUMOUNT; break;
-		default:            type = CMD_UMOUNT;     break;
+		case CMD_SMBMOUNT:
+			type = CMD_SMBUMOUNT;
+			break;
+		case CMD_NCPMOUNT:
+			type = CMD_NCPUMOUNT;
+			break;
+		case CMD_FUSEMOUNT:
+			type = CMD_FUSEUMOUNT;
+			break;
+		case CMD_TRUECRYPTMOUNT:
+			type = CMD_TRUECRYPTUMOUNT;
+			break;
+		default:
+			type = CMD_UMOUNT;
+			break;
 	}
 
 	if (config->command[0][type] == NULL)
