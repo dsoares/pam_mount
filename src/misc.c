@@ -344,9 +344,9 @@ void set_myuid(void *data)
 	setsid();
 	chdir("/");
 	if (user == NULL) {
-		w4rn("%s(pre): UID tuple is (%ld, %ld, %ld, %ld)\n", __func__,
-		     static_cast(long, getuid()), static_cast(long, getgid()),
-		     static_cast(long, geteuid()), static_cast(long, getegid()));
+		w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
+		     static_cast(long, getuid()), static_cast(long, geteuid()),
+		     static_cast(long, getgid()), static_cast(long, getegid()));
 		if (setuid(0) < 0) {
 			l0g("error setting uid to 0\n");
 			return;
@@ -378,9 +378,9 @@ void set_myuid(void *data)
 		setenv("HOME", real_user->pw_dir, 1);
 		setenv("USER", real_user->pw_name, 1);
 	}
-	w4rn("%s(post): UID tuple is (%ld, %ld, %ld, %ld)\n", __func__,
-	     static_cast(long, getuid()), static_cast(long, getgid()),
-	     static_cast(long, geteuid()), static_cast(long, getegid()));
+	w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
+	     static_cast(long, getuid()), static_cast(long, geteuid()),
+	     static_cast(long, getgid()), static_cast(long, getegid()));
 	return;
 }
 

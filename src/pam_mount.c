@@ -486,9 +486,9 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		ret = PAM_SERVICE_ERR;
 		goto out;
 	}
-	w4rn("%s: UID tuple (%ld, %ld, %ld, %ld)\n", __func__,
-	     static_cast(long, getuid()), static_cast(long, getgid()),
-	     static_cast(long, geteuid()), static_cast(long, getegid()));
+	w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
+	     static_cast(long, getuid()), static_cast(long, geteuid()),
+	     static_cast(long, getgid()), static_cast(long, getegid()));
 
 	/* This code needs root priv. */
 	for (vol = 0; vol < Config.volcount; ++vol) {
@@ -563,9 +563,9 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	assert(pamh != NULL);
 
 	w4rn("received order to close things\n");
-	w4rn("%s: UID tuple is (%ld, %ld, %ld, %ld)\n", __func__,
-	     static_cast(long, getuid()), static_cast(long, getgid()),
-	     static_cast(long, geteuid()), static_cast(long, getegid()));
+	w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
+	     static_cast(long, getuid()), static_cast(long, geteuid()),
+	     static_cast(long, getgid()), static_cast(long, getegid()));
 	/*
 	 * call pam_get_user() again because ssh calls PAM fns from seperate
  	 * processes.
