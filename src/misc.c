@@ -22,9 +22,6 @@ pam_mount - misc.c
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
 #include <config.h>
-#ifdef HAVE_SETFSUID
-#	include <sys/fsuid.h>
-#endif
 #include <sys/stat.h>
 #include <assert.h>
 #include <limits.h>
@@ -351,12 +348,6 @@ void set_myuid(void *data)
 			l0g("error setting uid to 0\n");
 			return;
 		}
-#ifdef HAVE_SETFSUID
-		if (setfsuid(0) < 0) {
-			l0g("error setting fsuid to 0\n");
-			return;
-		}
-#endif
 	} else {
 		/* Set UID and GID to the user's one */
 		const struct passwd *real_user;

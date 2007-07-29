@@ -47,7 +47,6 @@ AM_CONDITIONAL(FLYN, test "$FLYN")
 
 AC_CHECK_LIB(crypto, EVP_DecryptInit_ex) # RH 8.0's OpenSSL does not have?
 AC_CHECK_LIB(ssl, SSL_load_error_strings)
-AC_CHECK_FUNCS(setfsuid)
 
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
