@@ -200,9 +200,9 @@ filesystems (listed in /proc/filesystem), so you will have to load the
 necessary modules _first_ for them to be recognized with "auto". If this
 attribute is not present, "auto" is assumed.
 
-The "cifs", "davfs", "smbfs", "ncpfs" and "fuse" types override the
-identically-named kernel filesystems and use the smbmount/ncpmount
-programs, as defined above, instead of `mount -t smbfs ...`.
+The "cifs", "davfs", "smbfs", "ncpfs", "fuse" and "truecrypt" types
+override the identically-named kernel filesystems and use the
+helper programs as defined above.
 
 
 SERVER defines the server from which to source. The exact volume path
