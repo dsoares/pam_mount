@@ -90,6 +90,7 @@ fi
 CIPHER=""
 KEYSIZE=""
 HASH=""
+luks_ro="";
 LOOP=false
 DOFSCK=false;
 MOUNTOPTIONS=""
@@ -107,6 +108,11 @@ for opt in $OPTIONS; do
 		(fstype)  FSTYPE="$VAL";;
 		(fsck)    DOFSCK="true";;
 		(*)
+			if [ "$opt" == "ro" ]; then
+				luks_ro="--readonly";
+			elif [ "$opt" == "rw" ]; then
+				luks_ro="";
+			fi;
 			if [ -z "$MOUNTOPTIONS" ]; then
 				MOUNTOPTIONS="$opt"
 			else
@@ -135,7 +141,7 @@ DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
 # Check for LUKS
 if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
 	LUKS=true;
-	cryptsetup luksOpen "$DEVICE" "$DMDEVICE";
+	cryptsetup luksOpen $luks_ro "$DEVICE" "$DMDEVICE";
 else
 	LUKS=false;
 	cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
