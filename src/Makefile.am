@@ -29,8 +29,6 @@ pam_mount_la_LDFLAGS = -module -avoid-version $(GLIB_LIBS) $(XML_LIBS) -lHX
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c buffer-nolibtool.c pair-nolibtool.c xstdlib-nolibtool.c
 pmvarrun_LDFLAGS = $(GLIB_LIBS) -lHX
 
-INCLUDES = -I$(srcdir)/../include
-
 AM_CFLAGS = $(GLIB_CFLAGS) $(XML_CPPFLAGS) -DG_DISABLE_DEPRECATED \
 	-D_LARGEFILE_SOURCE=1 -D_LARGE_FILES -D_FILE_OFFSET_BITS=64 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
