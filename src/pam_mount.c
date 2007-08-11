@@ -83,13 +83,17 @@ static void parse_pam_args(int argc, const char **argv)
 		assert(argv[i] != NULL);
 
 	/* first, set default values */
-	Args.auth_type = GET_PASS;
+	Args.auth_type       = GET_PASS;
+	Args.password_prompt = "pam_mount password:";
+
 	for (i = 0; i < argc; ++i) {
 		w4rn("pam_sm_open_session args: %s\n", argv[i]);
 		if (strcmp("use_first_pass", argv[i]) == 0)
 			Args.auth_type = USE_FIRST_PASS;
 		else if (strcmp("try_first_pass", argv[i]) == 0)
 			Args.auth_type = TRY_FIRST_PASS;
+		else if (strncmp(argv[i], "password_prompt=", 7) == 0)
+			Args.password_prompt = argv[i] + 7;
 		else
 			w4rn("bad pam_mount option\n");
 	}
@@ -262,8 +266,9 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			authtok = xstrdup(ptr);
 		}
 	}
-	if (!authtok) { /* get password directly */
-		ret = read_password(pamh, "pam_mount password:", &authtok);
+	if (authtok == NULL) {
+		/* get password directly */
+		ret = read_password(pamh, Args.password_prompt, &authtok);
 		if (ret != PAM_SUCCESS) {
 			l0g("error trying to read password\n");
 			goto out;
