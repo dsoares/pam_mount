@@ -447,15 +447,18 @@ static int mkmountpoint(struct vol *const volume, const char *const d)
 	return ret;
 }
 
-int do_unmount(const struct config *config, const unsigned int vol,
-    struct HXbtree *vinfo, const char *const password, const bool mkmntpoint)
-{
-/* PRE:    config points to a valid struct config
- *         config->volume[vol] is a valid struct vol
- *         mkmntpoint is true if mount point should be rmdir'ed
- * POST:   volume is unmounted
- * FN VAL: if error 0 else 1, errors are logged
+/*
+ * do_unmount
+ * @config:	current config
+ * @vol:	volume index into @config->vol[]
+ * @vinfo:
+ * @password:	always %NULL
+ *
+ * Returns zero on error, positive non-zero for success.
  */
+int do_unmount(const struct config *config, const unsigned int vol,
+    struct HXbtree *vinfo, const char *const password)
+{
 	GError *err = NULL;
 	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
@@ -531,9 +534,10 @@ int do_unmount(const struct config *config, const unsigned int vol,
 	}
  out:
 	spawn_restore_sigchld();
-	if (mkmntpoint && config->rmdir_mntpt && vpt->created_mntpt &&
-	    rmdir(vpt->mountpoint) < 0) /* non-fatal */
-		w4rn("could not remove %s\n", vpt->mountpoint);
+	if (config->mkmntpoint && config->rmdir_mntpt && vpt->created_mntpt)
+		if (rmdir(vpt->mountpoint) < 0)
+			/* non-fatal, but warn */
+			w4rn("could not remove %s\n", vpt->mountpoint);
 	return ret;
 }
 
@@ -759,12 +763,11 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
  * @vol:	volume index into @config->vol[]
  * @vinfo:
  * @password:
- * @mkmntpoint:	whether to create mountpoint if it does not exist
  *
  * Returns zero on error, positive non-zero for success.
  */
 int do_mount(const struct config *config, const unsigned int vol,
-    struct HXbtree *vinfo, const char *password, const bool mkmntpoint)
+    struct HXbtree *vinfo, const char *password)
 {
 	const char *_argv[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];
@@ -807,7 +810,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 		}
 	}
 	if (!exists(vpt->mountpoint)) {
-		if (mkmntpoint) {
+		if (config->mkmntpoint) {
 			if (!mkmountpoint(vpt, vpt->mountpoint))
 				return 0;
 		} else {
@@ -929,13 +932,12 @@ int do_mount(const struct config *config, const unsigned int vol,
  * @config:
  * @vol:	volume index into @config->volume[]
  * @password:	password string (may be %NULL on unmount)
- * @mkmntpoint:	whether to create mountpoint if it does not exist
  *
  * Returns zero on error, positive non-zero for success.
  * Note: Checked by volume_record_sane() and read_volume()
  */
 int mount_op(mount_op_fn_t *mnt, const struct config *config,
-    const unsigned int vol, const char *password, bool mkmntpoint)
+    const unsigned int vol, const char *password)
 {
 	int fnval;
 	struct HXbtree *vinfo;
@@ -971,7 +973,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	if (Debug)
 		log_pm_input(config, vol);
 
-	fnval = mnt(config, vol, vinfo, password, mkmntpoint);
+	fnval = (*mnt)(config, vol, vinfo, password);
 	HXformat_free(vinfo);
 	return fnval;
 }

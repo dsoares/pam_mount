@@ -510,8 +510,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 			continue;
 		w4rn("about to perform mount operations\n");
 
-		if (!mount_op(do_mount, &Config, vol, system_authtok,
-		    Config.mkmntpoint)) {
+		if (!mount_op(do_mount, &Config, vol, system_authtok)) {
 			l0g("mount of %s failed\n", Config.volume[vol].volume);
 			ret = PAM_SERVICE_ERR;
 		}
@@ -599,8 +598,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		/* Unmount in reverse order to facilitate nested mounting. */
 		for (vol = Config.volcount - 1; vol >= 0; --vol) {
 			w4rn("going to unmount\n");
-			if (!mount_op(do_unmount, &Config, vol, NULL,
-			    Config.mkmntpoint))
+			if (!mount_op(do_unmount, &Config, vol, NULL))
 				l0g("unmount of %s failed\n",
 				    Config.volume[vol].volume);
 		}
