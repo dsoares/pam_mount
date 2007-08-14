@@ -401,14 +401,14 @@ static void log_pm_input(const struct config *const config,
 }
 
 /*
- * mkmountpoint - create mountpoint directory
+ * mkmountpoint_real - create mountpoint directory
  * @volume:	volume description
  * @d:		directory
  *
  * If the directory @d does not exist, create it and all its parents if
  * @volume->created_mntpt = true. On success, returns 1, otherwise 0.
  */
-static bool mkmountpoint(struct vol *const volume, const char *const d)
+static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 {
 	bool ret = true;
 	struct passwd *passwd_ent;
@@ -445,6 +445,35 @@ static bool mkmountpoint(struct vol *const volume, const char *const d)
  out:
 	free(parent);
 	return ret;
+}
+
+/*
+ * mkmountpoint - create mountpoint for volume
+ * @volume:	volume structure
+ * @d:		directory to create
+ *
+ * Switches to the volume user's identity and see if we can create the
+ * mountpoint. This is required for NFS mounts with root_squash enabled
+ * (assuming the mountpoint's parent is writable by the user, e.g. if it is
+ * inside the user's home directory).
+ *
+ * If that fails, do as usual (create as root, chown to user).
+ */
+static bool mkmountpoint(struct vol *volume, const char *d)
+{
+	struct passwd *pe;
+
+	if ((pe = getpwnam(volume->user)) == NULL) {
+		l0g("getpwuid: %s\n", strerror(errno));
+		return false;
+	}
+
+	if (seteuid(pe->pw_uid) == 0)
+		if (mkmountpoint_real(volume, d))
+			return true;
+
+	seteuid(0);
+	return mkmountpoint_real(volume, d);
 }
 
 /*
