@@ -441,7 +441,7 @@ static int mkmountpoint(struct vol *const volume, const char *const d)
 		ret = 0;
 		goto out;
 	}
-	volume->created_mntpt = 1;
+	volume->created_mntpt = true;
  out:
 	free(parent);
 	return ret;
@@ -531,7 +531,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 	}
  out:
 	spawn_restore_sigchld();
-	if (mkmntpoint != 0 && vpt->created_mntpt &&
+	if (mkmntpoint && vpt->created_mntpt &&
 	    rmdir(vpt->mountpoint) < 0) /* non-fatal */
 		w4rn("could not remove %s\n", vpt->mountpoint);
 	return ret;
