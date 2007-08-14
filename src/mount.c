@@ -531,7 +531,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 	}
  out:
 	spawn_restore_sigchld();
-	if (mkmntpoint && vpt->created_mntpt &&
+	if (mkmntpoint && config->rmdir_mntpt && vpt->created_mntpt &&
 	    rmdir(vpt->mountpoint) < 0) /* non-fatal */
 		w4rn("could not remove %s\n", vpt->mountpoint);
 	return ret;

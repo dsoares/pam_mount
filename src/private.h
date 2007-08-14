@@ -57,7 +57,7 @@ struct vol {
 	enum command_type type;
 	/* true if configuration from global config, false if luserconf */
 	bool globalconf;
-	/* set, so that umount will rmdir it */
+	/* set, so that umount can rmdir it */
 	bool created_mntpt;
 	char fs_key_cipher[MAX_PAR + 1];
 	char fs_key_path[PATH_MAX + 1];
@@ -78,7 +78,7 @@ struct config {
 	/* user logging in */
 	char *user;
 	bool debug;
-	bool mkmntpoint;
+	bool mkmntpoint, rmdir_mntpt;
 	unsigned int volcount;
 	char luserconf[PATH_MAX + 1];
 	char fsckloop[PATH_MAX + 1];

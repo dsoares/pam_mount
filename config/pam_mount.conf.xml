@@ -18,8 +18,13 @@ entirely. -->
 <debug enable="0" />
 
 
-<!-- Create mountpoint if it does not exist yet. This is a good thing. -->
-<mkmountpoint enable="1" />
+<!--
+Create mountpoint if it does not exist yet. This is a good thing.
+
+If enabled, and a mountpoint was created by pam_mount, the mountpoint will
+be removed again on logout. To disable this behavior, use remove="false".
+-->
+<mkmountpoint enable="1" remove="true" />
 
 
 <!-- Loopback device to use to run fsck on loopback filesystems. -->

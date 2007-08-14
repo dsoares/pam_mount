@@ -395,6 +395,12 @@ static inline char *get_next_argument(char **sptr)
 	return ret;
 }
 
+static inline bool parse_bool(const char *s)
+{
+	return strcasecmp(s, "yes") == 0 || strcasecmp(s, "on") == 0||
+	       strcasecmp(s, "true") == 0 || strcmp(s, "1") == 0;
+}
+
 static inline int strcmp_1u(const xmlChar *a, const char *b)
 {
 	return strcmp(reinterpret_cast(const char *, a), b);
@@ -520,6 +526,9 @@ static const char *rc_mkmountpoint(xmlNode *node, struct config *config, int c)
 	char *s;
 	if ((s = xmlGetProp_2s(node, "enable")) != NULL)
 		config->mkmntpoint = strtol(s, NULL, 0);
+	free(s);
+	if ((s = xmlGetProp_2s(node, "remove")) != NULL)
+		config->rmdir_mntpt = parse_bool(s);
 	free(s);
 	return NULL;
 }
