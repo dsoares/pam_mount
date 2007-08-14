@@ -65,7 +65,7 @@ static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
 static void log_output(int);
 static void log_pm_input(const struct config * const, const unsigned int);
-static int mkmountpoint(struct vol * const, const char * const);
+static bool mkmountpoint(struct vol * const, const char * const);
 static int pipewrite(int, const void *, size_t);
 static void run_lsof(const struct config * const, struct HXbtree *);
 static void vol_to_dev(char *, size_t, const struct vol *);
@@ -408,9 +408,9 @@ static void log_pm_input(const struct config *const config,
  * If the directory @d does not exist, create it and all its parents if
  * @volume->created_mntpt = true. On success, returns 1, otherwise 0.
  */
-static int mkmountpoint(struct vol *const volume, const char *const d)
+static bool mkmountpoint(struct vol *const volume, const char *const d)
 {
-	int ret = 1;
+	bool ret = true;
 	struct passwd *passwd_ent;
 	char dcopy[PATH_MAX + 1], *parent;
 
@@ -422,23 +422,23 @@ static int mkmountpoint(struct vol *const volume, const char *const d)
 	dcopy[sizeof_z(dcopy)] = '\0';
 	parent = g_path_get_dirname(dcopy);
 	if (!exists(parent) && mkmountpoint(volume, parent) == 0) {
-		ret = 0;
+		ret = false;
 		goto out;
 	}
 	if ((passwd_ent = getpwnam(volume->user)) != NULL) {
 		if (mkdir(d, 0700) < 0) {
 			l0g("tried to create %s but failed\n", d);
-			ret = 0;
+			ret = false;
 			goto out;
 		}
 		if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid) < 0) {
 			l0g("could not chown %s to %s\n", d, volume->user);
-			ret = 0;
+			ret = false;
 			goto out;
 		}
 	} else {
 		l0g("could not determine uid from %s to make %s\n", volume->user, d);
-		ret = 0;
+		ret = false;
 		goto out;
 	}
 	volume->created_mntpt = true;
