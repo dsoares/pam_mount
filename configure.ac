@@ -23,30 +23,31 @@
 AC_INIT(pam_mount, 0.19)
 AC_CONFIG_HEADERS(config.h)
 AM_INIT_AUTOMAKE
-
-AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],
-    [Path to the super lib directory [[/lib]]]),
-    [slibdir="$withval"], [slibdir="/lib"])
-AC_ARG_WITH([ssbindir], AS_HELP_STRING([--with-ssbindir=PATH],
-    [Path to the super sbin directory [[/sbin]]]),
-    [ssbindir="$withval"], [ssbindir="/sbin"])
-AC_SUBST(slibdir)
-AC_SUBST(ssbindir)
-
 AC_PROG_CC
-
-m4_sinclude(m4lib/gcc4_visibility.m4)
-AC_PROG_INSTALL
+AM_PROG_CC_C_O
 AC_DISABLE_STATIC
 AM_PROG_LIBTOOL
-AC_PROG_LN_S
 AM_PATH_GLIB_2_0(,,AC_MSG_ERROR(You are missing glib))
 AM_PATH_XML2(,,AC_MSG_ERROR(You are missing libxml2))
 
-AM_CONDITIONAL(FLYN, test "$FLYN")
+AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],
+	[Path to the super lib directory [[/lib]]]),
+	[slibdir="$withval"], [slibdir="/lib"])
+AC_SUBST(slibdir)
+AC_ARG_WITH([ssbindir], AS_HELP_STRING([--with-ssbindir=PATH],
+	[Path to the super sbin directory [[/sbin]]]),
+	[ssbindir="$withval"], [ssbindir="/sbin"])
+AC_SUBST(ssbindir)
 
+m4_sinclude(m4lib/gcc4_visibility.m4)
 AC_CHECK_LIB(crypto, EVP_DecryptInit_ex) # RH 8.0's OpenSSL does not have?
 AC_CHECK_LIB(ssl, SSL_load_error_strings)
+
+AC_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGE_FILES -D_FILE_OFFSET_BITS=64 \
+	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
+	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
+	-Winline -pipe"
+AC_SUBST(AC_CFLAGS)
 
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
@@ -59,24 +60,23 @@ AC_CHECK_HEADER([libHX.h], [],
 #	error You need a newer version of libHX (at least 1.10.0)
 #endif
 ])
-AC_CHECK_HEADER(security/pam_modules.h,[have_pamheader="yes"],)
+AC_CHECK_HEADER(security/pam_modules.h, [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
-AC_CHECK_HEADER(pam/pam_modules.h,[have_pamheader="yes"],)
+AC_CHECK_HEADER(pam/pam_modules.h, [have_pamheader="yes"])
 if test x"$have_pamheader" != x"yes"; then
-	AC_MSG_ERROR(You are missing PAM headers)
+	AC_MSG_ERROR([You are missing PAM headers])
 fi
 
 case "$host" in
-  *-*-linux*)
-    # See also <configure-flags> in pam_mount.xml.
-    PAM_MODDIR="\$(slibdir)/security"
-    ;;
-  *-*-darwin*)
-    PAM_MODDIR="/usr/lib/pam"
-    ;;
-  *)
-    PAM_MODDIR="/usr/lib"
-    ;;
+    (*-*-linux*)
+	PAM_MODDIR='${slibdir}/security'
+	;;
+    (*-*-darwin*)
+	PAM_MODDIR="/usr/lib/pam"
+	;;
+    (*)
+	PAM_MODDIR="/usr/lib"
+	;;
 esac
 AC_SUBST(PAM_MODDIR)
 

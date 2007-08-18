@@ -26,7 +26,7 @@ module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
 
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c pair.c optlist.c buffer.c spawn.c xstdlib.c
-pam_mount_la_LDADD   = -lHX
+pam_mount_la_LIBADD  = -lHX
 pam_mount_la_LDFLAGS = -module -avoid-version $(GLIB_LIBS) $(XML_LIBS)
 
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c buffer-nolibtool.c pair-nolibtool.c xstdlib-nolibtool.c
@@ -34,10 +34,7 @@ pmvarrun_LDADD   = -lHX
 pmvarrun_LDFLAGS = $(GLIB_LIBS)
 
 AM_CFLAGS = $(GLIB_CFLAGS) $(XML_CPPFLAGS) -DG_DISABLE_DEPRECATED \
-	-D_LARGEFILE_SOURCE=1 -D_LARGE_FILES -D_FILE_OFFSET_BITS=64 \
-	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
-	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
-	-Winline -pipe @GCC_FVISIBILITY_HIDDEN@
+	$(AC_CFLAGS) $(GCC_FVISIBILITY_HIDDEN)
 
 install-data-hook:
 	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;
