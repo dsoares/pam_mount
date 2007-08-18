@@ -1,3 +1,5 @@
+# -*- Makefile -*-
+#
 #   FILE: Makefile.am --
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
 #   DATE: 03 August 2002
@@ -19,48 +21,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-if FLYN
-# For local development use only.
-include /etc/fctk/config.mk
-endif
-
 man_MANS = autoehd.8 mount.crypt.8 pam_mount.8 pmvarrun.8 \
            mkehd.1 mount_ehd.8 passwdehd.8 umount.crypt.8
 
 EXTRA_DIST = pam_mount.spec $(man_MANS)
-
-if FLYN
-# For local development use only.
-README: pam_mount.xml
-	xsltproc -o README /usr/share/fctk/README.xslt pam_mount.xml
-
-pam_mount.html: pam_mount.xml
-	xsltproc -o pam_mount.html /usr/share/fctk/webpage.xslt pam_mount.xml
-
-pam_mount_summary.html: pam_mount.xml
-	xsltproc -o pam_mount_summary.html /usr/share/fctk/html_summary.xslt pam_mount.xml
-
-pam_mount.spec: pam_mount.xml
-	xsltproc -o pam_mount.spec --stringparam version $(VERSION) /usr/share/fctk/spec.xslt pam_mount.xml
-
-control: pam_mount.xml
-	xsltproc -o control /usr/share/fctk/control.xslt pam_mount.xml
-
-pam_mount.8: pam_mount.xml
-	xsltproc -o pam_mount.8 /usr/share/fctk/manpage.xslt pam_mount.xml
-
-maintainer-clean-local:
-	rm -f control
-	rm -f new.html
-	rm -f $(PACKAGE).spec
-	rm -f $(PACKAGE)_summary.html
-	rm -f pam_mount.8
-	rm -f README
-	rm -f usage_$(PACKAGE).c
-
-# ============================= all ===========================================
-all: $(PACKAGE).spec README pam_mount.html pam_mount_summary.html control
-	cp README ..
-	cp control ../debian
-
-endif

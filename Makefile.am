@@ -1,3 +1,5 @@
+# -*- Makefile -*-
+
 #   FILE: Makefile.am --
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
 #   DATE: 03 August 2002
@@ -19,38 +21,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-if FLYN
-# For local development use only.
-include /etc/fctk/config.mk
-endif
-
 AUTOMAKE_OPTIONS = foreign
-
 EXTRA_DIST = autogen.sh AUTHORS FAQ LICENSE.GPL2 LICENSE.LGPL2
-
 SUBDIRS = src config scripts dry
-
-if FLYN
-# For local development use only.
-# ============================= dist-hook =====================================
-dist-hook:
-	make dry
-
-# ============================= rpm ============================================
-rpm: dry dist
-	$(BUILD_RPM)
-
-# ============================= deb ===========================================
-deb: dry dist
-	$(BUILD_DEB)
-
-# ============================= check ==========================================
-check: rpm
-	$(CHECK)
-
-# ============================= publish ========================================
-publish: dry/pam_mount.html rpm deb
-	$(PUBLISH)
-
-endif

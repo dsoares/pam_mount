@@ -1,3 +1,5 @@
+# -*- Makefile -*-
+#
 #   FILE: Makefile.am --
 # AUTHOR: W. Michael Petullo <mike@flyn.org>
 #   DATE: 06 October 2002
