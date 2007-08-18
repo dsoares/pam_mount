@@ -111,16 +111,17 @@ static void log_output(int fd) {
 static void run_lsof(const struct config *const config,
     struct HXbtree *vinfo)
 {
-	int i, _argc = 0, cstdout = -1, child_exit;
+	int _argc = 0, cstdout = -1, child_exit;
 	const char *_argv[MAX_PAR + 1];
 	GError *err = NULL;
+	unsigned int i;
 	pid_t pid;
 
-	if (config->command[0][CMD_LSOF] == NULL)
+	if (config->command[CMD_LSOF][0] == NULL)
 		l0g("lsof not defined in pam_mount.conf.xml\n");
 	/* FIXME: NEW */
-	for (i = 0; config->command[i][CMD_LSOF] != NULL; i++)
-		add_to_argv(_argv, &_argc, config->command[i][CMD_LSOF], vinfo);
+	for (i = 0; config->command[CMD_LSOF][i] != NULL; ++i)
+		add_to_argv(_argv, &_argc, config->command[CMD_LSOF][i], vinfo);
 	log_argv(_argv);
 
 	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
@@ -489,10 +490,11 @@ int do_unmount(const struct config *config, const unsigned int vol,
     struct HXbtree *vinfo, const char *const password)
 {
 	GError *err = NULL;
-	int i, child_exit, _argc = 0, ret = 1, cstderr = -1;
+	int child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
 	const char *_argv[MAX_PAR + 1];
 	const struct vol *vpt;
+	unsigned int i;
 	int type;
 
 	assert(config_valid(config));
@@ -526,11 +528,11 @@ int do_unmount(const struct config *config, const unsigned int vol,
 			break;
 	}
 
-	if (config->command[0][type] == NULL)
+	if (config->command[type][0] == NULL)
 		l0g("{smb,ncp}umount not defined in pam_count.conf.xml\n");
 
-	for (i = 0; config->command[i][type] != NULL; ++i)
-		add_to_argv(_argv, &_argc, config->command[i][type], vinfo);
+	for (i = 0; config->command[type][i] != NULL; ++i)
+		add_to_argv(_argv, &_argc, config->command[type][i], vinfo);
 
 	/*
 	 * FIXME: ugly hack to support umount.crypt script. I hope that
@@ -611,10 +613,11 @@ static int do_losetup(const struct config *config, const unsigned int vol,
  */
 	pid_t pid;
 	GError *err = NULL;
-	int i, ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
+	int ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
 	const char *cipher, *keybits;
 	const struct vol *vpt;
+	unsigned int i;
 
 	assert(config_valid(config));
 	assert(vinfo != NULL);
@@ -626,7 +629,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	cipher  = optlist_value(vpt->options, "encryption");
 	keybits = optlist_value(vpt->options, "keybits");
 
-	if (config->command[0][CMD_LOSETUP] == NULL) {
+	if (config->command[CMD_LOSETUP][0] == NULL) {
 		l0g("losetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
@@ -637,8 +640,9 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 		if (keybits != NULL)
 			format_add(vinfo, "KEYBITS", keybits);
 	}
-	for (i = 0; config->command[i][CMD_LOSETUP] != NULL; ++i)
-	    add_to_argv(_argv, &_argc, config->command[i][CMD_LOSETUP], vinfo);
+	for (i = 0; config->command[CMD_LOSETUP][i] != NULL; ++i)
+		add_to_argv(_argv, &_argc,
+		            config->command[CMD_LOSETUP][i], vinfo);
 
 	log_argv(_argv);
 	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
@@ -679,20 +683,21 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 	pid_t pid;
 	GError *err = NULL;
 	const char *_argv[MAX_PAR + 1];
-	int i, child_exit, _argc = 0;
+	int child_exit, _argc = 0;
+	unsigned int i;
 
 	assert(config_valid(config));
 	assert(vinfo != NULL);
 
-	if (config->command[0][CMD_UNLOSETUP] == NULL) {
+	if (config->command[CMD_UNLOSETUP][0] == NULL) {
 		l0g("unlosetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
 	/* FIXME: NEW */
-	for (i = 0; config->command[i][CMD_UNLOSETUP] != NULL; i++)
+	for (i = 0; config->command[CMD_UNLOSETUP][i] != NULL; ++i)
 		add_to_argv(_argv, &_argc,
-		            config->command[i][CMD_UNLOSETUP], vinfo);
+		            config->command[CMD_UNLOSETUP][i], vinfo);
 	log_argv(_argv);
 	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
 	    NULL, &pid, NULL, NULL, NULL, &err)) {
@@ -719,11 +724,12 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 #if defined (__linux__)
 	pid_t pid;
 	GError *err = NULL;
-	int i, child_exit, _argc = 0, cstdout = -1, cstderr = -1;
+	int child_exit, _argc = 0, cstdout = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
 	char options[MAX_PAR + 1];
 	const char *fsck_target;
 	const struct vol *vpt;
+	unsigned int i;
 
 	assert(config_valid(config));
 	assert(vinfo != NULL);
@@ -734,7 +740,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	vpt = &config->volume[vol];
 	fsck_target = vpt->volume;
 
-	if (config->command[0][CMD_FSCK] == NULL) {
+	if (config->command[CMD_FSCK][0] == NULL) {
 		l0g("fsck not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
@@ -755,8 +761,8 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	/* FIXME: NEW */
 	/* FIXME: need to fsck /dev/mapper/whatever... */
 	format_add(vinfo, "FSCKTARGET", fsck_target);
-	for (i = 0; config->command[i][CMD_FSCK]; i++)
-		add_to_argv(_argv, &_argc, config->command[i][CMD_FSCK], vinfo);
+	for (i = 0; config->command[CMD_FSCK][i]; ++i)
+		add_to_argv(_argv, &_argc, config->command[CMD_FSCK][i], vinfo);
 
 	log_argv(_argv);
 	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
@@ -801,11 +807,12 @@ int do_mount(const struct config *config, const unsigned int vol,
 	const char *_argv[MAX_PAR + 1];
 	char prev_mntpt[PATH_MAX + 1];
 	size_t _password_len;
-	int i, mount_again = 0;
+	int mount_again = 0;
 	unsigned char _password[MAX_PAR + EVP_MAX_BLOCK_LENGTH];
 	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
 	pid_t pid = -1;
 	struct vol *vpt;
+	unsigned int i;
 
 	assert(config_valid(config));
 	assert(vinfo != NULL);
@@ -851,15 +858,15 @@ int do_mount(const struct config *config, const unsigned int vol,
 	}
 	if (mount_again) {
 		GError *err = NULL;
-		if (config->command[0][CMD_MNTAGAIN] == NULL) {
+		if (config->command[CMD_MNTAGAIN][0] == NULL) {
 			l0g("mntagain not defined in pam_mount.conf.xml\n");
 			return 0;
 		}
 		/* FIXME: NEW */
 		format_add(vinfo, "PREVMNTPT", prev_mntpt);
-		for (i = 0; config->command[i][CMD_MNTAGAIN] != NULL; i++)
+		for (i = 0; config->command[CMD_MNTAGAIN][i] != NULL; ++i)
 			add_to_argv(_argv, &_argc,
-			            config->command[i][CMD_MNTAGAIN], vinfo);
+			            config->command[CMD_MNTAGAIN][i], vinfo);
 		log_argv(_argv);
 		if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
 		    set_myuid, NULL, &pid, NULL, NULL, &cstderr, &err)) {
@@ -870,7 +877,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 	} else {
 		GError *err = NULL;
 		char *mount_user;
-		if (config->command[0][vpt->type] == NULL) {
+		if (config->command[vpt->type][0] == NULL) {
 			l0g("proper mount command not defined in "
 			    "pam_mount.conf.xml\n");
 			return 0;
@@ -908,9 +915,9 @@ int do_mount(const struct config *config, const unsigned int vol,
 		   l0g("volume type (%d) is unknown\n", vpt->type);
 		   return 0;
 		 */
-		for (i = 0; config->command[i][vpt->type] != NULL; ++i)
+		for (i = 0; config->command[vpt->type][i] != NULL; ++i)
 			add_to_argv(_argv, &_argc,
-			            config->command[i][vpt->type], vinfo);
+			            config->command[vpt->type][i], vinfo);
 
 		if (vpt->type == CMD_LCLMOUNT &&
 		    !check_filesystem(config, vol, vinfo, _password, _password_len))

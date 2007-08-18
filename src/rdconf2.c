@@ -174,7 +174,7 @@ bool volume_record_sane(const struct config *config, int vol)
 	vpt = &config->volume[vol];
 
 	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
-	if (!config->command[0][vpt->type]) {
+	if (config->command[vpt->type][0] == NULL) {
 		l0g("mount command not defined for this type\n");
 		return 0;
 	}
@@ -189,7 +189,7 @@ bool volume_record_sane(const struct config *config, int vol)
 		l0g("NCP volume definition missing user option\n");
 		return 0;
 	}
-	if (config->command[0][CMD_UMOUNT] == NULL) {
+	if (config->command[CMD_UMOUNT][0] == NULL) {
 		l0g("umount command not defined\n");
 		return 0;
 	}

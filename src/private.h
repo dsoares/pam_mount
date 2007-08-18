@@ -82,7 +82,7 @@ struct config {
 	unsigned int volcount;
 	char luserconf[PATH_MAX + 1];
 	char fsckloop[PATH_MAX + 1];
-	char *command[MAX_PAR + 1][_CMD_MAX];
+	char *command[_CMD_MAX][MAX_PAR+1];
 	optlist_t *options_require;
 	optlist_t *options_allow;
 	optlist_t *options_deny;

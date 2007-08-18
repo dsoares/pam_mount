@@ -126,19 +126,21 @@ int expandconfig(const struct config *config)
  */
 void freeconfig(struct config *config)
 {
-	int i, j;
+	unsigned int i, j;
+
 	for (i = 0; i < _CMD_MAX; ++i) {
-		free(config->command[0][i]);
-		for (j = 0; config->command[j][i] != NULL; ++j)
-			config->command[j][i] = NULL;
+		free(config->command[i][0]);
+		for (j = 0; config->command[i][j] != NULL; ++j)
+			config->command[i][j] = NULL;
 	}
+
 	free(config->user);
 	return;
 }
 
 void initconfig(struct config *config)
 {
-	int i, j;
+	unsigned int i, j;
 
 	memset(config, 0, sizeof(*config));
 	config->debug      = 1;
@@ -147,7 +149,7 @@ void initconfig(struct config *config)
 
 	for (i = 0; default_command[i].type != -1; ++i)
 		for (j = 0; default_command[i].def[j] != NULL; ++j)
-			config->command[j][default_command[i].type] =
+			config->command[default_command[i].type][j] =
 				xstrdup(default_command[i].def[j]);
 
 	return;
@@ -444,8 +446,8 @@ static inline char *xmlGetProp_2s(xmlNode *node, const char *attr)
 //-----------------------------------------------------------------------------
 static const char *rc_command(xmlNode *node, struct config *config, int cmd)
 {
+	unsigned int n = 0;
 	char *arg, *wp;
-	int n = 0;
 
 	if (config->level != CONTEXT_GLOBAL)
 		return "Tried to set command from user config\n";
@@ -463,7 +465,7 @@ static const char *rc_command(xmlNode *node, struct config *config, int cmd)
 			 * @config->command[0][cmd] will be the pointer to the
 			 * block to free later.
 			 */
-			config->command[n++][cmd] = arg;
+			config->command[cmd][n++] = arg;
 
 		/* No hassle to support comment-split tags. */
 		break;
