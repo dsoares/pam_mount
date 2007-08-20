@@ -525,7 +525,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	modify_pm_count(&Config, Config.user, "1");
 	/* end root priv. */
  out:
-	w4rn("done opening session\n");
+	w4rn("done opening session (ret=%d)\n", ret);
 	return ret;
 }
 
