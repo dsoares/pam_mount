@@ -33,7 +33,7 @@ pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c buffer-nolibtool.c pair-nolibtool
 pmvarrun_LDADD   = -lHX
 pmvarrun_LDFLAGS = $(GLIB_LIBS)
 
-AM_CFLAGS = $(GLIB_CFLAGS) $(XML_CFLAGS) -DG_DISABLE_DEPRECATED \
+AM_CFLAGS = $(GLIB_CFLAGS) $(XML_CPPFLAGS) -DG_DISABLE_DEPRECATED \
             $(regular_CFLAGS) $(GCC_FVISIBILITY_HIDDEN)
 
 install-data-hook:
