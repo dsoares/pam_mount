@@ -91,6 +91,8 @@ static void parse_pam_args(int argc, const char **argv)
 			Args.auth_type = USE_FIRST_PASS;
 		else if (strcmp("try_first_pass", argv[i]) == 0)
 			Args.auth_type = TRY_FIRST_PASS;
+		else if (strcmp("soft_try_pass", argv[i]) == 0)
+			Args.auth_type = SOFT_TRY_PASS;
 		else
 			w4rn("bad pam_mount option\n");
 	}
@@ -267,6 +269,10 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		goto out;
 	}
 	if (authtok == NULL) {
+		if (Args.auth_type == SOFT_TRY_PASS) {
+			ret = PAM_AUTHINFO_UNAVAIL;
+			goto out;
+		}
 		/* get password directly */
 		ret = read_password(pamh, Config.msg_authpw, &authtok);
 		if (ret != PAM_SUCCESS) {
@@ -411,6 +417,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	assert(pamh != NULL);
 
 	initconfig(&Config);
+	parse_pam_args(argc, argv);
 	/*
 	 * call pam_get_user again because ssh calls PAM fns from seperate
  	 * processes.
@@ -443,6 +450,10 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	ret = pam_get_data(pamh, "pam_mount_system_authtok",
 	      static_cast(const void **, static_cast(void *, &system_authtok)));
 	if (ret != PAM_SUCCESS) {
+		if (Args.auth_type == SOFT_TRY_PASS) {
+			ret = PAM_AUTHINFO_UNAVAIL;
+			goto out;
+		}
 		l0g("error trying to retrieve authtok from auth code\n");
 		ret = read_password(pamh, Config.msg_sessionpw, &system_authtok);
 		if (ret != PAM_SUCCESS) {

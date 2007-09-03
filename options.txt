@@ -15,3 +15,7 @@ use_first_pass
 try_first_pass
 	Try taking the password from the PAM subsystem;
 	if it fails, ask for password.
+
+soft_try_pass
+	Try taking the password frmo the PAM subsystem;
+	if it fails, do not ask.
