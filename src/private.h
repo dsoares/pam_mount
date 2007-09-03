@@ -88,6 +88,7 @@ struct config {
 	optlist_t *options_deny;
 	struct vol *volume;
 	int level;
+	char *msg_authpw, *msg_sessionpw;
 };
 
 #endif /* PMT_PRIVATE_H */

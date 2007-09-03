@@ -13,7 +13,6 @@ enum auth_type {
 
 struct pam_args {
 	enum auth_type auth_type;
-	const char *password_prompt;
 };
 
 /*

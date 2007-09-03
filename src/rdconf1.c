@@ -60,6 +60,11 @@ enum wildcard_type {
 	WC_SGRP,    /* in secondary group */
 };
 
+enum {
+	CMDA_AUTHPW,
+	CMDA_SESSIONPW,
+};
+
 struct callbackmap {
 	const char *name;
 	const char *(*func)(xmlNode *, struct config *, int);
@@ -135,6 +140,8 @@ void freeconfig(struct config *config)
 	}
 
 	free(config->user);
+	free(config->msg_authpw);
+	free(config->msg_sessionpw);
 	return;
 }
 
@@ -567,6 +574,24 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config, int cmd)
 	return NULL;
 }
 
+static const char *rc_string(xmlNode *node, struct config *config, int cmd)
+{
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_TEXT_NODE)
+			continue;
+		switch (cmd) {
+			case CMDA_AUTHPW:
+				config->msg_authpw = xstrdup(signed_cast(const char *, node->content));
+				break;
+			case CMDA_SESSIONPW:
+				config->msg_sessionpw = xstrdup(signed_cast(const char *, node->content));
+				break;
+		}
+		break;
+	}
+	return NULL;
+}
+
 static const char *rc_volume_inter(struct config *config,
     const struct volume_attrs *attr)
 {
@@ -802,6 +827,8 @@ static const struct callbackmap cf_tags[] = {
 	{"mntagain",        rc_command,             CMD_MNTAGAIN},
 	{"mntcheck",        rc_command,             CMD_MNTCHECK},
 	{"mntoptions",      rc_mntoptions,          CMD_NONE},
+	{"msg-authpw",      rc_string,              CMDA_AUTHPW},
+	{"msg-sessionpw",   rc_string,              CMDA_SESSIONPW},
 	{"nfsmount",        rc_command,             CMD_NFSMOUNT},
 	{"ncpmount",        rc_command,             CMD_NCPMOUNT},
 	{"ncpumount",       rc_command,             CMD_NCPUMOUNT},

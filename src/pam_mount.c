@@ -83,8 +83,7 @@ static void parse_pam_args(int argc, const char **argv)
 		assert(argv[i] != NULL);
 
 	/* first, set default values */
-	Args.auth_type       = GET_PASS;
-	Args.password_prompt = "pam_mount password:";
+	Args.auth_type  = GET_PASS;
 
 	for (i = 0; i < argc; ++i) {
 		w4rn("pam_sm_open_session args: %s\n", argv[i]);
@@ -92,8 +91,6 @@ static void parse_pam_args(int argc, const char **argv)
 			Args.auth_type = USE_FIRST_PASS;
 		else if (strcmp("try_first_pass", argv[i]) == 0)
 			Args.auth_type = TRY_FIRST_PASS;
-		else if (strncmp(argv[i], "password_prompt=", 7) == 0)
-			Args.password_prompt = argv[i] + 7;
 		else
 			w4rn("bad pam_mount option\n");
 	}
@@ -195,13 +192,12 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass)
 	struct pam_response *resp = NULL;
 
 	assert(pamh != NULL);
-	assert(prompt != NULL);
 	assert(pass != NULL);
 
 	w4rn("enter read_password\n");
 	*pass = NULL;
 	msg.msg_style = PAM_PROMPT_ECHO_OFF;
-	msg.msg = prompt;
+	msg.msg       = (prompt == NULL) ? "Password: " : prompt;
 	retval  = converse(pamh, 1, &pmsg, &resp);
 	if (retval == PAM_SUCCESS)
 		*pass = xstrdup(resp->resp);
@@ -266,9 +262,13 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			authtok = xstrdup(ptr);
 		}
 	}
+	if (!readconfig(CONFIGFILE, 1, &Config)) {
+		ret = PAM_SERVICE_ERR;
+		goto out;
+	}
 	if (authtok == NULL) {
 		/* get password directly */
-		ret = read_password(pamh, Args.password_prompt, &authtok);
+		ret = read_password(pamh, Config.msg_authpw, &authtok);
 		if (ret != PAM_SUCCESS) {
 			l0g("error trying to read password\n");
 			goto out;
@@ -435,20 +435,21 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		goto out;
 	}
 
+	if (!readconfig(CONFIGFILE, 1, &Config)) {
+		ret = PAM_SERVICE_ERR;
+		goto out;
+	}
+
 	ret = pam_get_data(pamh, "pam_mount_system_authtok",
 	      static_cast(const void **, static_cast(void *, &system_authtok)));
 	if (ret != PAM_SUCCESS) {
 		l0g("error trying to retrieve authtok from auth code\n");
-		ret = read_password(pamh, "reenter password for pam_mount:", &system_authtok);
+		ret = read_password(pamh, Config.msg_sessionpw, &system_authtok);
 		if (ret != PAM_SUCCESS) {
 			l0g("error trying to read password\n");
 			goto out;
 		}
 
-	}
-	if (!readconfig(CONFIGFILE, 1, &Config)) {
-		ret = PAM_SERVICE_ERR;
-		goto out;
 	}
 
 	/*

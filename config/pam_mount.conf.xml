@@ -365,4 +365,18 @@ If FSKEYCIPHER is empty, then the user's login password is also the
 volume's password.
 -->
 
+<!--
+When pam_mount is not used with "use_first_pass" or "try_first_pass" in
+the PAM configuration files (/etc/pam.d/), it will have to ask for a
+password. This is also the case if pam_mount is the first auth module
+in the block.
+-->
+<msg-authpw>pam_mount password:</msg-authpw>
+
+<!--
+In case the 'session' PAM block does not have the password (e.g. on su
+from root to user), it will ask again.
+-->
+<msg-sessionpw>reenter password for pam_mount:</msg-sessionpw>
+
 </pam_mount>
