@@ -1,0 +1,17 @@
+
+This short document will explain the various pam_mount options.
+Options are listed in the 4th column of a PAM file, e.g.:
+
+	auth	optional	pam_mount.so	use_first_pass
+
+
+<no argument>
+	Always ask for password.
+
+use_first_pass
+	Always take the password from the PAM subsystem;
+	if it is not available, fail the module.
+
+try_first_pass
+	Try taking the password from the PAM subsystem;
+	if it fails, ask for password.
