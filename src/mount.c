@@ -956,7 +956,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 
 	spawn_restore_sigchld();
 	if (Debug)
-		system("df");
+		system("df -Ta");
 
 	/* pass on through the result from the umount process */
 	return !WEXITSTATUS(child_exit);
