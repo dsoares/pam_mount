@@ -355,7 +355,7 @@ static int modify_pm_count(struct config *config, char *user,
 
 	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
 	    NULL, &pid, NULL, &cstdout, NULL, &err)) {
-		l0g("error executing /usr/sbin/pmvarrun\n");
+		l0g("error executing pmvarrun\n");
 		fnval = -1;
 		goto out;
 	}
