@@ -1,0 +1,16 @@
+
+SVN /trunk
+==========
+- [r209]: Do not use absolute paths, search $PATH instead for programs
+  (apparently Fedora fails it again since $PATH is crippled)
+- [r210]: Add pam_mount.conf to .conf.xml converter
+- [r223]: "sufficient" keyword documentation
+- [r224]: Misc cryptmount fix
+- [r232]: Pass down readonly flag to luksOpen
+- [r237]: Add option to retain automatically created mountpoints
+- [r240]: Create mountpoint as user if possible (e.g. if /home/USER
+  already exists and your volume is /home/USER/myvol)
+- [r249]: Build fixes, making it work OOTB again with FC6 and Autoconf 2.59
+- [r251]: Allow changing the password prompt
+- [r252]: Add an overview of pam_mount options (options.txt)
+- [r253]: Implement the "soft_try_pass" option
