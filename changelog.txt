@@ -2,7 +2,6 @@
 SVN /trunk
 ==========
 - [r209]: Do not use absolute paths, search $PATH instead for programs
-  (apparently Fedora fails it again since $PATH is crippled)
 - [r210]: Add pam_mount.conf to .conf.xml converter
 - [r223]: "sufficient" keyword documentation
 - [r224]: Misc cryptmount fix
