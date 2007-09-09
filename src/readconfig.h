@@ -8,9 +8,9 @@ struct config;
 /*
  *	RDCONF1.C
  */
-extern int expandconfig(const struct config *);
+extern bool expandconfig(const struct config *);
 extern void initconfig(struct config *);
-extern int readconfig(const char *, int, struct config *);
+extern bool readconfig(const char *, bool, struct config *);
 extern void freeconfig(struct config *);
 
 /*

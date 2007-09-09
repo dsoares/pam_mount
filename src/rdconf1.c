@@ -23,6 +23,7 @@ pam_mount - rdconf1.c
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,8 +68,8 @@ enum {
 
 struct callbackmap {
 	const char *name;
-	const char *(*func)(xmlNode *, struct config *, int);
-	int cmd;
+	const char *(*func)(xmlNode *, struct config *, unsigned int);
+	unsigned int cmd;
 };
 
 struct pmt_command {
@@ -98,11 +99,11 @@ static const struct pmt_command default_command[];
  *
  * Expands all wildcards in the structure.
  */
-int expandconfig(const struct config *config)
+bool expandconfig(const struct config *config)
 {
 	const char *u = config->user;
 	struct vol *vpt;
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < config->volcount; ++i) {
 		vpt = &config->volume[i];
@@ -113,14 +114,15 @@ int expandconfig(const struct config *config)
 		    expand_user(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
 		    expand_home(u, vpt->fs_key_path, sizeof(vpt->fs_key_path)) == NULL ||
 		    expand_user(u, vpt->fs_key_path, sizeof(vpt->fs_key_path)) == NULL)
-			return 0;
+			return false;
 
 		if (strcmp(vpt->user, "*") == 0 || *vpt->user == '@')
-			vpt->used_wildcard = 1;
+			vpt->used_wildcard = true;
 
 		strcpy(vpt->user, config->user);
 	}
-	return 1;
+
+	return true;
 }
 
 /*
@@ -150,8 +152,8 @@ void initconfig(struct config *config)
 	unsigned int i, j;
 
 	memset(config, 0, sizeof(*config));
-	config->debug      = 1;
-	config->mkmntpoint = 1;
+	config->debug      = true;
+	config->mkmntpoint = true;
 	strcpy(config->fsckloop, "/dev/loop7");
 
 	for (i = 0; default_command[i].type != -1; ++i)
@@ -162,7 +164,7 @@ void initconfig(struct config *config)
 	return;
 }
 
-int readconfig(const char *file, int global_conf, struct config *config)
+bool readconfig(const char *file, bool global_conf, struct config *config)
 {
 	const struct callbackmap *cmp;
 	const char *err;
@@ -170,11 +172,11 @@ int readconfig(const char *file, int global_conf, struct config *config)
 	xmlNode *ptr;
 
 	if ((doc = xmlParseFile(file)) == NULL)
-		return 0;
+		return false;
 	ptr = xmlDocGetRootElement(doc);
 	if (ptr == NULL || strcmp_1u(ptr->name, "pam_mount") != 0) {
 		xmlFreeDoc(doc);
-		return 0;
+		return false;
 	}
 
 	for (ptr = ptr->children; ptr != NULL; ptr = ptr->next) {
@@ -190,7 +192,7 @@ int readconfig(const char *file, int global_conf, struct config *config)
 	}
 
 	xmlFreeDoc(doc);
-	return 1;
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -451,7 +453,8 @@ static inline char *xmlGetProp_2s(xmlNode *node, const char *attr)
 }
 
 //-----------------------------------------------------------------------------
-static const char *rc_command(xmlNode *node, struct config *config, int cmd)
+static const char *rc_command(xmlNode *node, struct config *config,
+    unsigned int command)
 {
 	unsigned int n = 0;
 	char *arg, *wp;
@@ -469,10 +472,10 @@ static const char *rc_command(xmlNode *node, struct config *config, int cmd)
 			/*
 			 * The copy taken with strdup() is not freed in this
 			 * function, because it is used soon. 
-			 * @config->command[0][cmd] will be the pointer to the
-			 * block to free later.
+			 * @config->command[command][0] will be the pointer to
+			 * the block to free later.
 			 */
-			config->command[cmd][n++] = arg;
+			config->command[command][n++] = arg;
 
 		/* No hassle to support comment-split tags. */
 		break;
@@ -480,7 +483,8 @@ static const char *rc_command(xmlNode *node, struct config *config, int cmd)
 	return NULL;
 }
 
-static const char *rc_debug(xmlNode *node, struct config *config, int cmd)
+static const char *rc_debug(xmlNode *node, struct config *config,
+    unsigned int cmd)
 {
 	char *s;
 	if ((s = xmlGetProp_2s(node, "enable")) != NULL)
@@ -489,7 +493,8 @@ static const char *rc_debug(xmlNode *node, struct config *config, int cmd)
 	return NULL;
 }
 
-static const char *rc_fsckloop(xmlNode *node, struct config *config, int cmd)
+static const char *rc_fsckloop(xmlNode *node, struct config *config,
+    unsigned int cmd)
 {
 	char *dev;
 
@@ -507,7 +512,8 @@ static const char *rc_fsckloop(xmlNode *node, struct config *config, int cmd)
 	return NULL;
 }
 
-static const char *rc_luserconf(xmlNode *node, struct config *config, int cmd)
+static const char *rc_luserconf(xmlNode *node, struct config *config,
+    unsigned int command)
 {
 	struct passwd *pent;
 	char *s;
@@ -530,7 +536,8 @@ static const char *rc_luserconf(xmlNode *node, struct config *config, int cmd)
 	return NULL;
 }
 
-static const char *rc_mkmountpoint(xmlNode *node, struct config *config, int c)
+static const char *rc_mkmountpoint(xmlNode *node, struct config *config,
+    unsigned int command)
 {
 	char *s;
 	if ((s = xmlGetProp_2s(node, "enable")) != NULL)
@@ -542,7 +549,8 @@ static const char *rc_mkmountpoint(xmlNode *node, struct config *config, int c)
 	return NULL;
 }
 
-static const char *rc_mntoptions(xmlNode *node, struct config *config, int cmd)
+static const char *rc_mntoptions(xmlNode *node, struct config *config,
+    unsigned int command)
 {
 	char *options;
 	int ret;
@@ -574,12 +582,13 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config, int cmd)
 	return NULL;
 }
 
-static const char *rc_string(xmlNode *node, struct config *config, int cmd)
+static const char *rc_string(xmlNode *node, struct config *config,
+    unsigned int command)
 {
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
 			continue;
-		switch (cmd) {
+		switch (command) {
 			case CMDA_AUTHPW:
 				config->msg_authpw = xstrdup(signed_cast(const char *, node->content));
 				break;
@@ -598,7 +607,7 @@ static const char *rc_volume_inter(struct config *config,
 	enum wildcard_type wildcard = WC_NONE;
 	struct passwd *pent;
 	struct vol *vpt;
-	int i;
+	unsigned int i;
 
 	if (strlen(attr->user) > sizeof_z(vpt->user) ||
 	    strlen(attr->fstype) > sizeof_z(vpt->fstype) ||
@@ -733,7 +742,8 @@ static const char *rc_volume_inter(struct config *config,
 	return NULL;
 }
 
-static const char *rc_volume(xmlNode *node, struct config *config, int cmd)
+static const char *rc_volume(xmlNode *node, struct config *config,
+    unsigned int command)
 {
 	struct volume_attrs norm, orig = {
 		.user        = xmlGetProp_2s(node, "user"),
@@ -749,10 +759,12 @@ static const char *rc_volume(xmlNode *node, struct config *config, int cmd)
 	};
 	const char *ret;
 	char *invert;
+
 	if ((invert = xmlGetProp_2s(node, "invert")) != NULL) {
 		orig.invert = strtoul(invert, NULL, 0);
 		free(invert);
 	}
+
 	memcpy(&norm, &orig, sizeof(norm));
 	if (norm.user        == NULL) norm.user        = "";
 	if (norm.pgrp        == NULL) norm.pgrp        = "";

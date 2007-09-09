@@ -266,7 +266,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			authtok = xstrdup(ptr);
 		}
 	}
-	if (!readconfig(CONFIGFILE, 1, &Config)) {
+	if (!readconfig(CONFIGFILE, true, &Config)) {
 		ret = PAM_SERVICE_ERR;
 		goto out;
 	}
@@ -445,7 +445,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		goto out;
 	}
 
-	if (!readconfig(CONFIGFILE, 1, &Config)) {
+	if (!readconfig(CONFIGFILE, true, &Config)) {
 		ret = PAM_SERVICE_ERR;
 		goto out;
 	}
@@ -474,7 +474,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		w4rn("per-user configurations not allowed by pam_mount.conf.xml\n");
 	else if (exists(Config.luserconf) && owns(Config.user, Config.luserconf)) {
 		w4rn("going to readconfig user\n");
-		if (!readconfig(Config.luserconf, 0, &Config)) {
+		if (!readconfig(Config.luserconf, false, &Config)) {
 			ret = PAM_SERVICE_ERR;
 			goto out;
 		}
