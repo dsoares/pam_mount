@@ -158,8 +158,8 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 				fprintf(stderr, "Invalid user name\n");
 				exit(EXIT_FAILURE);
 			}
-			g_strlcpy(settings->user, optarg,
-			          sizeof(settings->user));
+			HX_strlcpy(settings->user, optarg,
+			           sizeof(settings->user));
 			break;
 		default:
 			usage(EXIT_FAILURE, NULL);
