@@ -418,7 +418,6 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 	assert(vol_valid(volume));
 	assert(d != NULL);
 
-	w4rn("creating mount point %s\n", d);
 	strncpy(dcopy, d, sizeof_z(dcopy));
 	dcopy[sizeof_z(dcopy)] = '\0';
 	parent = g_path_get_dirname(dcopy);
@@ -426,19 +425,17 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 		ret = false;
 		goto out;
 	}
-	if ((passwd_ent = getpwnam(volume->user)) != NULL) {
-		if (mkdir(d, 0700) < 0) {
-			l0g("tried to create %s but failed\n", d);
-			ret = false;
-			goto out;
-		}
-		if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid) < 0) {
-			l0g("could not chown %s to %s\n", d, volume->user);
-			ret = false;
-			goto out;
-		}
-	} else {
+	if ((passwd_ent = getpwnam(volume->user)) == NULL) {
 		l0g("could not determine uid from %s to make %s\n", volume->user, d);
+		ret = false;
+		goto out;
+	}
+	if (mkdir(d, 0700) < 0) {
+		ret = false;
+		goto out;
+	}
+	if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid) < 0) {
+		l0g("could not chown %s to %s\n", d, volume->user);
 		ret = false;
 		goto out;
 	}
@@ -463,18 +460,23 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 static bool mkmountpoint(struct vol *volume, const char *d)
 {
 	struct passwd *pe;
+	bool ret;
 
 	if ((pe = getpwnam(volume->user)) == NULL) {
 		l0g("getpwuid: %s\n", strerror(errno));
 		return false;
 	}
 
+	w4rn("creating mount point %s\n", d);
 	if (seteuid(pe->pw_uid) == 0)
 		if (mkmountpoint_real(volume, d))
 			return true;
 
 	seteuid(0);
-	return mkmountpoint_real(volume, d);
+	ret = mkmountpoint_real(volume, d);
+	if (!ret)
+		l0g("tried to create %s but failed\n", d);
+	return ret;
 }
 
 /*
