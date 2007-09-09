@@ -104,9 +104,13 @@ for opt in $OPTIONS; do
 		(cipher)  CIPHER="$VAL";;
 		(keysize) KEYSIZE="$VAL";;
 		(hash)    HASH="$VAL";;
-		(loop)    LOOP="true";;
 		(fstype)  FSTYPE="$VAL";;
 		(fsck)    DOFSCK="true";;
+		(loop)
+			if ! losetup "$DEVICE" &>/dev/null; then
+				LOOP="true";;
+			fi;
+			;;
 		(*)
 			if [ "$opt" == "ro" ]; then
 				luks_ro="--readonly";
