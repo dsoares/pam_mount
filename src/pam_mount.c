@@ -450,22 +450,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		goto out;
 	}
 
-	ret = pam_get_data(pamh, "pam_mount_system_authtok",
-	      static_cast(const void **, static_cast(void *, &system_authtok)));
-	if (ret != PAM_SUCCESS) {
-		if (Args.auth_type == SOFT_TRY_PASS) {
-			ret = PAM_AUTHINFO_UNAVAIL;
-			goto out;
-		}
-		l0g("error trying to retrieve authtok from auth code\n");
-		ret = read_password(pamh, Config.msg_sessionpw, &system_authtok);
-		if (ret != PAM_SUCCESS) {
-			l0g("error trying to read password\n");
-			goto out;
-		}
-
-	}
-
 	/*
 	 * Get the Kerberos CCNAME so we can make it available to the
 	 * mount command later on.
@@ -507,6 +491,22 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		ret = PAM_SERVICE_ERR;
 		goto out;
 	}
+
+	ret = pam_get_data(pamh, "pam_mount_system_authtok",
+	      static_cast(const void **, static_cast(void *, &system_authtok)));
+	if (ret != PAM_SUCCESS) {
+		if (Args.auth_type == SOFT_TRY_PASS) {
+			ret = PAM_AUTHINFO_UNAVAIL;
+			goto out;
+		}
+		l0g("error trying to retrieve authtok from auth code\n");
+		ret = read_password(pamh, Config.msg_sessionpw, &system_authtok);
+		if (ret != PAM_SUCCESS) {
+			l0g("error trying to read password\n");
+			goto out;
+		}
+	}
+
 	w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
 	     static_cast(long, getuid()), static_cast(long, geteuid()),
 	     static_cast(long, getgid()), static_cast(long, getegid()));
