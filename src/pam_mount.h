@@ -1,7 +1,6 @@
 #ifndef PMT_PAM_MOUNT_H
 #define PMT_PAM_MOUNT_H 1
 
-#include <glib.h>
 #include <stdbool.h>
 
 struct config;
