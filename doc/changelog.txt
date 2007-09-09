@@ -1,6 +1,18 @@
 
+(This only contains the more interesting changes.)
+
 SVN /trunk
 ==========
+- [r264]: Silence unwanted error message (fallout from r240)
+- [r270]: Add "Known Bugs and Issues" documentation
+- [r274]: More documentation - How to stack PAM modules without pam_stack
+- [r276]: Option passing to some mount helpers needs to be different
+- [r277]: Avoid stacking of loop devices
+- [r278]: Do not ask for password if no volumes found
+
+
+v0.20 (September 05 2007)
+=========================
 - [r209]: Do not use absolute paths, search $PATH instead for programs
 - [r210]: Add pam_mount.conf to .conf.xml converter
 - [r223]: "sufficient" keyword documentation
