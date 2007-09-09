@@ -248,28 +248,28 @@ int config_valid(const struct config *c)
 /*
  * log_argv -
  * @argv:	argument vector
+ *
  * Log @argv using w4rn() when debugging is turned on.
  */
 void log_argv(const char *const *argv)
 {
-	/* FIXME: UGLY! */
-	int i;
-	char str[MAX_PAR + 1];
+	hmc_t *str = NULL;
+	unsigned int i;
+
 	if (!Debug)
 		return;
-	g_strlcpy(str, argv[0], sizeof(str));
-	g_strlcat(str, " ", sizeof(str));
-	str[sizeof_z(str)] = '\0';
-	for (i = 1; argv[i] != NULL && strlen(str) < sizeof(str) - 2; i++) {
-		g_strlcat(str, "[", sizeof(str));
-		g_strlcat(str, argv[i], sizeof(str));
-		g_strlcat(str, "] ", sizeof(str));
-		str[sizeof_z(str)] = '\0';
-		if (strlen(str) >= sizeof_z(str))
-			/* Should never be greater */
-			break;
+
+	hmc_strasg(&str, *argv);
+	hmc_strcat(&str, " ");
+
+	for (i = 1; argv[i] != NULL; ++i) {
+		hmc_strcat(&str, "[");
+		hmc_strcat(&str, argv[i]);
+		hmc_strcat(&str, "] ");
 	}
+
 	w4rn("command: %s\n", str);
+	hmc_free(str);
 	return;
 }
 
