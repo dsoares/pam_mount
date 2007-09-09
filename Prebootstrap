@@ -1,3 +1,3 @@
 #!/bin/bash
 
-man -l dry/pam_mount.8 | perl -pe 's/.\cH//g' >README;
+man -l dry/pam_mount.8 | perl -pe 's/.\cH//g' >dry/readme.txt;
