@@ -25,11 +25,11 @@ moduledir = @PAM_MODDIR@
 module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
 
-pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c pair.c optlist.c buffer.c spawn.c xstdlib.c
+pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c pair.c optlist.c spawn.c xstdlib.c
 pam_mount_la_LIBADD  = -lHX
 pam_mount_la_LDFLAGS = -module -avoid-version $(GLIB_LIBS) $(XML_LIBS)
 
-pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c buffer-nolibtool.c pair-nolibtool.c xstdlib-nolibtool.c
+pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c pair-nolibtool.c xstdlib-nolibtool.c
 pmvarrun_LDADD   = -lHX
 pmvarrun_LDFLAGS = $(GLIB_LIBS)
 
