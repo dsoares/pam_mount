@@ -32,6 +32,7 @@ pam_mount - pam_mount.c
 #include <errno.h>
 #include <glib.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +63,7 @@ static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
 /* Variables */
-int Debug = 0;
+bool Debug = true;
 struct config Config = {};
 struct pam_args Args = {};
 
@@ -228,6 +229,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	const char *pam_user = NULL;
 
 	assert(pamh != NULL);
+	w4rn("Entered pam_mount auth stage\n");
 
 	/*
 	 * FIXME: this is called again in pam_sm_open_session. This is because
@@ -415,6 +417,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	int getval;
 
 	assert(pamh != NULL);
+	w4rn("Entered pam_mount session stage\n");
 
 	initconfig(&Config);
 	parse_pam_args(argc, argv);

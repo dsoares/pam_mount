@@ -42,7 +42,7 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <pwd.h>
 #include "compiler.h"
 #include "misc.h"
-#include "pam_mount.h" /* @Debug workaround */
+#include "pam_mount.h"
 #include "private.h"
 
 /* Definitions */
@@ -68,7 +68,7 @@ static void usage(int, const char *);
 static int write_count(int, long, const char *);
 
 /* Variables */
-int Debug = 0;
+bool Debug = false;
 
 //-----------------------------------------------------------------------------
 /*

@@ -2,6 +2,7 @@
 #define PMT_PAM_MOUNT_H 1
 
 #include <glib.h>
+#include <stdbool.h>
 
 struct config;
 
@@ -23,7 +24,7 @@ struct pam_args {
 	/* Workaround Xserver issue */
 #	define Debug pmt_debug
 #endif
-extern int Debug;
+extern bool Debug;
 extern struct config Config;
 extern struct pam_args Args;
 
