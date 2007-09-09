@@ -27,9 +27,8 @@ be mounted using the standard mount command.
 %setup
 
 %build
-autoreconf -fi;
 %configure --disable-static --with-ssbindir=/sbin --with-slibdir=/%_lib
-make;
+make %{?jobs:-j%jobs};
 
 %install
 b="%buildroot";
