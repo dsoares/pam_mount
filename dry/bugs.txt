@@ -1,0 +1,68 @@
+
+Known Bugs
+==========
+
+None.
+
+
+Known Issues
+============
+
+[ davfs2 - password passing ]
+
+The unmodified davfs mount program will not work with pam_mount because
+it cannot be driven non-interactively. (/etc/davfs2.secrets is not
+really an option since it would expose your password again, and in
+plaintext at that.)
+
+
+[ gksu ]
+
+gksu interprets any output on stderr as an error. pam_mount writes
+debug output to stderr, so this combination will only work if debugging
+is disabled in pam_mount, or gksu gets fixed.
+
+
+[ pam_mount < 0.19 - config file ]
+
+Our config file format changed from plaintext to XML with version 0.19.
+A Perl script to convert it can be found in the scripts/ directory
+beginning with version 0.20.
+
+
+[ ssh - password passing ]
+
+When interactively asking for the password, the ssh client opens
+/dev/tty and ignores stdin over which pam_mount passes the password.
+
+
+[ sshd - various ]
+
+When public key authentication is used, the PAM auth stage is entirely
+skipped. Additionally, pam_mount is not able to ask for a password in
+the session stage.
+
+When "PrivilegeSeparation" is enabled, ssh will not run through the PAM
+stacks.
+
+"UsePAM" is required to make sshd go through the PAM stacks.
+
+"UseLogin yes" may be used to enable pam_mount -- irrespective of
+public key authentification, privilege separation or UsePAM=no. sshd
+itself will not do anything useful w.r.t. pam_mount, but it will call
+/bin/login which will then run through the PAM session stage, where
+pam_mount can ask your for a password. Read the sshd documentation
+about possible pitfalls involved using UseLogin.
+
+
+[ ssh/Ubuntu/GDM/not sure - privilege drop ]
+
+I sometimes get reports about unmount failing because of insufficient
+privileges. Some programs and/or distributions and/or pam
+configurations seem to drop the root privileges after successful
+authentification. This goes counter to pam_mount which needs these
+privileges for umount. (May not apply for FUSE mounts.)
+
+
+
+# right-margin: 72
