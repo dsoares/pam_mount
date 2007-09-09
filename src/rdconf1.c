@@ -141,6 +141,9 @@ void freeconfig(struct config *config)
 			config->command[i][j] = NULL;
 	}
 
+	HXbtree_free(config->options_allow);
+	HXbtree_free(config->options_require);
+	HXbtree_free(config->options_deny);
 	free(config->user);
 	free(config->msg_authpw);
 	free(config->msg_sessionpw);
@@ -150,6 +153,8 @@ void freeconfig(struct config *config)
 void initconfig(struct config *config)
 {
 	unsigned int i, j;
+	static const unsigned int flags =
+		HXBT_MAP | HXBT_CKEY | HXBT_CDATA | HXBT_SCMP | HXBT_CID;
 
 	memset(config, 0, sizeof(*config));
 	config->debug      = true;
@@ -160,6 +165,10 @@ void initconfig(struct config *config)
 		for (j = 0; default_command[i].def[j] != NULL; ++j)
 			config->command[default_command[i].type][j] =
 				xstrdup(default_command[i].def[j]);
+
+	config->options_allow   = HXbtree_init(flags);
+	config->options_require = HXbtree_init(flags);
+	config->options_deny    = HXbtree_init(flags);
 
 	return;
 }
@@ -549,6 +558,38 @@ static const char *rc_mkmountpoint(xmlNode *node, struct config *config,
 	return NULL;
 }
 
+/*
+ * str_to_optlist -
+ * @optlist:	destination list
+ * @str:	string to parse
+ *
+ * Break down @str into its option. This function modifies @str in-place.
+ * This is ok, since it is already an allocated string (i.e. does not
+ * belong to libxml but to pam_mount). Caller frees it anyway right away.
+ */
+static bool str_to_optlist(struct HXbtree *optlist, char *str)
+{
+	char *value, *ptr;
+
+	if (str == NULL || strlen(str) == 0)
+		/*
+		 * So what, ignore it.
+		 */
+		return true;
+
+	while ((ptr = HX_strsep(&str, ",")) != NULL) {
+		value = strchr(ptr, '=');
+		if (value != NULL) {
+			*value++ = '\0';
+			HXbtree_add(optlist, ptr, value);
+		} else {
+			HXbtree_add(optlist, ptr, NULL);
+		}
+	}
+
+	return true;
+}
+
 static const char *rc_mntoptions(xmlNode *node, struct config *config,
     unsigned int command)
 {
@@ -559,21 +600,21 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 		return "Tried to set <mntoptions allow=...> from user config";
 
 	if ((options = xmlGetProp_2s(node, "allow")) != NULL) {
-		ret = str_to_optlist(&config->options_allow, options);
+		ret = str_to_optlist(config->options_allow, options);
 		free(options);
 		if (!ret)
 			return "Error parsing allowed options";
 	}
 
 	if ((options = xmlGetProp_2s(node, "deny")) != NULL) {
-		ret = str_to_optlist(&config->options_deny, options);
+		ret = str_to_optlist(config->options_deny, options);
 		free(options);
 		if (!ret)
 			return "Error parsing denied options";
 	}
 
 	if ((options = xmlGetProp_2s(node, "require")) != NULL) {
-		ret = str_to_optlist(&config->options_require, options);
+		ret = str_to_optlist(config->options_require, options);
 		free(options);
 		if (!ret)
 			return "Error parsing required options";
@@ -677,6 +718,8 @@ static const char *rc_volume_inter(struct config *config,
 	vpt->globalconf = config->level == CONTEXT_GLOBAL;
 	strncpy(vpt->user, config->user, sizeof(vpt->user));
 	vpt->type = CMD_LCLMOUNT;
+	vpt->options = HXbtree_init(HXBT_MAP | HXBT_CKEY | HXBT_CDATA |
+	               HXBT_SCMP | HXBT_CID);
 
 	/* [1] */
 	strncpy(vpt->fstype, attr->fstype, sizeof(vpt->fstype));
@@ -717,12 +760,12 @@ static const char *rc_volume_inter(struct config *config,
 			if (!fstab_value(vpt->volume, FSTAB_OPTS, options,
 			    sizeof(options)))
 				return "could not determine options";
-			if (!str_to_optlist(&vpt->options, options))
+			if (!str_to_optlist(vpt->options, options))
 				return "error parsing mount options";
 		} else {
 			vpt->options = NULL;
 		}
-	} else if (!str_to_optlist(&vpt->options, attr->options)) {
+	} else if (!str_to_optlist(vpt->options, attr->options)) {
 		return "error parsing mount options";
 	}
 

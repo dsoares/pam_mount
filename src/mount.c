@@ -42,7 +42,6 @@ pam_mount - mount.c
 #include "crypto.h"
 #include "misc.h"
 #include "mount.h"
-#include "optlist.h"
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
@@ -318,7 +317,8 @@ static void vol_to_dev(char *match, size_t s, const struct vol *vol)
 
 	case CMD_NCPMOUNT:
 		snprintf(match, s, "%s/%s", vol->server,
-		         optlist_value(vol->options, "user"));
+		         static_cast(const char *,
+		         HXbtree_get(vol->options, "user")));
 		break;
 
 	case CMD_NFSMOUNT:
@@ -380,12 +380,41 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 }
 #endif
 
+/*
+ * optlist_to_str -
+ * @optlist:	option list
+ *
+ * Transform the option list into a flat string. Allocates and returns the
+ * string. Caller has to free it. Used for debugging.
+ */
+static hmc_t *optlist_to_str(const struct HXbtree *optlist)
+{
+	const struct HXbtree_node *option;
+	hmc_t *ret = hmc_sinit("");
+	void *trav;
+
+	if (optlist == NULL)
+		return ret;
+
+	trav = HXbtrav_init(optlist);
+	while ((option = HXbtraverse(trav)) != NULL) {
+		hmc_strcat(&ret, option->key);
+		if (option->data != NULL &&
+		    *static_cast(const char *, option->data) != '\0') {
+			hmc_strcat(&ret, "=");
+			hmc_strcat(&ret, option->data);
+		}
+		hmc_strcat(&ret, ",");
+	}
+	return ret;
+}
 static void log_pm_input(const struct config *const config,
     const unsigned int vol)
 {
 	const struct vol *vpt = &config->volume[vol];
-	char options[MAX_PAR + 1];
+	hmc_t *options;
 
+	options = optlist_to_str(vpt->options);
 	w4rn("information for mount:\n");
 	w4rn("----------------------\n");
 	w4rn("(defined by %s)\n", vpt->globalconf ? "globalconf" : "luserconf");
@@ -393,11 +422,12 @@ static void log_pm_input(const struct config *const config,
 	w4rn("server:        %s\n", vpt->server);
 	w4rn("volume:        %s\n", vpt->volume);
 	w4rn("mountpoint:    %s\n", vpt->mountpoint);
-	w4rn("options:       %s\n", optlist_to_str(options, vpt->options));
+	w4rn("options:       %s\n", options);
 	w4rn("fs_key_cipher: %s\n", vpt->fs_key_cipher);
 	w4rn("fs_key_path:   %s\n", vpt->fs_key_path);
 	w4rn("use_fstab:     %d\n", vpt->use_fstab);
 	w4rn("----------------------\n");
+	hmc_free(options);
 	return;
 }
 
@@ -628,8 +658,8 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	assert(password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	vpt     = &config->volume[vol];
-	cipher  = optlist_value(vpt->options, "encryption");
-	keybits = optlist_value(vpt->options, "keybits");
+	cipher  = HXbtree_get(vpt->options, "encryption");
+	keybits = HXbtree_get(vpt->options, "keybits");
 
 	if (config->command[CMD_LOSETUP][0] == NULL) {
 		l0g("losetup not defined in pam_mount.conf.xml\n");
@@ -728,7 +758,6 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	GError *err = NULL;
 	int child_exit, _argc = 0, cstdout = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
-	char options[MAX_PAR + 1];
 	const char *fsck_target;
 	const struct vol *vpt;
 	unsigned int i;
@@ -747,18 +776,19 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 		return 0;
 	}
 
-	if (optlist_exists(vpt->options, "bind") ||
-	    optlist_exists(vpt->options, "move") ||
+	if (HXbtree_find(vpt->options, "bind") != NULL ||
+	    HXbtree_find(vpt->options, "move") != NULL ||
 	    fstype_nodev(vpt->fstype) != 0)
 		return 1;
 
-	if (optlist_exists(vpt->options, "loop")) {
+	if (HXbtree_find(vpt->options, "loop") != NULL) {
 		if (!do_losetup(config, vol, vinfo, password, password_len))
 			return 0;
 		fsck_target = config->fsckloop;
 	} else {
-		w4rn("volume not a loopback (options: %s)\n",
-		     optlist_to_str(options, vpt->options));
+		hmc_t *options = optlist_to_str(vpt->options);
+		w4rn("volume not a loopback (options: %s)\n", options);
+		hmc_free(options);
 	}
 	/* FIXME: NEW */
 	/* FIXME: need to fsck /dev/mapper/whatever... */
@@ -780,7 +810,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	if (optlist_exists(vpt->options, "loop"))
+	if (HXbtree_find(vpt->options, "loop") != NULL)
 		if (!do_unlosetup(config, vinfo))
 			return 0;
 	/*
@@ -979,9 +1009,9 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 {
 	int fnval;
 	struct HXbtree *vinfo;
-	char options[MAX_PAR + 1];
 	const struct vol *vpt;
 	struct passwd *pe;
+	hmc_t *options;
 
 	assert(config_valid(config));
 
@@ -1005,13 +1035,14 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	}
 
 	/* FIXME: should others remain undefined if == ""? */
-	optlist_to_str(options, vpt->options);
+	options = optlist_to_str(vpt->options);
 	format_add(vinfo, "OPTIONS", options);
 
 	if (Debug)
 		log_pm_input(config, vol);
 
 	fnval = (*mnt)(config, vol, vinfo, password);
+	hmc_free(options);
 	HXformat_free(vinfo);
 	return fnval;
 }

@@ -30,74 +30,98 @@ pam_mount - rdconf2.c
 #include <pwd.h>
 #include "compiler.h"
 #include "misc.h"
-#include "optlist.h"
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
 
 /*
- * options_allow_ok - check for disallowed options
+ * allow_ok - check for disallowed options
  * @allowed:	list of allowed options
  * @options:	options to check
  *
  * Check if there are any options in @options that are not in @allowed.
  * If so, return false.
  */
-static bool options_allow_ok(optlist_t * allowed, optlist_t * options)
+static bool allow_ok(const struct HXbtree *allowed,
+    const struct HXbtree *options)
 {
-	optlist_t *e;
+	const struct HXbtree_node *e;
+	void *t;
 
-	if (optlist_exists(allowed, "*") || !optlist_len(options))
+	if (HXbtree_find(allowed, "*") != NULL || options->items == 0)
 		return true;
-	for (e = options; e != NULL; e = optlist_next(e))
-		if (!optlist_exists(allowed, optlist_key(e))) {
-			l0g("option %s not allowed\n", optlist_key(e));
+
+	t = HXbtrav_init(options);
+	while ((e = HXbtraverse(t)) != NULL)
+		if (HXbtree_find(allowed, e->data) != NULL) {
+			l0g("option %s not allowed\n",
+			    static_cast(const char *, e->data));
+			HXbtrav_free(t);
 			return false;
 		}
+
+	HXbtrav_free(t);
 	return true;
 }
 
 /*
- * options_required_ok - check for missing options
+ * required_ok - check for missing options
  * @required:	list of required options
  * @options:	options to check
  *
  * Checks @options whether it contains all options in @required.
  * If so, returns true.
  */
-static bool options_required_ok(optlist_t * required, optlist_t * options)
+static bool required_ok(const struct HXbtree *required,
+    const struct HXbtree *options)
 {
-	optlist_t *e;
-	for (e = required; e != NULL; e = optlist_next(e))
-		if (!optlist_exists(options, optlist_key(e))) {
-			l0g("option %s required\n", optlist_key(e));
+	const struct HXbtree_node *e;
+	void *t;
+
+	t = HXbtrav_init(required);
+	while ((e = HXbtraverse(t)) != NULL)
+		if (HXbtree_find(options, e->data) == NULL) {
+			l0g("option %s required\n",
+			    static_cast(const char *, e->data));
+			HXbtrav_free(t);
 			return false;
 		}
+
+	HXbtrav_free(t);
 	return true;
 }
 
 /*
- * options_deny_ok - check for denied options
+ * deny_ok - check for denied options
  * @denied:	list of denied options
  * @options:	options to check
  *
  * Checks @options whether any of them appear in @deny. If so, returns false.
  */
-static bool options_deny_ok(optlist_t * denied, optlist_t * options)
+static bool deny_ok(const struct HXbtree *denied,
+    const struct HXbtree *options)
 {
-	optlist_t *e;
-	if (optlist_len(denied) == 0) {
+	const struct HXbtree_node *e;
+	void *t;
+
+	if (denied->items == 0) {
 		w4rn("no denied options\n");
 		return true;
-	} else if (optlist_exists(denied, "*") && optlist_len(options) > 0) {
+	} else if (HXbtree_find(denied, "*") != NULL && options->items != 0) {
 		l0g("all mount options denied, user tried to specify one\n");
 		return false;
 	}
-	for (e = denied; e != NULL; e = optlist_next(e))
-		if (optlist_exists(options, optlist_key(e))) {
-			l0g("option %s denied\n", optlist_key(e));
+
+	t = HXbtrav_init(denied);
+	while ((e = HXbtraverse(t)) != NULL)
+		if (HXbtree_find(options, e->data) != NULL) {
+			l0g("option %s denied\n",
+			    static_cast(const char *, e->data));
+			HXbtrav_free(t);
 			return false;
 		}
+
+	HXbtrav_free(t);
 	return true;
 }
 
@@ -113,24 +137,21 @@ static bool options_ok(const struct config *config, const struct vol *volume)
 	assert(config != NULL);
 	assert(volume != NULL);
 
-	if (optlist_len(config->options_allow) > 0 &&
-	    optlist_len(config->options_deny) > 0) {
+	if (config->options_allow->items != 0 &&
+	    config->options_deny->items != 0) {
 		l0g("possible conflicting option settings (use allow OR deny)\n");
 		return false;
 	}
 	if (!volume->use_fstab) {
-		if (!options_required_ok(config->options_require,
-		    volume->options)) {
+		if (!required_ok(config->options_require, volume->options)) {
 			return false;
-		} else if (optlist_len(config->options_allow) > 0) {
-			if (!options_allow_ok(config->options_allow,
-			    volume->options))
+		} else if (config->options_allow->items != 0) {
+			if (!allow_ok(config->options_allow, volume->options))
 				return false;
-		} else if (optlist_len(config->options_deny) > 0) {
-			if (!options_deny_ok(config->options_deny,
-			    volume->options))
+		} else if (config->options_deny->items != 0) {
+			if (!deny_ok(config->options_deny, volume->options))
 				return false;
-		} else if (optlist_len(volume->options) > 0) {
+		} else if (volume->options->items != 0) {
 			l0g("user specified options denied by default\n");
 			return false;
 		}
@@ -198,7 +219,7 @@ bool volume_record_sane(const struct config *config, unsigned int vol)
 		}
 
 	if (vpt->type == CMD_NCPMOUNT &&
-	    !optlist_exists(vpt->options, "user")) {
+	    HXbtree_find(vpt->options, "user") != NULL) {
 		l0g("NCP volume definition missing user option\n");
 		return false;
 	}

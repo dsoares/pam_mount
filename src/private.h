@@ -2,7 +2,6 @@
 #define PMT_PRIVATE_H 1
 
 #include <stdbool.h>
-#include "optlist.h"
 
 #define CLOSE(a) do { \
 	if(close(a) == -1) { \
@@ -68,7 +67,7 @@ struct vol {
 	/* FIXME: PATH_MAX */
 	char volume[MAX_PAR + 1];
 	/* May be NULL if no options */
-	optlist_t *options;
+	struct HXbtree *options;
 	char mountpoint[PATH_MAX + 1];
 	bool use_fstab;
 	bool used_wildcard;
@@ -83,9 +82,7 @@ struct config {
 	char luserconf[PATH_MAX + 1];
 	char fsckloop[PATH_MAX + 1];
 	char *command[_CMD_MAX][MAX_PAR+1];
-	optlist_t *options_require;
-	optlist_t *options_allow;
-	optlist_t *options_deny;
+	struct HXbtree *options_require, *options_allow, *options_deny;
 	struct vol *volume;
 	int level;
 	char *msg_authpw, *msg_sessionpw;
