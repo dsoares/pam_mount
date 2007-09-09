@@ -35,80 +35,80 @@ pam_mount - rdconf2.c
 #include "private.h"
 #include "readconfig.h"
 
-/* Functions */
-static int _options_ok(const struct config *, const struct vol *);
-static int options_allow_ok(optlist_t *, optlist_t *);
-static int options_deny_ok(optlist_t *, optlist_t *);
-static int options_required_ok(optlist_t *, optlist_t *);
-
-/* ============================ options_allow_ok () ======================== */
-/* INPUT:  allowed, an optlist of allowed options
- *         options, a list of options
- * OUTPUT: if options acceptable 1 else 0
- * SIDE EFFECTS: error logged
+/*
+ * options_allow_ok - check for disallowed options
+ * @allowed:	list of allowed options
+ * @options:	options to check
+ *
+ * Check if there are any options in @options that are not in @allowed.
+ * If so, return false.
  */
-static int options_allow_ok(optlist_t * allowed, optlist_t * options)
+static bool options_allow_ok(optlist_t * allowed, optlist_t * options)
 {
 	optlist_t *e;
 
 	if (optlist_exists(allowed, "*") || !optlist_len(options))
-		return 1;
+		return true;
 	for (e = options; e != NULL; e = optlist_next(e))
 		if (!optlist_exists(allowed, optlist_key(e))) {
 			l0g("option %s not allowed\n", optlist_key(e));
-			return 0;
+			return false;
 		}
-	return 1;
+	return true;
 }
 
-/* ============================ options_required_ok () ===================== */
-/* INPUT:  required, an optlist of required options
- *         options, a list of options
- * OUTPUT: if options acceptable 1 else 0
- * SIDE EFFECTS: error logged
+/*
+ * options_required_ok - check for missing options
+ * @required:	list of required options
+ * @options:	options to check
+ *
+ * Checks @options whether it contains all options in @required.
+ * If so, returns true.
  */
-static int options_required_ok(optlist_t * required, optlist_t * options)
+static bool options_required_ok(optlist_t * required, optlist_t * options)
 {
 	optlist_t *e;
 	for (e = required; e != NULL; e = optlist_next(e))
 		if (!optlist_exists(options, optlist_key(e))) {
 			l0g("option %s required\n", optlist_key(e));
-			return 0;
+			return false;
 		}
-	return 1;
+	return true;
 }
 
-/* ============================ options_deny_ok () ========================= */
-/* INPUT:  denied, an optlist of denied options
- *         options, a list of options
- * OUTPUT: if options acceptable 1 else 0
- * SIDE EFFECTS: error logged
+/*
+ * options_deny_ok - check for denied options
+ * @denied:	list of denied options
+ * @options:	options to check
+ *
+ * Checks @options whether any of them appear in @deny. If so, returns false.
  */
-static int options_deny_ok(optlist_t * denied, optlist_t * options)
+static bool options_deny_ok(optlist_t * denied, optlist_t * options)
 {
 	optlist_t *e;
-	if (!optlist_len(denied)) {
+	if (optlist_len(denied) == 0) {
 		w4rn("no denied options\n");
-		return 1;
+		return true;
 	} else if (optlist_exists(denied, "*") && optlist_len(options) > 0) {
 		l0g("all mount options denied, user tried to specify one\n");
-		return 0;
+		return false;
 	}
 	for (e = denied; e != NULL; e = optlist_next(e))
 		if (optlist_exists(options, optlist_key(e))) {
 			l0g("option %s denied\n", optlist_key(e));
-			return 0;
+			return false;
 		}
-	return 1;
+	return true;
 }
 
-/* ============================ _options_ok () ============================= */
-/* INPUT:  config, the configuration to use as a basis for checking
- *         volume, a volume to check
- * OUTPUT: if volume checks okay 1, else 0
- * SIDE EFFECTS: error logged
+/*
+ * options_ok - checks options
+ * @config:	current configuration
+ * @vol:	current volume
+ *
+ * Returns whether the volume is ok.
  */
-static int _options_ok(const struct config *config, const struct vol *volume)
+static bool options_ok(const struct config *config, const struct vol *volume)
 {
 	assert(config != NULL);
 	assert(volume != NULL);
@@ -116,34 +116,41 @@ static int _options_ok(const struct config *config, const struct vol *volume)
 	if (optlist_len(config->options_allow) > 0 &&
 	    optlist_len(config->options_deny) > 0) {
 		l0g("possible conflicting option settings (use allow OR deny)\n");
-		return 0;
+		return false;
 	}
 	if (!volume->use_fstab) {
 		if (!options_required_ok(config->options_require,
-		    volume->options))
-			return 0;
-		else if (optlist_len(config->options_allow) > 0) {
+		    volume->options)) {
+			return false;
+		} else if (optlist_len(config->options_allow) > 0) {
 			if (!options_allow_ok(config->options_allow,
 			    volume->options))
-				return 0;
+				return false;
 		} else if (optlist_len(config->options_deny) > 0) {
 			if (!options_deny_ok(config->options_deny,
 			    volume->options))
-				return 0;
+				return false;
 		} else if (optlist_len(volume->options) > 0) {
 			l0g("user specified options denied by default\n");
-			return 0;
+			return false;
 		}
 	}
-	return 1;
+	return true;
 }
 
-/* ============================ luserconf_volume_record_sane () ============ */
-/* PRE:    config points to a valid struct config
-		vol...
-*/
-/* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-bool luserconf_volume_record_sane(const struct config *config, int vol)
+/*
+ * luserconf_volume_record_sane -
+ * @config:	current configuration
+ * @vol:	volume index
+ *
+ * Check whether the per-user volume is in accordance with wildcard and
+ * option restrictions.
+ *
+ * FIXME: check to ensure input is legal and reject all else instead of
+ * rejecting everyhing that is illegal.
+ */
+bool luserconf_volume_record_sane(const struct config *config,
+    unsigned int vol)
 {
 	const struct vol *vpt;
 	assert(config != NULL);
@@ -152,20 +159,24 @@ bool luserconf_volume_record_sane(const struct config *config, int vol)
 
 	if (config->volume[vol].used_wildcard) {
 		l0g("You may not use wildcards in user-defined volumes\n");
-		return 0;
+		return false;
 	}
-	if (!_options_ok(config, &config->volume[vol])) {
+	if (!options_ok(config, &config->volume[vol])) {
 		l0g("illegal option specified by user\n");
-		return 0;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
-/* ============================ volume_record_sane () ====================== */
-/* PRE:    config points to a valid struct config
- * FN VAL: if error string error message else NULL */
-/* FIXME: check to ensure input is legal and reject all else instead of rejecting everyhing that is illegal */
-bool volume_record_sane(const struct config *config, int vol)
+/*
+ * volume_record_sane -
+ * @config:	current configuration
+ * @vol:	volume index
+ *
+ * FIXME: check to ensure input is legal and reject all else instead of
+ * rejecting everyhing that is illegal.
+ */
+bool volume_record_sane(const struct config *config, unsigned int vol)
 {
 	const struct vol *vpt;
 
@@ -176,32 +187,32 @@ bool volume_record_sane(const struct config *config, int vol)
 	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
 	if (config->command[vpt->type][0] == NULL) {
 		l0g("mount command not defined for this type\n");
-		return 0;
+		return false;
 	}
-	if ((vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
+	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
 	    vpt->type == CMD_NCPMOUNT || vpt->type == CMD_NFSMOUNT ||
-	    vpt->type == CMD_DAVMOUNT) && strlen(vpt->server) == 0) {
-		l0g("remote mount type specified without server\n");
-		return 0;
-	}
+	    vpt->type == CMD_DAVMOUNT)
+	    	if (strlen(vpt->server) == 0) {
+			l0g("remote mount type specified without server\n");
+			return false;
+		}
+
 	if (vpt->type == CMD_NCPMOUNT &&
 	    !optlist_exists(vpt->options, "user")) {
 		l0g("NCP volume definition missing user option\n");
-		return 0;
+		return false;
 	}
 	if (config->command[CMD_UMOUNT][0] == NULL) {
 		l0g("umount command not defined\n");
-		return 0;
+		return false;
 	}
 	if (strlen(vpt->fs_key_cipher) > 0 && strlen(vpt->fs_key_path) == 0) {
 		l0g("fs_key_cipher defined without fs_key_path\n");
-		return 0;
+		return false;
 	}
 	if (strlen(vpt->fs_key_cipher) == 0 && strlen(vpt->fs_key_path) > 0) {
 		l0g("fs_key_path defined without fs_key_cipher\n");
-		return 0;
+		return false;
 	}
-	return 1;
+	return true;
 }
-
-//=============================================================================

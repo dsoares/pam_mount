@@ -16,7 +16,7 @@ extern void freeconfig(struct config *);
 /*
  *	RDCONF2.C
  */
-extern bool luserconf_volume_record_sane(const struct config *, int);
-extern bool volume_record_sane(const struct config *, int);
+extern bool luserconf_volume_record_sane(const struct config *, unsigned int);
+extern bool volume_record_sane(const struct config *, unsigned int);
 
 #endif /* PMT_READCONFIG_H */

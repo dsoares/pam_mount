@@ -408,7 +408,7 @@ static int modify_pm_count(struct config *config, char *user,
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
     int argc, const char **argv)
 {
-	int vol;
+	unsigned int vol;
 	int ret = PAM_SUCCESS;
 	unsigned int krb5_set;
 	char *system_authtok;
@@ -511,7 +511,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	     static_cast(long, getuid()), static_cast(long, geteuid()),
 	     static_cast(long, getgid()), static_cast(long, getegid()));
 
-	/* This code needs root priv. */
 	for (vol = 0; vol < Config.volcount; ++vol) {
 		/*
 		 * luserconf_volume_record_sane() is called here so that a user
@@ -531,14 +530,10 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 			ret = PAM_SERVICE_ERR;
 		}
 	}
-	/* end root priv. */
-	/* Paranoia? */
 	clean_system_authtok(pamh, system_authtok, 0);
 	if (krb5_set)
 		unsetenv("KRB5CCNAME");
-	/* This code needs root priv. */
 	modify_pm_count(&Config, Config.user, "1");
-	/* end root priv. */
  out:
 	w4rn("done opening session (ret=%d)\n", ret);
 	return ret;
@@ -576,7 +571,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
     int flags, int argc, const char **argv)
 {
-	int vol;
+	unsigned int vol;
 	int ret = PAM_SUCCESS;
 	const char *pam_user = NULL;
 
@@ -609,7 +604,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		l0g("could not chdir\n");
 	if (Config.volcount <= 0)
 		w4rn("volcount is zero\n");
-	/* This code needs root priv. */
+
 	if (modify_pm_count(&Config, Config.user, "-1") <= 0) {
 		/* Unmount in reverse order to facilitate nested mounting. */
 		for (vol = Config.volcount - 1; vol >= 0; --vol) {
@@ -618,7 +613,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 				l0g("unmount of %s failed\n",
 				    Config.volume[vol].volume);
 		}
-		/* end root priv. */
 	} else {
 		w4rn("%s seems to have other remaining open sessions\n",
 		     Config.user);
