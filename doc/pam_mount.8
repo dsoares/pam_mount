@@ -90,6 +90,20 @@ will try to authenticate.
 pam_unix will try to authenticate the user if pam_ldap fails. If pam_unix
 fails, then the authentication will be refused.
 .PP
+Alternatively, the following is possible (thanks to Andrew Morgan for
+the hint!):
+.nf
+
+	auth [success=2 default=ignore] pam_unix2.so
+	auth [success=1 default=ignore] pam_ldap.so use_first_pass
+	auth requisite pam_deny.so
+	auth optional pam_mount.so use_first_pass
+.fi
+.PP
+It may seem odd, but the first three lines will make it so that at least one of
+pam_unix2 or pam_ldap has to succeed. As you can see, pam_mount will be run
+\fBafter\fR successful authentification with theses subsystems.
+.PP
 If your volume has a different password than your system account, then encrypt
 the password to the volume you wish mounted using your system password as the
 key and store it somewhere on your system's local filesystem. pam_mount

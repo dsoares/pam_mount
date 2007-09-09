@@ -91,6 +91,19 @@ NASTY DETAILS
        3.  pam_unix  will  try  to authenticate the user if pam_ldap fails. If
            pam_unix fails, then the authentication will be refused.
 
+       Alternatively, the following is possible (thanks to Andrew  Morgan  for
+       the hint!):
+
+            auth [success=2 default=ignore] pam_unix2.so
+            auth [success=1 default=ignore] pam_ldap.so use_first_pass
+            auth requisite pam_deny.so
+            auth optional pam_mount.so use_first_pass
+
+       It  may  seem  odd,  but  the first three lines will make it so that at
+       least one of pam_unix2 or pam_ldap has to  succeed.  As  you  can  see,
+       pam_mount  will  be  run  after successful authentification with theses
+       subsystems.
+
        If your volume has a different password than your system account,  then
        encrypt  the  password to the volume you wish mounted using your system
        password as the key and store  it  somewhere  on  your  system's  local
@@ -129,9 +142,9 @@ NASTY DETAILS
        security  flaw  so  user-defined volumes are not allowed by the example
        pam_mount.conf.xml distributed with pam_mount.
 
-       In general, you will  leave  all  the  first  (general)  parameters  as
-       provided  by  default. You only have to provide the user/volume list in
-       the end of the file, following the examples.
+       In general, you will leave all the first (general) parameters  as  pro‐
+       vided  by default. You only have to provide the user/volume list in the
+       end of the file, following the examples.
 
        To ensure that your system and, possibly, the  remote  server  are  all
        properly configured, you should try to mount all or some of the volumes
