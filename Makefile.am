@@ -22,5 +22,4 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
-EXTRA_DIST = autogen.sh AUTHORS FAQ LICENSE.GPL2 LICENSE.LGPL2
-SUBDIRS = src config scripts dry
+SUBDIRS = src scripts dry

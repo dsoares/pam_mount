@@ -23,5 +23,3 @@
 
 man_MANS = autoehd.8 mount.crypt.8 pam_mount.8 pmvarrun.8 \
            mkehd.1 mount_ehd.8 passwdehd.8 umount.crypt.8
-
-EXTRA_DIST = pam_mount.spec $(man_MANS)

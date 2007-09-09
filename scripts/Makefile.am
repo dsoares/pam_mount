@@ -24,5 +24,3 @@
 bin_SCRIPTS = mkehd autoehd passwdehd mount_ehd
 ssbindir = @ssbindir@
 ssbin_SCRIPTS = mount.crypt umount.crypt
-
-EXTRA_DIST = mkehd autoehd passwdehd mount_ehd mount.crypt umount.crypt
