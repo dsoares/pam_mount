@@ -426,24 +426,24 @@ static inline int strcmp_1u(const xmlChar *a, const char *b)
  * no match was found, positive non-zero on success or negative non-zero on
  * failure.
  */
-static int user_in_sgrp(const char *user, const char *grp)
+static bool user_in_sgrp(const char *user, const char *grp)
 {
 	struct group *gent;
 	const char **wp;
 
 	if ((gent = getgrnam(grp)) == NULL) {
 		w4rn("getgrnam(\"%s\") failed: %s\n", grp, strerror(errno));
-		return -1;
+		return false;
 	}
 
 	wp = const_cast(const char **, gent->gr_mem);
 	while (wp != NULL && *wp != NULL) {
 		if (strcmp(*wp, user) == 0)
-			return 1;
+			return true;
 		++wp;
 	}
 
-	return 0;
+	return false;
 }
 
 static inline char *xmlGetProp_2s(xmlNode *node, const char *attr)
