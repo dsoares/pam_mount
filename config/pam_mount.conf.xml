@@ -126,7 +126,7 @@ subsystem has PATH set properly.
 
 <ncpumount>ncpumount %(MNTPT)</ncpumount>
 
-<fusemount>mount.fuse %(VOLUME) %(MNTPT) "%(before=\"-o\" OPTIONS)"</fusemount>
+<fusemount>mount.fuse %(VOLUME) %(MNTPT) "%(before=\"-o \" OPTIONS)"</fusemount>
 
 <fuseumount>fusermount -u %(MNTPT)</fuseumount>
 
@@ -146,7 +146,7 @@ package). -->
 <lclmount>mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
 	"%(before=\"-o\" OPTIONS)"</lclmount>
 
-<cryptmount>mount -t crypt "%(before=\"-o\" OPTIONS)"
+<cryptmount>mount -t crypt "%(before=\"-o \" OPTIONS)"
 	%(VOLUME) %(MNTPT)</cryptmount>
 
 <nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)

@@ -784,13 +784,13 @@ static const struct pmt_command default_command[] = {
 	{CMD_DAVMOUNT,   "davfs", "davmount",   {"mount", "-t", "davfs", "%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_NCPMOUNT,   "ncpfs", "ncpmount",   {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_NCPUMOUNT,  "ncpfs", "ncpumount",  {"ncpumount", "%(MNTPT)", NULL}},
-	{CMD_FUSEMOUNT,  "fuse",  "fusemount",  {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
+	{CMD_FUSEMOUNT,  "fuse",  "fusemount",  {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o \" OPTIONS)", NULL}},
 	{CMD_FUSEUMOUNT, "fuse",  "fuseumount", {"fusermount", "-u", "%(MNTPT)", NULL}},
 	/* Do not use LCLMOUNT to avoid calling fsck */
 	{CMD_NFSMOUNT,   "nfs",   "nfsmount",   {"mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}},
 	{CMD_LCLMOUNT,   NULL,    "lclmount",   {"mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
 	/* Hope to have this in util-linux (LCLMOUNT) some day: */
-	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount", "-t", "crypt", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_UMOUNT,     NULL,    "umount",     {"umount", "%(MNTPT)", NULL}},
 	{CMD_LSOF,       NULL,    "lsof",       {"lsof", "%(MNTPT)", NULL}},
 	{CMD_MNTAGAIN,   NULL,    "mntagain",   {"mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
