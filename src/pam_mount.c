@@ -21,8 +21,8 @@ pam_mount - pam_mount.c
 
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
-#define PAM_SM_SESSION
-#define PAM_SM_PASSWORD
+#define PAM_SM_SESSION 1
+#define PAM_SM_PASSWORD 1
 
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
