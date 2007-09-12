@@ -26,7 +26,7 @@ module_LTLIBRARIES = pam_mount.la
 sbin_PROGRAMS = pmvarrun
 
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
-pam_mount_la_LIBADD  = -lHX
+pam_mount_la_LIBADD  = -lHX -lpam
 pam_mount_la_LDFLAGS = -module -avoid-version $(GLIB_LIBS) $(XML_LIBS)
 
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c xstdlib-nolibtool.c
