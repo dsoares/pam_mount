@@ -237,13 +237,13 @@ static int already_mounted(const struct config *const config,
 	 * WONTFIX: I am not overly fond of using mount, but BSD has no
 	 * /etc/mtab?
 	 */
-	if (config->command[0][CMD_MNTCHECK] == NULL) {
+	if (config->command[CMD_MNTCHECK][0] == NULL) {
 		l0g("mntcheck not defined in pam_mount.conf.xml\n");
 		return -1;
 	}
 
-	for (i = 0; config->command[i][CMD_MNTCHECK] != NULL; ++i)
-		add_to_argv(_argv, &_argc, config->command[i][CMD_MNTCHECK],
+	for (i = 0; config->command[CMD_MNTCHECK][i] != NULL; ++i)
+		add_to_argv(_argv, &_argc, config->command[CMD_MNTCHECK][i],
 		            vinfo);
 	log_argv(_argv);
 
