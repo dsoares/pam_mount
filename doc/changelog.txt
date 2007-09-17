@@ -3,6 +3,10 @@
 
 SVN /trunk
 ==========
+
+
+v0.21 (September 17 2007)
+=========================
 - [r264]: Silence unwanted error message (fallout from r240)
 - [r270]: Add "Known Bugs and Issues" documentation
 - [r274]: More documentation - How to stack PAM modules without pam_stack
