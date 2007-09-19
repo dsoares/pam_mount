@@ -89,6 +89,7 @@ fi
 
 CIPHER=""
 KEYSIZE=""
+keyfile="";
 HASH=""
 luks_ro="";
 LOOP=false
@@ -98,7 +99,7 @@ OLDIFS="$IFS";
 IFS=", ";
 
 for opt in $OPTIONS; do
-	KEY="${opt%=*}";
+	KEY="${opt%%=*}";
 	VAL="${opt#*=}";
 	case "$KEY" in
 		(cipher)  CIPHER="$VAL";;
@@ -106,6 +107,8 @@ for opt in $OPTIONS; do
 		(hash)    HASH="$VAL";;
 		(fstype)  FSTYPE="$VAL";;
 		(fsck)    DOFSCK="true";;
+		(keyfile)
+			keyfile="$VAL";;
 		(loop)
 			if ! losetup "$DEVICE" &>/dev/null; then
 				LOOP="true";;
@@ -145,7 +148,11 @@ DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
 # Check for LUKS
 if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
 	LUKS=true;
-	cryptsetup luksOpen $luks_ro "$DEVICE" "$DMDEVICE";
+	if [ -z "$keyfile" ]; then
+		cryptsetup luksOpen $luks_ro "$DEVICE" "$DMDEVICE";
+	else
+		cryptsetup luksOpen $luks_ro -d "$keyfile" "$DEVICE" "$DMDEVICE";
+	fi;
 else
 	LUKS=false;
 	cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
