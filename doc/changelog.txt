@@ -3,6 +3,9 @@
 
 SVN /trunk
 ==========
+- [r293]: revert r290 which incorrectly changed the luks argument order
+- [r294]: --keyfile option added to mount.crypt
+- [r296]: improved error reporting in the config converter script
 
 
 v0.21 (September 17 2007)
