@@ -380,6 +380,7 @@ sub parse_conf()
 	close OUT;
 	
 	foreach my $line (@file) {
+		++$.;
 		chomp $line;
 		$line =~ s/^\s+//s;
 
@@ -408,13 +409,22 @@ sub parse_conf()
 			$callbacks{$fields[0]}->(@fields);
 			$writer->raw("\n\n");
 		} else {
-			print STDERR "Unknown command: $fields[0]\n";
+			print STDERR "-" x 40, "\n",
+			      "Unknown command: \"$fields[0]\" near ",
+			      "line $.:\n",
+			      $line, "\n",
+			      "-" x 40, "\n";
+			return 1;
 		}
 	}
+
+	return 0;
 }
 
-&parse_conf();
+my $ret = &parse_conf();
 
 $writer->endTag("pam_mount");
 $writer->end();
 $output->close();
+
+exit $ret;
