@@ -145,7 +145,7 @@ DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
 # Check for LUKS
 if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
 	LUKS=true;
-	cryptsetup luksOpen $luks_ro "$DMDEVICE" "$DEVICE";
+	cryptsetup luksOpen $luks_ro "$DEVICE" "$DMDEVICE";
 else
 	LUKS=false;
 	cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
