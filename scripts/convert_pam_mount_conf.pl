@@ -381,9 +381,11 @@ sub parse_conf()
 	
 	foreach my $line (@file) {
 		chomp $line;
+		$line =~ s/^\s+//s;
 
-		next if ($line =~ /^\s*#/);
-		next if ($line =~ /^\s*$/);
+		if (length($line) == 0 || substr($line, 0, 1) eq "#") {
+			next;
+		}
 
 		my @fields = split(/(?<!\\)\s+/, $line);
 		for (my $i = 0; $i <= $#fields; ++$i) {
