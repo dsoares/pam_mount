@@ -28,7 +28,6 @@ pam_mount - mount.c
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <glib.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -450,7 +449,7 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 
 	strncpy(dcopy, d, sizeof_z(dcopy));
 	dcopy[sizeof_z(dcopy)] = '\0';
-	parent = g_path_get_dirname(dcopy);
+	parent = HX_dirname(dcopy);
 	if (!exists(parent) && mkmountpoint(volume, parent) == 0) {
 		ret = false;
 		goto out;

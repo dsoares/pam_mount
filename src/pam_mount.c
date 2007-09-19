@@ -30,7 +30,6 @@ pam_mount - pam_mount.c
 #include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
-#include <glib.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
