@@ -14,6 +14,7 @@ v0.26 (September 20 2007)
   in converter script
 - [r303]: fix mount.crypt inner shell syntax
 - [r308]: add "nullok" option
+- [r311]: fix a missing user identity switch after mkmountpoint'ing
 
 
 v0.21 (September 17 2007)

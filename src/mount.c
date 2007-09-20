@@ -63,7 +63,7 @@ static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
 static void log_output(int);
 static void log_pm_input(const struct config * const, const unsigned int);
-static bool mkmountpoint(struct vol * const, const char * const);
+static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
 static void run_lsof(const struct config * const, struct HXbtree *);
 static void vol_to_dev(char *, size_t, const struct vol *);
@@ -436,7 +436,7 @@ static void log_pm_input(const struct config *const config,
  * @d:		directory
  *
  * If the directory @d does not exist, create it and all its parents if
- * @volume->created_mntpt = true. On success, returns 1, otherwise 0.
+ * @volume->created_mntpt = true. On success, returns true, otherwise false.
  */
 static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 {
@@ -480,7 +480,7 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 }
 
 /*
- * mkmountpoint - create mountpoint for volume
+ * mkmountpoint_pick - create mountpoint for volume
  * @volume:	volume structure
  * @d:		directory to create
  *
@@ -491,7 +491,7 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
  *
  * If that fails, do as usual (create as root, chown to user).
  */
-static bool mkmountpoint(struct vol *volume, const char *d)
+static bool mkmountpoint_pick(struct vol *volume, const char *d)
 {
 	struct passwd *pe;
 	bool ret;
@@ -511,6 +511,20 @@ static bool mkmountpoint(struct vol *volume, const char *d)
 	if (!ret)
 		l0g("tried to create %s but failed\n", d);
 	return ret;
+}
+
+/*
+ * mkmountpoint -
+ *
+ * Wrapper for mkmountpoint_pick(). Switch back to root user after
+ * mkmountpoint() operation. This is needed, otherwise the PAM stack will
+ * (more or less) spuriously fail with PAM_SYSTEM_ERR.
+ */
+static inline bool mkmountpoint(struct vol *volume, const char *d)
+{
+	bool r = mkmountpoint_pick(volume, d);
+	seteuid(0);
+	return r;
 }
 
 /*
