@@ -111,7 +111,7 @@ for opt in $OPTIONS; do
 			keyfile="$VAL";;
 		(loop)
 			if ! losetup "$DEVICE" &>/dev/null; then
-				LOOP="true";;
+				LOOP="true";
 			fi;
 			;;
 		(*)
