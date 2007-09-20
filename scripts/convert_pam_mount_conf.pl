@@ -316,22 +316,22 @@ sub callback_volume(@)
 	my($nf, $char);
 	
 	foreach my $f (@fields) {
-		if (!defined $nf && $f =~ /^'(.+)'$/) {
+		if (!defined($nf) && $f =~ /^'(.+)'$/) {
 			push(@new_fields, $1);
-		} elsif (!defined $nf && $f =~ /^"(.+)"$/) {
+		} elsif (!defined($nf) && $f =~ /^"(.+)"$/) {
 			push(@new_fields, $1);
-		} elsif (!defined $nf && $f =~ /^'([^']+)$/) {
+		} elsif (!defined($nf) && $f =~ /^'([^']+)$/) {
 			$nf   = $1;
 			$char = "'";
-		} elsif (!defined $nf && $f =~ /^"([^"]+)$/) {
+		} elsif (!defined($nf) && $f =~ /^"([^"]+)$/) {
 			$nf   = $1;
 			$char = "\"";
-		} elsif (defined $nf && $f =~ /^([^$char]+)$char$/) {
+		} elsif (defined($nf) && $f =~ /^([^$char]+)$char$/) {
 			$nf  .= " $1";
 			push(@new_fields, $nf);
 			$nf   = undef;
 			$char = undef;
-		} elsif(defined $nf) {
+		} elsif(defined($nf)) {
 			$nf .= " $f";
 		} else {
 			push(@new_fields, $f);
