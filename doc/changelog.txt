@@ -32,3 +32,15 @@ v0.20 (September 05 2007)
 - [r251]: Allow changing the password prompt
 - [r252]: Add an overview of pam_mount options (options.txt)
 - [r253]: Implement the "soft_try_pass" option
+
+
+v0.19 (July 04 2007)
+====================
+- [r126]: pam_mount switched to an XML configuration.
+- [r160]: NT domain placeholders
+- [r164]: properly detect loop64 support
+- [r173]: split group matching into multiple attributes
+- [r175]: add an "invert" attribute
+- [r183]: remove pam_mount.la from `make install`ed directory
+- [r189]: partial davfs support
+- [r203]: added truecrypt support
