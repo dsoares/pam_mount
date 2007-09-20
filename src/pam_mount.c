@@ -93,6 +93,8 @@ static void parse_pam_args(int argc, const char **argv)
 			Args.auth_type = TRY_FIRST_PASS;
 		else if (strcmp("soft_try_pass", argv[i]) == 0)
 			Args.auth_type = SOFT_TRY_PASS;
+		else if (strcmp("nullok", argv[i]) == 0)
+			Args.nullok = true;
 		else
 			w4rn("bad pam_mount option\n");
 	}
@@ -256,7 +258,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
 		      static_cast(void *, &ptr)));
 		if (ret != PAM_SUCCESS || ptr == NULL) {
-			if (ret == PAM_SUCCESS && ptr == NULL)
+			if (ret == PAM_SUCCESS && ptr == NULL &&
+			    !Args.nullok)
 				ret = PAM_AUTHINFO_UNAVAIL;
 			l0g("could not get password from PAM system\n");
 			if (Args.auth_type == USE_FIRST_PASS)
@@ -299,11 +302,11 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		l0g("error trying to save authtok for session code\n");
 		goto out;
 	}
- out:
 	assert(ret != PAM_SUCCESS ||
 	       pam_get_data(pamh, "pam_mount_system_authtok", &tmp) ==
 	       PAM_SUCCESS);
 	assert(ret != PAM_SUCCESS || tmp != NULL);
+ out:
 	return ret;
 }
 

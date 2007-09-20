@@ -19,3 +19,10 @@ try_first_pass
 soft_try_pass
 	Try taking the password from the PAM subsystem;
 	if it fails, do not ask.
+
+nullok
+	Do not fail if the authentication token was NULL (i.e. if
+	the user was not asked by another PAM auth module to provide
+	a password) and pam_mount was configured not to ask (e.g.
+	with use_first_pass), and pam_mount.so is "required" in the
+	PAM stack.

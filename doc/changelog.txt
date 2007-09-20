@@ -9,6 +9,7 @@ SVN /trunk
 - [r301]: do not literally copy the special-meaning single dashes
   in converter script
 - [r303]: fix mount.crypt inner shell syntax
+- [r308]: add "nullok" option
 
 
 v0.21 (September 17 2007)
