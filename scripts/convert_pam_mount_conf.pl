@@ -297,7 +297,6 @@ sub callback_volume(@)
 	shift @fields;
 
 	my %attr = (
-		"invert" => 0,
 		"fstype" => "auto",
 	);
 	
