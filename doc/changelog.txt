@@ -4,6 +4,7 @@
 SVN /trunk
 ==========
 - [r312]: add luserconf conversion note to convert_pam_mount_conf.pl
+- [r313]: do not print "mount errors" if there won't be any
 
 
 v0.26 (September 20 2007)

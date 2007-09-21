@@ -61,7 +61,6 @@ static int check_filesystem(const struct config *, const unsigned int, struct HX
 static int do_losetup(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
 static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
-static void log_output(int);
 static void log_pm_input(const struct config * const, const unsigned int);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
@@ -78,12 +77,15 @@ static int split_bsd_mount(char *, const char **, const char **, const char **);
 //-----------------------------------------------------------------------------
 /*
  * log_output
- * @fd:	file descriptor to read from
+ * @fd:		file descriptor to read from
+ * @cmsg:	conditional message
  *
- * Reads all data from @fd and logs it using w4rn(). @fd is uaually connected
- * to a pipe to another process's stdout or stderr.
+ * Reads all data from @fd and logs it using w4rn(). @fd is usually connected
+ * to a pipe to another process's stdout or stderr. Only if @fd actually has
+ * output for us, @cmsg will be printed
  */
-static void log_output(int fd) {
+static void log_output(int fd, const char *cmsg)
+{
 	char buf[BUFSIZ + 1];
 	FILE *fp;
 
@@ -93,8 +95,13 @@ static void log_output(int fd) {
 	}
 
 	setvbuf(fp, NULL, _IOLBF, 0);
-	while (fgets(buf, sizeof(buf), fp) != NULL)
+	if (fgets(buf, sizeof(buf), fp) != NULL)
+		if (cmsg != NULL)
+			w4rn("%s", cmsg);
+
+	do {
 		w4rn("%s", buf);
+	} while (fgets(buf, sizeof(buf), fp) != NULL);
 	return;
 }
 
@@ -128,8 +135,7 @@ static void run_lsof(const struct config *const config,
 		g_error_free(err);
 		return;
 	}
-	w4rn("lsof output (should be empty)...\n");
-	log_output(cstdout);
+	log_output(cstdout, "lsof output:\n");
 	w4rn("waiting for lsof\n");
 	if (waitpid(pid, &child_exit, 0) == -1)
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -601,8 +607,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 		ret = 0;
 		goto out;
 	}
-	w4rn("umount errors (should be empty):\n");
-	log_output(cstderr);
+	log_output(cstderr, "umount errors:\n");
 	CLOSE(cstderr);
 	w4rn("waiting for umount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
@@ -708,9 +713,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	    ret = 0;
 	}
 	CLOSE(cstdin);
-	w4rn("losetup errors (should be empty):\n");
-
-	log_output(cstderr);
+	log_output(cstderr, "losetup errors:\n");
 	CLOSE(cstderr);
 	w4rn("waiting for losetup\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
@@ -821,8 +824,9 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 		g_error_free(err);
 		return 0;
 	}
-	log_output(cstdout); /* stdout and stderr must be logged for fsck */
-	log_output(cstderr);
+	/* stdout and stderr must be logged for fsck */
+	log_output(cstdout, NULL);
+	log_output(cstderr, NULL);
 	CLOSE(cstderr);
 	w4rn("waiting for filesystem check\n");
 	if (waitpid(pid, &child_exit, 0) < 0)
@@ -994,8 +998,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 	}
 	/* Paranoia? */
 	memset(_password, 0, sizeof(_password));
-	w4rn("mount errors (should be empty):\n");
-	log_output(cstderr);
+	log_output(cstderr, "mount errors:\n");
 	CLOSE(cstderr);
 	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
