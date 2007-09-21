@@ -1,6 +1,6 @@
 /*=============================================================================
 pam_mount - pmvarrun.c
-  Copyright (C) W. Michael Putello <mike@flyn.org>, 2004
+  Copyright © W. Michael Petullo <mike@flyn.org>, 2004
   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
