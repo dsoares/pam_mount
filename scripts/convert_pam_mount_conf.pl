@@ -86,6 +86,8 @@ sub callback_luserconf(@)
 	my @fields = @_;
 
 	$writer->emptyTag("luserconf", "name" => $fields[1]);
+	print STDERR "Please note that you will also probably have to convert",
+	      $fields[1], "\n";
 }
 
 sub callback_options_allow(@)
