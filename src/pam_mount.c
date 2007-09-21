@@ -608,7 +608,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		w4rn("volcount is zero\n");
 
 	if (modify_pm_count(&Config, Config.user, "-1") <= 0) {
-		/* Unmount in reverse order to facilitate nested mounting. */
 		for (vol = Config.volcount - 1; vol >= 0; --vol) {
 			w4rn("going to unmount\n");
 			if (!mount_op(do_unmount, &Config, vol, NULL))
