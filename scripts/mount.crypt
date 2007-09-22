@@ -78,7 +78,7 @@ if [ -z "$DEVICE" ]; then
 fi
 
 if [ ! -f "$DEVICE" -a ! -b "$DEVICE" ]; then
-        echo "${0##*/}: $DEVICE is not a block device or file" >&2;
+	echo "${0##*/}: $DEVICE is neither a block device nor file" >&2;
 	exit 1
 fi
 
