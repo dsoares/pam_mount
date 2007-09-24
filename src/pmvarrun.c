@@ -35,6 +35,7 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,29 +102,29 @@ static void set_defaults(struct settings *settings)
  * from https://vitalnix.svn.sourceforge.net/svnroot/vitalnix/
  * /trunk/src/libvxutil/util.c
  */
-static int valid_username(const char *n)
+static bool valid_username(const char *n)
 {
 	if (*n == '\0')
-		return 0;
+		return false;
 	if (!((*n >= 'A' && *n <= 'Z') || (*n >= 'a' && *n <= 'z') ||
 	    *n == '_'))
-		return 0;
+		return false;
 
 	while (*n != '\0') {
-		int valid;
+		bool valid;
 
 		if (*n == '$' && *(n+1) == '\0') /* Samba accounts */
-			return 1;
+			return true;
 
 		valid = (*n >= 'A' && *n <= 'Z') || (*n >= 'a' && *n <= 'z') ||
 		        (*n >= '0' && *n <= '9') || *n == '_' || *n == '.' ||
 		        *n == '-';
 		if (!valid)
-			return 0;
+			return false;
 		++n;
 	}
 
-	return 1;
+	return true;
 }
 
 /*
@@ -145,7 +146,7 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 			usage(EXIT_SUCCESS, NULL);
 			break;
 		case 'd':
-			Debug = 1;
+			Debug = true;
 			break;
 		case 'o':
 			settings->operation = str_to_long(optarg);
