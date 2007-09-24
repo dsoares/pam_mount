@@ -580,6 +580,11 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	assert(pamh != NULL);
 
 	w4rn("received order to close things\n");
+	if (Config.volcount == 0) {
+		w4rn("No volumes to umount\n");
+		goto out;
+	}
+
 	w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
 	     static_cast(long, getuid()), static_cast(long, geteuid()),
 	     static_cast(long, getgid()), static_cast(long, getegid()));
