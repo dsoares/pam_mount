@@ -85,7 +85,7 @@ sub callback_luserconf(@)
 {
 	my @fields = @_;
 
-	$writer->emptyTag("luserconf", "name" => $fields[1]);
+	$writer->emptyTag("luserconf", "name" => $fields[1].".xml");
 	print STDERR "Please note that you will also probably have to convert",
 	      $fields[1], "\n";
 }
