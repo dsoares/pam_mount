@@ -118,7 +118,7 @@ static bool valid_username(const char *n)
 
 		valid = (*n >= 'A' && *n <= 'Z') || (*n >= 'a' && *n <= 'z') ||
 		        (*n >= '0' && *n <= '9') || *n == '_' || *n == '.' ||
-		        *n == '-';
+		        *n == '-' || *n == ' ' || *n == '\\';
 		if (!valid)
 			return false;
 		++n;
