@@ -13,9 +13,13 @@ struct vol;
 /*
  *	MISC.C
  */
-#define PMPREFIX       "pam_mount(" __FILE__ ":" __STRINGIFY(__LINE__) ") "
-#define l0g(fmt, ...)  misc_log((PMPREFIX fmt), ## __VA_ARGS__)
-#define w4rn(fmt, ...) misc_warn((PMPREFIX fmt), ## __VA_ARGS__)
+#define PMPREFIX       "pam_mount(%s:%u) "
+#define l0g(fmt, ...) \
+	misc_log((PMPREFIX fmt), HX_basename(__FILE__), \
+	__LINE__, ## __VA_ARGS__)
+#define w4rn(fmt, ...) \
+	misc_warn((PMPREFIX fmt), HX_basename(__FILE__), \
+	__LINE__, ## __VA_ARGS__)
 
 extern void add_to_argv(const char **, int * const, const char * const,
 	struct HXbtree *);
