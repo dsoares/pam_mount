@@ -139,7 +139,7 @@ static void run_lsof(const struct config *const config,
 	if (waitpid(pid, &child_exit, 0) == -1)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	CLOSE(cstdout);
+	close(cstdout);
 	return;
 }
 
@@ -605,7 +605,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 		goto out;
 	}
 	log_output(cstderr, "umount errors:\n");
-	CLOSE(cstderr);
+	close(cstderr);
 	w4rn("waiting for umount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -708,9 +708,9 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	    l0g("error sending password to losetup\n");
 	    ret = 0;
 	}
-	CLOSE(cstdin);
+	close(cstdin);
 	log_output(cstderr, "losetup errors:\n");
-	CLOSE(cstderr);
+	close(cstderr);
 	w4rn("waiting for losetup\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -821,7 +821,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	/* stdout and stderr must be logged for fsck */
 	log_output(cstdout, NULL);
 	log_output(cstderr, NULL);
-	CLOSE(cstderr);
+	close(cstderr);
 	w4rn("waiting for filesystem check\n");
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -992,7 +992,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 	/* Paranoia? */
 	memset(_password, 0, sizeof(_password));
 	log_output(cstderr, "mount errors:\n");
-	CLOSE(cstderr);
+	close(cstderr);
 	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
 		spawn_restore_sigchld();
