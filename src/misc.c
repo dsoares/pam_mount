@@ -44,6 +44,19 @@ static int static_string_valid(const char *, const size_t);
 
 //-----------------------------------------------------------------------------
 /*
+ * misc_dump_id - print user IDs
+ */
+void misc_dump_id(const char *where)
+{
+	w4rn("%s: (uid=%u, euid=%u, gid=%u, egid=%u)\n", where,
+	     static_cast(unsigned int, getuid()),
+	     static_cast(unsigned int, geteuid()),
+	     static_cast(unsigned int, getgid()),
+	     static_cast(unsigned int, getegid()));
+	return;
+}
+
+/*
  * misc_log - log to syslog
  * @format:	printf(3)-style format specifier
  *
@@ -341,9 +354,7 @@ void set_myuid(void *data)
 	setsid();
 	chdir("/");
 	if (user == NULL) {
-		w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
-		     static_cast(long, getuid()), static_cast(long, geteuid()),
-		     static_cast(long, getgid()), static_cast(long, getegid()));
+		misc_dump_id("set_myuid<pre>");
 		if (setuid(0) < 0) {
 			l0g("error setting uid to 0\n");
 			return;
@@ -369,9 +380,7 @@ void set_myuid(void *data)
 		setenv("HOME", real_user->pw_dir, 1);
 		setenv("USER", real_user->pw_name, 1);
 	}
-	w4rn("%s(pre): (uid=%ld, euid=%ld, gid=%ld, egid=%ld)\n", __func__,
-	     static_cast(long, getuid()), static_cast(long, geteuid()),
-	     static_cast(long, getgid()), static_cast(long, getegid()));
+	misc_dump_id("set_myuid<post>");
 	return;
 }
 

@@ -27,6 +27,7 @@ extern int config_valid(const struct config *);
 extern int exists(const char *);
 extern void log_argv(const char * const *);
 extern void misc_add_ntdom(struct HXbtree *, const char *);
+extern void misc_dump_id(const char *);
 extern void misc_log(const char *, ...);
 extern void misc_warn(const char *, ...);
 extern int owns(const char *, const char *);
