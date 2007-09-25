@@ -572,8 +572,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
     int flags, int argc, const char **argv)
 {
-	unsigned int vol;
-	int ret = PAM_SUCCESS;
+	int ret = PAM_SUCCESS, vol;
 	const char *pam_user = NULL;
 
 	assert(pamh != NULL);
