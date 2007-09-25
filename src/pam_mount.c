@@ -326,7 +326,6 @@ static int modify_pm_count(struct config *config, char *user,
     char *operation)
 {
 	FILE *fp;
-	GError *err = NULL;
 	struct HXbtree *vinfo;
 	int _argc = 0, child_exit, cstdout = -1, fnval = -1;
 	const char *_argv[MAX_PAR + 1];
@@ -357,7 +356,7 @@ static int modify_pm_count(struct config *config, char *user,
 	HXformat_free(vinfo);
 	log_argv(_argv);
 
-	if (!spawn_apS(_argv, set_myuid, NULL, &pid, NULL, &cstdout, NULL, &err)) {
+	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, set_myuid, NULL)) {
 		l0g("error executing pmvarrun\n");
 		fnval = -1;
 		goto out;

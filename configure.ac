@@ -28,7 +28,6 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
 AM_PROG_LIBTOOL
-AM_PATH_GLIB_2_0(,,AC_MSG_ERROR(You are missing glib))
 AM_PATH_XML2(,,AC_MSG_ERROR(You are missing libxml2))
 
 AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],

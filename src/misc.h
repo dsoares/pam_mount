@@ -2,6 +2,7 @@
 #define PMT_MISC_H 1
 
 #include <sys/types.h>
+#include <stdbool.h>
 #include "compiler.h"
 
 #define __STRINGIFY_EXPAND(s) #s
@@ -32,7 +33,7 @@ extern void misc_log(const char *, ...);
 extern void misc_warn(const char *, ...);
 extern int owns(const char *, const char *);
 extern char *relookup_user(const char *);
-extern void set_myuid(void *);
+extern void set_myuid(const char *);
 extern long str_to_long(const char *);
 extern int vol_valid(const struct vol *);
 

@@ -27,14 +27,12 @@ sbin_PROGRAMS = pmvarrun
 
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
 pam_mount_la_LIBADD  = -lHX -lpam
-pam_mount_la_LDFLAGS = -module -avoid-version $(GLIB_LIBS) $(XML_LIBS)
+pam_mount_la_LDFLAGS = -module -avoid-version $(XML_LIBS)
 
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c xstdlib-nolibtool.c
 pmvarrun_LDADD   = -lHX
-pmvarrun_LDFLAGS = $(GLIB_LIBS)
 
-AM_CFLAGS = $(GLIB_CFLAGS) $(XML_CPPFLAGS) -DG_DISABLE_DEPRECATED \
-            $(regular_CFLAGS) $(GCC_FVISIBILITY_HIDDEN)
+AM_CFLAGS = $(XML_CPPFLAGS) $(regular_CFLAGS) $(GCC_FVISIBILITY_HIDDEN)
 
 install-data-hook:
 	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;

@@ -8,6 +8,7 @@ SVN /trunk
 - [r318]: allow MSAD usernames (with spaces and backslash) in pmvarrun
 - [r321]: quick-terminate if there is nothing to do on closing session
 - [r324]: fix crash on logout with su (unsigned loop underflow)
+- [r329]: drop libglib dependency
 
 
 v0.26 (September 20 2007)

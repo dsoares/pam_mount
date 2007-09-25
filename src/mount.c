@@ -116,9 +116,8 @@ static void log_output(int fd, const char *cmsg)
 static void run_lsof(const struct config *const config,
     struct HXbtree *vinfo)
 {
-	int _argc = 0, cstdout = -1, child_exit;
+	int _argc = 0, cstdout = -1;
 	const char *_argv[MAX_PAR + 1];
-	GError *err = NULL;
 	unsigned int i;
 	pid_t pid;
 
@@ -129,14 +128,12 @@ static void run_lsof(const struct config *const config,
 		add_to_argv(_argv, &_argc, config->command[CMD_LSOF][i], vinfo);
 	log_argv(_argv);
 
-	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, &cstdout, NULL, &err)) {
-		l0g("%s\n", err->message);
-		g_error_free(err);
+	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, NULL, NULL))
 		return;
-	}
+
 	log_output(cstdout, "lsof output:\n");
 	w4rn("waiting for lsof\n");
-	if (waitpid(pid, &child_exit, 0) == -1)
+	if (waitpid(pid, NULL, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
 	close(cstdout);
@@ -228,7 +225,6 @@ static int already_mounted(const struct config *const config,
 {
 	char *_argv[MAX_PAR + 1], dev[PATH_MAX+1] = {}, mte[BUFSIZ + 1];
 	int i, _argc = 0, cstdout = -1, mounted = 0;
-	GError *err = NULL;
 	struct vol *vpt;
 	pid_t pid;
 	FILE *fp;
@@ -251,12 +247,8 @@ static int already_mounted(const struct config *const config,
 		            vinfo);
 	log_argv(_argv);
 
-	/* FIXME: replace by popen() if available on BSD */
-	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, &cstdout, NULL, &err)) {
-		l0g("%s\n", err->message);
-		g_error_free(err);
+	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, NULL, NULL))
 		return -1;
-	}
 
 	fp = fdopen(cstdout, "r");
 	while (fgets(mte, sizeof(mte), fp) != NULL) {
@@ -543,7 +535,6 @@ static inline bool mkmountpoint(struct vol *volume, const char *d)
 int do_unmount(const struct config *config, const unsigned int vol,
     struct HXbtree *vinfo, const char *const password)
 {
-	GError *err = NULL;
 	int child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
 	const char *_argv[MAX_PAR + 1];
@@ -598,9 +589,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
 	}
 	log_argv(_argv);
-	if (!spawn_apS(_argv, set_myuid, NULL, &pid, NULL, NULL, &cstderr, &err)) {
-		l0g("%s\n", err->message);
-		g_error_free(err);
+	if (!spawn_start(_argv, &pid, NULL, NULL, &cstderr, set_myuid, NULL)) {
 		ret = 0;
 		goto out;
 	}
@@ -664,7 +653,6 @@ static int do_losetup(const struct config *config, const unsigned int vol,
  * FN VAL: if error 0 else 1, errors are logged
  */
 	pid_t pid;
-	GError *err = NULL;
 	int ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
 	const char *cipher, *keybits;
@@ -697,11 +685,8 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 		            config->command[CMD_LOSETUP][i], vinfo);
 
 	log_argv(_argv);
-	if (!spawn_apS(_argv, set_myuid, NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
-		l0g("%s\n", err->message);
-		g_error_free(err);
+	if (!spawn_start(_argv, &pid, &cstdin, NULL, &cstderr, set_myuid, NULL))
 		return 0;
-	}
 
 	/* note to self: password is decrypted */
 	if (pipewrite(cstdin, password, password_len) != password_len) {
@@ -730,7 +715,6 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
  * FN VAL: if error 0 else 1, errors are logged
  */
 	pid_t pid;
-	GError *err = NULL;
 	const char *_argv[MAX_PAR + 1];
 	int child_exit, _argc = 0;
 	unsigned int i;
@@ -748,11 +732,8 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 		add_to_argv(_argv, &_argc,
 		            config->command[CMD_UNLOSETUP][i], vinfo);
 	log_argv(_argv);
-	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, NULL, NULL, &err)) {
-		l0g("%s\n", err->message);
-		g_error_free(err);
+	if (!spawn_start(_argv, &pid, NULL, NULL, NULL, NULL, NULL))
 		return 0;
-	}
 	w4rn("waiting for losetup delete\n");
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -771,7 +752,6 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
  */
 #if defined (__linux__)
 	pid_t pid;
-	GError *err = NULL;
 	int child_exit, _argc = 0, cstdout = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
 	const char *fsck_target;
@@ -813,11 +793,9 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, config->command[CMD_FSCK][i], vinfo);
 
 	log_argv(_argv);
-	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, &cstdout, &cstderr, &err)) {
-		l0g("%s\n", err->message);
-		g_error_free(err);
+	if (!spawn_start(_argv, &pid, NULL, &cstdout, &cstderr, NULL, NULL))
 		return 0;
-	}
+
 	/* stdout and stderr must be logged for fsck */
 	log_output(cstdout, NULL);
 	log_output(cstderr, NULL);
@@ -905,7 +883,6 @@ int do_mount(const struct config *config, const unsigned int vol,
 		}
 	}
 	if (mount_again) {
-		GError *err = NULL;
 		if (config->command[CMD_MNTAGAIN][0] == NULL) {
 			l0g("mntagain not defined in pam_mount.conf.xml\n");
 			return 0;
@@ -916,14 +893,10 @@ int do_mount(const struct config *config, const unsigned int vol,
 			add_to_argv(_argv, &_argc,
 			            config->command[CMD_MNTAGAIN][i], vinfo);
 		log_argv(_argv);
-		if (!spawn_apS(_argv, set_myuid, NULL, &pid, NULL, NULL,
-		    &cstderr, &err)) {
-			l0g("%s\n", err->message);
-			g_error_free(err);
+		if (!spawn_start(_argv, &pid, NULL, NULL, &cstderr,
+		    set_myuid, NULL))
 			return 0;
-		}
 	} else {
-		GError *err = NULL;
 		char *mount_user;
 		if (config->command[vpt->type][0] == NULL) {
 			l0g("proper mount command not defined in "
@@ -976,12 +949,10 @@ int do_mount(const struct config *config, const unsigned int vol,
 		log_argv(_argv);
 		mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
 		             vpt->user : NULL;
-		if (!spawn_apS(_argv, set_myuid, mount_user, &pid, &cstdin,
-		    NULL, &cstderr, &err)) {
-			l0g("%s\n", err->message);
-			g_error_free(err);
+		if (!spawn_start(_argv, &pid, &cstdin, NULL, &cstderr,
+		    set_myuid, mount_user))
 			return 0;
-		}
+
 		if (vpt->type != CMD_NFSMOUNT)
 			if (pipewrite(cstdin, _password, _password_len) !=
 			    _password_len)

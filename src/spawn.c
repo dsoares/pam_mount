@@ -19,13 +19,14 @@ pam_mount - spawn.c
 
   -- For details, see the file named "LICENSE.LGPL2"
 =============================================================================*/
+#include <sys/types.h>
 #include <errno.h>
-#include <glib.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "compiler.h"
+#include <unistd.h>
 #include "misc.h"
 #include "spawn.h"
 
@@ -34,37 +35,105 @@ static struct sigaction saved_handler = {.sa_handler = SIG_DFL};
 
 //-----------------------------------------------------------------------------
 /*
- * spawn_apS -
+ * spawn_build_pipes -
+ * @fd_request:	user array to tell us which pipe sets to create
+ * @p:		result array
  *
- * Wrapper around that glib funky prototype spawn thing. Saves the old
- * %SIGCHLD handler before installing our own (just %SIG_DFL actually).
- *
- * On success, returns 1 and the handler is NOT reset. Every [successful] call
- * to spawn_apS() must be followed by spawn_restore_sigchld(). This is usually
- * done after waitpid(), when we are sure there are no more pam_mount-created
- * children that could potentially confuse GDM.
- *
- * On failure, this function returns 0 and the original %SIGCHLD handler will
- * be restored.
- *
- * All of this mess is required because GDM gets confused when the waitpid()
- * from its %SIGCHLD handler sees a PID it did not spawn (note: pam_mount
- * creates some). The workaround is to put GDM's %SIGCHLD handler back and
- * set our own. Since pam_mount will explicitly wait for the exact PID it
- * spawned, GDM childs are not touched. Afterwards, the handler is set back
- * to its original value (see semantics above) so that GDM can handle its
- * zombies.
+ * Create some pipes.
  */
-bool spawn_apS(const char *const *argv, GSpawnChildSetupFunc cs, void *data,
-    int *pid, int *istdin, int *istdout, int *istderr, GError **err)
+static inline int spawn_build_pipes(const int **fd_request, int (*p)[2])
 {
+	if (fd_request[0] != NULL && pipe(p[0]) < 0)
+		return -errno;
+	if (fd_request[1] != NULL && pipe(p[1]) < 0)
+		return -errno;
+	if (fd_request[2] != NULL && pipe(p[2]) < 0)
+		return -errno;
+	return 1;
+}
+
+static void spawn_close_pipes(int (*p)[2])
+{
+	close(p[0][0]);
+	close(p[0][1]);
+	close(p[1][0]);
+	close(p[1][1]);
+	close(p[2][0]);
+	close(p[2][1]);
+	return;
+}
+
+/*
+ * spawn_start -
+ * @argv:	program and arguments
+ * @pid:	resulting PID
+ * @fd_stdin:	if non-%NULL, assign stdin
+ * @fd_stdout:	if non-%NULL, assign stdout
+ * @fd_stderr:	if non-%NULL, assign stderr
+ * @setup:	child process setup function
+ * @user:	username (used for FUSE)
+ *
+ * Sets up pipes and runs the specified program.
+ *
+ * Side effects: Saves the old %SIGCHLD handler before and overrides it with
+ * %SIG_DFL. This is needed because otherwise GDM's signal handler would
+ * trigger with pam_mount's child processes.
+ *
+ * On success, returns true and the handler is NOT reset. Every [successful]
+ * call to spawn_start() must be followed by spawn_restore_sigchld(). This is
+ * usually done after waitpid(), when we are sure there are no more
+ * processes that were created by pam_mount that could potentially confuse GDM.
+ *
+ * On failure, this function returns false and the original %SIGCHLD handler
+ * will be restored.
+ */
+bool spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
+    int *fd_stdout, int *fd_stderr, void (*setup)(const char *),
+    const char *user)
+{
+	const int *fd_rq[] = {fd_stdin, fd_stdout, fd_stderr};
+	int pipes[3][2], ret;
+
+	if ((ret = spawn_build_pipes(fd_rq, pipes)) < 0) {
+		l0g("pipe(): %s\n", strerror(-ret));
+		return false;
+	}
+
 	spawn_set_sigchld();
-	if (g_spawn_async_with_pipes(NULL, const_cast(char **, argv),
-	    NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, cs, data,
-	    pid, istdin, istdout, istderr, err))
-		return true;
-	spawn_restore_sigchld();
-	return false;
+	if ((*pid = fork()) < 0) {
+		l0g("fork(): %s\n", strerror(errno));
+		spawn_restore_sigchld();
+		spawn_close_pipes(pipes);
+		return false;
+	} else if (*pid == 0) {
+		if (setup != NULL)
+			(*setup)(user);
+		if (fd_stdin != NULL)
+			dup2(pipes[0][0], STDIN_FILENO);
+		if (fd_stdout != NULL)
+			dup2(pipes[1][1], STDOUT_FILENO);
+		if (fd_stderr != NULL)
+			dup2(pipes[2][2], STDERR_FILENO);
+		spawn_close_pipes(pipes);
+		execvp(*argv, const_cast(char * const *, argv));
+		l0g("execvp: %s\n", strerror(errno));
+		_exit(-1);
+	}
+	
+	if (fd_stdin != NULL) {
+		*fd_stdin = pipes[0][1];
+		close(pipes[0][0]);
+	}
+	if (fd_stdout != NULL) {
+		*fd_stdout = pipes[1][0];
+		close(pipes[1][1]);
+	}
+	if (fd_stderr != NULL) {
+		*fd_stderr = pipes[2][0];
+		close(pipes[2][1]);
+	}
+
+	return true;
 }
 
 /*

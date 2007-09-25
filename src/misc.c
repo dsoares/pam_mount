@@ -330,27 +330,25 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 
 /*
  * set_myuid -
- * @data:	username
+ * @user:	switch to specified user
  *
- * set_myuid() is called in the child process as a result of the spawn_ap0()
- * fork, before exec() will take place.
+ * set_myuid() is called in the child process as a result of the 
+ * spawn_start() fork, before exec() will take place.
  *
- * If @user is %NULL, the UID is changed to root. (In most cases, we are
+ * If @users is %NULL, the UID is changed to root. (In most cases, we are
  * already root, though.)
  *
- * If @user is not %NULL, the UID of the current process is changed to
- * that of @user. Also, for FUSE daemons, we set the HOME and USER
- * environment variables. setsid() is called so that FUSE daemons (e.g.
- * sshfs) get a new session identifier and do not get killed by the
- * login program after PAM authentication is successful.
+ * If @user is not %NULL, the UID of the current process is changed to that of
+ * @user. Also, as a bonus for FUSE daemons, we set the HOME and USER
+ * environment variables. setsid() is called so that FUSE daemons (e.g. sshfs)
+ * get a new session identifier and do not get killed by the login program
+ * after PAM authentication is successful.
  *
  * chdir("/") is called so that fusermount does not get stuck in a
  * non-readable directory (by means of doing `su - unprivilegeduser`)
  */
-void set_myuid(void *data)
+void set_myuid(const char *user)
 {
-	const char *user = data;
-
 	setsid();
 	chdir("/");
 	if (user == NULL) {
