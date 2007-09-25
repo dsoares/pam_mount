@@ -129,8 +129,7 @@ static void run_lsof(const struct config *const config,
 		add_to_argv(_argv, &_argc, config->command[CMD_LSOF][i], vinfo);
 	log_argv(_argv);
 
-	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
-	    NULL, &pid, NULL, &cstdout, NULL, &err)) {
+	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, &cstdout, NULL, &err)) {
 		l0g("%s\n", err->message);
 		g_error_free(err);
 		return;
@@ -253,8 +252,7 @@ static int already_mounted(const struct config *const config,
 	log_argv(_argv);
 
 	/* FIXME: replace by popen() if available on BSD */
-	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
-	    NULL, &pid, NULL, &cstdout, NULL, &err)) {
+	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, &cstdout, NULL, &err)) {
 		l0g("%s\n", err->message);
 		g_error_free(err);
 		return -1;
@@ -600,8 +598,7 @@ int do_unmount(const struct config *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
 	}
 	log_argv(_argv);
-	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
-	    NULL, &pid, NULL, NULL, &cstderr, &err)) {
+	if (!spawn_apS(_argv, set_myuid, NULL, &pid, NULL, NULL, &cstderr, &err)) {
 		l0g("%s\n", err->message);
 		g_error_free(err);
 		ret = 0;
@@ -700,8 +697,7 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 		            config->command[CMD_LOSETUP][i], vinfo);
 
 	log_argv(_argv);
-	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, set_myuid,
-	    NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
+	if (!spawn_apS(_argv, set_myuid, NULL, &pid, &cstdin, NULL, &cstderr, &err)) {
 		l0g("%s\n", err->message);
 		g_error_free(err);
 		return 0;
@@ -752,8 +748,7 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 		add_to_argv(_argv, &_argc,
 		            config->command[CMD_UNLOSETUP][i], vinfo);
 	log_argv(_argv);
-	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
-	    NULL, &pid, NULL, NULL, NULL, &err)) {
+	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, NULL, NULL, &err)) {
 		l0g("%s\n", err->message);
 		g_error_free(err);
 		return 0;
@@ -818,8 +813,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 		add_to_argv(_argv, &_argc, config->command[CMD_FSCK][i], vinfo);
 
 	log_argv(_argv);
-	if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL,
-	    NULL, &pid, NULL, &cstdout, &cstderr, &err)) {
+	if (!spawn_apS(_argv, NULL, NULL, &pid, NULL, &cstdout, &cstderr, &err)) {
 		l0g("%s\n", err->message);
 		g_error_free(err);
 		return 0;
@@ -922,8 +916,8 @@ int do_mount(const struct config *config, const unsigned int vol,
 			add_to_argv(_argv, &_argc,
 			            config->command[CMD_MNTAGAIN][i], vinfo);
 		log_argv(_argv);
-		if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-		    set_myuid, NULL, &pid, NULL, NULL, &cstderr, &err)) {
+		if (!spawn_apS(_argv, set_myuid, NULL, &pid, NULL, NULL,
+		    &cstderr, &err)) {
 			l0g("%s\n", err->message);
 			g_error_free(err);
 			return 0;
@@ -982,9 +976,8 @@ int do_mount(const struct config *config, const unsigned int vol,
 		log_argv(_argv);
 		mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
 		             vpt->user : NULL;
-		if (!spawn_apS(NULL, _argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD,
-		    set_myuid, mount_user, &pid, &cstdin, NULL,
-		    &cstderr, &err)) {
+		if (!spawn_apS(_argv, set_myuid, mount_user, &pid, &cstdin,
+		    NULL, &cstderr, &err)) {
 			l0g("%s\n", err->message);
 			g_error_free(err);
 			return 0;

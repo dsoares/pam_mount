@@ -22,6 +22,7 @@ pam_mount - spawn.c
 #include <errno.h>
 #include <glib.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "compiler.h"
@@ -54,17 +55,16 @@ static struct sigaction saved_handler = {.sa_handler = SIG_DFL};
  * to its original value (see semantics above) so that GDM can handle its
  * zombies.
  */
-int spawn_apS(const char *wd, const char *const *argv, const char *const *envp,
-    GSpawnFlags flags, GSpawnChildSetupFunc cs, void *data, int *pid,
-    int *istdin, int *istdout, int *istderr, GError **err)
+bool spawn_apS(const char *const *argv, GSpawnChildSetupFunc cs, void *data,
+    int *pid, int *istdin, int *istdout, int *istderr, GError **err)
 {
 	spawn_set_sigchld();
-	if (g_spawn_async_with_pipes(wd, const_cast(char **, argv),
-	    const_cast(char **, envp), flags | G_SPAWN_SEARCH_PATH, cs, data,
+	if (g_spawn_async_with_pipes(NULL, const_cast(char **, argv),
+	    NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, cs, data,
 	    pid, istdin, istdout, istderr, err))
-		return 1;
+		return true;
 	spawn_restore_sigchld();
-	return 0;
+	return false;
 }
 
 /*
