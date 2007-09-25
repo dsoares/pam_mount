@@ -607,8 +607,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	/* if our CWD is in the home directory, it might not get umounted */
 	if (chdir("/") != 0)
 		l0g("could not chdir\n");
-	if (Config.volcount <= 0)
-		w4rn("volcount is zero\n");
 
 	if (modify_pm_count(&Config, Config.user, "-1") <= 0) {
 		for (vol = Config.volcount - 1; vol >= 0; --vol) {
