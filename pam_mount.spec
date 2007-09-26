@@ -36,7 +36,6 @@ b="%buildroot";
 rm -Rf "$b";
 make -i install DESTDIR="$b";
 mkdir -p "$b/%_sysconfdir/security";
-install -m0644 config/pam_mount.conf.xml "$b/%_sysconfdir/security/";
 
 %clean
 rm -Rf "%buildroot";
