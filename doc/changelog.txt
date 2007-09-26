@@ -3,6 +3,7 @@
 
 SVN /trunk
 ==========
+- [r341]: Install pam_mount.conf.xml by default
 
 
 v0.27 (September 26 2007)
