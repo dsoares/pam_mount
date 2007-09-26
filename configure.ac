@@ -38,6 +38,10 @@ AC_ARG_WITH([ssbindir], AS_HELP_STRING([--with-ssbindir=PATH],
 	[Path to the super sbin directory [[/sbin]]]),
 	[ssbindir="$withval"], [ssbindir="/sbin"])
 AC_SUBST(ssbindir)
+AC_ARG_WITH([selinux], AS_HELP_STRING([--with-selinux],
+	[Install selinux files]),
+	[with_selinux=true], [with_selinux=false])
+AM_CONDITIONAL(SELINUX, $with_selinux)
 
 m4_sinclude(m4lib/gcc4_visibility.m4)
 AC_CHECK_LIB(crypto, EVP_DecryptInit_ex) # RH 8.0's OpenSSL does not have?
