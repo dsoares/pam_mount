@@ -8,7 +8,8 @@ License:        LGPL
 URL:            http://pam-mount.sf.net/
 
 Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
-Suggests:	lsof
+# psmisc: /bin/fuser
+Suggests:	lsof psmisc
 BuildRequires:  libtool linux-kernel-headers pam-devel
 BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.10
 BuildRoot:      %_tmppath/%name-%version-build
