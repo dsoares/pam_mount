@@ -210,6 +210,42 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass)
 	return retval;
 }
 
+static int common_init(pam_handle_t *pamh, int argc, const char **argv)
+{
+	const char *pam_user;
+	int ret;
+
+	initconfig(&Config);
+	parse_pam_args(argc, argv);
+	/*
+	 * call pam_get_user again because ssh calls PAM fns from seperate
+ 	 * processes.
+	 */
+	ret = pam_get_user(pamh, &pam_user, NULL);
+	if (ret != PAM_SUCCESS) {
+		l0g("could not get user");
+		/*
+		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
+		 * su to other users.
+		 */
+		return PAM_SUCCESS;
+	}
+	/*
+	 * FIXME: free me! the dup is requried because result of pam_get_user()
+	 * disappears (valgrind)
+	 */
+	Config.user = relookup_user(pam_user);
+	if (strlen(Config.user) > MAX_PAR) {
+		l0g("username %s is too long\n", Config.user);
+		return PAM_SERVICE_ERR;
+	}
+
+	if (!readconfig(CONFIGFILE, true, &Config))
+		return PAM_SERVICE_ERR;
+
+	return -1;
+}
+
 /*
  * pam_sm_authenticate -
  * @pamh:	PAM handle
@@ -227,31 +263,12 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	int ret = PAM_SUCCESS;
 	char *authtok = NULL;
 	const void *tmp = NULL;
-	const char *pam_user = NULL;
 
 	assert(pamh != NULL);
 
-	/*
-	 * FIXME: this is called again in pam_sm_open_session. This is because
-	 * pam_sm_authenticate() is never called when root su's to another
-	 * user.
-	 */
-	initconfig(&Config);
-	parse_pam_args(argc, argv);
-	/* needed because gdm does not prompt for username as login does: */
-	if ((ret = pam_get_user(pamh, &pam_user, NULL)) != PAM_SUCCESS) {
-		l0g("could not get user\n");
-		/*
-		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
-		 * su to other users
-		 */
-		goto out;
-	}
-	/*
-	 * FIXME: free me! the dup is required because result of pam_get_user
-	 * disappears (valgrind)
-	 */
-	Config.user = relookup_user(pam_user);
+	if ((ret = common_init(pamh, argc, argv)) != -1)
+		return ret;
+
 	if (Args.auth_type != GET_PASS) { /* get password from PAM system */
 		char *ptr = NULL;
 		ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
@@ -266,10 +283,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		} else {
 			authtok = xstrdup(ptr);
 		}
-	}
-	if (!readconfig(CONFIGFILE, true, &Config)) {
-		ret = PAM_SERVICE_ERR;
-		goto out;
 	}
 	if (authtok == NULL) {
 		if (Args.auth_type == SOFT_TRY_PASS) {
@@ -435,44 +448,14 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	int ret = PAM_SUCCESS;
 	unsigned int krb5_set;
 	char *system_authtok;
-	const char *pam_user = NULL;
 	const void *tmp;
 	int getval;
 
 	assert(pamh != NULL);
 	w4rn("Entered pam_mount session stage\n");
 
-	initconfig(&Config);
-	parse_pam_args(argc, argv);
-
-	/*
-	 * call pam_get_user again because ssh calls PAM fns from seperate
- 	 * processes.
-	 */
-	ret = pam_get_user(pamh, &pam_user, NULL);
-	if (ret != PAM_SUCCESS) {
-		l0g("could not get user");
-		/*
-		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
-		 * su to other users.
-		 */
-		goto out;
-	}
-	/*
-	 * FIXME: free me! the dup is requried because result of pam_get_user()
-	 * disappears (valgrind)
-	 */
-	Config.user = relookup_user(pam_user);
-	if (strlen(Config.user) > MAX_PAR) {
-		l0g("username %s is too long\n", Config.user);
-		ret = PAM_SERVICE_ERR;
-		goto out;
-	}
-
-	if (!readconfig(CONFIGFILE, true, &Config)) {
-		ret = PAM_SERVICE_ERR;
-		goto out;
-	}
+	if ((ret = common_init(pamh, argc, argv)) != -1)
+		return ret;
 
 	/*
 	 * Get the Kerberos CCNAME so we can make it available to the
