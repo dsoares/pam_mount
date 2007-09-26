@@ -1,3 +1,0 @@
-#!/bin/bash
-
-man -l doc/pam_mount.8 | perl -pe 's/.\cH//g' >doc/pam_mount.txt;

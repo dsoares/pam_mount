@@ -23,3 +23,7 @@
 
 man_MANS = autoehd.8 mount.crypt.8 pam_mount.8 pmvarrun.8 \
            mkehd.1 mount_ehd.8 passwdehd.8 umount.crypt.8
+noinst_DATA = pam_mount.txt
+
+pam_mount.txt: pam_mount.8
+	man -l ${srcdir}/pam_mount.8 | perl -pe 's/.\cH//g' >pam_mount.txt;
