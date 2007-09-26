@@ -4,6 +4,7 @@
 SVN /trunk
 ==========
 - [r341]: Install pam_mount.conf.xml by default
+- [r343]: Add --with-selinux configure option to install selinux files
 
 
 v0.27 (September 26 2007)
