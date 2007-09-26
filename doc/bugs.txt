@@ -72,4 +72,12 @@ Unverified programs:
 	* GDM on Ubuntu
 
 
+[ vsftpd - not using PAM ]
+
+vsftpd does not run through the PAM session code, hence will never
+call pam_mount's mounting functions.
+It also appears to drop privileges so that there would be a
+unmounting problems.
+
+
 # right-margin: 72
