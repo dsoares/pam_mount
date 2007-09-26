@@ -87,7 +87,6 @@ static void parse_pam_args(int argc, const char **argv)
 	Args.auth_type  = GET_PASS;
 
 	for (i = 0; i < argc; ++i) {
-		w4rn("pam_sm_open_session args: %s\n", argv[i]);
 		if (strcmp("use_first_pass", argv[i]) == 0)
 			Args.auth_type = USE_FIRST_PASS;
 		else if (strcmp("try_first_pass", argv[i]) == 0)
@@ -231,7 +230,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	const char *pam_user = NULL;
 
 	assert(pamh != NULL);
-	w4rn("Entered pam_mount auth stage\n");
 
 	/*
 	 * FIXME: this is called again in pam_sm_open_session. This is because
