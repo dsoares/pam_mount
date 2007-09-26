@@ -338,8 +338,8 @@ static int modify_pm_count(struct config *config, char *user,
 	assert(operation != NULL);
 
 	/* avoid bomb on command exiting before count read */
+	memset(&sact, 0, sizeof(sact));
 	sact.sa_handler = SIG_DFL;
-	sact.sa_flags = 0;
 	sigemptyset(&sact.sa_mask);
 	if (sigaction(SIGPIPE, &sact, &oldsact) < 0) {
 		fnval = -1;
