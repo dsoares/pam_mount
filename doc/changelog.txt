@@ -3,6 +3,10 @@
 
 SVN /trunk
 ==========
+
+
+v0.27 (September 26 2007)
+=========================
 - [r312]: add luserconf conversion note to convert_pam_mount_conf.pl
 - [r313]: do not print "mount errors" if there won't be any
 - [r318]: allow MSAD usernames (with spaces and backslash) in pmvarrun
