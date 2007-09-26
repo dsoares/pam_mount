@@ -55,7 +55,7 @@ pam_mount can ask your for a password. Read the sshd documentation
 about possible pitfalls involved using UseLogin.
 
 
-[ ssh/Ubuntu/GDM/not sure - privilege drop ]
+[ su, probably others - privilege drop ]
 
 I sometimes get reports about unmount failing because of insufficient
 privileges. Some programs and/or distributions and/or pam
@@ -63,6 +63,13 @@ configurations seem to drop the root privileges after successful
 authentification. This goes counter to pam_mount which needs these
 privileges for umount. (May not apply for FUSE mounts.)
 
+The following programs are confirmed to have this issue:
+
+	* su/sux from coreutils
+
+Unverified programs:
+
+	* GDM on Ubuntu
 
 
 # right-margin: 72
