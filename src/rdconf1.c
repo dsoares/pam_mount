@@ -163,6 +163,9 @@ void initconfig(struct config *config)
 	config->mkmntpoint = true;
 	strcpy(config->fsckloop, "/dev/loop7");
 
+	config->msg_authpw    = HX_strdup("pam_mount password:");
+	config->msg_sessionpw = HX_strdup("reenter password for pam_mount:");
+
 	config->path = HX_strdup("/sbin:/bin:/usr/sbin:/usr/bin:"
 	               "/usr/local/sbin:/usr/local/bin");
 
@@ -635,9 +638,11 @@ static const char *rc_string(xmlNode *node, struct config *config,
 			continue;
 		switch (command) {
 			case CMDA_AUTHPW:
+				free(config->msg_authpw);
 				config->msg_authpw = xstrdup(signed_cast(const char *, node->content));
 				break;
 			case CMDA_SESSIONPW:
+				free(config->msg_sessionpw);
 				config->msg_sessionpw = xstrdup(signed_cast(const char *, node->content));
 				break;
 			case CMDA_PATH:
