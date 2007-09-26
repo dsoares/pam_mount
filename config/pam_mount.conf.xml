@@ -94,11 +94,12 @@ If you change the -p0 argument for lclmount, you'll need to modify the
 source in mount.c (it sends the password to the stdin file descriptor of
 the child process - look for STDIN_FILENO).
 
-You can specify either absolute paths, or short ones. In the latter case,
-PATH will be searched, so ensure that your login process and/or the PAM
-subsystem has PATH set properly.
-(E.g. PATH=/sbin:/bin:/usr/sbin:/usr/bin is a good choice.)
+You can specify either absolute paths, or relative ones, in which case
+$PATH will be searched. Since some login programs really behave
+antisocial, pam_mount will always set its own $PATH.
 -->
+
+<path>/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin</path>
 
 <lsof>lsof %(MNTPT)</lsof>
 

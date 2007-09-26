@@ -62,6 +62,7 @@ static void parse_pam_args(int, const char **);
 static int read_password(pam_handle_t *, const char *, char **);
 
 /* Variables */
+static const char *envpath_saved;
 bool Debug = true;
 struct config Config = {};
 struct pam_args Args = {};
@@ -311,6 +312,30 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 }
 
 /*
+ * On login, $PATH is correctly set to ENV_ROOTPATH (from /etc/login.defs),
+ * while on logout, it happens to be ENV_PATH only. This is problematic,
+ * since some programs are in /sbin and /usr/sbin which is
+ * often not contained in ENV_PATH.
+ *
+ * In short: Another workaround for coreutils.
+ */
+static void envpath_init(const char *new_path)
+{
+	envpath_saved = getenv("PATH");
+	setenv("PATH", new_path, true);
+	return;
+}
+
+static void envpath_restore(void)
+{
+	if (envpath_saved == NULL)
+		unsetenv("PATH");
+	else
+		setenv("PATH", envpath_saved, true);
+	return;
+}
+
+/*
  * modify_pm_count -
  * @config:
  * @user:
@@ -421,6 +446,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	initconfig(&Config);
 	parse_pam_args(argc, argv);
+
 	/*
 	 * call pam_get_user again because ssh calls PAM fns from seperate
  	 * processes.
@@ -509,6 +535,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	misc_dump_id("Session open");
 
+	envpath_init(Config.path);
 	for (vol = 0; vol < Config.volcount; ++vol) {
 		/*
 		 * luserconf_volume_record_sane() is called here so that a user
@@ -532,6 +559,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if (krb5_set)
 		unsetenv("KRB5CCNAME");
 	modify_pm_count(&Config, Config.user, "1");
+	envpath_restore();
  out:
 	w4rn("done opening session (ret=%d)\n", ret);
 	return ret;
@@ -603,6 +631,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	if (chdir("/") != 0)
 		l0g("could not chdir\n");
 
+	envpath_init(Config.path);
 	if (modify_pm_count(&Config, Config.user, "-1") <= 0) {
 		for (vol = Config.volcount - 1; vol >= 0; --vol) {
 			w4rn("going to unmount\n");
@@ -614,6 +643,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		w4rn("%s seems to have other remaining open sessions\n",
 		     Config.user);
 	}
+	envpath_restore();
  out:
 	/*
 	 * Note that PMConfig is automatically freed later in clean_config()

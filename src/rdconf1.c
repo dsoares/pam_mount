@@ -64,6 +64,7 @@ enum wildcard_type {
 enum {
 	CMDA_AUTHPW,
 	CMDA_SESSIONPW,
+	CMDA_PATH,
 };
 
 struct callbackmap {
@@ -147,6 +148,7 @@ void freeconfig(struct config *config)
 	free(config->user);
 	free(config->msg_authpw);
 	free(config->msg_sessionpw);
+	free(config->path);
 	return;
 }
 
@@ -161,6 +163,9 @@ void initconfig(struct config *config)
 	config->mkmntpoint = true;
 	strcpy(config->fsckloop, "/dev/loop7");
 
+	config->path = HX_strdup("/sbin:/bin:/usr/sbin:/usr/bin:"
+	               "/usr/local/sbin:/usr/local/bin");
+
 	for (i = 0; default_command[i].type != -1; ++i)
 		for (j = 0; default_command[i].def[j] != NULL; ++j)
 			config->command[default_command[i].type][j] =
@@ -169,7 +174,6 @@ void initconfig(struct config *config)
 	config->options_allow   = HXbtree_init(flags);
 	config->options_require = HXbtree_init(flags);
 	config->options_deny    = HXbtree_init(flags);
-
 	return;
 }
 
@@ -636,6 +640,10 @@ static const char *rc_string(xmlNode *node, struct config *config,
 			case CMDA_SESSIONPW:
 				config->msg_sessionpw = xstrdup(signed_cast(const char *, node->content));
 				break;
+			case CMDA_PATH:
+				free(config->path);
+				config->path = xstrdup(signed_cast(const char *, node->content));
+				break;
 		}
 		break;
 	}
@@ -887,6 +895,7 @@ static const struct callbackmap cf_tags[] = {
 	{"nfsmount",        rc_command,             CMD_NFSMOUNT},
 	{"ncpmount",        rc_command,             CMD_NCPMOUNT},
 	{"ncpumount",       rc_command,             CMD_NCPUMOUNT},
+	{"path",            rc_string,              CMDA_PATH},
 	{"pmvarrun",        rc_command,             CMD_PMVARRUN},
 	{"smbmount",        rc_command,             CMD_SMBMOUNT},
 	{"smbumount",       rc_command,             CMD_SMBUMOUNT},

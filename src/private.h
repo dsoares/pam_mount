@@ -78,7 +78,7 @@ struct config {
 	struct HXbtree *options_require, *options_allow, *options_deny;
 	struct vol *volume;
 	int level;
-	char *msg_authpw, *msg_sessionpw;
+	char *msg_authpw, *msg_sessionpw, *path;
 };
 
 #endif /* PMT_PRIVATE_H */
