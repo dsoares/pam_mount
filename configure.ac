@@ -20,7 +20,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-AC_INIT(pam_mount, 0.27)
+AC_INIT(pam_mount, 0.28)
 AC_CONFIG_HEADERS(config.h)
 AC_PROG_INSTALL
 AM_INIT_AUTOMAKE
