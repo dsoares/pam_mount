@@ -3,6 +3,10 @@
 
 SVN /trunk
 ==========
+
+
+v0.29 (September 27 2007)
+=========================
 - [r353]: Explicitly initialize fd array (spawn.c)
 - [r354]: Fix a copy-and-paste typo during dup2() (spawn.c)
 
