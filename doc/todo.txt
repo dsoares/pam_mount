@@ -34,30 +34,9 @@ or when I ssh using public key?
 
 o need progress feedback from fsck, especially for gdm.
 
-o once mount supports cryptsetup natively remove hacks from (search for "some day"):
-	misc.c
-	pam_mount.h
-	mount.c
-	readconfig.c
-	pam_mount_macros.te
-
-o replace vol_t fields with one fmt_ptrn and add value_query fn to
-fmt_ptrn lib?
-
 o regression tests:
 	options = '-', do not use fstab
 	options = '-', use fstab (mnt pt not defined either)
-
-o ????? return to using user owned /var/run/pam_mount/test -- document
-in code that this is a good idea to allow an option to ssh users besides
-turning of priv. sep code.  Also, it renders the benefits of /etc/fstab
-use.  BUT CAN SSH CREATE /var/run/ ENTRIES WHEN PRIV SEP ENABLED?
-  => No, not with privsep, one would have to patch sshd heavily.
-
-o fix detecting of previously mounted volumes that used --bind.
-
-o test new "no --bind with remote mount" code.  (and ensure --bind is
-used for local mounts)
 
 o Should -N go in pam_mount.conf like it is now?  Shall I put this in
 conf/pam_mount.conf?  How does hashing/not hashing effect scripts?
@@ -90,9 +69,6 @@ continues to try and unmount volumes after a user logs out.  pam_mount
 would pass the daemon volumes to unmount and cancel things if the user
 logs back in.  HOW WOULD ALL OF THIS BE AUTHENTICATED?
 
-o share configuration reading and sanity checks with authconfig using
-a shared library.
-
 o Break into multiple (root priveleged and user priv.) processes?
 	- See /* This code needs root priv. */
 	- root "exec program" process (or user + "mount" POSIX capability? CAP_SYS_ADMIN (not very fine-grained)) use shared memory (see shmget) to pass argv to root process.
@@ -111,9 +87,6 @@ o Get umount -l to release loop device when appropriate and possible?
 
 o Make pam_mount.c and mount.c completely binary passwd safe.
 
-o Does auth code still work with null password?
-    => Currently not :(
-
 o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
 	I HAVE REPORTS THAT IT WORKS NOW.  DOES IT?
 
@@ -125,8 +98,6 @@ unstable.  In Red Hat bugzilla.
 o Deamon to unmount volume after all processes finally exit after a user logs
 out?  What if a user uses nohup?
     => pam_mount is just not the thing to do non-interactive sessions. Period.
-
-o Remove pmhelper code completely from readconfig.c.
 
 o Get smbmount and ncpmount to support mount-like -p0 option to simplify
 pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
@@ -140,11 +111,6 @@ of adduser package).
 
 o Modify passwd to update /home/mike.key.  Add -p, --post-script option
 to run passwdehd?  (See passwdehd script)
-
-o Get supported by Red Hat.
-	- Need upstream linux-utils/kernel to support encr.
-
-o Make home directory images scalable in size (resize.*fs?).
 
 o From Roman Sliva <roman.sliva@vsb.cz>: pam_mount doesn't mount ncp
 filesystems of Novell servers using NDS - full context username must be
