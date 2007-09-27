@@ -127,7 +127,7 @@ bool spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 		if (fd_stdout != NULL)
 			dup2(pipes[1][1], STDOUT_FILENO);
 		if (fd_stderr != NULL)
-			dup2(pipes[2][2], STDERR_FILENO);
+			dup2(pipes[2][1], STDERR_FILENO);
 		spawn_close_pipes(pipes);
 		execvp(*argv, const_cast(char * const *, argv));
 		l0g("execvp: %s\n", strerror(errno));
