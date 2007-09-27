@@ -14,6 +14,7 @@ struct vol;
 /*
  *	MISC.C
  */
+/* Note that you will also need to change PMPREFIX in pmvarrun.c then! */
 #define PMPREFIX       "pam_mount(%s:%u) "
 #define l0g(fmt, ...) \
 	misc_log((PMPREFIX fmt), HX_basename(__FILE__), \
