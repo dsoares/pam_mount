@@ -48,7 +48,7 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 
 /* Definitions */
 #undef PMPREFIX
-#define PMPREFIX        "pmvarrun: "
+#define PMPREFIX        "pmvarrun(%s:%u): "
 #define ASCIIZ_LLX      sizeof("0xFFFFFFFF""FFFFFFFF")
 #define VAR_RUN         "/var/run"
 #define VAR_RUN_PMT     VAR_RUN "/pam_mount"
@@ -83,7 +83,7 @@ static void usage(const int exitcode, const char *error)
 {
 	fprintf(stderr, "Usage: pmvarrun -u USER [-o NUMBER] [-d]\n");
 	if (error != NULL)
-		fprintf(stderr, PMPREFIX ": %s\n\n", error);
+		fprintf(stderr, "%s\n\n", error);
 	exit(exitcode);
 }
 
