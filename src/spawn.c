@@ -40,9 +40,16 @@ static struct sigaction saved_handler = {.sa_handler = SIG_DFL};
  * @p:		result array
  *
  * Create some pipes.
+ * Explicitly initialize the @p array with -1 so that we can call close()
+ * on all of them without any side effects.
  */
 static inline int spawn_build_pipes(const int **fd_request, int (*p)[2])
 {
+	unsigned int x, y;
+	for (x = 0; x < 3; ++x)
+		for (y = 0; y < 2; ++y)
+			p[x][y] = -1;
+
 	if (fd_request[0] != NULL && pipe(p[0]) < 0)
 		return -errno;
 	if (fd_request[1] != NULL && pipe(p[1]) < 0)
@@ -52,6 +59,13 @@ static inline int spawn_build_pipes(const int **fd_request, int (*p)[2])
 	return 1;
 }
 
+/*
+ * spawn_close_pipes -
+ * @p:	pipe fds to close
+ *
+ * In @p, there might be some fds that are -1 (due to the p[x][y] = -1 in
+ * spawn_build_pipes()). That is ok, as closing -1 does not do anything.
+ */
 static void spawn_close_pipes(int (*p)[2])
 {
 	close(p[0][0]);

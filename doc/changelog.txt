@@ -3,6 +3,7 @@
 
 SVN /trunk
 ==========
+- [r353]: Explicitly initialize fd array (spawn.c)
 
 
 v0.28 (September 27 2007)
