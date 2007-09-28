@@ -155,8 +155,14 @@ if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
 	fi;
 else
 	LUKS=false;
-	cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
-		-s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
+	if [ -z "$keyfile" ]; then
+		cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
+			-s ${KEYSIZE:-256} create "$DMDEVICE" "$DEVICE";
+	else
+		cryptsetup -c "${CIPHER:-aes}" -h "${HASH:-ripemd160}" \
+			-s ${KEYSIZE:-256} -d "$keyfile" \
+			create "$DMDEVICE" "$DEVICE";
+	fi;
 fi;
 
 if [ $? -ne 0 ]; then
