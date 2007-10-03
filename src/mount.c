@@ -459,8 +459,10 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 	 * The directory will be created in a restricted mode S_IRWXU here.
 	 * When mounted, the root directory of the new vfsmount will override
 	 * it, so there is no need to use S_IRWXUGO or S_IRWXU | S_IXUGO here.
+	 *
+	 * Workaround for CIFS on root_squashed NFS: +S_IXUGO
 	 */
-	if (mkdir(d, S_IRWXU) < 0) {
+	if (mkdir(d, S_IRWXU | S_IXUGO) < 0) {
 		ret = false;
 		goto out;
 	}
