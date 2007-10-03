@@ -4,6 +4,7 @@
 SVN /trunk
 ==========
 - [r366]: Allow --keyfile to be used for non-LUKS too
+- [r368]: Add workaround for CIFS mounts within root_squashed NFS
 
 
 v0.29 (September 27 2007)
