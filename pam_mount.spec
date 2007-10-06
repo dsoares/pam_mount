@@ -1,7 +1,7 @@
 
 Name:           pam_mount
 Version:        0.29
-Release:        0
+Release:        1
 Group:          System/Libraries
 Summary:        A PAM module that can mount volumes for a user session
 License:        LGPL
@@ -13,7 +13,12 @@ BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.10
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers
 # psmisc: /bin/fuser
-Recommends:	lsof psmisc util-linux-crypto
+Recommends:	lsof psmisc
+%if %suse_version < 1030
+Recommends:	util-linux-crypto
+%else
+Recommends:	cryptsetup
+%endif
 %endif
 %if "%_vendor" == "redhat"
 BuildRequires:	kernel-headers
