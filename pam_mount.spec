@@ -46,10 +46,20 @@ make %{?jobs:-j%jobs};
 b="%buildroot";
 rm -Rf "$b";
 make -i install DESTDIR="$b";
-mkdir -p "$b/%_sysconfdir/security";
+mkdir -p "$b/%_sysconfdir/security" "$b/%_sbindir";
+install -pm0755 scripts/convert_pam_mount_conf.pl "$b/%_sbindir/";
 
 %clean
 rm -Rf "%buildroot";
+
+%post
+if [ -e %_sysconfdir/security/pam_mount.conf -a \
+    ! -e %_sysconfdir/security/pam_mount.conf.xml ]; then
+	%_sbindir/convert_pam_mount_conf.pl \
+		<%_sysconfdir/security/pam_mount.conf \
+		>%_sysconfdir/security/pam_mount.conf.xml;                 
+	echo "Configuration migrated from pam_mount.conf to pam_mount.conf.xml.";
+fi;
 
 %files
 %defattr(-,root,root)
@@ -60,10 +70,11 @@ rm -Rf "%buildroot";
 %_bindir/autoehd
 %_bindir/passwdehd
 %_bindir/mount_ehd
+%_sbindir/*
 /sbin/mount.crypt
 /sbin/umount.crypt
 %_mandir/*/*
-%doc doc/*.txt scripts/convert_pam_mount_conf.pl
+%doc doc/*.txt
 %if 0%{?_with_selinux:1}
 %policy %_sysconfdir/selinux/strict/src/policy/macros/%{name}_macros.te
 %policy %_sysconfdir/selinux/strict/src/policy/file_contexts/misc/%name.fc
