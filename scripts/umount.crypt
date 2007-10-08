@@ -70,13 +70,7 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-# Check for LUKS
-#
-if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
-	cryptsetup luksClose "$DMDEVICE";
-else
-	cryptsetup remove "$DMDEVICE";
-fi;
+cryptsetup remove "$DMDEVICE";
 
 if [ $? -ne 0 ]; then
 	echo "${0##*/}: error removing $DMDEVICE" >&2
