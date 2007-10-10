@@ -13,7 +13,7 @@ BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.10
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers
 # psmisc: /bin/fuser
-Recommends:	lsof psmisc
+Recommends:	cifs-mount lsof psmisc
 %if %suse_version < 1030
 Recommends:	util-linux-crypto
 %else
@@ -22,7 +22,7 @@ Recommends:	cryptsetup
 %endif
 %if "%_vendor" == "redhat"
 BuildRequires:	kernel-headers
-Requires:	cryptsetup-luks lsof psmisc
+Requires:	cryptsetup-luks lsof psmisc samba-client
 %endif
 BuildRoot:      %_tmppath/%name-%version-build
 Prefix:         %_prefix
