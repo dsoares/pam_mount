@@ -34,7 +34,10 @@ using the password just entered.
 pam_mount supports SMB, NCP, and any type of filesystem that can
 be mounted using the standard mount command.
 
+%if "%_vendor" != "redhat"
 %debug_package
+%endif
+
 %prep
 %setup
 
