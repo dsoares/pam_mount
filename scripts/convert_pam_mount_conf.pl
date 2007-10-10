@@ -360,13 +360,13 @@ sub callback_volume(@)
 	if (defined($fields[4]) && $fields[4] ne "-") {
 		$attr{mountpoint} = $fields[4];
 	}
-	if (defined($fields[5]) && $fields[4] ne "-") {
+	if (defined($fields[5]) && $fields[5] ne "-") {
 		$attr{options}    = $fields[5];
 	}
-	if (defined($fields[6]) && $fields[4] ne "-") {
+	if (defined($fields[6]) && $fields[6] ne "-") {
 		$attr{fskeycipher}= $fields[6];
 	}
-	if (defined($fields[7]) && $fields[4] ne "-") {
+	if (defined($fields[7]) && $fields[7] ne "-") {
 		$attr{fskeypath}  = $fields[7];
 	}
 
