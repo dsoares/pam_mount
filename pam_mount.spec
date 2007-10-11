@@ -24,6 +24,7 @@ Recommends:	cryptsetup
 BuildRequires:	kernel-headers
 Requires:	cryptsetup-luks lsof psmisc samba-client
 %endif
+Requires(post):	perl(XML::Writer)
 BuildRoot:      %_tmppath/%name-%version-build
 Prefix:         %_prefix
 
@@ -55,13 +56,30 @@ install -pm0755 scripts/convert_pam_mount_conf.pl "$b/%_sbindir/";
 %clean
 rm -Rf "%buildroot";
 
+%pre
+#
+# On upgrade, when pmt.conf exists and pmt.conf.xml does not,
+# create pmt.conf.xml with size 0 to signal conversion.
+#
+f="%_sysconfdir/security/pam_mount.conf";
+if [ "$1" -eq 2 -a -e "$f" ]; then
+	touch -a "$f.xml";
+fi;
+
 %post
-if [ -e %_sysconfdir/security/pam_mount.conf -a \
-    ! -e %_sysconfdir/security/pam_mount.conf.xml ]; then
-	%_sbindir/convert_pam_mount_conf.pl \
-		<%_sysconfdir/security/pam_mount.conf \
-		>%_sysconfdir/security/pam_mount.conf.xml;                 
-	echo "Configuration migrated from pam_mount.conf to pam_mount.conf.xml.";
+#
+# pmt.conf.xml always exists now.
+#
+f="%_sysconfdir/security/pam_mount.conf";
+if [ -e "$f" -a ! -s "$f.xml" ]; then
+	"%_sbindir/convert_pam_mount_conf.pl" \
+		<"$f" >"$f.xml";
+	echo -en "Configuration migration from pam_mount.conf to pam_mount.conf.xml ";
+	if [ "$?" -eq 0 ]; then
+		echo "successful - also please check any ~/.pam_mount.conf files.";
+	else
+		echo "failed";
+	fi;
 fi;
 
 %files
