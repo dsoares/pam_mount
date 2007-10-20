@@ -1,7 +1,8 @@
 #!/bin/bash -ex
 #==============================================================================
 # mount_ehd2
-#   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
+#   Copyright © CC Computer Consultants GmbH, 2005 - 2006
+#   Contact: Jan Engelhardt <jengelh [at] computergmbh de>
 #
 #   This program is free software; you can redistribute it and/or
 #   modify it under the terms of the GNU General Public License as

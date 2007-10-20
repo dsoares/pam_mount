@@ -1,6 +1,7 @@
 /*=============================================================================
 pam_mount - spawn.c
-  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2006 - 2007
+  Copyright © CC Computer Consultants GmbH, 2006 - 2007
+  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as

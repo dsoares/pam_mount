@@ -2,7 +2,8 @@
 #==============================================================================
 # umount.crypt
 #   Copyright © W. Michael Petullo <mike@flyn.org>, 2004
-#   Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2006
+#   Copyright © CC Computer Consultants GmbH, 2005 - 2006
+#   Contact: Jan Engelhardt <jengelh [at] computergmbh de>
 #   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 #
 #   This program is free software; you can redistribute it and/or

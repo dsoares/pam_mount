@@ -1,7 +1,8 @@
 /*=============================================================================
 pam_mount - crypto.c
   Copyright © W. Michael Petullo <mike@flyn.org>, 2002
-  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
+  Copyright © CC Computer Consultants GmbH, 2005 - 2007
+  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU Lesser General Public License as

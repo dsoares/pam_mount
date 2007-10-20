@@ -1,7 +1,8 @@
 /*=============================================================================
 pam_mount - pmvarrun.c
   Copyright © W. Michael Petullo <mike@flyn.org>, 2004
-  Copyright © Jan Engelhardt <jengelh [at] gmx de>, 2005 - 2007
+  Copyright © CC Computer Consultants GmbH, 2005 - 2007
+  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 
   This program is free software; you can redistribute it and/or modify
