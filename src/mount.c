@@ -55,6 +55,9 @@ pam_mount - mount.c
 #	include <linux/loop.h>
 #	include <linux/major.h>
 #endif
+#ifndef S_IXUGO
+#	define S_IXUGO (S_IXUSR | S_IXGRP | S_IXOTH)
+#endif
 
 /* Functions */
 static int already_mounted(const struct config * const, const unsigned int, char * const, struct HXbtree *);
