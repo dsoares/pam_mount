@@ -453,10 +453,11 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	int getval;
 
 	assert(pamh != NULL);
-	w4rn("Entered pam_mount session stage\n");
 
 	if ((ret = common_init(pamh, argc, argv)) != -1)
 		return ret;
+
+	w4rn("Entered pam_mount session stage\n");
 
 	/*
 	 * Get the Kerberos CCNAME so we can make it available to the
