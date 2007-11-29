@@ -348,7 +348,7 @@ sub callback_volume(@)
 		$fields[$i] =~ s/\\\s/ /g;
 	}
 
-	if (defined($fields[1])) {
+	if (defined($fields[1]) && $fields[1] ne "local") {
 		$attr{fstype}     = $fields[1];
 	}
 	if (defined($fields[2]) && $fields[2] ne "-") {
