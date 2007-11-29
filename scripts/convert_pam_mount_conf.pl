@@ -302,14 +302,6 @@ sub callback_volume(@)
 		"fstype" => "auto",
 	);
 	
-	if ($fields[0] =~ /^\@\@(.*)/) {
-		$attr{sgrp} = "$1";
-	} elsif ($fields[0] =~ /^\@(.*)/) {
-		$attr{pgrp} = "$1";
-	} else {
-		$attr{user} = "$fields[0]";
-	}
-	
 	# search for wrong splits 
 	# happens at 'a value' or "a value"
 	# and remove quotes around a single value. "value" or 'value'
@@ -348,6 +340,14 @@ sub callback_volume(@)
 		$fields[$i] =~ s/\\\s/ /g;
 	}
 
+	if ($fields[0] =~ /^\@\@(.*)/) {
+		$attr{sgrp} = "$1";
+	} elsif ($fields[0] =~ /^\@(.*)/) {
+		$attr{pgrp} = "$1";
+	} else {
+		$attr{user} = "$fields[0]";
+	}
+	
 	if (defined($fields[1]) && $fields[1] ne "local") {
 		$attr{fstype}     = $fields[1];
 	}
