@@ -1,8 +1,10 @@
 
-(This only contains the more interesting changes.)
-
 SVN /trunk
 ==========
+
+
+v0.31 (December 01 2007)
+========================
 - [r366]: Allow --keyfile to be used for non-LUKS too
 - [r368]: Add workaround for CIFS mounts within root_squashed NFS
 - [r377]: luksClose is the same as Remove (in umount.crypt)

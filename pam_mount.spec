@@ -1,7 +1,7 @@
 
 Name:           pam_mount
-Version:        0.29
-Release:        1
+Version:        0.31
+Release:        0
 Group:          System/Libraries
 Summary:        A PAM module that can mount volumes for a user session
 License:        LGPL
@@ -100,5 +100,3 @@ fi;
 %policy %_sysconfdir/selinux/strict/src/policy/macros/%{name}_macros.te
 %policy %_sysconfdir/selinux/strict/src/policy/file_contexts/misc/%name.fc
 %endif
-
-%changelog -n pam_mount
