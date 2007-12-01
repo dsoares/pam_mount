@@ -7,6 +7,9 @@ SVN /trunk
 - [r368]: Add workaround for CIFS mounts within root_squashed NFS
 - [r377]: luksClose is the same as Remove (in umount.crypt)
 - [r380]: Fix copy-and-paste error in converter script
+- [r386]: Convert "local" fstype entries from old configuration
+  format correctly.
+- [r387]: Fixed parsing of old pam_mount.conf with spaces in group names
 
 
 v0.29 (September 27 2007)
