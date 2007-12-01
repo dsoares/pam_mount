@@ -10,6 +10,8 @@ SVN /trunk
 - [r386]: Convert "local" fstype entries from old configuration
   format correctly.
 - [r387]: Fixed parsing of old pam_mount.conf with spaces in group names
+- [r390]: Fixed: When no volumes were to be mounted, return value
+  was not PAM_SUCCESS.
 
 
 v0.29 (September 27 2007)

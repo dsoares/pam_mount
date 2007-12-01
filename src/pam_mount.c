@@ -446,7 +446,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
     int argc, const char **argv)
 {
 	unsigned int vol;
-	int ret = PAM_SUCCESS;
+	int ret;
 	unsigned int krb5_set;
 	char *system_authtok;
 	const void *tmp;
@@ -493,6 +493,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		     Config.luserconf);
 	if (Config.volcount <= 0) {
 		w4rn("no volumes to mount\n");
+		ret = PAM_SUCCESS;
 		goto out;
 	}
 	if (!expandconfig(&Config)) {
