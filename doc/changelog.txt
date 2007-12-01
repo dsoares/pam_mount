@@ -5,6 +5,10 @@ SVN /trunk
 
 v0.31 (December 01 2007)
 ========================
+Fixed parsing of old-style pam_mount.conf with spaces in group names,
+copy-and-paste typos and a missing return value. Added workaround for
+CIFS volumes within NFS mounts with "root_squash" option.
+
 - [r366]: Allow --keyfile to be used for non-LUKS too
 - [r368]: Add workaround for CIFS mounts within root_squashed NFS
 - [r377]: luksClose is the same as Remove (in umount.crypt)
