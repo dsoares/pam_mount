@@ -143,6 +143,9 @@ void freeconfig(struct config *config)
 			config->command[i][j] = NULL;
 	}
 
+	for (i = 0; i < config->volcount; ++i)
+		HXbtree_free(config->volume[i].options);
+
 	HXbtree_free(config->options_allow);
 	HXbtree_free(config->options_require);
 	HXbtree_free(config->options_deny);
