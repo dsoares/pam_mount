@@ -779,8 +779,6 @@ static const char *rc_volume_inter(struct config *config,
 				return "could not determine options";
 			if (!str_to_optlist(vpt->options, options))
 				return "error parsing mount options";
-		} else {
-			vpt->options = NULL;
 		}
 	} else if (!str_to_optlist(vpt->options, attr->options)) {
 		return "error parsing mount options";
