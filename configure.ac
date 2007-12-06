@@ -21,7 +21,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-AC_INIT(pam_mount, 0.31)
+AC_INIT(pam_mount, 0.32)
 AC_CONFIG_HEADERS(config.h)
 AC_PROG_INSTALL
 AM_INIT_AUTOMAKE
@@ -58,14 +58,7 @@ AC_SUBST(regular_CFLAGS)
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 
-AC_CHECK_HEADER([libHX.h], [],
-	AC_MSG_ERROR([Need at least libHX 1.10 (http://jengelh.hopto.org/p/libHX/)]),
-	[
-#include <libHX.h>
-#if !defined(_LIBHX_H) || _LIBHX_H < 20070701
-#	error You need a newer version of libHX (at least 1.10.0)
-#endif
-])
+PKG_CHECK_MODULES([libHX], [libHX >= 1.10.2])
 AC_CHECK_HEADER(security/pam_modules.h, [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
 AC_CHECK_HEADER(pam/pam_modules.h, [have_pamheader="yes"])

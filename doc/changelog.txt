@@ -1,8 +1,11 @@
 
 SVN /trunk
 ==========
+
+v0.32 (December 06 2007)
+========================
 - [r397]: remove unintended zeroing of variable
-- [r398]: rip out mntagain hack
+- [r399]: rip out mntagain hack
 
 
 v0.31 (December 01 2007)

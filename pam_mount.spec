@@ -1,6 +1,6 @@
 
 Name:           pam_mount
-Version:        0.31
+Version:        0.32
 Release:        0
 Group:          System/Libraries
 Summary:        A PAM module that can mount volumes for a user session
@@ -9,7 +9,7 @@ URL:            http://pam-mount.sf.net/
 
 Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
 BuildRequires:  libtool pam-devel
-BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.10
+BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.10.2
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers
 # psmisc: /bin/fuser
