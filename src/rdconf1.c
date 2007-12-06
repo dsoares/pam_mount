@@ -863,7 +863,6 @@ static const struct pmt_command default_command[] = {
 	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount", "-t", "crypt", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_UMOUNT,     NULL,    "umount",     {"umount", "%(MNTPT)", NULL}},
 	{CMD_LSOF,       NULL,    "lsof",       {"lsof", "%(MNTPT)", NULL}},
-	{CMD_MNTAGAIN,   NULL,    "mntagain",   {"mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
 	/*
 	 *  Leave mntcheck available on GNU/Linux so I can ship one
 	 *  config file example
@@ -894,7 +893,6 @@ static const struct callbackmap cf_tags[] = {
 	{"lsof",            rc_command,             CMD_LSOF},
 	{"luserconf",       rc_luserconf,           CMD_NONE},
 	{"mkmountpoint",    rc_mkmountpoint,        CMD_NONE},
-	{"mntagain",        rc_command,             CMD_MNTAGAIN},
 	{"mntcheck",        rc_command,             CMD_MNTCHECK},
 	{"mntoptions",      rc_mntoptions,          CMD_NONE},
 	{"msg-authpw",      rc_string,              CMDA_AUTHPW},

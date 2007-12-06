@@ -153,16 +153,6 @@ package). -->
 <nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)
 	"%(before=\"-o\" OPTIONS)"</nfsmount>
 
-<mntagain>mount --bind %(PREVMNTPT) %(MNTPT)</mntagain>
-
-<!-- For BSD:
-<mntagain>mount_null %(PREVMNTPT) %(MNTPT)</mntagain>
--->
-<!-- For solaris:
-<mntagain>mount -F lofs %(PREVMNTPT) %(MNTPT)</mntagain>
--->
-
-
 <!-- mntcheck utility for BSDs which lack /etc/mtab -->
 <mntcheck>mount</mntcheck>
 

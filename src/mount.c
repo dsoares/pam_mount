@@ -60,7 +60,7 @@ pam_mount - mount.c
 #endif
 
 /* Functions */
-static int already_mounted(const struct config * const, const unsigned int, char * const, struct HXbtree *);
+static int already_mounted(const struct config * const, const unsigned int, struct HXbtree *);
 static int check_filesystem(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
 static int do_losetup(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
 static int do_unlosetup(const struct config *, struct HXbtree *);
@@ -148,21 +148,18 @@ static void run_lsof(const struct config *const config,
 /* already_mounted
  * @config:	current config
  * @vol:	volume index into @config->volume[]
- * @mntpt:	destination buffer for current mountpoint
  * @vinfo:
  *
- * Checks if @config->volume[@vol] is already mounted, and if so, writes the
- * mountpoint into @mntpt (which must be at least of size %PATH_MAX+1) and
- * returns 1. If the volume is not mounted, returns zero and @mntpt is
- * cleared. Returns -1 on error.
+ * Checks if @config->volume[@vol] is already mounted, and returns 1 if this
+ * the case, 0 if not and -1 on error.
  */
 static int already_mounted(const struct config *const config,
-    const unsigned int vol, char *const mntpt, struct HXbtree *vinfo)
+    const unsigned int vol, struct HXbtree *vinfo)
 #if defined(__linux__)
 {
 	char dev[PATH_MAX+1] = {}, real_mpt[PATH_MAX+1];
 	struct mntent *mtab_record;
-	int mounted = 0;
+	bool mounted = false;
 	FILE *mtab;
 	struct vol *vpt;
 
@@ -185,7 +182,6 @@ static int already_mounted(const struct config *const config,
 		    vpt->mountpoint, real_mpt);
 	}
 
-	*mntpt = '\0';
 	w4rn("checking to see if %s is already mounted at %s\n",
 	     dev, vpt->mountpoint);
 
@@ -215,9 +211,7 @@ static int already_mounted(const struct config *const config,
 		if (xcmp(fsname, dev) == 0 &&
 		    (strcmp(fspt, vpt->mountpoint) == 0 ||
 		    strcmp(fspt, real_mpt) == 0)) {
-			mounted = 1;
-			strncpy(mntpt, fspt, PATH_MAX);
-			mntpt[PATH_MAX] = '\0';
+			mounted = true;
 			break;
 		}
 	}
@@ -281,8 +275,6 @@ static int already_mounted(const struct config *const config,
 		if (xcmp(fsname, dev) == 0 &&
 		    strcmp(fspt, vpt->mountpoint) == 0) {
 			mounted = 1;
-			strncpy(mntpt, fspt, PATH_MAX);
-			mntpt[PATH_MAX] = '\0';
 			break;
 		}
 	}
@@ -837,45 +829,29 @@ int do_mount(const struct config *config, const unsigned int vol,
     struct HXbtree *vinfo, const char *password)
 {
 	const char *_argv[MAX_PAR + 1];
-	char prev_mntpt[PATH_MAX + 1];
 	size_t _password_len;
-	int mount_again = 0;
 	unsigned char _password[MAX_PAR + EVP_MAX_BLOCK_LENGTH];
 	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
+	char *mount_user;
 	pid_t pid = -1;
 	struct vol *vpt;
 	unsigned int i;
+	int ret;
 
 	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 
 	vpt = &config->volume[vol];
-
-	/* FIXME: This is a little ugly, especially check for != LCLMOUNT */
-	mount_again = already_mounted(config, vol, prev_mntpt, vinfo);
-	if (mount_again != 0) {
-		if (mount_again == -1) {
-			l0g("could not determine if %s is already mounted, "
-			    "failing\n", config->volume[vol].volume);
-			return 0;
-		} else if (strcmp(prev_mntpt, vpt->mountpoint) == 0) {
-			w4rn("%s already seems to be mounted at %s, "
-			     "skipping\n", config->volume[vol].volume,
-			     prev_mntpt);
-			return 1;
-		} else {
-			w4rn("%s already mounted elsewhere at %s\n",
-			     config->volume[vol].volume, prev_mntpt);
-			/*
-			 * FIXME: ugly hack to support umount.crypt script. I
-			 * hope that util-linux will have native dm_crypt
-			 * support some day.
-			 */
-			if (vpt->type != CMD_LCLMOUNT &&
-			    vpt->type != CMD_CRYPTMOUNT)
-				mount_again = 0;
-		}
+	ret = already_mounted(config, vol, vinfo);
+	if (ret == -1) {
+		l0g("could not determine if %s is already mounted, "
+		    "failing\n", vpt->volume);
+		return 0;
+	} else if (ret == 1) {
+		w4rn("%s already seems to be mounted at %s, "
+		     "skipping\n", vpt->volume, vpt->mountpoint);
+		return 1;
 	}
 	if (!exists(vpt->mountpoint)) {
 		if (config->mkmntpoint) {
@@ -884,88 +860,72 @@ int do_mount(const struct config *config, const unsigned int vol,
 		} else {
 			l0g("mount point %s does not exist (pam_mount not "
 			    "configured to make it)\n",
-			    config->volume[vol].mountpoint);
+			    vpt->mountpoint);
 			return 0;
 		}
 	}
-	if (mount_again) {
-		if (config->command[CMD_MNTAGAIN][0] == NULL) {
-			l0g("mntagain not defined in pam_mount.conf.xml\n");
-			return 0;
-		}
-		/* FIXME: NEW */
-		format_add(vinfo, "PREVMNTPT", prev_mntpt);
-		for (i = 0; config->command[CMD_MNTAGAIN][i] != NULL; ++i)
-			add_to_argv(_argv, &_argc,
-			            config->command[CMD_MNTAGAIN][i], vinfo);
-		log_argv(_argv);
-		if (!spawn_start(_argv, &pid, NULL, NULL, &cstderr,
-		    set_myuid, NULL))
+
+	if (config->command[vpt->type][0] == NULL) {
+		l0g("proper mount command not defined in "
+		    "pam_mount.conf.xml\n");
+		return 0;
+	}
+	w4rn("checking for encrypted filesystem key configuration\n");
+
+	/* FIXME: better done elsewhere? */
+	password = (password != NULL) ? password : "";
+	if (strlen(vpt->fs_key_cipher) > 0) {
+		/*
+		 * _password is binary data -- no strlen(), strcpy(), etc.!
+		 */
+		w4rn("decrypting FS key using system auth. token and "
+		     "%s\n", vpt->fs_key_cipher);
+		/*
+		 * vpt->fs_key_path contains real filesystem key.
+		 */
+		if (!decrypted_key(_password, &_password_len,
+		    vpt->fs_key_path, vpt->fs_key_cipher, password))
 			return 0;
 	} else {
-		char *mount_user;
-		if (config->command[vpt->type][0] == NULL) {
-			l0g("proper mount command not defined in "
-			    "pam_mount.conf.xml\n");
-			return 0;
-		}
-		w4rn("checking for encrypted filesystem key configuration\n");
-		/* FIXME: better done elsewhere? */
-		password = (password != NULL) ? password : "";
-		if (strlen(vpt->fs_key_cipher) > 0) {
-			/*
-			 * _password is binary data -- no strlen(), strcpy(),
-			 * etc.!
-			 */
-			w4rn("decrypting FS key using system auth. token and "
-			     "%s\n", config->volume[vol].fs_key_cipher);
-			/*
-			 * config->volume[vol].fs_key_path contains real
-			 * filesystem key.
-			 */
-			if (!decrypted_key(_password, &_password_len,
-			    vpt->fs_key_path, vpt->fs_key_cipher, password))
-				return 0;
-		} else {
-			/*
-			 * _password is an ASCII string in this case -- we'll
-			 * treat its MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the
-			 * standard string MAX_PAR + 1 in this case
-			 */
-			strncpy(signed_cast(char *, _password), password, MAX_PAR);
-			_password[MAX_PAR] = '\0';
-			_password_len = strlen(password);
-		}
-		w4rn("about to start building mount command\n");
-		/* FIXME: NEW */
-		/* FIXME:
-		   l0g("volume type (%d) is unknown\n", vpt->type);
-		   return 0;
+		/*
+		 * _password is an ASCII string in this case -- we'll
+		 * treat its MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the
+		 * standard string MAX_PAR + 1 in this case
 		 */
-		for (i = 0; config->command[vpt->type][i] != NULL; ++i)
-			add_to_argv(_argv, &_argc,
-			            config->command[vpt->type][i], vinfo);
-
-		if (vpt->type == CMD_LCLMOUNT &&
-		    !check_filesystem(config, vol, vinfo, _password, _password_len))
-			l0g("error checking filesystem but will continue\n");
-		/* send password down pipe to mount process */
-		if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
-			setenv("PASSWD_FD", "0", 1);
-		log_argv(_argv);
-		mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
-		             vpt->user : NULL;
-		if (!spawn_start(_argv, &pid, &cstdin, NULL, &cstderr,
-		    set_myuid, mount_user))
-			return 0;
-
-		if (vpt->type != CMD_NFSMOUNT)
-			if (pipewrite(cstdin, _password, _password_len) !=
-			    _password_len)
-				/* FIXME: clean: returns value of exit below */
-				l0g("error sending password to mount\n");
-		close(cstdin);
+		strncpy(signed_cast(char *, _password), password, MAX_PAR);
+		_password[MAX_PAR] = '\0';
+		_password_len = strlen(password);
 	}
+	w4rn("about to start building mount command\n");
+	/* FIXME: NEW */
+	/* FIXME:
+	   l0g("volume type (%d) is unknown\n", vpt->type);
+	   return 0;
+	 */
+	for (i = 0; config->command[vpt->type][i] != NULL; ++i)
+		add_to_argv(_argv, &_argc,
+		            config->command[vpt->type][i], vinfo);
+
+	if (vpt->type == CMD_LCLMOUNT &&
+	    !check_filesystem(config, vol, vinfo, _password, _password_len))
+		l0g("error checking filesystem but will continue\n");
+	/* send password down pipe to mount process */
+	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
+		setenv("PASSWD_FD", "0", 1);
+	log_argv(_argv);
+	mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
+	             vpt->user : NULL;
+	if (!spawn_start(_argv, &pid, &cstdin, NULL, &cstderr,
+	    set_myuid, mount_user))
+		return 0;
+
+	if (vpt->type != CMD_NFSMOUNT)
+		if (pipewrite(cstdin, _password, _password_len) !=
+		    _password_len)
+			/* FIXME: clean: returns value of exit below */
+			l0g("error sending password to mount\n");
+	close(cstdin);
+
 	/* Paranoia? */
 	memset(_password, 0, sizeof(_password));
 	log_output(cstderr, "mount errors:\n");

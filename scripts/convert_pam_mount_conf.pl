@@ -264,12 +264,7 @@ sub callback_nfsmount(@)
 
 sub callback_mntagain(@)
 {
-	my @fields = @_;
-
-	shift @fields;
-	$writer->startTag("mntagain");
-	$writer->characters(join(" ", @fields));
-	$writer->endTag("mntagain");
+	# not translated - removed in pam_mount 0.32
 }
 
 sub callback_mntcheck(@)
