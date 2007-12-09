@@ -727,9 +727,13 @@ static const char *rc_volume_inter(struct config *config,
 	}
 
 	/* realloc */
-	config->volume = xrealloc(config->volume,
-	                 sizeof(struct vol) * (config->volcount + 1));
-	vpt = &config->volume[config->volcount++];
+	vpt = xrealloc(config->volume, sizeof(struct vol) *
+	               (config->volcount + 1));
+	if (vpt == NULL)
+		return strerror(errno);
+
+	config->volume = vpt;
+	vpt = &config->volume[config->volcount];
 	memset(vpt, 0, sizeof(*vpt));
 
 	vpt->globalconf = config->level == CONTEXT_GLOBAL;
@@ -737,6 +741,8 @@ static const char *rc_volume_inter(struct config *config,
 	vpt->type = CMD_LCLMOUNT;
 	vpt->options = HXbtree_init(HXBT_MAP | HXBT_CKEY | HXBT_CDATA |
 	               HXBT_SCMP | HXBT_CID);
+	if (vpt->options == NULL)
+		return strerror(errno);
 
 	/* [1] */
 	strncpy(vpt->fstype, attr->fstype, sizeof(vpt->fstype));
@@ -793,6 +799,7 @@ static const char *rc_volume_inter(struct config *config,
 
 	/* expandconfig() will set this later */
 	vpt->used_wildcard = 0;
+	++config->volcount;
 	return NULL;
 
  notforme:
