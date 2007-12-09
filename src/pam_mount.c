@@ -97,7 +97,7 @@ static void parse_pam_args(int argc, const char **argv)
 		else if (strcmp("nullok", argv[i]) == 0)
 			Args.nullok = true;
 		else
-			w4rn("bad pam_mount option\n");
+			w4rn("bad pam_mount option \"%s\"\n", argv[i]);
 	}
 	return;
 }

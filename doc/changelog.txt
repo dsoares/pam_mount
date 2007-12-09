@@ -1,6 +1,8 @@
 
 SVN /trunk
 ==========
+- [r401]: notify about unknown options in /etc/pam.d/*
+
 
 v0.32 (December 06 2007)
 ========================
