@@ -96,6 +96,8 @@ static void parse_pam_args(int argc, const char **argv)
 			Args.auth_type = SOFT_TRY_PASS;
 		else if (strcmp("nullok", argv[i]) == 0)
 			Args.nullok = true;
+		else if (strcmp("debug", argv[i]) == 0)
+			Debug = true;
 		else
 			w4rn("bad pam_mount option \"%s\"\n", argv[i]);
 	}
