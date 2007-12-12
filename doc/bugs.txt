@@ -16,7 +16,7 @@ really an option since it would expose your password again, and in
 plaintext at that.)
 
 
-[ gksu ]
+[ gksu & kdesu ]
 
 gksu interprets any output on stderr as an error. pam_mount writes
 debug output to stderr, so this combination will only work if debugging
