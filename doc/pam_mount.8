@@ -24,9 +24,8 @@ the need of listing every every possibly useful remote  volume in /etc/fstab or
 in an automount/supermount config file. This is also necessary for securing
 encrypted filesystems.
 .PP
-pam_mount "understands" SMB, NCP, and any type of filesystem that can be
-mounted using the standard mount command. If someone has a particular need for
-a different filesystem, feel free to ask me to include it and send me patches.
+pam_mount can mount any filesystem the kernel supports, and has supports the
+userspace helpers for SMB, CIFS, NCP, davfs, FUSE, and crypto mounts.
 .PP
 If you intend to use pam_mount to protect volumes on your computer using an
 encrypted filesystem system, please know that there are many other issues you
