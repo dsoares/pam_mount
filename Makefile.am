@@ -23,3 +23,6 @@
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
 SUBDIRS = config doc scripts src
+
+install-data-hook:
+	mkdir -p ${DESTDIR}${localstatedir}/run/pam_mount;
