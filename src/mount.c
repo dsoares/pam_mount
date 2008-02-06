@@ -397,6 +397,13 @@ static hmc_t *optlist_to_str(const struct HXbtree *optlist)
 		}
 		hmc_strcat(&ret, ",");
 	}
+
+	if (*ret != '\0')
+		/*
+		 * When string is not empty, there is always at least one
+		 * comma -- nuke it. */
+		ret[hmc_length(ret)-1] = '\0';
+
 	return ret;
 }
 static void log_pm_input(const struct config *const config,
