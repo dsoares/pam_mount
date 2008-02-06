@@ -1,15 +1,15 @@
 
-SVN /trunk
-==========
-- [r401]: notify about unknown options in /etc/pam.d/*
-- [r402]: support "debug" option for pam_mount in /etc/pam.d/*
-- [r405]: mount.crypt: detect loop devices by major number
+GIT HEAD
+========
+- notify about unknown options in /etc/pam.d/*
+- support "debug" option for pam_mount in /etc/pam.d/*
+- mount.crypt: detect loop devices by major number
 
 
 v0.32 (December 06 2007)
 ========================
-- [r397]: remove unintended zeroing of variable
-- [r399]: rip out mntagain hack
+- remove unintended zeroing of variable
+- rip out mntagain hack
 
 
 v0.31 (December 01 2007)
@@ -18,14 +18,13 @@ Fixed parsing of old-style pam_mount.conf with spaces in group names,
 copy-and-paste typos and a missing return value. Added workaround for
 CIFS volumes within NFS mounts with "root_squash" option.
 
-- [r366]: Allow --keyfile to be used for non-LUKS too
-- [r368]: Add workaround for CIFS mounts within root_squashed NFS
-- [r377]: luksClose is the same as Remove (in umount.crypt)
-- [r380]: Fix copy-and-paste error in converter script
-- [r386]: Convert "local" fstype entries from old configuration
-  format correctly.
-- [r387]: Fixed parsing of old pam_mount.conf with spaces in group names
-- [r390]: Fixed: When no volumes were to be mounted, return value
+- allow --keyfile to be used for non-LUKS too
+- add workaround for CIFS mounts within root_squashed NFS
+- luksClose is the same as Remove (in umount.crypt)
+- fix copy-and-paste error in converter script
+- convert "local" fstype entries from old configuration format correctly.
+- fixed parsing of old pam_mount.conf with spaces in group names
+- fixed: When no volumes were to be mounted, return value
   was not PAM_SUCCESS.
 
 
@@ -34,8 +33,8 @@ v0.29 (September 27 2007)
 An uninitialized array and a copy-and-paste error were corrected in
 the recently introduced process spawn code.
 
-- [r353]: Explicitly initialize fd array (spawn.c)
-- [r354]: Fix a copy-and-paste typo during dup2() (spawn.c)
+- explicitly initialize fd array (spawn.c)
+- fix a copy-and-paste typo during dup2() (spawn.c)
 
 
 v0.28 (September 27 2007)
@@ -43,9 +42,9 @@ v0.28 (September 27 2007)
 A hotfix for an incorrect printf format specification in pmvarrun.
 Also installs config files by default now.
 
-- [r341]: Install pam_mount.conf.xml by default
-- [r343]: Add --with-selinux configure option to install selinux files
-- [r348]: Fix crash due to printf arguments in pmvarrun.c
+- install pam_mount.conf.xml by default
+- add --with-selinux configure option to install selinux files
+- fix crash due to printf arguments in pmvarrun.c
 
 
 v0.27 (September 26 2007)
@@ -54,13 +53,13 @@ This release fixes a crash on logout with su by using a fixed $PATH
 to work around broken login programs. MSAD usernames are now accepted
 in pmvarrun. The libglib dependency has been dropped.
 
-- [r312]: add luserconf conversion note to convert_pam_mount_conf.pl
-- [r313]: do not print "mount errors" if there won't be any
-- [r318]: allow MSAD usernames (with spaces and backslash) in pmvarrun
-- [r321]: quick-terminate if there is nothing to do on closing session
-- [r324]: fix crash on logout with su (unsigned loop underflow)
-- [r329]: drop libglib dependency
-- [r331]: always use fixed $PATH
+- add luserconf conversion note to convert_pam_mount_conf.pl
+- do not print "mount errors" if there won't be any
+- allow MSAD usernames (with spaces and backslash) in pmvarrun
+- quick-terminate if there is nothing to do on closing session
+- fix crash on logout with su (unsigned loop underflow)
+- drop libglib dependency
+- always use fixed $PATH
 
 
 v0.26 (September 20 2007)
@@ -69,30 +68,30 @@ Luks argument ordering, mountpoint creation as user, and the
 converter script were corrected. The "nullok" and --keyfile options
 were added.
 
-- [r293]: revert r290 which incorrectly changed the luks argument order
-- [r294]: --keyfile option added to mount.crypt
-- [r296]: improved error reporting in the config converter script
-- [r301]: do not literally copy the special-meaning single dashes
+- revert r290 which incorrectly changed the luks argument order
+- --keyfile option added to mount.crypt
+- improved error reporting in the config converter script
+- do not literally copy the special-meaning single dashes
   in converter script
-- [r303]: fix mount.crypt inner shell syntax
-- [r308]: add "nullok" option
-- [r311]: fix a missing user identity switch after mkmountpoint'ing
+- fix mount.crypt inner shell syntax
+- add "nullok" option
+- fix a missing user identity switch after mkmountpoint'ing
 
 
 v0.21 (September 17 2007)
 =========================
- Some mount helpers needed a different option passing method.
+Some mount helpers needed a different option passing method.
 Stacking of loop devices is now avoided, and pam_mount will not ask
 for a password if no volumes are to be mounted. The documentation has
 been updated to include PAM module stacking (e.g. when using pam_ldap
 with pam_mount).
 
-- [r264]: Silence unwanted error message (fallout from r240)
-- [r270]: Add "Known Bugs and Issues" documentation
-- [r274]: More documentation - How to stack PAM modules without pam_stack
-- [r276]: Option passing to some mount helpers needs to be different
-- [r277]: Avoid stacking of loop devices
-- [r278]: Do not ask for password if no volumes found
+- silence unwanted error message (fallout from r240)
+- add "Known Bugs and Issues" documentation
+- more documentation - How to stack PAM modules without pam_stack
+- option passing to some mount helpers needs to be different
+- avoid stacking of loop devices
+- do not ask for password if no volumes found
 
 
 v0.20 (September 05 2007)
@@ -100,18 +99,18 @@ v0.20 (September 05 2007)
 This release adds extra options regarding pam_mount behavior
 (messages and mount points).
 
-- [r209]: Do not use absolute paths, search $PATH instead for programs
-- [r210]: Add pam_mount.conf to .conf.xml converter
-- [r223]: "sufficient" keyword documentation
-- [r224]: Misc cryptmount fix
-- [r232]: Pass down readonly flag to luksOpen
-- [r237]: Add option to retain automatically created mountpoints
-- [r240]: Create mountpoint as user if possible (e.g. if /home/USER
+- do not use absolute paths, search $PATH instead for programs
+- add pam_mount.conf to .conf.xml converter
+- "sufficient" keyword documentation
+- misc cryptmount fix
+- pass down readonly flag to luksOpen
+- add option to retain automatically created mountpoints
+- create mountpoint as user if possible (e.g. if /home/USER
   already exists and your volume is /home/USER/myvol)
-- [r249]: Build fixes, making it work OOTB again with FC6 and Autoconf 2.59
-- [r251]: Allow changing the password prompt
-- [r252]: Add an overview of pam_mount options (options.txt)
-- [r253]: Implement the "soft_try_pass" option
+- build fixes, making it work OOTB again with FC6 and Autoconf 2.59
+- allow changing the password prompt
+- add an overview of pam_mount options (options.txt)
+- implement the "soft_try_pass" option
 
 
 v0.19 (July 04 2007)
@@ -119,14 +118,14 @@ v0.19 (July 04 2007)
 pam_mount now uses an XML config file, which also has a few new
 variables and options. Support for truecrypt was added.
 
-- [r126]: pam_mount switched to an XML configuration.
-- [r160]: NT domain placeholders
-- [r164]: properly detect loop64 support
-- [r173]: split group matching into multiple attributes
-- [r175]: add an "invert" attribute
-- [r183]: remove pam_mount.la from `make install`ed directory
-- [r189]: partial davfs support
-- [r203]: added truecrypt support
+- pam_mount switched to an XML configuration.
+- NT domain placeholders
+- properly detect loop64 support
+- split group matching into multiple attributes
+- add an "invert" attribute
+- remove pam_mount.la from `make install`ed directory
+- partial davfs support
+- added truecrypt support
 
 
 v0.18 (September 07 2006)
@@ -134,19 +133,19 @@ v0.18 (September 07 2006)
 A crash on x86_64 has been fixed. pam_mount now changes to the root
 directory before attempting to (un)mount.
 
-- [r109]: Change to / before attempting mount
-- [r112]: Check return value in xmemdup()
-- [r113]: Fix segfault on x64: Do not reuse va_lists (found by Celestar)
+- change to / before attempting mount
+- check return value in xmemdup()
+- fix segfault on x64: Do not reuse va_lists (found by Celestar)
 
 
 v0.17 (August 06 2006)
 ======================
 This release fixes memory corruption issues and improper zeroing.
 
-- [r99]: Use standard allocators
-- [r100]: Fix memory corruption issue
-- [r102]: Enhance debugging messages with file/line
-- [r103]: Fix improper zeroing (deceived as memory corruption)
+- use standard allocators
+- fix memory corruption issue
+- enhance debugging messages with file/line
+- fix improper zeroing (deceived as memory corruption)
 
 
 v0.16 (July 30 2006)
@@ -156,24 +155,24 @@ environment variables for FUSE daemons are now set, and configure has
 two new options (--slibdir and --sbindir).
 
 - SIGCHLD handling updated
-- [r70]: set important environment variables for fuse daemons
-- [r72]: added new --slibdir and --ssbindir options to configure
+- set important environment variables for fuse daemons
+- added new --slibdir and --ssbindir options to configure
 - documentation updates
 
 
 v0.15 (July 26 2006)
 ====================
-- [r3]: mount.crypt and umount.crypt are installed to /sbin rather
+- mount.crypt and umount.crypt are installed to /sbin rather
   than /usr/sbin; /bin/mount only looks into /sbin
-- [r4]: KRB5 credentials are now set in the environment
-- [r48]: Fix XDM crash, for GCC >= 4.x
-- [r52]: Disable debug output by default (confused gksu) [sf bug #1524325]
-- [r63]: Do FUSE mounts done unprivileged [sf bug #1489657 and ML]
-- [r63]: Fixed: /bin/login sends SIGHUP/SIGTERM to outstanding session
+- KRB5 credentials are now set in the environment
+- fix XDM crash, for GCC >= 4.x
+- disable debug output by default (confused gksu) [sf bug #1524325]
+- do FUSE mounts done unprivileged [sf bug #1489657 and ML]
+- fixed: /bin/login sends SIGHUP/SIGTERM to outstanding session
   processes after PAM completed; this killed fuse daemons
-- [r65]: Work around XDM crash (symbol clash), for GCC <= 3.x;
+- work around XDM crash (symbol clash), for GCC <= 3.x;
   the proper solution would be that XDM be NOT compiled with -rdynamic
-- Properly truncate /var/run/pam_mount/YOURNAME files [sf bug #1503246]
+- properly truncate /var/run/pam_mount/YOURNAME files [sf bug #1503246]
 
 
 v0.13 (April 01 2006)
