@@ -1,9 +1,10 @@
 
-GIT HEAD
-========
+v0.33 (February 22 2008)
+========================
 - notify about unknown options in /etc/pam.d/*
 - support "debug" option for pam_mount in /etc/pam.d/*
 - mount.crypt: detect loop devices by major number
+- remove trailing comma from mount options
 
 
 v0.32 (December 06 2007)
