@@ -111,7 +111,7 @@ for opt in $OPTIONS; do
 		(keyfile)
 			keyfile="$VAL";;
 		(loop)
-			if [ "`stat --format=\"%t\" \"$DEVICE\"`" == 7 ]; then
+			if [ "`stat --format=\"%t\" \"$DEVICE\"`" != 7 ]; then
 				LOOP="true";
 			fi;
 			;;
