@@ -41,7 +41,7 @@ OpenBSD pam_mount reads its configuration file from /etc/pam_mount.conf.xml.
 pam_mount.conf.xml contains many comments documenting its use.
 .PP
 In addition, you must include two entries in the system's applicable
-/etc/pam.d/SERVICE config files, as the following example shows:
+/etc/pam.d/\fIservice\fP config files, as the following example shows:
 .IP
 .nf
     auth     required  pam_securetty.so
@@ -68,14 +68,13 @@ make use of PAM's sufficient keyword then model your configuration on the
 following:
 .IP
 .nf
-
-...
+\(bu\(bu\(bu
 account sufficient  pam_ldap.so
 auth    required    pam_mount.so
 auth    sufficient  pam_ldap.so use_first_pass
 auth    required    pam_unix.so use_first_pass
 session optional    pam_mount.so
-...
+\(bu\(bu\(bu
 .fi
 .PP
 This allows the following:
@@ -91,12 +90,12 @@ fails, then the authentication will be refused.
 .PP
 Alternatively, the following is possible (thanks to Andrew Morgan for
 the hint!):
+.IP
 .nf
-
-	auth [success=2 default=ignore] pam_unix2.so
-	auth [success=1 default=ignore] pam_ldap.so use_first_pass
-	auth requisite pam_deny.so
-	auth optional pam_mount.so use_first_pass
+auth [success=2 default=ignore] pam_unix2.so
+auth [success=1 default=ignore] pam_ldap.so use_first_pass
+auth requisite pam_deny.so
+auth optional pam_mount.so use_first_pass
 .fi
 .PP
 It may seem odd, but the first three lines will make it so that at least one of
@@ -109,23 +108,23 @@ key and store it somewhere on your system's local filesystem. pam_mount
 supports transparently decrypting this filesystem key, as long as the cipher
 used is supported by openssl. Given:
 .TP
-sk
+\fIsk\fP
 system key, the key or password used to log into the system
 .TP
-fsk
+\fIfsk\fP
 filesystem key, the key that allows you to use the filesystem you wish pam_mount to mount for you
 .TP
-E and D
+\fIE and D\fP
 an openssl supported synchronous encryption/decryption algorithm
 .TP
-efsk
+\fIefsk\fP
 encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on the local filesystem (ie: /home/user.key)
 .PP
 pam_mount will read efsk from the local filesystem, perform fsk = D_sk (efsk)
 and use fsk to mount the filesystem. If you change your system password, simply
 regenerate efsk using efsk = E_sk (fsk). If you want to mount this volume by
-hand, use something like openssl enc -d -aes-256-ecb -in /home/user.key | mount
--p0 /home/user. More information about this technique is included in
+hand, use something like `openssl enc -d -aes-256-ecb -in /home/user.key |
+mount -p0 /home/user`. More information about this technique is included in
 pam_mount.conf.xml.
 .PP
 A script named mkehd is provided with pam_mount to help create encrypted home

@@ -46,7 +46,7 @@ NASTY DETAILS
        tains many comments documenting its use.
 
        In addition, you must include two entries in  the  system's  applicable
-       /etc/pam.d/SERVICE config files, as the following example shows:
+       /etc/pam.d/service config files, as the following example shows:
 
                   auth     required  pam_securetty.so
                   auth     required  pam_pwdb.so shadow nullok
@@ -71,12 +71,13 @@ NASTY DETAILS
        that make use of PAM's sufficient keyword then model your configuration
        on the following:
 
-
+              ···
               account sufficient  pam_ldap.so
               auth    required    pam_mount.so
               auth    sufficient  pam_ldap.so use_first_pass
               auth    required    pam_unix.so use_first_pass
               session optional    pam_mount.so
+              ···
 
        This allows the following:
 
@@ -93,10 +94,10 @@ NASTY DETAILS
        Alternatively,  the  following is possible (thanks to Andrew Morgan for
        the hint!):
 
-            auth [success=2 default=ignore] pam_unix2.so
-            auth [success=1 default=ignore] pam_ldap.so use_first_pass
-            auth requisite pam_deny.so
-            auth optional pam_mount.so use_first_pass
+              auth [success=2 default=ignore] pam_unix2.so
+              auth [success=1 default=ignore] pam_ldap.so use_first_pass
+              auth requisite pam_deny.so
+              auth optional pam_mount.so use_first_pass
 
        It may seem odd, but the first three lines will  make  it  so  that  at
        least  one  of  pam_unix2  or  pam_ldap has to succeed. As you can see,
@@ -123,8 +124,8 @@ NASTY DETAILS
        pam_mount will read efsk from the local filesystem, perform fsk =  D_sk
        (efsk)  and  use fsk to mount the filesystem. If you change your system
        password, simply regenerate efsk using efsk = E_sk (fsk). If  you  want
-       to  mount  this  volume  by  hand,  use  something  like openssl enc -d
-       -aes-256-ecb -in /home/user.key | mount -p0 /home/user.  More  informa‐
+       to  mount  this  volume  by  hand,  use  something like `openssl enc -d
+       -aes-256-ecb -in /home/user.key | mount -p0 /home/user`. More  informa‐
        tion about this technique is included in pam_mount.conf.xml.
 
        A  script  named  mkehd  is  provided  with  pam_mount  to  help create
