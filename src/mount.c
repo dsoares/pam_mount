@@ -988,8 +988,9 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 		w4rn("getpwnam(\"%s\") failed: %s\n",
 		     Config.user, strerror(errno));
 	} else {
-		HXformat_add(vinfo, "USERUID", &pe->pw_uid, HXTYPE_LONG);
-		HXformat_add(vinfo, "USERGID", &pe->pw_gid, HXTYPE_LONG);
+		unsigned int uid = pe->pw_uid, gid = pe->pw_gid;
+		HXformat_add(vinfo, "USERUID", &uid, HXTYPE_UINT);
+		HXformat_add(vinfo, "USERGID", &gid, HXTYPE_UINT);
 	}
 
 	/* FIXME: should others remain undefined if == ""? */
