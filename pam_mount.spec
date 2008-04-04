@@ -9,7 +9,7 @@ URL:            http://pam-mount.sf.net/
 
 Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
 BuildRequires:  libtool pam-devel
-BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.10.2
+BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.15
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers
 # psmisc: /bin/fuser

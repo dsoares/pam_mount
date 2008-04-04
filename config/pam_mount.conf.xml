@@ -106,7 +106,7 @@ antisocial, pam_mount will always set its own $PATH.
 <fsck>fsck -p %(FSCKTARGET)</fsck>
 
 <losetup>losetup -p0 "%(before=\"-e\" CIPHER)"
-    "%(before=\"-k\" KEYBITS)" %(FSCKLOOP) %(VOLUME)</losetup>
+	"%(ifnempty=\"-k\" KEYBITS)" %(KEYBITS) %(FSCKLOOP) %(VOLUME)</losetup>
 
 <unlosetup>losetup -d %(FSCKLOOP)</unlosetup>
 
@@ -127,7 +127,8 @@ antisocial, pam_mount will always set its own $PATH.
 
 <ncpumount>ncpumount %(MNTPT)</ncpumount>
 
-<fusemount>mount.fuse %(VOLUME) %(MNTPT) "%(before=\"-o \" OPTIONS)"</fusemount>
+<fusemount>mount.fuse %(VOLUME) %(MNTPT)
+	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</fusemount>
 
 <fuseumount>fusermount -u %(MNTPT)</fuseumount>
 
@@ -145,13 +146,13 @@ etc. -->
 <!-- On OpenBSD try "/usr/local/bin/mount_ehd" (included in pam_mount
 package). -->
 <lclmount>mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
-	"%(before=\"-o\" OPTIONS)"</lclmount>
+	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</lclmount>
 
-<cryptmount>mount -t crypt "%(before=\"-o \" OPTIONS)"
+<cryptmount>mount -t crypt "%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)
 	%(VOLUME) %(MNTPT)</cryptmount>
 
 <nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)
-	"%(before=\"-o\" OPTIONS)"</nfsmount>
+	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</nfsmount>
 
 <!-- mntcheck utility for BSDs which lack /etc/mtab -->
 <mntcheck>mount</mntcheck>
