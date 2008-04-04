@@ -553,7 +553,7 @@ static const char *rc_luserconf(xmlNode *node, struct config *config,
 	HX_strlcpy(config->luserconf, pent->pw_dir, sizeof(config->luserconf));
 	HX_strlcat(config->luserconf, "/", sizeof(config->luserconf));
 	HX_strlcat(config->luserconf, s, sizeof(config->luserconf));
-	w4rn("path to luserconf set to %s\n", config->luserconf),
+	w4rn("path to luserconf set to %s\n", config->luserconf);
 	free(s);
 	return NULL;
 }
