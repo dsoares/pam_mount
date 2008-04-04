@@ -415,9 +415,17 @@ static int write_count(int fd, long nv, const char *filename) {
 	char buf[ASCIIZ_LLX];
 	int wrt, len, ret;
 
-	if (nv <= 0 && unlink(filename) < 0) {
-		l0g("could not unlink %s: %s\n", filename, strerror(errno));
-		return 1; /* let user log in */
+	if (nv <= 0) {
+		if (unlink(filename) >= 0)
+			return true;
+		if (errno != EPERM)
+			l0g("could not unlink %s: %s\n", filename, strerror(errno));
+		/*
+		 * Fallback to just blanking the file. This can happen when
+		 * pmvarrun is called as unprivileged user.
+		 */
+		ftruncate(fd, 0);
+		return true;
 	}
 
 	if ((ret = lseek(fd, 0, SEEK_SET)) != 0) {
@@ -431,7 +439,6 @@ static int write_count(int fd, long nv, const char *filename) {
 		ret = -errno;
 		l0g("wrote %d of %d bytes; write error on %s: %s\n",
 		    (wrt < 0) ? 0 : wrt, len, filename, strerror(errno));
-		close(fd);
 		return ret;
 	}
 
