@@ -28,6 +28,7 @@ pam_mount - rdconf2.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libHX/arbtree.h>
 #include <pwd.h>
 #include "compiler.h"
 #include "misc.h"

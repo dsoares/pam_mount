@@ -34,7 +34,9 @@ pam_mount - rdconf1.c
 #elif defined(__linux__)
 #	include <mntent.h>
 #endif
-#include <libHX.h>
+#include <libHX/arbtree.h>
+#include <libHX/option.h>
+#include <libHX/string.h>
 #include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"

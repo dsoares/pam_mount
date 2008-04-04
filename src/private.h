@@ -1,6 +1,7 @@
 #ifndef PMT_PRIVATE_H
 #define PMT_PRIVATE_H 1
 
+#include <limits.h>
 #include <stdbool.h>
 
 #define MAX_PAR         127
