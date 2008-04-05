@@ -75,7 +75,7 @@ void misc_log(const char *format, ...)
 	va_copy(arg2, args);
 	if (Debug)
 		vfprintf(stderr, format, args);
-	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, arg2);
+	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
 	return;
@@ -99,7 +99,7 @@ void misc_warn(const char *format, ...)
 	va_start(args, format);
 	va_copy(arg2, args);
 	vfprintf(stderr, format, args);
-	vsyslog(LOG_AUTHPRIV | LOG_ERR, format, arg2);
+	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
 	return;

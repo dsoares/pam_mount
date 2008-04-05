@@ -71,6 +71,9 @@ case "$host" in
     (*-*-linux*)
 	PAM_MODDIR='${slibdir}/security'
 	;;
+    (*-*-solaris*)
+	PAM_MODDIR="${libdir}/security";
+	;;
     (*-*-darwin*)
 	PAM_MODDIR="/usr/lib/pam"
 	;;

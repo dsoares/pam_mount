@@ -47,6 +47,10 @@ pam_mount - pam_mount.c
 #include "spawn.h"
 #include "xstdlib.h"
 
+#ifndef PAM_EXTERN
+#	define PAM_EXTERN
+#endif
+
 #if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 #	define CONFIGFILE "/etc/pam_mount.conf.xml"
 #else
