@@ -351,7 +351,8 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 void set_myuid(const char *user)
 {
 	setsid();
-	chdir("/");
+	if (chdir("/") < 0)
+		;
 	if (user == NULL) {
 		misc_dump_id("set_myuid<pre>");
 		if (setuid(0) < 0) {

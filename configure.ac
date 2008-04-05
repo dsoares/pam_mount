@@ -53,7 +53,7 @@ regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-D_FILE_OFFSET_BITS=64 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
-	-Winline -pipe"
+	-Winline -Wformat=2 -pipe"
 AC_SUBST(regular_CFLAGS)
 
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],

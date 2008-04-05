@@ -2,6 +2,7 @@
 #define PMT_CRYPTO_H 1
 
 #include <sys/types.h>
+#include "config.h"
 
 #ifdef HAVE_LIBCRYPTO
 #	ifndef EVP_MAX_BLOCK_LENGTH

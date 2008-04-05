@@ -900,7 +900,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 		 * standard string MAX_PAR + 1 in this case
 		 */
 		strncpy(signed_cast(char *, _password), password, MAX_PAR);
-		_password[MAX_PAR] = '\0';
+		_password[MAX_PAR-1] = '\0';
 		_password_len = strlen(password);
 	}
 	w4rn("about to start building mount command\n");
@@ -946,7 +946,8 @@ int do_mount(const struct config *config, const unsigned int vol,
 
 	spawn_restore_sigchld();
 	if (Debug)
-		system("df -Ta");
+		if (system("df -Ta") < 0)
+			;
 
 	/* pass on through the result from the umount process */
 	return !WEXITSTATUS(child_exit);
