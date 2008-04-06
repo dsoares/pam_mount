@@ -4,28 +4,30 @@
 pam_mount - A PAM module that can mount volumes for a user session
 .SH OVERVIEW
 .PP
-This module is aimed at environments with SMB (Samba or Windows NT) or NCP
-(Netware or Mars\-NWE) servers that Unix users wish to access transparently. It
-facilitates access to private volumes of these types well. The module also
-supports mounting home directories using  loopback encrypted filesystems. The
-module was originally written for use on the GNU/Linux operating system but has
-since been modified to work on several flavors of BSD.
+This module is aimed at environments with central file servers that a user
+wishes to mount on login and unmount on logout, such as (semi-)diskless
+stations where many users can logon and where statically mounting the entire
+/home from a server is a security risk, or listing all possible volumes in
+/etc/fstab is not feasible.
 .IP "\(bu" 4
-Every user can access his own volumes
+Users can define their own list of volumes without having to change
+(possibly non-writable) global config files.
 .IP "\(bu" 4
-The user needs to type the password just once (at login)
+Single sign-on feature - the user needs to type the password just once
+(at login)
 .IP "\(bu" 4
-The mounting process is transparent to the users
+Transparent mount process
 .IP "\(bu" 4
-There is no need to keep the login passwords in any additional file
+No stored passwords
 .IP "\(bu" 4
-The volumes are unmounted upon logout, so it saves system resources, avoiding
-the need of listing every every possibly useful remote  volume in /etc/fstab or
-in an automount/supermount config file. This is also necessary for securing
-encrypted filesystems.
+Volumes are unmounted on logout, freeing system resources and
+not leaving data exposed.
 .PP
-pam_mount can mount any filesystem the kernel supports, and has supports the
-userspace helpers for SMB, CIFS, NCP, davfs, FUSE, and crypto mounts.
+The module also supports mounting local filesystems of any kind the normal
+mount utility supports, with extra code to make sure certain volumes are set up
+properly because often they need more than just a mount call, such as encrypted
+volumes. This includes SMB/CIFS, NCP, davfs2, FUSE, losetup crypto,
+dm-crypt/cryptsetup and truecrypt.
 .PP
 If you intend to use pam_mount to protect volumes on your computer using an
 encrypted filesystem system, please know that there are many other issues you
@@ -47,7 +49,7 @@ In addition, you must include two entries in the system's applicable
     auth     required  pam_securetty.so
     auth     required  pam_pwdb.so shadow nullok
     auth     required  pam_nologin.so
-+++ auth     optional  pam_mount.so use_first_pass
++++ auth     optional  pam_mount.so try_first_pass
     account  required  pam_pwdb.so
     password required  pam_cracklib.so
     password required  pam_pwdb.so shadow nullok use_authtok
@@ -64,8 +66,8 @@ statements. These make PAM look into the specified file. If there is a
 file before the "sufficient" statement or before the "include" statement.
 .PP
 If you use pam_ldap, pam_winbind, or any other authentication services that
-make use of PAM's sufficient keyword then model your configuration on the
-following:
+make use of PAM's sufficient keyword, model your configuration on the
+following order:
 .IP
 .nf
 \(bu\(bu\(bu
@@ -77,16 +79,17 @@ session optional    pam_mount.so
 \(bu\(bu\(bu
 .fi
 .PP
-This allows the following:
+This allows for:
 .IP "1." 4
-pam_mount will prompt for a password and export it to the PAM system.
+pam_mount, as the first "auth" module, will prompt for a password and export it
+to the PAM system.
 .IP "2." 4
 pam_ldap will use the password from the PAM system to try and authenticate the
 user. If this succedes, the user will be authenticated. If it fails, pam_unix
 will try to authenticate.
 .IP "3." 4
-pam_unix will try to authenticate the user if pam_ldap fails. If pam_unix
-fails, then the authentication will be refused.
+pam_unix will try to authenticate the user if pam_ldap failed. If pam_unix
+fails, then the authentication will be refused (due to the "required").
 .PP
 Alternatively, the following is possible (thanks to Andrew Morgan for
 the hint!):
@@ -100,7 +103,7 @@ auth optional pam_mount.so use_first_pass
 .PP
 It may seem odd, but the first three lines will make it so that at least one of
 pam_unix2 or pam_ldap has to succeed. As you can see, pam_mount will be run
-\fBafter\fR successful authentification with theses subsystems.
+\fBafter\fR successful authentification with these subsystems.
 .PP
 If your volume has a different password than your system account, then encrypt
 the password to the volume you wish mounted using your system password as the

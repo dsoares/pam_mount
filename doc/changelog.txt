@@ -1,4 +1,16 @@
 
+For details, see the history as recorded in the git repository.
+
+v0.35 (April 06 2008)
+=====================
+- mount.crypt: fix loop device detection
+- mount.crypt: wait for dm devices to show up
+- fixed: mount flag and value were one argument
+- pmvarrun: support unprivileged mode
+- Support for SSH keyboard-interactive authenticated volumes
+- documentation updates
+
+
 v0.33 (February 22 2008)
 ========================
 - notify about unknown options in /etc/pam.d/*

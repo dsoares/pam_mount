@@ -1,6 +1,6 @@
 
 Name:           pam_mount
-Version:        0.33
+Version:        0.35
 Release:        0
 Group:          System/Libraries
 Summary:        A PAM module that can mount volumes for a user session
@@ -8,7 +8,7 @@ License:        LGPL
 URL:            http://pam-mount.sf.net/
 
 Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
-BuildRequires:  libtool pam-devel
+BuildRequires:  libtool pam-devel pkg-config
 BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.15
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers
@@ -29,11 +29,15 @@ BuildRoot:      %_tmppath/%name-%version-build
 Prefix:         %_prefix
 
 %description
-pam_mount automatically mounts directories when the user logs in,
-using the password just entered.
+This module is aimed at environments with central file servers that a
+user wishes to mount on login and unmount on logout, such as
+(semi-)diskless stations where many users can logon.
 
-pam_mount supports SMB, NCP, and any type of filesystem that can
-be mounted using the standard mount command.
+The module also supports mounting local filesystems of any kind the
+normal mount utility supports, with extra code to make sure certain
+volumes are set up properly because often they need more than just a
+mount call, such as encrypted volumes. This includes SMB/CIFS, NCP,
+davfs2, FUSE, losetup crypto, dm-crypt/cryptsetup and truecrypt.
 
 %if "%_vendor" != "redhat"
 %debug_package
@@ -87,10 +91,7 @@ fi;
 %config(noreplace) %_sysconfdir/security/%name.conf.xml
 /%_lib/security/%{name}*.so
 %_sbindir/pmvarrun
-%_bindir/mkehd
-%_bindir/autoehd
-%_bindir/passwdehd
-%_bindir/mount_ehd
+%_bindir/*
 %_sbindir/*
 /sbin/mount.crypt
 /sbin/umount.crypt
