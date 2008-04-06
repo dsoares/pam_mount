@@ -41,6 +41,7 @@ enum command_type {
 	CMD_PMVARRUN,
 	CMD_TRUECRYPTMOUNT,
 	CMD_TRUECRYPTUMOUNT,
+	CMD_FD0SSH,
 	_CMD_MAX,
 	CMD_NONE,
 };
@@ -64,6 +65,7 @@ struct vol {
 	char mountpoint[PATH_MAX + 1];
 	bool use_fstab;
 	bool used_wildcard;
+	bool uses_ssh;
 };
 
 struct config {

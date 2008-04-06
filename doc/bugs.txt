@@ -30,12 +30,6 @@ A Perl script to convert it can be found in the scripts/ directory
 beginning with version 0.20.
 
 
-[ ssh - password passing ]
-
-When interactively asking for the password, the ssh client opens
-/dev/tty and ignores stdin over which pam_mount passes the password.
-
-
 [ sshd - various ]
 
 When public key authentication is used, the PAM auth stage is entirely

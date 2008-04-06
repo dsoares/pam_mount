@@ -909,6 +909,12 @@ int do_mount(const struct config *config, const unsigned int vol,
 	   l0g("volume type (%d) is unknown\n", vpt->type);
 	   return 0;
 	 */
+
+	if (vpt->uses_ssh)
+		for (i = 0; config->command[CMD_FD0SSH][i] != NULL; ++i)
+			add_to_argv(_argv, &_argc,
+			            config->command[CMD_FD0SSH][i], vinfo);
+
 	for (i = 0; config->command[vpt->type][i] != NULL; ++i)
 		add_to_argv(_argv, &_argc,
 		            config->command[vpt->type][i], vinfo);

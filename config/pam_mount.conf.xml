@@ -136,6 +136,8 @@ antisocial, pam_mount will always set its own $PATH.
 
 <truecryptumount>truecrypt -d %(MNTPT)</truecryptumount>
 
+<fd0ssh>pmt-fd0ssh</fd0ssh>
+
 <!-- Linux supports lazy unmounting (-l). May be dangerous for encrypted
 volumes. May also break loopback mounts because loopback devices are not
 freed. Need to unmount mount point (not volume!) to support SMB mounts,
@@ -170,6 +172,7 @@ Volumes that will be mounted when user triggers the pam_mount module
         server="..."
         path="..."
         mountpoint="..."
+	ssh="1"
         options="..."
         fskeycipher="..."
         fskeypath="..."
@@ -217,6 +220,12 @@ mounted. '~' expands to the user's home directory as present in the passwd
 database, according to sh semantics. "~name" is not supported. If this
 attribute is omitted, the location is read from /etc/fstab, which also
 requires PATH to be the device of an fstab entry.
+
+
+The SSH option enables an input hack wrapper (zerossh) for this mount
+to hand the password to ssh over an ssh-specific mechanism. Enable this
+option for any mount involving the SSH binary, e.g. ccgfs or sshfs. Do
+NOT enable it for anything else or the login will most likely hang.
 
 
 OPTIONS specifies mount options. If omitted, and /etc/fstab is used (see

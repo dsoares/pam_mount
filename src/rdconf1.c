@@ -84,7 +84,7 @@ struct pmt_command {
 struct volume_attrs {
 	char *user, *pgrp, *sgrp, *fstype, *server, *path, *mntpt,
 	     *options, *fskeycipher, *fskeypath;
-	unsigned int invert;
+	bool invert, uses_ssh;
 };
 
 /* Functions */
@@ -737,6 +737,7 @@ static const char *rc_volume_inter(struct config *config,
 	config->volume = vpt;
 	vpt = &config->volume[config->volcount];
 	memset(vpt, 0, sizeof(*vpt));
+	vpt->uses_ssh = attr->uses_ssh;
 
 	vpt->globalconf = config->level == CONTEXT_GLOBAL;
 	strncpy(vpt->user, config->user, sizeof(vpt->user));
@@ -825,11 +826,16 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		.fskeypath   = xmlGetProp_2s(node, "fskeypath"),
 	};
 	const char *ret;
-	char *invert;
+	char *tmp;
 
-	if ((invert = xmlGetProp_2s(node, "invert")) != NULL) {
-		orig.invert = strtoul(invert, NULL, 0);
-		free(invert);
+	if ((tmp = xmlGetProp_2s(node, "invert")) != NULL) {
+		orig.invert = strtoul(tmp, NULL, 0);
+		free(tmp);
+	}
+
+	if ((tmp = xmlGetProp_2s(node, "ssh")) != NULL) {
+		orig.uses_ssh = strtoul(tmp, NULL, 0);
+		free(tmp);
 	}
 
 	memcpy(&norm, &orig, sizeof(norm));
@@ -893,6 +899,7 @@ static const struct callbackmap cf_tags[] = {
 	{"cryptmount",      rc_command,             CMD_CRYPTMOUNT},
 	{"davmount",        rc_command,             CMD_DAVMOUNT},
 	{"debug",           rc_debug,               CMD_NONE},
+	{"fd0ssh",          rc_command,             CMD_FD0SSH},
 	{"fsckloop",        rc_fsckloop,            CMD_NONE},
 	{"fsck",            rc_command,             CMD_FSCK},
 	{"fusemount",       rc_command,             CMD_FUSEMOUNT},
