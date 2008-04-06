@@ -176,7 +176,8 @@ Volumes that will be mounted when user triggers the pam_mount module
     />
 
 
-USER is a user for which a volume rule applies, "*" selects all users.
+USER is a user for which a volume rule applies, "*" selects all users
+except root or any other user with UID 0.
 
 A volume with PGRP attribute will be mounted when a user has that
 particular group as its primary group. A volume with SGRP attribute will
