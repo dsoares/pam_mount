@@ -1,0 +1,31 @@
+
+Minimum required packages for building pam_mount from a tarball release:
+
+	* libHX 1.15 or up
+	* libxml 2.6.x or up
+	* pkg-config
+	* Linux-PAM 0.99.x
+	SUN-PAM (compiled-tested only with 5.11.85)
+	BSD PAM is untested and probably not working right now.
+
+Additional required packages for building from (Git) snapshot:
+
+	* autoconf 2.59 or up
+	* automake 1.9 or up (automake 1.4 will NOT work)
+	* libtool 1.5.22 or up (older ones might work)
+
+Optional packages for building:
+
+	* openssl 0.9.6 or up
+
+Suggested packages for runtime:
+
+	local targets:
+	* encfs -- file-level encryption
+	* cryptsetup 1.0.5 or up -- block-level encryption
+
+	remote targets:
+	* sshfs -- SFTP-over-SSH
+	* ccgfs -- ccgfs-over-SSH (full operation support; mknod, acl, xattrs)
+	* cifs-mount -- for CIFS and SMB shares
+	* davfs2 -- HTTP/WebDAV (needs pam_mount patch)
