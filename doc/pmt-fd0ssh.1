@@ -1,0 +1,19 @@
+.TH pmt\-fd0ssh 1 2008-04-06
+.SH NAME
+pmt\-fd0ssh - hand stdin passwords to ssh via ssh-askpass mechanism
+.SH SYNOPSIS
+\fBpmt\-fd0ssh\fP [\fImount command\fP]
+.SH DESCRIPTION
+This is a wrapper for ssh which reads the password from stdin
+and sets things up so that ssh will recall the wrapper to get the password,
+which will be read from the parent process using a pipe.
+.PP
+It is used by pam_mount(8) to mount SSH-based filesystems, such as
+ccgfs and sshfs.
+.SH "SEE ALSO"
+This program is imported from hxtools, a tool suite by Jan Engelhardt.
+Idea by John S. Skogtvedt, http://www.debian-administration.org/articles/587
+.SH AUTHOR
+This manpage was originally written by Bastian Kleineidam
+<calvin@debian.org> for the Debian distribution of libpam\-mount but
+may be used by others.
