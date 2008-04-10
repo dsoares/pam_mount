@@ -1,6 +1,12 @@
 
 For details, see the history as recorded in the git repository.
 
+v0.35.1 (April 10 2008)
+=======================
+- fix HAVE_LIBCRYPTO regression;
+  crypto was always disabled even if openssl present
+
+
 v0.35 (April 06 2008)
 =====================
 - mount.crypt: fix loop device detection
