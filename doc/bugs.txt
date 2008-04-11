@@ -32,14 +32,11 @@ beginning with version 0.20.
 
 [ sshd - various ]
 
-When public key authentication is used, the PAM auth stage is entirely
-skipped. Additionally, pam_mount is not able to ask for a password in
-the session stage.
-
-When "PrivilegeSeparation" is enabled, ssh will not run through the PAM
-stacks.
-
 "UsePAM" is required to make sshd go through the PAM stacks.
+
+When public key authentication is used, the PAM auth stage is entirely
+skipped. And sshd will not let PAM modules use the 'converse' function
+either.
 
 "UseLogin yes" may be used to enable pam_mount -- irrespective of
 public key authentification, privilege separation or UsePAM=no. sshd
