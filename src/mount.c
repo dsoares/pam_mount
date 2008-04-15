@@ -101,13 +101,14 @@ static void log_output(int fd, const char *cmsg)
 	}
 
 	setvbuf(fp, NULL, _IOLBF, 0);
-	if (fgets(buf, sizeof(buf), fp) != NULL)
+	if (fgets(buf, sizeof(buf), fp) != NULL) {
 		if (cmsg != NULL)
 			w4rn("%s", cmsg);
 
-	do {
-		w4rn("%s", buf);
-	} while (fgets(buf, sizeof(buf), fp) != NULL);
+		do {
+			w4rn("%s", buf);
+		} while (fgets(buf, sizeof(buf), fp) != NULL);
+	}
 	fclose(fp);
 	return;
 }
