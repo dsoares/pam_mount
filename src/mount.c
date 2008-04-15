@@ -122,8 +122,12 @@ static void run_lsof(const struct config *const config,
 {
 	int _argc = 0, cstdout = -1;
 	const char *_argv[MAX_PAR + 1];
+	struct stat sb;
 	unsigned int i;
 	pid_t pid;
+
+	if (stat(HXbtree_get(vinfo, "MNTPT"), &sb) < 0 && errno == EEXIST)
+		return;
 
 	if (config->command[CMD_LSOF][0] == NULL)
 		l0g("lsof not defined in pam_mount.conf.xml\n");
