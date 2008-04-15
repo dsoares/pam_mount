@@ -315,14 +315,12 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 		l0g("too many arguments to mount command\n");
 		return;
 	}
-	if (HXformat_aprintf(vinfo, &filled, arg) == 0) {
+	if (HXformat_aprintf(vinfo, &filled, arg) == 0)
 		/*
 		 * This case may happen with e.g. %(before="-o" OPTIONS) where
 		 * OPTIONS is empty. And empty options is certainly valid.
 		 */
-		w4rn("could not fill %s\n", arg);
 		return;
-	}
 
 	argv[*argc]   = filled;
 	argv[++*argc] = NULL;
