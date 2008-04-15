@@ -86,7 +86,9 @@ static int split_bsd_mount(char *, const char **, const char **, const char **);
  *
  * Reads all data from @fd and logs it using w4rn(). @fd is usually connected
  * to a pipe to another process's stdout or stderr. Only if @fd actually has
- * output for us, @cmsg will be printed
+ * output for us, @cmsg will be printed.
+ *
+ * @fd will be closed.
  */
 static void log_output(int fd, const char *cmsg)
 {
@@ -106,6 +108,7 @@ static void log_output(int fd, const char *cmsg)
 	do {
 		w4rn("%s", buf);
 	} while (fgets(buf, sizeof(buf), fp) != NULL);
+	fclose(fp);
 	return;
 }
 
@@ -144,7 +147,6 @@ static void run_lsof(const struct config *const config,
 	if (waitpid(pid, NULL, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	close(cstdout);
 	return;
 }
 
@@ -603,7 +605,6 @@ int do_unmount(const struct config *config, const unsigned int vol,
 		goto out;
 	}
 	log_output(cstderr, "umount errors:\n");
-	close(cstderr);
 	w4rn("waiting for umount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -704,7 +705,6 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	}
 	close(cstdin);
 	log_output(cstderr, "losetup errors:\n");
-	close(cstderr);
 	w4rn("waiting for losetup\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -808,7 +808,6 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	/* stdout and stderr must be logged for fsck */
 	log_output(cstdout, NULL);
 	log_output(cstderr, NULL);
-	close(cstderr);
 	w4rn("waiting for filesystem check\n");
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -946,7 +945,6 @@ int do_mount(const struct config *config, const unsigned int vol,
 	/* Paranoia? */
 	memset(_password, 0, sizeof(_password));
 	log_output(cstderr, "mount errors:\n");
-	close(cstderr);
 	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
 		spawn_restore_sigchld();
