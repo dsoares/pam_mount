@@ -28,7 +28,6 @@ pam_mount - xstdlib.c
 #include "private.h"
 #include "xstdlib.h"
 
-//-----------------------------------------------------------------------------
 /*
  * xmalloc - allocate memory
  * @n:	size of the new buffer
@@ -63,37 +62,6 @@ void *xrealloc(void *orig, size_t n)
 }
 
 /*
- * xzalloc -
- * @n:	bytes to allocate
- *
- * Allocates @n bytes and clears them if the allocation succeded. Returns
- * the pointer to the newly allocated memory if any, or %NULL on failure.
- */
-void *xzalloc(size_t n)
-{
-	void *ret;
-	if ((ret = xmalloc(n)) != NULL)
-		memset(ret, 0, n);
-	return ret;
-}
-
-/*
- * xmemdup -
- * @src:	pointer to source data
- * @n:		amount of bytes to copy
- *
- * Allocates a new block of size @n and copies @n bytes from @src to it,
- * and returns it. Returns %NULL on allocation failure.
- */
-void *xmemdup(const void *src, size_t n)
-{
-	void *ret;
-	if ((ret = xmalloc(n)) == NULL)
-		return ret;
-	return memcpy(ret, src, n);
-}
-
-/*
  * xstrdup -
  * @src:	source string
  *
@@ -102,27 +70,9 @@ void *xmemdup(const void *src, size_t n)
  */
 char *xstrdup(const char *src)
 {
-	return xmemdup(src, strlen(src) + 1);
-}
-
-/*
- * xstrndup -
- * @src:	source string
- * @max:	maximum number of characters to copy
- *
- * Basically just the usual strndup(), but with error reporting to fprintf()
- * should allocation fail.
- */
-char *xstrndup(const char *src, size_t max)
-{
-	size_t s = strlen(src);
-	char *ret;
-
-	if (max < s)
-		s = max;
-	if ((ret = xmemdup(src, s + 1)) == NULL)
-		return NULL;
-
-	ret[s] = '\0';
+	char *ret = HX_strdup(src);
+	if (ret == NULL)
+		l0g("%s: Could not allocate %lu bytes\n",
+		    __func__, strlen(src));
 	return ret;
 }

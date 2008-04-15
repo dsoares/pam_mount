@@ -169,10 +169,10 @@ void initconfig(struct config *config)
 	config->mkmntpoint = true;
 	strcpy(config->fsckloop, "/dev/loop7");
 
-	config->msg_authpw    = HX_strdup("pam_mount password:");
-	config->msg_sessionpw = HX_strdup("reenter password for pam_mount:");
+	config->msg_authpw    = xstrdup("pam_mount password:");
+	config->msg_sessionpw = xstrdup("reenter password for pam_mount:");
 
-	config->path = HX_strdup("/sbin:/bin:/usr/sbin:/usr/bin:"
+	config->path = xstrdup("/sbin:/bin:/usr/sbin:/usr/bin:"
 	               "/usr/local/sbin:/usr/local/bin");
 
 	for (i = 0; default_command[i].type != -1; ++i)
