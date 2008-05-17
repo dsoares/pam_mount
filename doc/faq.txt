@@ -4,7 +4,7 @@ Q.  I want to ask for help.  What information should I provide?
 
 A.  You need to provide us the following:
 
-    * A full log of a failed session with debugging on in
+    * A full log of a failed session with debugging turned on in
       pam_mount.conf.xml
     * The version of pam_mount that you are using
     * /etc/pam.d/* as relevant
