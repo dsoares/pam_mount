@@ -58,10 +58,12 @@ enum fstab_field {
 };
 
 enum wildcard_type {
-	WC_NONE,
 	WC_ANYUSER,
 	WC_PGRP,    /* as primary group */
 	WC_SGRP,    /* in secondary group */
+	WC_GID,
+	WC_EXACT,
+	WC_EXACT_UID,
 };
 
 enum {
@@ -82,7 +84,8 @@ struct pmt_command {
 };
 
 struct volume_attrs {
-	char *user, *pgrp, *sgrp, *fstype, *server, *path, *mntpt,
+	/* This could be better... */
+	char *user, *uid, *pgrp, *sgrp, *gid, *fstype, *server, *path, *mntpt,
 	     *options, *fskeycipher, *fskeypath;
 	bool invert, uses_ssh;
 };
@@ -664,7 +667,7 @@ static const char *rc_string(xmlNode *node, struct config *config,
 static const char *rc_volume_inter(struct config *config,
     const struct volume_attrs *attr)
 {
-	enum wildcard_type wildcard = WC_NONE;
+	enum wildcard_type wildcard = WC_EXACT;
 	struct passwd *pent;
 	struct vol *vpt;
 	unsigned int i;
@@ -684,7 +687,11 @@ static const char *rc_volume_inter(struct config *config,
 		return NULL;
 	}
 
-	if (strcmp(attr->user, "*") == 0)
+	if (*attr->uid != '\0')
+		wildcard = WC_EXACT_UID;
+	else if (*attr->gid != '\0')
+		wildcard = WC_GID;
+	else if (strcmp(attr->user, "*") == 0)
 		wildcard = WC_ANYUSER;
 	else if (*attr->pgrp != '\0')
 		wildcard = WC_PGRP;
@@ -693,18 +700,43 @@ static const char *rc_volume_inter(struct config *config,
 	else if (*attr->user == '\0')
 		wildcard = WC_ANYUSER;
 
-	if (wildcard != WC_NONE && (strcmp(config->user, "root") == 0 ||
+	if (wildcard < WC_EXACT && (strcmp(config->user, "root") == 0 ||
 	    pent->pw_uid == 0)) {
 		/* One day, when SELinux becomes a daily thing, remove this. */
 		w4rn("volume wildcards ignored for \"root\" and uid0\n");
 		return NULL;
 	}
 
-	if (wildcard == WC_NONE && (strcmp(config->user, attr->user) != 0) ^
-	    attr->invert)
-		goto notforme;
+	if (wildcard == WC_EXACT) {
+		if ((strcmp(config->user, attr->user) != 0) ^ attr->invert)
+			goto notforme;
+	} else if (wildcard == WC_EXACT_UID) {
+		unsigned int uid_start, uid_end;
+		char *m;
 
-	if (wildcard == WC_PGRP) {
+		uid_start = strtoul(attr->uid, &m, 0);
+		if (*m != '-' && *m != '\0') {
+			l0g("Bogus uid specification in <volume>\n");
+			return NULL;
+		}
+		uid_end = strtoul(m + 1, NULL, 0);
+		if ((pent->pw_uid < uid_start || pent->pw_uid > uid_end) ^
+		    attr->invert)
+			goto notforme;
+	} else if (wildcard == WC_GID) {
+		unsigned int gid_start, gid_end;
+		char *m;
+
+		gid_start = strtoul(attr->gid, &m, 0);
+		if (*m != '-' && *m != '\0') {
+			l0g("Bogus gid specification in <volume>\n");
+			return NULL;
+		}
+		gid_end = strtoul(m + 1, NULL, 0);
+		if ((pent->pw_gid < gid_start || pent->pw_gid > gid_end) ^
+		    attr->invert)
+			goto notforme;
+	} else if (wildcard == WC_PGRP) {
 		const char *grp_name = attr->pgrp;
 		struct group *gent;
 
@@ -815,8 +847,10 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 {
 	struct volume_attrs norm, orig = {
 		.user        = xmlGetProp_2s(node, "user"),
+		.uid         = xmlGetProp_2s(node, "uid"),
 		.pgrp        = xmlGetProp_2s(node, "pgrp"),
 		.sgrp        = xmlGetProp_2s(node, "sgrp"),
+		.gid         = xmlGetProp_2s(node, "gid"),
 		.fstype      = xmlGetProp_2s(node, "fstype"),
 		.server      = xmlGetProp_2s(node, "server"),
 		.path        = xmlGetProp_2s(node, "path"),
