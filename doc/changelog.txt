@@ -1,6 +1,10 @@
 
 For details, see the history as recorded in the git repository.
 
+- truecrypt 5.x is not supported because the truecrypt CLI component
+  that pam_mount requires was removed
+
+
 v0.35.1 (April 10 2008)
 =======================
 - fix HAVE_LIBCRYPTO regression;

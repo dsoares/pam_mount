@@ -132,6 +132,7 @@ antisocial, pam_mount will always set its own $PATH.
 
 <fuseumount>fusermount -u %(MNTPT)</fuseumount>
 
+<!-- Only for truecrypt 4.x -->
 <truecryptmount>truecrypt %(VOLUME) %(MNTPT)</truecryptmount>
 
 <truecryptumount>truecrypt -d %(MNTPT)</truecryptumount>
