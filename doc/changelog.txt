@@ -1,6 +1,9 @@
 
 For details, see the history as recorded in the git repository.
 
+- mount.crypt uses normal sleep from coreutils again
+
+
 v0.37 (May 17 2008)
 ===================
 - truecrypt 5.x is not supported because the truecrypt CLI component

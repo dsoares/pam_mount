@@ -176,7 +176,7 @@ fi
 
 for ((x = $dm_timeout * 3; x >= 0; --x)); do
 	[ -b "/dev/mapper/$DMDEVICE" ] && break;
-	usleep 333333;
+	sleep 0.33;
 done;
 if [ ! -b "/dev/mapper/$DMDEVICE" ]; then
 	echo "dm device $DMDEVICE did not show up in time." >&2;
