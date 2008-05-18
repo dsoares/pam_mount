@@ -874,6 +874,8 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 
 	memcpy(&norm, &orig, sizeof(norm));
 	if (norm.user        == NULL) norm.user        = "";
+	if (norm.uid         == NULL) norm.uid         = "";
+	if (norm.gid         == NULL) norm.gid         = "";
 	if (norm.pgrp        == NULL) norm.pgrp        = "";
 	if (norm.sgrp        == NULL) norm.sgrp        = "";
 	if (norm.fstype      == NULL) norm.fstype      = "auto";

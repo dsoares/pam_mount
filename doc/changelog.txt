@@ -1,6 +1,7 @@
 
 For details, see the history as recorded in the git repository.
 
+- fix null pointer deref (from new UID/GID range support)
 - mount.crypt uses normal sleep from coreutils again
 
 
