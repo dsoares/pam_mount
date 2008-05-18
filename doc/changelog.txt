@@ -1,6 +1,9 @@
 
 For details, see the history as recorded in the git repository.
 
+
+v0.38 (May 18 2008)
+===================
 - fix null pointer deref (from new UID/GID range support)
 - mount.crypt uses normal sleep from coreutils again
 
