@@ -29,7 +29,6 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
 AM_PROG_LIBTOOL
-AM_PATH_XML2(,,AC_MSG_ERROR(You are missing libxml2))
 
 AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],
 	[Path to the super lib directory [[/lib]]]),
@@ -63,6 +62,7 @@ AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 
 PKG_CHECK_MODULES([libHX], [libHX >= 1.15])
+PKG_CHECK_MODULES([libxml], [libxml-2.0])
 AC_CHECK_HEADER(security/pam_modules.h, [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
 AC_CHECK_HEADER(pam/pam_modules.h, [have_pamheader="yes"])

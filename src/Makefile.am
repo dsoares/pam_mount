@@ -27,15 +27,15 @@ bin_PROGRAMS = pmt-fd0ssh
 sbin_PROGRAMS = pmvarrun
 
 pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
-pam_mount_la_LIBADD  = -lHX -lpam ${pmt_LIBS}
-pam_mount_la_LDFLAGS = -module -avoid-version $(XML_LIBS)
+pam_mount_la_LIBADD  = -lpam ${libHX_LIBS} ${pmt_LIBS} ${libxml_LIBS}
+pam_mount_la_LDFLAGS = -module -avoid-version
 
 pmt_fd0ssh_SOURCES = fd0ssh.c
 
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c xstdlib-nolibtool.c
-pmvarrun_LDADD   = -lHX
+pmvarrun_LDADD   = ${libHX_LIBS}
 
-AM_CFLAGS = $(XML_CPPFLAGS) $(regular_CFLAGS) $(GCC_FVISIBILITY_HIDDEN)
+AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} ${libHX_CFLAGS} ${libxml_CFLAGS}
 
 install-data-hook:
 	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;
