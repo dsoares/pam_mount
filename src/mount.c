@@ -1,27 +1,13 @@
-/*=============================================================================
-pam_mount - mount.c
-  Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
-  Copyright © CC Computer Consultants GmbH, 2005 - 2007
-  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-  Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of
-  the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write to:
-  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-  Boston, MA  02110-1301  USA
-
-  -- For details, see the file named "LICENSE.LGPL2"
-=============================================================================*/
+/*
+ *	Copyright © Elvis Pfützenreuter, 2000
+ *	Copyright © Jan Engelhardt, 2006 - 2008
+ *	Copyright © Bastian Kleineidam, 2005
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #include <config.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -46,6 +32,7 @@ pam_mount - mount.c
 #include "private.h"
 #include "readconfig.h"
 #include "spawn.h"
+#include "xstdlib.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #	include <fstab.h>
 #elif defined(__linux__)
@@ -315,8 +302,7 @@ static void vol_to_dev(char *match, size_t s, const struct vol *vol)
 
 	case CMD_NCPMOUNT:
 		snprintf(match, s, "%s/%s", vol->server,
-		         static_cast(const char *,
-		         HXbtree_get(vol->options, "user")));
+		         kvplist_get(&vol->options, "user"));
 		break;
 
 	case CMD_NFSMOUNT:
@@ -378,48 +364,13 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 }
 #endif
 
-/*
- * optlist_to_str -
- * @optlist:	option list
- *
- * Transform the option list into a flat string. Allocates and returns the
- * string. Caller has to free it. Used for debugging.
- */
-static hmc_t *optlist_to_str(const struct HXbtree *optlist)
-{
-	const struct HXbtree_node *option;
-	hmc_t *ret = hmc_sinit("");
-	void *trav;
-
-	if (optlist == NULL)
-		return ret;
-
-	trav = HXbtrav_init(optlist);
-	while ((option = HXbtraverse(trav)) != NULL) {
-		hmc_strcat(&ret, option->key);
-		if (option->data != NULL &&
-		    *static_cast(const char *, option->data) != '\0') {
-			hmc_strcat(&ret, "=");
-			hmc_strcat(&ret, option->data);
-		}
-		hmc_strcat(&ret, ",");
-	}
-
-	if (*ret != '\0')
-		/*
-		 * When string is not empty, there is always at least one
-		 * comma -- nuke it. */
-		ret[hmc_length(ret)-1] = '\0';
-
-	return ret;
-}
 static void log_pm_input(const struct config *const config,
     const unsigned int vol)
 {
 	const struct vol *vpt = &config->volume[vol];
 	hmc_t *options;
 
-	options = optlist_to_str(vpt->options);
+	options = kvplist_to_str(&vpt->options);
 	w4rn("information for mount:\n");
 	w4rn("----------------------\n");
 	w4rn("(defined by %s)\n", vpt->globalconf ? "globalconf" : "luserconf");
@@ -677,8 +628,8 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	assert(password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	vpt     = &config->volume[vol];
-	cipher  = HXbtree_get(vpt->options, "encryption");
-	keybits = HXbtree_get(vpt->options, "keybits");
+	cipher  = kvplist_get(&vpt->options, "encryption");
+	keybits = kvplist_get(&vpt->options, "keybits");
 
 	if (config->command[CMD_LOSETUP][0] == NULL) {
 		l0g("losetup not defined in pam_mount.conf.xml\n");
@@ -782,17 +733,17 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 		return 0;
 	}
 
-	if (HXbtree_find(vpt->options, "bind") != NULL ||
-	    HXbtree_find(vpt->options, "move") != NULL ||
+	if (kvplist_contains(&vpt->options, "bind") ||
+	    kvplist_contains(&vpt->options, "move") ||
 	    fstype_nodev(vpt->fstype) != 0)
 		return 1;
 
-	if (HXbtree_find(vpt->options, "loop") != NULL) {
+	if (kvplist_contains(&vpt->options, "loop")) {
 		if (!do_losetup(config, vol, vinfo, password, password_len))
 			return 0;
 		fsck_target = config->fsckloop;
 	} else {
-		hmc_t *options = optlist_to_str(vpt->options);
+		hmc_t *options = kvplist_to_str(&vpt->options);
 		w4rn("volume not a loopback (options: %s)\n", options);
 		hmc_free(options);
 	}
@@ -813,7 +764,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	if (HXbtree_find(vpt->options, "loop") != NULL)
+	if (kvplist_contains(&vpt->options, "loop"))
 		if (!do_unlosetup(config, vinfo))
 			return 0;
 	/*
@@ -1004,7 +955,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	}
 
 	/* FIXME: should others remain undefined if == ""? */
-	options = optlist_to_str(vpt->options);
+	options = kvplist_to_str(&vpt->options);
 	format_add(vinfo, "OPTIONS", options);
 
 	if (Debug)

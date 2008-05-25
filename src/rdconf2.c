@@ -1,27 +1,13 @@
-/*=============================================================================
-pam_mount - rdconf2.c
-  Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
-  Copyright © CC Computer Consultants GmbH, 2005 - 2007
-  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-  Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of
-  the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write to:
-  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-  Boston, MA  02110-1301  USA
-
-  -- For details, see the file named "LICENSE.LGPL2"
-=============================================================================*/
+/*
+ *	Copyright (C) Elvis Pfützenreuter, 2000
+ *	Copyright © Jan Engelhardt, 2006 - 2008
+ *	Copyright © Bastian Kleineidam, 2005
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #include <sys/types.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -29,12 +15,14 @@ pam_mount - rdconf2.c
 #include <stdlib.h>
 #include <string.h>
 #include <libHX/arbtree.h>
+#include <libHX/clist.h>
 #include <pwd.h>
 #include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"
 #include "private.h"
 #include "readconfig.h"
+#include "xstdlib.h"
 
 /*
  * allow_ok - check for disallowed options
@@ -45,24 +33,19 @@ pam_mount - rdconf2.c
  * If so, return false.
  */
 static bool allow_ok(const struct HXbtree *allowed,
-    const struct HXbtree *options)
+    const struct HXclist_head *options)
 {
-	const struct HXbtree_node *e;
-	void *t;
+	const struct kvp *kvp;
 
 	if (HXbtree_find(allowed, "*") != NULL || options->items == 0)
 		return true;
 
-	t = HXbtrav_init(options);
-	while ((e = HXbtraverse(t)) != NULL)
-		if (HXbtree_find(allowed, e->data) == NULL) {
-			l0g("option %s not allowed\n",
-			    static_cast(const char *, e->data));
-			HXbtrav_free(t);
+	HXlist_for_each_entry(kvp, options, list)
+		if (HXbtree_find(allowed, kvp->key) == NULL) {
+			l0g("option %s not allowed\n", kvp->key);
 			return false;
 		}
 
-	HXbtrav_free(t);
 	return true;
 }
 
@@ -75,14 +58,14 @@ static bool allow_ok(const struct HXbtree *allowed,
  * If so, returns true.
  */
 static bool required_ok(const struct HXbtree *required,
-    const struct HXbtree *options)
+    const struct HXclist_head *options)
 {
 	const struct HXbtree_node *e;
 	void *t;
 
 	t = HXbtrav_init(required);
 	while ((e = HXbtraverse(t)) != NULL)
-		if (HXbtree_find(options, e->data) == NULL) {
+		if (!kvplist_contains(options, e->data)) {
 			l0g("option %s required\n",
 			    static_cast(const char *, e->data));
 			HXbtrav_free(t);
@@ -101,7 +84,7 @@ static bool required_ok(const struct HXbtree *required,
  * Checks @options whether any of them appear in @deny. If so, returns false.
  */
 static bool deny_ok(const struct HXbtree *denied,
-    const struct HXbtree *options)
+    const struct HXclist_head *options)
 {
 	const struct HXbtree_node *e;
 	void *t;
@@ -116,7 +99,7 @@ static bool deny_ok(const struct HXbtree *denied,
 
 	t = HXbtrav_init(denied);
 	while ((e = HXbtraverse(t)) != NULL)
-		if (HXbtree_find(options, e->data) != NULL) {
+		if (!kvplist_contains(options, e->data)) {
 			l0g("option %s denied\n",
 			    static_cast(const char *, e->data));
 			HXbtrav_free(t);
@@ -140,15 +123,15 @@ static bool options_ok(const struct config *config, const struct vol *volume)
 	assert(volume != NULL);
 
 	if (!volume->use_fstab) {
-		if (!required_ok(config->options_require, volume->options))
+		if (!required_ok(config->options_require, &volume->options))
 			return false;
 		if (config->options_allow->items != 0 &&
-		    !allow_ok(config->options_allow, volume->options))
+		    !allow_ok(config->options_allow, &volume->options))
 			return false;
 		if (config->options_deny->items != 0 &&
-		    !deny_ok(config->options_deny, volume->options))
+		    !deny_ok(config->options_deny, &volume->options))
 			return false;
-		if (volume->options->items != 0) {
+		if (volume->options.items != 0) {
 			l0g("user specified options denied by default\n");
 			return false;
 		}
@@ -216,7 +199,7 @@ bool volume_record_sane(const struct config *config, unsigned int vol)
 		}
 
 	if (vpt->type == CMD_NCPMOUNT &&
-	    HXbtree_find(vpt->options, "user") != NULL) {
+	    !kvplist_contains(&vpt->options, "user")) {
 		l0g("NCP volume definition missing user option\n");
 		return false;
 	}

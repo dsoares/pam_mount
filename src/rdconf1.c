@@ -1,25 +1,11 @@
-/*=============================================================================
-pam_mount - rdconf1.c
-  Copyright © CC Computer Consultants GmbH, 2006 - 2007
-  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of
-  the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write to:
-  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-  Boston, MA  02110-1301  USA
-
-  -- For details, see the file named "LICENSE.LGPL2"
-=============================================================================*/
+/*
+ *	Copyright © Jan Engelhardt, 2006 - 2008
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
@@ -141,7 +127,7 @@ void freeconfig(struct config *config)
 	}
 
 	for (i = 0; i < config->volcount; ++i)
-		HXbtree_free(config->volume[i].options);
+		kvplist_genocide(&config->volume[i].options);
 
 	HXbtree_free(config->options_allow);
 	HXbtree_free(config->options_require);
@@ -157,7 +143,7 @@ void initconfig(struct config *config)
 {
 	unsigned int i, j;
 	static const unsigned int flags =
-		HXBT_MAP | HXBT_CKEY | HXBT_CDATA | HXBT_SCMP | HXBT_CID;
+		HXBT_MAP | HXBT_CKEY | HXBT_SCMP | HXBT_CID;
 
 	memset(config, 0, sizeof(*config));
 	config->debug      = true;
@@ -575,14 +561,49 @@ static const char *rc_mkmountpoint(xmlNode *node, struct config *config,
  * This is ok, since it is already an allocated string (i.e. does not
  * belong to libxml but to pam_mount). Caller frees it anyway right away.
  */
+static bool str_to_optkv(struct HXclist_head *optlist, char *str)
+{
+	char *value, *ptr;
+	struct kvp *kvp;
+
+	if (str == NULL || *str == '\0')
+		return true;
+
+	while ((ptr = HX_strsep(&str, ",")) != NULL) {
+		kvp = malloc(sizeof(struct kvp));
+		if (kvp == NULL)
+			return false;
+		HXlist_init(&kvp->list);
+		value = strchr(ptr, '=');
+		if (value != NULL) {
+			*value++ = '\0';
+			kvp->key   = xstrdup(ptr);
+			kvp->value = xstrdup(value);
+			if (kvp->key == NULL || kvp->value == NULL)
+				goto out;
+			HXclist_push(optlist, &kvp->list);
+		} else {
+			kvp->key = xstrdup(ptr);
+			if (kvp->key == NULL)
+				goto out;
+			kvp->value = NULL;
+			HXclist_push(optlist, &kvp->list);
+		}
+	}
+
+	return true;
+ out:
+	free(kvp->key);
+	free(kvp->value);
+	free(kvp);
+	return false;
+}
+
 static bool str_to_optlist(struct HXbtree *optlist, char *str)
 {
 	char *value, *ptr;
 
-	if (str == NULL || strlen(str) == 0)
-		/*
-		 * So what, ignore it.
-		 */
+	if (str == NULL || *str == '\0')
 		return true;
 
 	while ((ptr = HX_strsep(&str, ",")) != NULL) {
@@ -823,10 +844,7 @@ static const char *rc_volume_inter(struct config *config,
 	vpt->globalconf = config->level == CONTEXT_GLOBAL;
 	strncpy(vpt->user, config->user, sizeof(vpt->user));
 	vpt->type = CMD_LCLMOUNT;
-	vpt->options = HXbtree_init(HXBT_MAP | HXBT_CKEY | HXBT_CDATA |
-	               HXBT_SCMP | HXBT_CID);
-	if (vpt->options == NULL)
-		return strerror(errno);
+	HXclist_init(&vpt->options);
 
 	/* [1] */
 	strncpy(vpt->fstype, attr->fstype, sizeof(vpt->fstype));
@@ -867,10 +885,10 @@ static const char *rc_volume_inter(struct config *config,
 			if (!fstab_value(vpt->volume, FSTAB_OPTS, options,
 			    sizeof(options)))
 				return "could not determine options";
-			if (!str_to_optlist(vpt->options, options))
+			if (!str_to_optkv(&vpt->options, options))
 				return "error parsing mount options";
 		}
-	} else if (!str_to_optlist(vpt->options, attr->options)) {
+	} else if (!str_to_optkv(&vpt->options, attr->options)) {
 		return "error parsing mount options";
 	}
 

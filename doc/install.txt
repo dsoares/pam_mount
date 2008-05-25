@@ -1,7 +1,7 @@
 
 Minimum required packages for building pam_mount from a tarball release:
 
-	* libHX 1.15 or up
+	* libHX 1.17 or up
 	* libxml 2.6.x or up
 	* pkg-config
 	* Linux-PAM 0.99.x

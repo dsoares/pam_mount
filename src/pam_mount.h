@@ -1,6 +1,7 @@
 #ifndef PMT_PAM_MOUNT_H
 #define PMT_PAM_MOUNT_H 1
 
+#include <libHX/list.h>
 #include <stdbool.h>
 
 struct config;
@@ -15,6 +16,11 @@ enum auth_type {
 struct pam_args {
 	enum auth_type auth_type;
 	bool nullok;
+};
+
+struct kvp {
+	char *key, *value;
+	struct HXlist_head list;
 };
 
 /*

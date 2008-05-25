@@ -1,32 +1,87 @@
-/*=============================================================================
-pam_mount - xstdlib.c
-  Copyright © CC Computer Consultants GmbH, 2006 - 2007
-  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of
-  the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write to:
-  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-  Boston, MA  02110-1301  USA
-
-  -- For details, see the file named "LICENSE.LGPL2"
-=============================================================================*/
+/*
+ *	Copyright © Jan Engelhardt, 2006 - 2008
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libHX/clist.h>
+#include <libHX/list.h>
+#include <libHX/string.h>
 #include "compiler.h"
 #include "misc.h"
+#include "pam_mount.h"
 #include "private.h"
 #include "xstdlib.h"
+
+bool kvplist_contains(const struct HXclist_head *head, const char *key)
+{
+	const struct kvp *kvp;
+
+	HXlist_for_each_entry(kvp, head, list)
+		if (strcmp(kvp->key, key) == 0)
+			return true;
+	return false;
+}
+
+char *kvplist_get(const struct HXclist_head *head, const char *key)
+{
+	const struct kvp *kvp;
+
+	HXlist_for_each_entry(kvp, head, list)
+		if (strcmp(kvp->key, key) == 0)
+			return kvp->value;
+	return NULL;
+}
+
+void kvplist_genocide(struct HXclist_head *head)
+{
+	struct kvp *kvp, *next;
+
+	HXlist_for_each_entry_safe(kvp, next, head, list) {
+		free(kvp->key);
+		free(kvp->value);
+		free(kvp);
+	}
+}
+
+/*
+ * kvplist_to_str -
+ * @optlist:	option list
+ *
+ * Transform the option list into a flat string. Allocates and returns the
+ * string. Caller has to free it. Used for debugging.
+ */
+hmc_t *kvplist_to_str(const struct HXclist_head *optlist)
+{
+	const struct kvp *kvp;
+	hmc_t *ret = hmc_sinit("");
+
+	if (optlist == NULL)
+		return ret;
+
+	HXlist_for_each_entry(kvp, optlist, list) {
+		hmc_strcat(&ret, kvp->key);
+		if (kvp->value != NULL && *kvp->value != '\0') {
+			hmc_strcat(&ret, "=");
+			hmc_strcat(&ret, kvp->value);
+		}
+		hmc_strcat(&ret, ",");
+	}
+
+	if (*ret != '\0')
+		/*
+		 * When string is not empty, there is always at least one
+		 * comma -- nuke it.
+		 */
+		ret[hmc_length(ret)-1] = '\0';
+
+	return ret;
+}
 
 /*
  * xmalloc - allocate memory

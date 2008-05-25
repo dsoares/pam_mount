@@ -1,6 +1,7 @@
 #ifndef PMT_PRIVATE_H
 #define PMT_PRIVATE_H 1
 
+#include <libHX/clist.h>
 #include <limits.h>
 #include <stdbool.h>
 
@@ -61,7 +62,7 @@ struct vol {
 	/* FIXME: PATH_MAX */
 	char volume[MAX_PAR + 1];
 	/* May be NULL if no options */
-	struct HXbtree *options;
+	struct HXclist_head options;
 	char mountpoint[PATH_MAX + 1];
 	bool use_fstab;
 	bool used_wildcard;

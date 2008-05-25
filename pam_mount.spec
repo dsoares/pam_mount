@@ -9,9 +9,10 @@ URL:            http://pam-mount.sf.net/
 
 Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
 BuildRequires:  libtool pam-devel pkg-config
-BuildRequires:  openssl-devel libxml2-devel libHX-devel >= 1.15
+BuildRequires:  openssl-devel >= 0.9.6, libxml2-devel >= 2.6
+BuildRequires:	libHX-devel >= 1.17
 %if "%_vendor" == "suse"
-BuildRequires:	linux-kernel-headers
+BuildRequires:	linux-kernel-headers >= 2.6
 # psmisc: /bin/fuser
 Recommends:	cifs-mount lsof psmisc
 %if %suse_version < 1030
