@@ -139,21 +139,16 @@ static bool options_ok(const struct config *config, const struct vol *volume)
 	assert(config != NULL);
 	assert(volume != NULL);
 
-	if (config->options_allow->items != 0 &&
-	    config->options_deny->items != 0) {
-		l0g("possible conflicting option settings (use allow OR deny)\n");
-		return false;
-	}
 	if (!volume->use_fstab) {
-		if (!required_ok(config->options_require, volume->options)) {
+		if (!required_ok(config->options_require, volume->options))
 			return false;
-		} else if (config->options_allow->items != 0) {
-			if (!allow_ok(config->options_allow, volume->options))
-				return false;
-		} else if (config->options_deny->items != 0) {
-			if (!deny_ok(config->options_deny, volume->options))
-				return false;
-		} else if (volume->options->items != 0) {
+		if (config->options_allow->items != 0 &&
+		    !allow_ok(config->options_allow, volume->options))
+			return false;
+		if (config->options_deny->items != 0 &&
+		    !deny_ok(config->options_deny, volume->options))
+			return false;
+		if (volume->options->items != 0) {
 			l0g("user specified options denied by default\n");
 			return false;
 		}
