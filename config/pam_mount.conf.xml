@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE pam_mount SYSTEM "pam_mount.conf.xml.dtd">
 <pam_mount>
 
 <!--
@@ -167,9 +168,12 @@ Volumes that will be mounted when user triggers the pam_mount module
 (usually at login).
 
     <volume
-        user="*" | user="name" | uid="number" | uid="start-end" |
-        pgrp="group" | sgrp="group" | gid="number" | gid="start-end"
-        invert="1"
+        user="*" | user="name" | uid="number" | uid="start-end"
+	invert-user="1" | invert-uid="1"
+        pgrp="group" | gid="number" | gid="start-end"
+	invert-pgrp="1"
+	sgrp="group"
+	invert-sgrp="1"
         fstype="auto"
         server="..."
         path="..."
@@ -181,21 +185,25 @@ Volumes that will be mounted when user triggers the pam_mount module
     />
 
 
+USER, UID, GID, PGRP and SGRP are logically ANDed (&), so by specifying
+a combination of these fields limits the volume to users which match all
+specified characteristics.
+
 USER is a user for which a volume rule applies, "*" selects all users
-except root or any other user with UID 0.
+except root or any other user with UID 0. INVERT-USER may be used to
+invert the result.
 
 Alternatively, you may use the UID attribute to specify that this volume
-applies to a specific UID or range of UIDs. The same is possible with
-the GID attribute.
-A volume with PGRP attribute will be mounted when a user has that
-particular group as its primary group. A volume with SGRP attribute will
-be mounted when the user has the group as either primary or secondary.
+applies to a specific UID or range of UIDs. INVERT-UID may be used to
+negate the result.
 
-USER, UID, GID, PGRP and SGRP are mutually exclusive. If neither is present,
-USER="*" is assumed.
+You may use the PGRP or GID attribute to specify that this volume
+applies to a specific group by name, in case of "PGRP", or by GID or GID
+range in case of "GID". INVERT-GID may be used to negate the result.
 
-INVERT will invert the sense of the USER, PGRP or SGRP selector, thereby
-making it possible to specify, e.g. "all users not in group xyz".
+A volume with SGRP attribute will only be mounted when the user has the
+group as either primary or secondary. INVERT-SGRP may be used to flip
+the result.
 
 
 FSTYPE can be any filesystem type. If /bin/mount or the kernel does not

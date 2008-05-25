@@ -57,15 +57,6 @@ enum fstab_field {
 	FSTAB_OPTS,
 };
 
-enum wildcard_type {
-	WC_ANYUSER,
-	WC_PGRP,    /* as primary group */
-	WC_SGRP,    /* in secondary group */
-	WC_GID,
-	WC_EXACT,
-	WC_EXACT_UID,
-};
-
 enum {
 	CMDA_AUTHPW,
 	CMDA_SESSIONPW,
@@ -87,7 +78,8 @@ struct volume_attrs {
 	/* This could be better... */
 	char *user, *uid, *pgrp, *sgrp, *gid, *fstype, *server, *path, *mntpt,
 	     *options, *fskeycipher, *fskeypath;
-	bool invert, uses_ssh;
+	bool invert_user, invert_uid, invert_gid, invert_pgrp, invert_sgrp,
+	     uses_ssh;
 };
 
 /* Functions */
@@ -664,10 +656,109 @@ static const char *rc_string(xmlNode *node, struct config *config,
 	return NULL;
 }
 
+/*
+ * volume_check_uid -
+ * @attrs:	volume attributes (specifically UID)
+ * @pent:	current user
+ * @err:	error notification
+ *
+ * Check if @uid_string can match @pent.
+ */
+static bool volume_check_uid(const struct volume_attrs *attr,
+    const struct passwd *pent, bool *err)
+{
+	unsigned int uid_start, uid_end;
+	char *m;
+
+	uid_start = uid_end = strtoul(attr->uid, &m, 0);
+	if (*m == '-') {
+		uid_end = strtoul(m + 1, NULL, 0);
+	} else if (*m != '\0') {
+		l0g("Bogus uid specification in <volume>\n");
+		*err = true;
+		return false;
+	}
+
+	return (uid_start <= pent->pw_uid && pent->pw_uid <= uid_end) ^
+	       attr->invert_uid;
+}
+
+/*
+ * volume_check_gid -
+ * @attrs:	volume attributes (specifically GID)
+ * @pent:	current user
+ * @err:	error notification
+ *
+ * Check if @gid_string can match @pent.
+ */
+static bool volume_check_gid(const struct volume_attrs *attr,
+    const struct passwd *pent, bool *err)
+{
+	unsigned int gid_start, gid_end;
+	char *m;
+
+	gid_start = gid_end = strtoul(attr->gid, &m, 0);
+	if (*m == '-') {
+		gid_end = strtoul(m + 1, NULL, 0);
+	} else if (*m != '\0') {
+		l0g("Bogus gid specification in <volume>\n");
+		*err = true;
+		return false;
+	}
+
+	return (gid_start <= pent->pw_gid && pent->pw_gid <= gid_end) ^
+	       attr->invert_gid;
+}
+
+/*
+ * volume_check_pgrp -
+ * @attrs:	volume attributes (specifically PGRP)
+ * @pent:	current user
+ * @err:	error notification
+ *
+ * Check if the current user has @pgrp as the primary group.
+ */
+static bool volume_check_pgrp(const char *group, const struct passwd *pent,
+    bool *err)
+{
+	const struct group *gent;
+
+	if ((gent = getgrgid(pent->pw_gid)) == NULL) {
+		w4rn("getgrgid(%ld) failed: %s\n",
+		     static_cast(long, pent->pw_gid), strerror(errno));
+		*err = true;
+		return false;
+	}
+	return strcmp(group, gent->gr_name) == 0;
+}
+
+/*
+ * volume_check_sgrp -
+ * @pgrp:	volume attributes (specifically SGRP)
+ * @pent:	current user
+ * @err:	error notification
+ *
+ * Check if the current user has @sgrp as any secondary group.
+ */
+static bool volume_check_sgrp(const struct volume_attrs *attr,
+    const char *user, const struct passwd *pent, bool *err)
+{
+	const struct group *gent;
+
+	if ((gent = getgrgid(pent->pw_gid)) == NULL) {
+		w4rn("getgrgid(%ld) failed: %s\n",
+		     static_cast(long, pent->pw_gid), strerror(errno));
+		*err = true;
+		return false;
+	}
+	return (user_in_sgrp(user, attr->sgrp) ||
+	       volume_check_pgrp(attr->sgrp, pent, err)) ^ attr->invert_sgrp;
+}
+
 static const char *rc_volume_inter(struct config *config,
     const struct volume_attrs *attr)
 {
-	enum wildcard_type wildcard = WC_EXACT;
+	bool for_me = true, root = true, err = false;
 	struct passwd *pent;
 	struct vol *vpt;
 	unsigned int i;
@@ -687,78 +778,36 @@ static const char *rc_volume_inter(struct config *config,
 		return NULL;
 	}
 
+	if (strcmp(attr->user, "*") == 0 || *attr->user == '\0')
+		root = false;
+	else if (*attr->user != '\0')
+		for_me &= (strcmp(config->user, attr->user) == 0) ^
+		          attr->invert_user;
+
 	if (*attr->uid != '\0')
-		wildcard = WC_EXACT_UID;
-	else if (*attr->gid != '\0')
-		wildcard = WC_GID;
-	else if (strcmp(attr->user, "*") == 0)
-		wildcard = WC_ANYUSER;
-	else if (*attr->pgrp != '\0')
-		wildcard = WC_PGRP;
-	else if (*attr->sgrp != '\0')
-		wildcard = WC_SGRP;
-	else if (*attr->user == '\0')
-		wildcard = WC_ANYUSER;
-
-	if (wildcard < WC_EXACT && (strcmp(config->user, "root") == 0 ||
-	    pent->pw_uid == 0)) {
-		/* One day, when SELinux becomes a daily thing, remove this. */
-		w4rn("volume wildcards ignored for \"root\" and uid0\n");
+		for_me &= volume_check_uid(attr, pent, &err);
+	if (err)
 		return NULL;
-	}
 
-	if (wildcard == WC_EXACT) {
-		if ((strcmp(config->user, attr->user) != 0) ^ attr->invert)
-			goto notforme;
-	} else if (wildcard == WC_EXACT_UID) {
-		unsigned int uid_start, uid_end;
-		char *m;
+	if (*attr->gid != '\0')
+		for_me &= volume_check_gid(attr, pent, &err);
+	if (err)
+		return NULL;
 
-		uid_start = strtoul(attr->uid, &m, 0);
-		if (*m != '-' && *m != '\0') {
-			l0g("Bogus uid specification in <volume>\n");
-			return NULL;
-		}
-		uid_end = strtoul(m + 1, NULL, 0);
-		if ((pent->pw_uid < uid_start || pent->pw_uid > uid_end) ^
-		    attr->invert)
-			goto notforme;
-	} else if (wildcard == WC_GID) {
-		unsigned int gid_start, gid_end;
-		char *m;
+	if (*attr->pgrp != '\0')
+		for_me &= volume_check_pgrp(attr->pgrp, pent, &err) ^
+		          attr->invert_pgrp;
+	if (err)
+		return NULL;
 
-		gid_start = strtoul(attr->gid, &m, 0);
-		if (*m != '-' && *m != '\0') {
-			l0g("Bogus gid specification in <volume>\n");
-			return NULL;
-		}
-		gid_end = strtoul(m + 1, NULL, 0);
-		if ((pent->pw_gid < gid_start || pent->pw_gid > gid_end) ^
-		    attr->invert)
-			goto notforme;
-	} else if (wildcard == WC_PGRP) {
-		const char *grp_name = attr->pgrp;
-		struct group *gent;
+	if (*attr->sgrp != '\0')
+		/* checking pgrp on purpose */
+		for_me &= volume_check_sgrp(attr, config->user, pent, &err);
+	if (err)
+		return NULL;
 
-		if ((gent = getgrgid(pent->pw_gid)) == NULL) {
-			w4rn("getgrgid(%ld) failed: %s\n",
-			     static_cast(long, pent->pw_gid), strerror(errno));
-			return NULL;
-		}
-		if ((strcmp(grp_name, gent->gr_name) != 0) ^ attr->invert)
-			goto notforme;
-	} else if (wildcard == WC_SGRP) {
-		const char *grp_name = attr->sgrp;
-		struct group *gent;
-
-		if ((gent = getgrgid(pent->pw_gid)) == NULL) {
-			w4rn("getgrgid(%ld) failed: %s\n",
-			     static_cast(long, pent->pw_gid), strerror(errno));
-			return NULL;
-		}
-		if (!user_in_sgrp(config->user, grp_name) ^ attr->invert)
-			goto notforme;
-	}
+	if (!for_me)
+		goto notforme;
 
 	/* realloc */
 	vpt = xrealloc(config->volume, sizeof(struct vol) *
@@ -862,8 +911,24 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	const char *ret;
 	char *tmp;
 
-	if ((tmp = xmlGetProp_2s(node, "invert")) != NULL) {
-		orig.invert = strtoul(tmp, NULL, 0);
+	if ((tmp = xmlGetProp_2s(node, "invert-user")) != NULL) {
+		orig.invert_user = strtoul(tmp, NULL, 0);
+		free(tmp);
+	}
+	if ((tmp = xmlGetProp_2s(node, "invert-uid")) != NULL) {
+		orig.invert_uid = strtoul(tmp, NULL, 0);
+		free(tmp);
+	}
+	if ((tmp = xmlGetProp_2s(node, "invert-gid")) != NULL) {
+		orig.invert_gid = strtoul(tmp, NULL, 0);
+		free(tmp);
+	}
+	if ((tmp = xmlGetProp_2s(node, "invert-pgrp")) != NULL) {
+		orig.invert_pgrp = strtoul(tmp, NULL, 0);
+		free(tmp);
+	}
+	if ((tmp = xmlGetProp_2s(node, "invert-sgrp")) != NULL) {
+		orig.invert_sgrp = strtoul(tmp, NULL, 0);
 		free(tmp);
 	}
 

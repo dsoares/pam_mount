@@ -1,6 +1,8 @@
 
 For details, see the history as recorded in the git repository.
 
+- extensive attribute matching for <volume>
+
 
 v0.38 (May 18 2008)
 ===================

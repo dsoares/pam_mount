@@ -1,0 +1,74 @@
+<!ELEMENT pam-mount
+	(debug?,mkmountpoint?,fsckloop?,luserconf?,mntoptions*,
+	path?,lsof?,fsck?,losetup?,unlosetup?,cifsmount?,davmount?,
+	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
+	fuseumount?,truecryptmount?,truecryptumount?,fd0ssh?,umount?,
+	lclmount?,cryptmount?,nfsmount?,mntcheck?,pmvarrun?,
+	volume*,msg-authpw?,msg-sessionpw?)>
+<!ELEMENT debug EMPTY>
+<!ATTLIST debug
+	enable CDATA #IMPLIED>
+<!ELEMENT mkmountpoint EMPTY>
+<!ATTLIST mkmountpoint
+	enable CDATA #IMPLIED
+	remove CDATA #IMPLIED
+>
+<!ELEMENT fsckloop EMPTY>
+<!ATTLIST fsckloop
+	device CDATA #IMPLIED
+>
+<!ELEMENT luserconf EMPTY>
+<!ATTLIST luserconf
+	name CDATA #REQUIRED
+>
+<!ELEMENT mntoptions EMPTY>
+<!ATTLIST mntoptions
+	allow CDATA #IMPLIED
+	deny CDATA #IMPLIED
+	require CDATA #IMPLIED
+>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT lsof (#PCDATA)>
+<!ELEMENT fsck (#PCDATA)>
+<!ELEMENT losetup (#PCDATA)>
+<!ELEMENT unlosetup (#PCDATA)>
+<!ELEMENT cifsmount (#PCDATA)>
+<!ELEMENT davmount (#PCDATA)>
+<!ELEMENT smbmount (#PCDATA)>
+<!ELEMENT smbumount (#PCDATA)>
+<!ELEMENT ncpmount (#PCDATA)>
+<!ELEMENT ncpumount (#PCDATA)>
+<!ELEMENT fusemount (#PCDATA)>
+<!ELEMENT fuseumount (#PCDATA)>
+<!ELEMENT truecryptmount (#PCDATA)>
+<!ELEMENT truecryptumount (#PCDATA)>
+<!ELEMENT fd0ssh (#PCDATA)>
+<!ELEMENT umount (#PCDATA)>
+<!ELEMENT lclmount (#PCDATA)>
+<!ELEMENT cryptmount (#PCDATA)>
+<!ELEMENT nfsmount (#PCDATA)>
+<!ELEMENT mntcheck (#PCDATA)>
+<!ELEMENT pmvarrun (#PCDATA)>
+<!ELEMENT volume EMPTY>
+<!ATTLIST volume
+	user CDATA #IMPLIED
+	invert-user (0|1) "0"
+	uid CDATA #IMPLIED
+	invert-uid (0|1) "0"
+	pgrp CDATA #IMPLIED
+	invert-pgrp (0|1) "0"
+	gid CDATA #IMPLIED
+	invert-gid (0|1) "0"
+	sgrp CDATA #IMPLIED
+	invert-sgrp (0|1) "0"
+	fstype CDATA #IMPLIED
+	server CDATA #IMPLIED
+	path CDATA #REQUIRED
+	mountpoint CDATA #REQUIRED
+	ssh (0|1) "0"
+	options CDATA #IMPLIED
+	fskeycipher CDATA #IMPLIED
+	fskeypath CDATA #IMPLIED
+>
+<!ELEMENT msg-authpw (#PCDATA)>
+<!ELEMENT msg-sessionpw (#PCDATA)>
