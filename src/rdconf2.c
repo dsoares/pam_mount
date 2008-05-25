@@ -55,7 +55,7 @@ static bool allow_ok(const struct HXbtree *allowed,
 
 	t = HXbtrav_init(options);
 	while ((e = HXbtraverse(t)) != NULL)
-		if (HXbtree_find(allowed, e->data) != NULL) {
+		if (HXbtree_find(allowed, e->data) == NULL) {
 			l0g("option %s not allowed\n",
 			    static_cast(const char *, e->data));
 			HXbtrav_free(t);

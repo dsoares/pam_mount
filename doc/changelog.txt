@@ -2,6 +2,7 @@
 For details, see the history as recorded in the git repository.
 
 - extensive attribute matching for <volume>
+- fix an unwanted inversion for handling <options allow=" (nonempty) ">
 
 
 v0.38 (May 18 2008)
