@@ -1,7 +1,7 @@
 
 For details, see the history as recorded in the git repository.
 
-- extensive attribute matching for <volume>
+- extended user selection for <volume>
 - fix an unwanted inversion for handling <options allow=" (nonempty) ">
 - store per-volume option list in ordered form --
   essentially fixes the problem of "user" (implies noeexec)

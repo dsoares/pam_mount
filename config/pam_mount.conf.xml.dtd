@@ -52,15 +52,11 @@
 <!ELEMENT volume EMPTY>
 <!ATTLIST volume
 	user CDATA #IMPLIED
-	invert-user (0|1) "0"
+	invert (0|1) "0"
 	uid CDATA #IMPLIED
-	invert-uid (0|1) "0"
 	pgrp CDATA #IMPLIED
-	invert-pgrp (0|1) "0"
 	gid CDATA #IMPLIED
-	invert-gid (0|1) "0"
 	sgrp CDATA #IMPLIED
-	invert-sgrp (0|1) "0"
 	fstype CDATA #IMPLIED
 	server CDATA #IMPLIED
 	path CDATA #REQUIRED

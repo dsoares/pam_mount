@@ -64,8 +64,7 @@ struct volume_attrs {
 	/* This could be better... */
 	char *user, *uid, *pgrp, *sgrp, *gid, *fstype, *server, *path, *mntpt,
 	     *options, *fskeycipher, *fskeypath;
-	bool invert_user, invert_uid, invert_gid, invert_pgrp, invert_sgrp,
-	     uses_ssh;
+	bool uses_ssh, invert;
 };
 
 /* Functions */
@@ -700,8 +699,7 @@ static bool volume_check_uid(const struct volume_attrs *attr,
 		return false;
 	}
 
-	return (uid_start <= pent->pw_uid && pent->pw_uid <= uid_end) ^
-	       attr->invert_uid;
+	return uid_start <= pent->pw_uid && pent->pw_uid <= uid_end;
 }
 
 /*
@@ -727,8 +725,7 @@ static bool volume_check_gid(const struct volume_attrs *attr,
 		return false;
 	}
 
-	return (gid_start <= pent->pw_gid && pent->pw_gid <= gid_end) ^
-	       attr->invert_gid;
+	return gid_start <= pent->pw_gid && pent->pw_gid <= gid_end;
 }
 
 /*
@@ -772,8 +769,8 @@ static bool volume_check_sgrp(const struct volume_attrs *attr,
 		*err = true;
 		return false;
 	}
-	return (user_in_sgrp(user, attr->sgrp) ||
-	       volume_check_pgrp(attr->sgrp, pent, err)) ^ attr->invert_sgrp;
+	return user_in_sgrp(user, attr->sgrp) ||
+	       volume_check_pgrp(attr->sgrp, pent, err);
 }
 
 static const char *rc_volume_inter(struct config *config,
@@ -802,8 +799,7 @@ static const char *rc_volume_inter(struct config *config,
 	if (strcmp(attr->user, "*") == 0 || *attr->user == '\0')
 		root = false;
 	else if (*attr->user != '\0')
-		for_me &= (strcmp(config->user, attr->user) == 0) ^
-		          attr->invert_user;
+		for_me &= strcmp(config->user, attr->user) == 0;
 
 	if (*attr->uid != '\0')
 		for_me &= volume_check_uid(attr, pent, &err);
@@ -816,8 +812,7 @@ static const char *rc_volume_inter(struct config *config,
 		return NULL;
 
 	if (*attr->pgrp != '\0')
-		for_me &= volume_check_pgrp(attr->pgrp, pent, &err) ^
-		          attr->invert_pgrp;
+		for_me &= volume_check_pgrp(attr->pgrp, pent, &err);
 	if (err)
 		return NULL;
 
@@ -826,6 +821,7 @@ static const char *rc_volume_inter(struct config *config,
 		for_me &= volume_check_sgrp(attr, config->user, pent, &err);
 	if (err)
 		return NULL;
+	for_me ^= attr->invert;
 
 	if (!for_me)
 		goto notforme;
@@ -929,27 +925,11 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	const char *ret;
 	char *tmp;
 
-	if ((tmp = xmlGetProp_2s(node, "invert-user")) != NULL) {
-		orig.invert_user = strtoul(tmp, NULL, 0);
+	if ((tmp = xmlGetProp_2s(node, "invert")) != NULL) {
+		/* "invert" going away sooner or later */
+		orig.invert = strtoul(tmp, NULL, 0);
 		free(tmp);
 	}
-	if ((tmp = xmlGetProp_2s(node, "invert-uid")) != NULL) {
-		orig.invert_uid = strtoul(tmp, NULL, 0);
-		free(tmp);
-	}
-	if ((tmp = xmlGetProp_2s(node, "invert-gid")) != NULL) {
-		orig.invert_gid = strtoul(tmp, NULL, 0);
-		free(tmp);
-	}
-	if ((tmp = xmlGetProp_2s(node, "invert-pgrp")) != NULL) {
-		orig.invert_pgrp = strtoul(tmp, NULL, 0);
-		free(tmp);
-	}
-	if ((tmp = xmlGetProp_2s(node, "invert-sgrp")) != NULL) {
-		orig.invert_sgrp = strtoul(tmp, NULL, 0);
-		free(tmp);
-	}
-
 	if ((tmp = xmlGetProp_2s(node, "ssh")) != NULL) {
 		orig.uses_ssh = strtoul(tmp, NULL, 0);
 		free(tmp);

@@ -169,11 +169,7 @@ Volumes that will be mounted when user triggers the pam_mount module
 
     <volume
         user="*" | user="name" | uid="number" | uid="start-end"
-	invert-user="1" | invert-uid="1"
-        pgrp="group" | gid="number" | gid="start-end"
-	invert-pgrp="1"
-	sgrp="group"
-	invert-sgrp="1"
+        pgrp="group" | sgrp="group" | gid="number" | gid="start-end"
         fstype="auto"
         server="..."
         path="..."
@@ -190,20 +186,17 @@ a combination of these fields limits the volume to users which match all
 specified characteristics.
 
 USER is a user for which a volume rule applies, "*" selects all users
-except root or any other user with UID 0. INVERT-USER may be used to
-invert the result.
+except root or any other user with UID 0.
 
 Alternatively, you may use the UID attribute to specify that this volume
-applies to a specific UID or range of UIDs. INVERT-UID may be used to
-negate the result.
+applies to a specific UID or range of UIDs.
 
 You may use the PGRP or GID attribute to specify that this volume
 applies to a specific group by name, in case of "PGRP", or by GID or GID
-range in case of "GID". INVERT-GID may be used to negate the result.
+range in case of "GID".
 
 A volume with SGRP attribute will only be mounted when the user has the
-group as either primary or secondary. INVERT-SGRP may be used to flip
-the result.
+group as either primary or secondary.
 
 
 FSTYPE can be any filesystem type. If /bin/mount or the kernel does not
