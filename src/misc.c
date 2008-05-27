@@ -1,27 +1,13 @@
-/*=============================================================================
-pam_mount - misc.c
-  Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
-  Copyright © CC Computer Consultants GmbH, 2005 - 2007
-  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-  Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of
-  the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write to:
-  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-  Boston, MA  02110-1301  USA
-
-  -- For details, see the file named "LICENSE.LGPL2"
-=============================================================================*/
+/*
+ *	Copyright (C) Elvis Pfützenreuter, 2000
+ *	Copyright © Jan Engelhardt, 2005 - 2008
+ *	Copyright © Bastian Kleineidam, 2005
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #include <config.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -418,7 +404,8 @@ void misc_add_ntdom(struct HXbtree *v, const char *user)
 	*domain = '\0';
 
 	if ((ptr = strchr(user, '\\')) != NULL) {
-		snprintf(domain, sizeof(domain), "%.*s", ptr - user - 1, user);
+		snprintf(domain, sizeof(domain), "%.*s",
+		         static_cast(int, ptr - user - 1), user);
 		domain_user = ptr + 1;
 	} else {
 		domain_user = user;
