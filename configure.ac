@@ -1,27 +1,13 @@
-#   FILE: configure.ac --
-# AUTHOR: W. Michael Petullo <mike@flyn.org>
-#   DATE: 03 August 2002
 #
-# Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
-# Copyright © CC Computer Consultants GmbH, 2005 - 2007
-# Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-# All rights reserved.
+#	Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
+#	Copyright © Jan Engelhardt, 2005 - 2008
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
+#	This file is part of pam_mount; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-AC_INIT([pam_mount], [0.38])
+AC_INIT([pam_mount], [0.39])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_INSTALL
 AM_INIT_AUTOMAKE

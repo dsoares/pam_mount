@@ -1,6 +1,9 @@
 
 For details, see the history as recorded in the git repository.
 
+
+v0.39 (May 28 2008)
+===================
 - extended user selection for <volume>
 - fix an unwanted inversion for handling <options allow=" (nonempty) ">
 - store per-volume option list in ordered form --
