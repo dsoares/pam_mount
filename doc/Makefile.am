@@ -21,7 +21,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-man_MANS = autoehd.8 mount.crypt.8 pam_mount.8 pmvarrun.8 \
+man_MANS = autoehd.8 mount.crypt.8 pam_mount.8 pam_mount.conf.5 pmvarrun.8 \
            mkehd.1 mount_ehd.8 passwdehd.8 pmt-fd0ssh.1 umount.crypt.8
 noinst_DATA = pam_mount.txt
 
