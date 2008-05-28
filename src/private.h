@@ -72,7 +72,7 @@ struct vol {
 struct config {
 	/* user logging in */
 	char *user;
-	bool debug;
+	unsigned int debug;
 	bool mkmntpoint, rmdir_mntpt;
 	unsigned int volcount;
 	char luserconf[PATH_MAX + 1];

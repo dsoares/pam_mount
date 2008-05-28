@@ -1,29 +1,13 @@
 #!/bin/bash
-#==============================================================================
-# umount.crypt
-#   Copyright © W. Michael Petullo <mike@flyn.org>, 2004
-#   Copyright © CC Computer Consultants GmbH, 2005 - 2006
-#   Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-#   Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
 #
-#   This program is free software; you can redistribute it and/or
-#   modify it under the terms of the GNU General Public License as
-#   published by the Free Software Foundation; either version 2 of
-#   the License, or (at your option) any later version.
+#	Copyright © W. Michael Petullo <mike@flyn.org>, 2004
+#	Copyright © Jan Engelhardt, 2005 - 2008
 #
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-#   General Public License for more details.
+#	This program is part of pam_mount; you can redistribute it and/or
+#	modify it under the terms of the GNU General Public License as
+#	published by the Free Software Foundation; either version 2 of
+#	the License, or (at your option) any later version.
 #
-#   You should have received a copy of the GNU General Public
-#   License along with this program; if not, write to:
-#   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-#   Boston, MA  02110-1301  USA
-#
-#   -- For details, see the file named "LICENSE.GPL2"
-#==============================================================================
-
 # Sanitize environment
 export PATH="/sbin:/bin:/usr/sbin:/usr/bin";
 export IFS=`echo -en " \t\n"`;
@@ -31,6 +15,10 @@ export IFS=`echo -en " \t\n"`;
 READLINK="`which readlink`";
 OPTIONS=""
 USAGE="dir"
+
+if [[ -n "$_PMT_DEBUG_LEVEL" -ge 2 ]]; then
+	set -x;
+fi;
 
 if [ -z "$1" ]; then
 	echo "${0##*/}: directory to unmount not specified" >&2

@@ -490,7 +490,7 @@ static const char *rc_debug(xmlNode *node, struct config *config,
 {
 	char *s;
 	if ((s = xmlGetProp_2s(node, "enable")) != NULL)
-		Debug = config->debug = strtol(s, NULL, 0);
+		Debug = config->debug = strtoul(s, NULL, 0);
 	free(s);
 	return NULL;
 }

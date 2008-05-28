@@ -14,8 +14,11 @@ handled by the parser.
 
 <!-- Turn on if you want to debug why some volume cannot be mounted etc.
 This can be overriden by user's local configuration. This will also affect
-the pmvarrun helper program. To disable, use enable="0" or comment it out
-entirely. -->
+the pmvarrun helper program.
+	enable="0"    disable debugging
+	enable="1"    enable pam_mount tracing
+	enable="2"    additionaly enable mount.crypt tracing
+-->
 <debug enable="0" />
 
 

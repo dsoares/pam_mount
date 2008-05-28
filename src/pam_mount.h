@@ -30,7 +30,7 @@ struct kvp {
 	/* Workaround Xserver issue */
 #	define Debug pmt_debug
 #endif
-extern bool Debug;
+extern unsigned int Debug;
 extern struct config Config;
 extern struct pam_args Args;
 

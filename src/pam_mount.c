@@ -1,27 +1,14 @@
-/*=============================================================================
-pam_mount - pam_mount.c
-  Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
-  Copyright © CC Computer Consultants GmbH, 2005 - 2007
-  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-  Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of
-  the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write to:
-  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-  Boston, MA  02110-1301  USA
-
-  -- For details, see the file named "LICENSE.LGPL2"
-=============================================================================*/
+/*
+ *	pam_mount
+ *	Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
+ *	Copyright © Jan Engelhardt, 2005 - 2008
+ *	Copyright © Bastian Kleineidam, 2005
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #define PAM_SM_SESSION 1
 #define PAM_SM_PASSWORD 1
 
@@ -68,7 +55,7 @@ static int read_password(pam_handle_t *, const char *, char **);
 
 /* Variables */
 static const char *envpath_saved;
-bool Debug = true;
+unsigned int Debug = true;
 struct config Config = {};
 struct pam_args Args = {};
 
@@ -220,6 +207,7 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass)
 static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 {
 	const char *pam_user;
+	char buf[8];
 	int ret;
 
 	initconfig(&Config);
@@ -250,6 +238,8 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	if (!readconfig(CONFIGFILE, true, &Config))
 		return PAM_SERVICE_ERR;
 
+	snprintf(buf, sizeof(buf), "%u", Debug);
+	setenv("_PMT_DEBUG_LEVEL", buf, true);
 	return -1;
 }
 
