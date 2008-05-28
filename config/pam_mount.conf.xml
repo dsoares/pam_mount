@@ -152,7 +152,7 @@ package). -->
 <lclmount>mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
 	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</lclmount>
 
-<cryptmount>mount -t crypt "%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)
+<cryptmount>mount.crypt "%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)
 	%(VOLUME) %(MNTPT)</cryptmount>
 
 <nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)
