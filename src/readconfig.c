@@ -66,7 +66,7 @@ static pm_command_t Command[] = {
         {NCPMOUNT, "ncp", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
-	{NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
+        {NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
 	{LCLMOUNT, NULL, "lclmount", {"/bin/mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
 	{CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
