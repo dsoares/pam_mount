@@ -67,10 +67,10 @@ static pm_command_t Command[] = {
         {NCPMOUNT, "ncp", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPMOUNT, "ncpfs", "ncpmount", {"/usr/bin/ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
         {NCPUMOUNT, "ncpfs", "ncpumount", {"/usr/bin/ncpumount", "%(MNTPT)", NULL}},
-	{NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o \" OPTIONS)", NULL}},	/* Don't use LCLMOUNT to avoid fsck */
-	{LCLMOUNT, "local", "lclmount", {"/bin/mount", "-p0", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o \" OPTIONS)", NULL}},
+	{NFSMOUNT, "nfs", "nfsmount", {"/bin/mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}}, /* Don't use LCLMOUNT to avoid fsck */
+	{LCLMOUNT, "local", "lclmount", {"/bin/mount", "-p0", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
 	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	{CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CRYPTMOUNT, "crypt", "cryptmount", {"/bin/mount", "-t", "crypt", "%(before=\"-o\" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{UMOUNT, NULL, "umount", {"/bin/umount", "%(MNTPT)", NULL}},
 	{LSOF, NULL, "lsof", {"/usr/sbin/lsof", "%(MNTPT)", NULL}},
 	{MNTAGAIN, NULL, "mntagain", {"/bin/mount", "--bind", "%(PREVMNTPT)", "%(MNTPT)", NULL}},
@@ -80,7 +80,7 @@ static pm_command_t Command[] = {
 	 */
 	{MNTCHECK, NULL, "mntcheck", {"/bin/mount", NULL}},
 	{FSCK, NULL, "fsck", {"/sbin/fsck", "-p", "%(FSCKTARGET)", NULL}},
-	{LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e \" CIPHER)", "%(before=\"-k \" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
+	{LOSETUP, NULL, "losetup", {"/sbin/losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
 	{UNLOSETUP, NULL, "unlosetup", {"/sbin/losetup", "-d", "%(FSCKLOOP)", NULL}},
 	{PMVARRUN, NULL, "pmvarrun", {"/usr/sbin/pmvarrun", "-u", "%(USER)", "-d", "-o", "%(OPERATION)", NULL}},
 	{-1, NULL, NULL, {NULL}}

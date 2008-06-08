@@ -250,8 +250,6 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
  fmt_ptrn_t *vinfo)
 {
 	char *filled;
-	char *ptr;
-	int i = 0;
 
 	assert(argv != NULL);
 	/* need room for one more + terminating NULL for execv */
@@ -268,39 +266,14 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 		while (fmt_ptrn_parse_err(vinfo) != 0)
 			l0g(PMPREFIX "%s\n",
 			    fmt_ptrn_parse_strerror(vinfo));
-		/* hopefully "key has no value" -- for example:
-		 *  %(before=\"-k \" KEYBITS) */
+		/* [??] hopefully "key has no value" -- for example:
+		 *  %(before=\"-k\" KEYBITS) */
 		return;
 	}
 	while (fmt_ptrn_parse_err(vinfo) != 0)
 		l0g(PMPREFIX "%s\n", fmt_ptrn_parse_strerror(vinfo));
-	/* FIXME: this is NOT robust enough (handles only spaces -- no tabs, etc.)
-	 * also, this breaks apart paths with spaces.
-	 * FIXME: this is silly, how can I avoid parsing this again after
-	 * dotfile did?
-	 */
-	ptr = filled;
-	argv[*argc] = g_new(char, strlen(ptr) + 1);
-	while(*ptr != '\0') {
-		if (*ptr == '\\' && *(ptr + 1) == ' ') {
-			argv[*argc][i++] = ' ';
-			ptr += 2;
-		} else if (*ptr == ' ') {
-			argv[*argc][i] = '\0';
 
-			while (*ptr == ' ')
-				ptr++;
-
-			if(*ptr != '\0') {
-				i = 0;
-				argv[++*argc] = g_new(char, strlen(ptr) + 1);
-			}
-		} else {
-			argv[*argc][i++] = *ptr;
-			ptr++;	
-		}
-	}
-	argv[*argc][i] = '\0';
+	argv[*argc] = filled;
 	argv[++*argc] = NULL;
 }
 
