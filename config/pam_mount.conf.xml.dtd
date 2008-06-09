@@ -59,6 +59,15 @@
 <!ELEMENT gid (#PCDATA)>
 <!ELEMENT pgrp (#PCDATA)>
 <!ELEMENT sgrp (#PCDATA)>
+<!ATTLIST user
+	icase (0|1|yes|no|true|false) "no"
+>
+<!ATTLIST pgrp
+	icase (0|1|yes|no|true|false) "no"
+>
+<!ATTLIST sgrp
+	icase (0|1|yes|no|true|false) "no"
+>
 <!-- invert-* attributes are deprecated -->
 <!ATTLIST volume
 	user CDATA #IMPLIED

@@ -408,6 +408,16 @@ static inline bool parse_bool(const char *s)
 	       strcasecmp(s, "true") == 0 || strcmp(s, "1") == 0;
 }
 
+static inline bool parse_bool_f(char *s)
+{
+	bool ret;
+	if (s == NULL)
+		return false;
+	ret = parse_bool(s);
+	free(s);
+	return ret;
+}
+
 static inline int strcmp_1u(const xmlChar *a, const char *b)
 {
 	return strcmp(reinterpret_cast(const char *, a), b);
@@ -422,7 +432,7 @@ static inline int strcmp_1u(const xmlChar *a, const char *b)
  * no match was found, positive non-zero on success or negative non-zero on
  * failure.
  */
-static bool user_in_sgrp(const char *user, const char *grp)
+static bool user_in_sgrp(const char *user, const char *grp, bool icase)
 {
 	struct group *gent;
 	const char **wp;
@@ -434,7 +444,8 @@ static bool user_in_sgrp(const char *user, const char *grp)
 
 	wp = const_cast(const char **, gent->gr_mem);
 	while (wp != NULL && *wp != NULL) {
-		if (strcmp(*wp, user) == 0)
+		if (strcmp(*wp, user) ||
+		    (icase && strcasecmp(*wp, user)) == 0)
 			return true;
 		++wp;
 	}
@@ -807,10 +818,16 @@ static int rc_volume_cond_not(const struct passwd *pwd, xmlNode *node)
  */
 static int rc_volume_cond_user(const struct passwd *pwd, xmlNode *node)
 {
+	xmlNode *parent = node;
+
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
 			continue;
-		return strcmp_1u(node->content, pwd->pw_name) == 0;
+		if (parse_bool_f(xmlGetProp_2s(parent, "icase")))
+			return strcasecmp(signed_cast(const char *,
+			       node->content), pwd->pw_name) == 0;
+		else
+			return strcmp_1u(node->content, pwd->pw_name) == 0;
 	}
 
 	return false;
@@ -879,11 +896,12 @@ static int rc_volume_cond_gid(const struct passwd *pwd, xmlNode *node)
 /**
  * rc_volume_cond_pgrp - handle <pgrp> element
  * @pwd:	user logging in
- * @node:	XML <pgrp> node
+ * @node:	XML <pgrp> node (actually also <sgrp>)
  */
 static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
 {
 	const struct group *grp;
+	xmlNode *parent = node;
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
@@ -895,7 +913,11 @@ static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
 			return -1;
 		}
 
-		return strcmp_1u(node->content, grp->gr_name) == 0;
+		if (parse_bool_f(xmlGetProp_2s(parent, "icase")))
+			return strcasecmp(signed_cast(const char *,
+			       node->content), grp->gr_name) == 0;
+		else
+			return strcmp_1u(node->content, grp->gr_name) == 0;
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "pgrp");
@@ -910,6 +932,7 @@ static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
 static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 {
 	const struct group *grp;
+	xmlNode *parent = node;
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
@@ -920,9 +943,12 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 			     static_cast(long, pwd->pw_gid), strerror(errno));
 			return -1;
 		}
-		return rc_volume_cond_pgrp(pwd, node) ||
-		       user_in_sgrp(pwd->pw_name,
-		                    signed_cast(const char *, node->content));
+
+		if (rc_volume_cond_pgrp(pwd, node))
+			return true;
+		return user_in_sgrp(pwd->pw_name,
+		       signed_cast(const char *, node->content),
+		       parse_bool_f(xmlGetProp_2s(parent, "icase")));
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "sgrp");

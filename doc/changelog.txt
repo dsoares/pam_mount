@@ -4,6 +4,7 @@ For details, see the history as recorded in the git repository.
 - the documentation in pam_mount.conf.xml has been reworked and
   split off into pam_mount.conf(5).
 - extensive user selection for <volume> (revised)
+- case-insensitive matching for user, pgrp, sgrp
 
 
 v0.39 (May 28 2008)

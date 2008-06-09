@@ -316,6 +316,11 @@ Check if the user logging in has \fIgroupname\fP as the primary group.
 \fB<sgrp>\fP\fIgroupname\fP\fB</sgrp>\fP
 Check if the user logging in is a member of the group given by \fIname\fP
 (i.e. it is either a primary or secondary group).
+.SS Attributes
+.TP
+\fBicase="yes"\fP or \fBicase="no"\fP
+The \fBicase\fP attribute may be used on \fB<user>\fP, \fB<pgrp>\fP and
+\fB<sgrp>\fP to enable case-insensitive matching (or not). It defaults to "no".
 .SH Examples
 .PP
 Remember that \fB~\fP can be used in the mountpoint attribute to denote the
