@@ -24,11 +24,13 @@ mountpoint="/bigdisk/%(USER)" />
 .PP
 and define to mount what for whom and how. There are a lot of tunables, which
 are described in this section.
-.SS User control
+.SS Simple user control
 .PP
 The following attributes control whether the volume is going to get mounted
 once the user logs in. By default, volumes apply to all users, and specifying
 attributes limits it to the given conditions, i.e. they are logically ANDed.
+There is a more powerful and verbose mechanism for specifying complex
+conditions, described further below in the section "Extended user control".
 .TP
 \fBuser="\fP\fIusername\fP\fB"\fP
 Limit the volume to the specified user, identified by name
@@ -272,6 +274,48 @@ prompt.
 \fB<msg\-sessionpw>\fP\fIreenter...:\fP\fB</msg\-sessionpw>\fP
 In case the 'session' PAM block does not have the password (e.g. on su
 from root to user), it will ask again. This prompt can also be customized.
+.SH Extended user control
+Sometimes, the simple user control attributes for the <volume> element are not
+sufficient where one may want to build more complex expressions as to whom a
+volume applies. Instead of attributes, extended user control is set up using
+additional elements within <volume>, for example
+.PP
+<volume path="/dev/shm" mountpoint="~"> <and> <sgrp>students</user> <not>
+<sgrp>profs</sgrp> </not> </and> </volume>
+.PP
+Which translates to (students && !profs).
+.SS Logical operators
+.TP
+\fB<and>\fP\fI<elements>*\fP\fB</and>\fP
+All elements within this one are logically ANDed. Any number of elements may
+appear.
+.TP
+\fB<or>\fP\fI<elements>*\fP\fB</or>\fP
+All elements within this one are logically ORed. Any number of elements may
+appear.
+.TP
+\fB<xor>\fP\fI<elements>{2}\fP\fB</xor>\fP
+The two elements within the <xor> are logically XORed.
+.TP
+\fB<not>\fP\fI<element>\fP\fB</not>\fP
+The single element within the <not> is logically negated.
+.SS User selection
+.TP
+\fB<user>\fP\fIusername\fP\fB</user>\fP
+Match against the given username.
+.TP
+\fB<uid>\fP\fInumber\fP\fB</uid>\fP or \fB<uid>\fP\fInumber\fP\fB-\fP\fInumber\fP\fB</uid>\fP
+Match the UID of the user logging in against a UID or UID range.
+.TP
+\fB<gid>\fP\fInumber\fP\fB</gid>\fP or \fB<gid>\fP\fInumber\fP\fB-\fP\fInumber\fP\fB</gid>\fP
+Match the primary group of the user logging in against a GID or GID range.
+.TP
+\fB<pgrp>\fP\fIgroupname\fP\fB</pgrp>\fP
+Check if the user logging in has \fIgroupname\fP as the primary group.
+.TP
+\fB<sgrp>\fP\fIgroupname\fP\fB</sgrp>\fP
+Check if the user logging in is a member of the group given by \fIname\fP
+(i.e. it is either a primary or secondary group).
 .SH Examples
 .PP
 Remember that \fB~\fP can be used in the mountpoint attribute to denote the
