@@ -60,7 +60,7 @@ struct config Config = {};
 struct pam_args Args = {};
 
 //-----------------------------------------------------------------------------
-/*
+/**
  * parse_pam_args -
  * @argv:	NULL-terminated argument vector
  * @argc:	number of elements in @argc
@@ -95,7 +95,7 @@ static void parse_pam_args(int argc, const char **argv)
 	return;
 }
 
-/*
+/**
  * clean_config -
  * @pamh:	PAM handle
  * @data:	custom data pointer
@@ -111,7 +111,7 @@ static void clean_config(pam_handle_t *pamh, void *data, int err)
 	return;
 }
 
-/*
+/**
  * clean_system_authtok -
  * @pamh:	PAM handle
  * @data:	custom data pointer
@@ -134,7 +134,7 @@ static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode)
 	return;
 }
 
-/*
+/**
  * converse -
  * @pamh:	PAM handle
  * @nargs:	number of messages
@@ -173,7 +173,7 @@ static int converse(pam_handle_t *pamh, int nargs,
 	return retval; /* propagate error status */
 }
 
-/*
+/**
  * read_password -
  * @pamh:	PAM handle
  * @prompt:	a prompt message
@@ -243,7 +243,7 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	return -1;
 }
 
-/*
+/**
  * pam_sm_authenticate -
  * @pamh:	PAM handle
  * @flags:	PAM flags
@@ -319,7 +319,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	return ret;
 }
 
-/*
+/**
  * On login, $PATH is correctly set to ENV_ROOTPATH (from /etc/login.defs),
  * while on logout, it happens to be ENV_PATH only. This is problematic,
  * since some programs are in /sbin and /usr/sbin which is
@@ -343,7 +343,7 @@ static void envpath_restore(void)
 	return;
 }
 
-/*
+/**
  * modify_pm_count -
  * @config:
  * @user:
@@ -427,7 +427,7 @@ static int modify_pm_count(struct config *config, char *user,
 	return fnval;
 }
 
-/*
+/**
  * pam_sm_open_session -
  * @pamh:	PAM handle
  * @flags:	PAM flags
@@ -545,7 +545,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	return ret;
 }
 
-/*
+/**
  * pam_sm_chauthtok -
  * @pamh:	PAM handle
  * @flags:	PAM flags
@@ -560,7 +560,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
 
-/*
+/**
  * pam_sm_close_session -
  * @pamh:	PAM handle
  * @flags:	PAM flags
@@ -633,7 +633,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	return ret;
 }
 
-/*
+/**
  * pam_sm_setcred -
  * @pamh:	PAM handle
  * @flags:	PAM flags
@@ -648,7 +648,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_setcred(pam_handle_t *pamh, int flags,
 	return PAM_SUCCESS;
 }
 
-/*
+/**
  * pam_sm_acct_mgmt -
  * @pamh:	PAM handle
  * @flags:	PAM flags
@@ -677,5 +677,3 @@ EXPORT_SYMBOL struct pam_module _pam_mount_modstruct = {
 };
 
 #endif
-
-//=============================================================================

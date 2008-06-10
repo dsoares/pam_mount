@@ -35,7 +35,7 @@ pam_mount - spawn.c
 static struct sigaction saved_handler = {.sa_handler = SIG_DFL};
 
 //-----------------------------------------------------------------------------
-/*
+/**
  * spawn_build_pipes -
  * @fd_request:	user array to tell us which pipe sets to create
  * @p:		result array
@@ -60,7 +60,7 @@ static inline int spawn_build_pipes(const int **fd_request, int (*p)[2])
 	return 1;
 }
 
-/*
+/**
  * spawn_close_pipes -
  * @p:	pipe fds to close
  *
@@ -78,7 +78,7 @@ static void spawn_close_pipes(int (*p)[2])
 	return;
 }
 
-/*
+/**
  * spawn_start -
  * @argv:	program and arguments
  * @pid:	resulting PID
@@ -151,7 +151,7 @@ bool spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 	return true;
 }
 
-/*
+/**
  * spawn_set_sigchld -
  *
  * Save the old SIGCHLD handler and then set SIGCHLD to SIG_DFL. This is used
@@ -173,7 +173,7 @@ int spawn_set_sigchld(void)
 	return sigaction(SIGCHLD, &nh, &saved_handler);
 }
 
-/*
+/**
  * spawn_restore_sigchld -
  *
  * Restore the SIGCHLD handler that was saved during spawn_set_sigchld().

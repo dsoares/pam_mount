@@ -31,7 +31,7 @@
 static int static_string_valid(const char *, const size_t);
 
 //-----------------------------------------------------------------------------
-/*
+/**
  * misc_dump_id - print user IDs
  */
 void misc_dump_id(const char *where)
@@ -44,7 +44,7 @@ void misc_dump_id(const char *where)
 	return;
 }
 
-/*
+/**
  * misc_log - log to syslog
  * @format:	printf(3)-style format specifier
  *
@@ -68,7 +68,7 @@ void misc_log(const char *format, ...)
 	return;
 }
 
-/*
+/**
  * misc_warn - debug logger
  * @format:	printf(3)-style format specifier
  *
@@ -92,7 +92,7 @@ void misc_warn(const char *format, ...)
 	return;
 }
 
-/*
+/**
  * exists -
  * @file:	file to check
  *
@@ -108,7 +108,8 @@ int exists(const char *file)
 }
 
 
-/* owns -
+/**
+ * owns -
  * @user:	user to check for
  * @file:	file to check
  *
@@ -139,7 +140,7 @@ int owns(const char *user, const char *file)
 	       !S_ISLNK(filestat.st_mode);
 }
 
-/*
+/**
  * str_to_long -
  * @n:	string to analyze
  *
@@ -164,7 +165,7 @@ long str_to_long(const char *n)
 	return val;
 }
 
-/*
+/**
  * static_string_valid -
  * @s:		string to analyze
  * @len:	maximum length of string
@@ -183,7 +184,7 @@ static int static_string_valid(const char *s, const size_t len)
 	return 0;
 }
 
-/*
+/**
  * vol_valid -
  * @v:	volume to check
  *
@@ -219,7 +220,7 @@ int vol_valid(const struct vol *v) {
 	return 1;
 }
 
-/*
+/**
  * config_valid -
  * @c:	config to check
  *
@@ -248,7 +249,7 @@ int config_valid(const struct config *c)
 	return 1;
 }
 
-/*
+/**
  * log_argv -
  * @argv:	argument vector
  *
@@ -276,7 +277,8 @@ void log_argv(const char *const *argv)
 	return;
 }
 
-/* add_to_argv -
+/**
+ * add_to_argv -
  * @argv:	argument vector to add to
  * @argc:	pointer to current argument count
  * @arg:	argument to add
@@ -316,7 +318,7 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 	return;
 }
 
-/*
+/**
  * set_myuid -
  * @user:	switch to specified user
  *
@@ -371,7 +373,7 @@ void set_myuid(const char *user)
 	return;
 }
 
-/*
+/**
  * relookup_user -
  * @user:	The user to retrieve
  *
@@ -388,7 +390,7 @@ char *relookup_user(const char *user)
 		return xstrdup(pe->pw_name);
 }
 
-/*
+/**
  * misc_add_ntdom -
  * @v:		substitution data
  * @user:	username to add

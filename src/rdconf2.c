@@ -24,7 +24,7 @@
 #include "readconfig.h"
 #include "xstdlib.h"
 
-/*
+/**
  * allow_ok - check for disallowed options
  * @allowed:	list of allowed options
  * @options:	options to check
@@ -49,7 +49,7 @@ static bool allow_ok(const struct HXbtree *allowed,
 	return true;
 }
 
-/*
+/**
  * required_ok - check for missing options
  * @required:	list of required options
  * @options:	options to check
@@ -76,7 +76,7 @@ static bool required_ok(const struct HXbtree *required,
 	return true;
 }
 
-/*
+/**
  * deny_ok - check for denied options
  * @denied:	list of denied options
  * @options:	options to check
@@ -110,7 +110,7 @@ static bool deny_ok(const struct HXbtree *denied,
 	return true;
 }
 
-/*
+/**
  * options_ok - checks options
  * @config:	current configuration
  * @vol:	current volume

@@ -71,7 +71,7 @@ static const struct callbackmap cf_tags[];
 static const struct pmt_command default_command[];
 
 //-----------------------------------------------------------------------------
-/*
+/**
  * expandconfig -
  * @config:	configuration structure
  *
@@ -100,7 +100,7 @@ bool expandconfig(const struct config *config)
 	return true;
 }
 
-/*
+/**
  * freeconfig -
  * @config:	config struct
  *
@@ -194,7 +194,7 @@ bool readconfig(const char *file, bool global_conf, struct config *config)
 }
 
 //-----------------------------------------------------------------------------
-/*
+/**
  * expand_home -
  * @user:	username to use for home directory lookup
  * @path:	pathname to expand
@@ -228,7 +228,7 @@ static char *expand_home(const char *user, char *path, size_t size)
 	return path;
 }
 
-/*
+/**
  * expand_user -
  * @user:	username to substitue for placeholder
  * @dest:	buffer to operate on
@@ -255,7 +255,7 @@ static char *expand_user(const char *user, char *dest, size_t size)
 	return dest;
 }
 
-/*
+/**
  * fstab_value -
  * @volume:	path to volume
  * @field:	-
@@ -350,7 +350,7 @@ static int fstab_value(const char *volume, const enum fstab_field field,
 	return 1;
 }
 
-/*
+/**
  * get_next_argument -
  * @sptr:	pointer to pointer to writable string
  *
@@ -425,7 +425,7 @@ static inline int strcmp_1u(const xmlChar *a, const char *b)
 	return strcmp(reinterpret_cast(const char *, a), b);
 }
 
-/*
+/**
  * user_in_sgrp -
  * @user:	user to check
  * @grp:	group name
@@ -558,7 +558,7 @@ static const char *rc_mkmountpoint(xmlNode *node, struct config *config,
 	return NULL;
 }
 
-/*
+/**
  * str_to_optlist -
  * @optlist:	destination list
  * @str:	string to parse
@@ -576,7 +576,7 @@ static bool str_to_optkv(struct HXclist_head *optlist, char *str)
 		return true;
 
 	while ((ptr = HX_strsep(&str, ",")) != NULL) {
-		kvp = malloc(sizeof(struct kvp));
+		kvp = xmalloc(sizeof(struct kvp));
 		if (kvp == NULL)
 			return false;
 		HXlist_init(&kvp->list);
@@ -1256,5 +1256,3 @@ static const struct callbackmap cf_tags[] = {
 	{"volume",          rc_volume,              CMD_NONE},
 	{NULL},
 };
-
-//=============================================================================

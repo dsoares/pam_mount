@@ -63,7 +63,7 @@ static int split_bsd_mount(char *, const char **, const char **, const char **);
 #endif
 
 //-----------------------------------------------------------------------------
-/*
+/**
  * log_output
  * @fd:		file descriptor to read from
  * @cmsg:	conditional message
@@ -97,8 +97,8 @@ static void log_output(int fd, const char *cmsg)
 	return;
 }
 
-/*
- * run_lsof
+/**
+ * run_lsof -
  * @config:	current configuration
  * @vinfo:
  *
@@ -282,8 +282,8 @@ static int already_mounted(const struct config *const config,
 }
 #endif
 
-/*
- * vol_to_dev
+/**
+ * vol_to_dev -
  * @match:
  * @s:
  * @vol:	volume to analyze
@@ -382,7 +382,7 @@ static void log_pm_input(const struct config *const config,
 	return;
 }
 
-/*
+/**
  * mkmountpoint_real - create mountpoint directory
  * @volume:	volume description
  * @d:		directory
@@ -433,7 +433,7 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 	return ret;
 }
 
-/*
+/**
  * mkmountpoint_pick - create mountpoint for volume
  * @volume:	volume structure
  * @d:		directory to create
@@ -467,7 +467,7 @@ static bool mkmountpoint_pick(struct vol *volume, const char *d)
 	return ret;
 }
 
-/*
+/**
  * mkmountpoint -
  *
  * Wrapper for mkmountpoint_pick(). Switch back to root user after
@@ -481,8 +481,8 @@ static inline bool mkmountpoint(struct vol *volume, const char *d)
 	return r;
 }
 
-/*
- * do_unmount
+/**
+ * do_unmount -
  * @config:	current config
  * @vpt:	volume descriptor
  * @vinfo:
@@ -766,7 +766,7 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 #endif
 }
 
-/*
+/**
  * do_mount -
  * @config:	current config
  * @vpt:	volume descriptor
@@ -950,7 +950,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	return fnval;
 }
 
-/*
+/**
  * fstype_nodev -
  * @name:	fstype to check
  *
@@ -980,7 +980,7 @@ static int fstype_nodev(const char *name) {
 }
 
 #ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-/*
+/**
  * loop_bk -
  * @filename:	block device to query
  * @i:		pointer to result storage
@@ -1003,5 +1003,3 @@ static inline const char *loop_bk(const char *filename, struct loop_info64 *i)
 	return signed_cast(char *, i->lo_file_name);
 }
 #endif
-
-//=============================================================================

@@ -45,7 +45,7 @@ static void sslerror(const char *);
 
 //-----------------------------------------------------------------------------
 #ifdef HAVE_LIBCRYPTO
-/*
+/**
  * sslerror -
  * @msg:	Prefix to display
  *
@@ -59,7 +59,7 @@ static void sslerror(const char *msg)
 	return;
 }
 
-/*
+/**
  * hash_authtok -
  * @fp:		stream containing encrypted stream
  * @cipher:	OpenSSL cipher struct
@@ -102,7 +102,7 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 	return 1;
 }
 
-/*
+/**
  * decrypted_key -
  * @pt_fs_key:		filesystem key
  * @pt_fs_key_len:	filesystem key length

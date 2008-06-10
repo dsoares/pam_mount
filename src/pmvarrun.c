@@ -61,7 +61,7 @@ static int write_count(int, long, const char *);
 unsigned int Debug = false;
 
 //-----------------------------------------------------------------------------
-/*
+/**
  * usage - display help
  * @exitcode:	numeric value we will be exiting with
  * @error:	descriptive error string
@@ -76,7 +76,7 @@ static void usage(const int exitcode, const char *error)
 	exit(exitcode);
 }
 
-/*
+/**
  * set_defaults -
  * @settings:	pointer to settings structure
  */
@@ -88,8 +88,7 @@ static void set_defaults(struct settings *settings)
 }
 
 /*
- * from https://vitalnix.svn.sourceforge.net/svnroot/vitalnix/
- * /trunk/src/libvxutil/util.c
+ * from git://dev.medozas.de/vitalnix /src/libvxutil/util.c
  */
 static bool valid_username(const char *n)
 {
@@ -116,8 +115,8 @@ static bool valid_username(const char *n)
 	return true;
 }
 
-/*
- * parse_args
+/**
+ * parse_args -
  * @argc:	number of elements in @argv
  * @argv:	NULL-terminated argument vector
  * @settings:	pointer to settings structure
@@ -159,7 +158,7 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 	return;
 }
 
-/*
+/**
  * modify_pm_count -
  * @user:	user to poke on
  * @amount:	increment (usually -1, 0 or +1)
@@ -243,8 +242,8 @@ int main(int argc, const char **argv)
 }
 
 //-----------------------------------------------------------------------------
-/*
- * create_var_run
+/**
+ * create_var_run -
  *
  * Creates the /var/run/pam_mount directory required by pmvarrun and sets
  * proper permissions on it.
@@ -280,7 +279,7 @@ static int create_var_run(void)
 	return 1;
 }
 
-/*
+/**
  * open_and_lock -
  * @filename:	file to open
  *
@@ -356,7 +355,7 @@ static int open_and_lock(const char *filename, long uid) {
 	return fd;
 }
 
-/*
+/**
  * read_current_count -
  * @fd:	file descriptor to read from
  *
@@ -390,7 +389,7 @@ static long read_current_count(int fd, const char *filename) {
 	return ret;
 }
 
-/*
+/**
  * write_count -
  * @fd:		file descriptor to write to
  * @nv:		new value to write
@@ -439,5 +438,3 @@ static int write_count(int fd, long nv, const char *filename) {
 
 	return 1;
 }
-
-//=============================================================================

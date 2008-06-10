@@ -49,7 +49,7 @@ void kvplist_genocide(struct HXclist_head *head)
 	}
 }
 
-/*
+/**
  * kvplist_to_str -
  * @optlist:	option list
  *
@@ -83,7 +83,7 @@ hmc_t *kvplist_to_str(const struct HXclist_head *optlist)
 	return ret;
 }
 
-/*
+/**
  * xmalloc - allocate memory
  * @n:	size of the new buffer
  *
@@ -99,7 +99,7 @@ void *xmalloc(size_t n)
 	return ret;
 }
 
-/*
+/**
  * xrealloc - resize memory block
  * @orig:	original address of the buffer
  * @n:		new size of the buffer
@@ -116,7 +116,7 @@ void *xrealloc(void *orig, size_t n)
 	return ret;
 }
 
-/*
+/**
  * xstrdup -
  * @src:	source string
  *
