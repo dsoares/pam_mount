@@ -49,7 +49,26 @@
 <!ELEMENT nfsmount (#PCDATA)>
 <!ELEMENT mntcheck (#PCDATA)>
 <!ELEMENT pmvarrun (#PCDATA)>
-<!ELEMENT volume EMPTY>
+<!ELEMENT volume (and|or|xor|not|user|uid|gid|pgrp|sgrp)>
+<!ELEMENT and ((and|or|xor|not|user|uid|gid|pgrp|sgrp)*)>
+<!ELEMENT or ((and|or|xor|not|user|uid|gid|pgrp|sgrp)*)>
+<!ELEMENT xor ((and|or|xor|not|user|uid|gid|pgrp|sgrp),(and|or|xor|not|user|uid|gid|pgrp|sgrp))>
+<!ELEMENT not (and|or|xor|not|user|uid|gid|pgrp|sgrp)>
+<!ELEMENT user (#PCDATA)>
+<!ELEMENT uid (#PCDATA)>
+<!ELEMENT gid (#PCDATA)>
+<!ELEMENT pgrp (#PCDATA)>
+<!ELEMENT sgrp (#PCDATA)>
+<!ATTLIST user
+	icase (0|1|yes|no|true|false) "no"
+>
+<!ATTLIST pgrp
+	icase (0|1|yes|no|true|false) "no"
+>
+<!ATTLIST sgrp
+	icase (0|1|yes|no|true|false) "no"
+>
+<!-- invert-* attributes are deprecated -->
 <!ATTLIST volume
 	user CDATA #IMPLIED
 	invert (0|1) "0"

@@ -60,17 +60,11 @@ struct pmt_command {
 	const char *fs, *command_name, *def[MAX_PAR + 1];
 };
 
-struct volume_attrs {
-	/* This could be better... */
-	char *user, *uid, *pgrp, *sgrp, *gid, *fstype, *server, *path, *mntpt,
-	     *options, *fskeycipher, *fskeypath;
-	bool uses_ssh, invert;
-};
-
 /* Functions */
 static char *expand_home(const char *, char *, size_t);
 static char *expand_user(const char *, char *, size_t);
 static inline int strcmp_1u(const xmlChar *, const char *);
+static int rc_volume_cond_ext(const struct passwd *, xmlNode *);
 
 /* Variables */
 static const struct callbackmap cf_tags[];
@@ -410,8 +404,18 @@ static inline char *get_next_argument(char **sptr)
 
 static inline bool parse_bool(const char *s)
 {
-	return strcasecmp(s, "yes") == 0 || strcasecmp(s, "on") == 0||
+	return strcasecmp(s, "yes") == 0 || strcasecmp(s, "on") == 0 ||
 	       strcasecmp(s, "true") == 0 || strcmp(s, "1") == 0;
+}
+
+static inline bool parse_bool_f(char *s)
+{
+	bool ret;
+	if (s == NULL)
+		return false;
+	ret = parse_bool(s);
+	free(s);
+	return ret;
 }
 
 static inline int strcmp_1u(const xmlChar *a, const char *b)
@@ -428,7 +432,7 @@ static inline int strcmp_1u(const xmlChar *a, const char *b)
  * no match was found, positive non-zero on success or negative non-zero on
  * failure.
  */
-static bool user_in_sgrp(const char *user, const char *grp)
+static bool user_in_sgrp(const char *user, const char *grp, bool icase)
 {
 	struct group *gent;
 	const char **wp;
@@ -440,7 +444,8 @@ static bool user_in_sgrp(const char *user, const char *grp)
 
 	wp = const_cast(const char **, gent->gr_mem);
 	while (wp != NULL && *wp != NULL) {
-		if (strcmp(*wp, user) == 0)
+		if (strcmp(*wp, user) ||
+		    (icase && strcasecmp(*wp, user)) == 0)
 			return true;
 		++wp;
 	}
@@ -676,157 +681,409 @@ static const char *rc_string(xmlNode *node, struct config *config,
 	return NULL;
 }
 
-/*
- * volume_check_uid -
- * @attrs:	volume attributes (specifically UID)
- * @pent:	current user
- * @err:	error notification
+/**
+ * rc_volume_cond_and - handle <and> element
+ * @pwd:	user logging in
+ * @node: 	XML <and> node
  *
- * Check if @uid_string can match @pent.
+ * Handle an <and> XML node, by processing all elements within it and ANDing
+ * them together. Returns negative on error.
  */
-static bool volume_check_uid(const struct volume_attrs *attr,
-    const struct passwd *pent, bool *err)
+static int rc_volume_cond_and(const struct passwd *pwd, xmlNode *node)
 {
-	unsigned int uid_start, uid_end;
-	char *m;
+	unsigned int count = 0;
+	int ret;
 
-	uid_start = uid_end = strtoul(attr->uid, &m, 0);
-	if (*m == '-') {
-		uid_end = strtoul(m + 1, NULL, 0);
-	} else if (*m != '\0') {
-		l0g("Bogus uid specification in <volume>\n");
-		*err = true;
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_ELEMENT_NODE)
+			continue;
+		ret = rc_volume_cond_ext(pwd, node);
+		if (ret < 0)
+			return ret;
+		else if (ret == 0)
+			return false;
+		++count;
+	}
+
+	if (count > 0)
+		/*
+		 * If there was any non-matching element, we would have
+		 * already returned above.
+		 */
+		return true;
+
+	l0g("config: <and> does not have any child elements\n");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_or - handle <or> element
+ * @pwd:	user logging in
+ * @node:	XML <or> node
+ *
+ * Handle an <or> XML node, by processing all elements within it and ORing
+ * them together. On error, returns -1.
+ */
+static int rc_volume_cond_or(const struct passwd *pwd, xmlNode *node)
+{
+	unsigned int count;
+	int ret;
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_ELEMENT_NODE)
+			continue;
+		ret = rc_volume_cond_ext(pwd, node);
+		if (ret < 0)
+			return ret;
+		else if (ret > 0)
+			return true;
+		++count;
+	}
+
+	if (count > 0)
+		return false;
+
+	l0g("config: <and> does not have any child elements\n");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_xor - handle <xor> element
+ * @pwd:	user logging in
+ * @node:	XML <xor> node
+ *
+ * Handle an <xor> XML node, by processing the two elements within it and
+ * XORin them together. Exactly two elements must be provided, otherwise
+ * the function fails with -1.
+ */
+static int rc_volume_cond_xor(const struct passwd *pwd, xmlNode *node)
+{
+	unsigned int count = 0;
+	int ret[2];
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_ELEMENT_NODE)
+			continue;
+		if (count >= 2)
+			goto out;
+		ret[count] = rc_volume_cond_ext(pwd, node);
+		if (ret[count] < 0)
+			return ret[count];
+		++count;
+	}
+
+	if (count == 2)
+		return ret[0] ^ ret[1];
+ out:
+	l0g("config: <xor> must have exactly two child elements\n");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_not - handle <not> element
+ * @pwd:	user logging in
+ * @node:	XML <not> node
+ *
+ * Handle an <not> XML node, by processing the single elements within it and
+ * negating it. Exactly one elements must be provided, otherwise the
+ * function fails with -1.
+ */
+static int rc_volume_cond_not(const struct passwd *pwd, xmlNode *node)
+{
+	unsigned int count = 0;
+	bool ret;
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_ELEMENT_NODE)
+			continue;
+		if (count++ > 0)
+			goto out;
+		ret = rc_volume_cond_ext(pwd, node);
+		if (ret < 0)
+			return ret;
+		ret = !ret;
+	}
+
+	if (count == 1)
+		return ret;
+ out:
+	l0g("config: <not> may only have one child element\n");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_user - handle <user> element
+ * @pwd:	user logging in
+ * @node:	XML <user> node
+ */
+static int rc_volume_cond_user(const struct passwd *pwd, xmlNode *node)
+{
+	xmlNode *parent = node;
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_TEXT_NODE)
+			continue;
+		if (parse_bool_f(xmlGetProp_2s(parent, "icase")))
+			return strcasecmp(signed_cast(const char *,
+			       node->content), pwd->pw_name) == 0;
+		else
+			return strcmp_1u(node->content, pwd->pw_name) == 0;
+	}
+
+	return false;
+}
+
+static int __rc_volume_cond_id(const char *s, unsigned int id)
+{
+	unsigned int id_start, id_end;
+	char *delim;
+
+	id_start = id_end = strtoul(s, &delim, 0);
+	if (*delim == '\0')
+		return id_start == id;
+	if (*delim != '-' || *++delim == '\0')
+		return -1;
+	id_end = strtoul(delim, &delim, 0);
+	if (*delim != '\0')
+		return -1;
+	return id_start <= id && id <= id_end;
+}
+
+/**
+ * rc_volume_cond_uid - handle <uid> element
+ * @pwd:	user logging in
+ * @node:	XML <uid> node
+ */
+static int rc_volume_cond_uid(const struct passwd *pwd, xmlNode *node)
+{
+	int ret;
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_TEXT_NODE)
+			continue;
+		ret = __rc_volume_cond_id(signed_cast(const char *,
+		      node->content), pwd->pw_uid);
+		if (ret < 0)
+			return ret;
+	}
+
+	l0g("config: empty or invalid content for <%s>\n", "uid");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_gid - handle <gid> element
+ * @pwd:	user logging in
+ * @node:	XML <uid> node
+ */
+static int rc_volume_cond_gid(const struct passwd *pwd, xmlNode *node)
+{
+	int ret;
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_TEXT_NODE)
+			continue;
+		ret = __rc_volume_cond_id(signed_cast(const char *,
+		      node->content), pwd->pw_gid);
+		if (ret < 0)
+			return ret;
+	}
+
+	l0g("config: empty or invalid content for <%s>\n", "gid");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_pgrp - handle <pgrp> element
+ * @pwd:	user logging in
+ * @node:	XML <pgrp> node (actually also <sgrp>)
+ */
+static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
+{
+	const struct group *grp;
+	xmlNode *parent = node;
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_TEXT_NODE)
+			continue;
+
+		if ((grp = getgrgid(pwd->pw_gid)) == NULL) {
+			w4rn("getgrgid(%ld) failed: %s\n",
+			     static_cast(long, pwd->pw_gid), strerror(errno));
+			return -1;
+		}
+
+		if (parse_bool_f(xmlGetProp_2s(parent, "icase")))
+			return strcasecmp(signed_cast(const char *,
+			       node->content), grp->gr_name) == 0;
+		else
+			return strcmp_1u(node->content, grp->gr_name) == 0;
+	}
+
+	l0g("config: empty or invalid content for <%s>\n", "pgrp");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_sgrp - handle <sgrp> element
+ * @pwd:	user logging in
+ * @node:	XML <sgrp> node
+ */
+static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
+{
+	const struct group *grp;
+	xmlNode *parent = node;
+
+	for (node = node->children; node != NULL; node = node->next) {
+		if (node->type != XML_TEXT_NODE)
+			continue;
+
+		if ((grp = getgrgid(pwd->pw_gid)) == NULL) {
+			w4rn("getgrgid(%ld) failed: %s\n",
+			     static_cast(long, pwd->pw_gid), strerror(errno));
+			return -1;
+		}
+
+		if (rc_volume_cond_pgrp(pwd, node))
+			return true;
+		return user_in_sgrp(pwd->pw_name,
+		       signed_cast(const char *, node->content),
+		       parse_bool_f(xmlGetProp_2s(parent, "icase")));
+	}
+
+	l0g("config: empty or invalid content for <%s>\n", "sgrp");
+	return -1;
+}
+
+/**
+ * rc_volume_cond_ext - interpret extended user control elements
+ * @pwd:	user logging in
+ * @node:	XML node to operate on
+ */
+static int rc_volume_cond_ext(const struct passwd *pwd, xmlNode *node)
+{
+	if (strcmp_1u(node->name, "and") == 0)
+		return rc_volume_cond_and(pwd, node);
+	else if (strcmp_1u(node->name, "or") == 0)
+		return rc_volume_cond_or(pwd, node);
+	else if (strcmp_1u(node->name, "xor") == 0)
+		return rc_volume_cond_xor(pwd, node);
+	else if (strcmp_1u(node->name, "not") == 0)
+		return rc_volume_cond_not(pwd, node);
+	else if (strcmp_1u(node->name, "user") == 0)
+		return rc_volume_cond_user(pwd, node);
+	else if (strcmp_1u(node->name, "uid") == 0)
+		return rc_volume_cond_uid(pwd, node);
+	else if (strcmp_1u(node->name, "gid") == 0)
+		return rc_volume_cond_gid(pwd, node);
+	else if (strcmp_1u(node->name, "pgrp") == 0)
+		return rc_volume_cond_pgrp(pwd, node);
+	else if (strcmp_1u(node->name, "sgrp") == 0)
+		return rc_volume_cond_sgrp(pwd, node);
+
+	l0g("config: unknown element <%s>\n", node->name);
+	return -1;
+}
+
+/**
+ * rc_volume_cond_simple - interpret simple user control elements
+ * @pwd:	user logging in
+ * @node:	XML <volume> node
+ */
+static int rc_volume_cond_simple(const struct passwd *pwd, xmlNode *node)
+{
+	char *user   = xmlGetProp_2s(node, "user");
+	char *invert = xmlGetProp_2s(node, "invert");
+	char *uid    = xmlGetProp_2s(node, "uid");
+	char *gid    = xmlGetProp_2s(node, "gid");
+	char *pgrp   = xmlGetProp_2s(node, "pgrp");
+	char *sgrp   = xmlGetProp_2s(node, "sgrp");
+	bool for_me  = true;
+	int ret      = true;
+
+	if (user == NULL && invert == NULL && uid == NULL && gid == NULL &&
+	    pgrp == NULL && sgrp == NULL)
+		return -1;
+
+	if (user != NULL)
+		for_me &= strcmp(pwd->pw_name, user) == 0;
+	if (uid != NULL) {
+		ret = __rc_volume_cond_id(uid, pwd->pw_uid);
+		if (ret < 0)
+			goto out;
+		for_me &= ret;
+	}
+	if (gid != NULL) {
+		ret = __rc_volume_cond_id(gid, pwd->pw_gid);
+		if (ret < 0)
+			goto out;
+		for_me &= ret;
+	}
+	if (invert != NULL) {
+		l0g("The \"invert\" attribute is deprecated, support will "
+		    "be removed in next version.\n");
+		if (strtoul(invert, NULL, 0))
+			for_me = !for_me;
+	}
+
+ out:
+	free(user);
+	free(invert);
+	free(uid);
+	free(gid);
+	free(pgrp);
+	free(sgrp);
+	if (ret < 0)
+		return ret;
+	return for_me;
+}
+
+/**
+ * rc_volume_cond - check if volume applies to user
+ * @node:	XML <volume> node
+ */
+static int rc_volume_cond(const char *user, xmlNode *node)
+{
+	struct passwd *pwd_ent;
+	int ret;
+
+	if ((pwd_ent = getpwnam(user)) == NULL) {
+		l0g("getpwnam: %s\n", strerror(errno));
+		return -1;
+	}
+
+	ret = rc_volume_cond_simple(pwd_ent, node);
+	if (ret < 0 && node->children != NULL) {
+		/* When no attributes, but elements... */
+		ret = rc_volume_cond_and(pwd_ent, node);
+		if (ret < 0)
+			return -1;
+		else if (ret == 0)
+			return false;
+	} else if (ret == 0) {
+		/* Attributes but (hopefully) no elements. */
+		if (node->children != NULL) {
+			l0g("You cannot have both simple and extended user control\n");
+			return -1;
+		}
 		return false;
 	}
 
-	return uid_start <= pent->pw_uid && pent->pw_uid <= uid_end;
+	return true;
 }
 
-/*
- * volume_check_gid -
- * @attrs:	volume attributes (specifically GID)
- * @pent:	current user
- * @err:	error notification
- *
- * Check if @gid_string can match @pent.
- */
-static bool volume_check_gid(const struct volume_attrs *attr,
-    const struct passwd *pent, bool *err)
+static const char *rc_volume(xmlNode *node, struct config *config,
+    unsigned int command)
 {
-	unsigned int gid_start, gid_end;
-	char *m;
-
-	gid_start = gid_end = strtoul(attr->gid, &m, 0);
-	if (*m == '-') {
-		gid_end = strtoul(m + 1, NULL, 0);
-	} else if (*m != '\0') {
-		l0g("Bogus gid specification in <volume>\n");
-		*err = true;
-		return false;
-	}
-
-	return gid_start <= pent->pw_gid && pent->pw_gid <= gid_end;
-}
-
-/*
- * volume_check_pgrp -
- * @attrs:	volume attributes (specifically PGRP)
- * @pent:	current user
- * @err:	error notification
- *
- * Check if the current user has @pgrp as the primary group.
- */
-static bool volume_check_pgrp(const char *group, const struct passwd *pent,
-    bool *err)
-{
-	const struct group *gent;
-
-	if ((gent = getgrgid(pent->pw_gid)) == NULL) {
-		w4rn("getgrgid(%ld) failed: %s\n",
-		     static_cast(long, pent->pw_gid), strerror(errno));
-		*err = true;
-		return false;
-	}
-	return strcmp(group, gent->gr_name) == 0;
-}
-
-/*
- * volume_check_sgrp -
- * @pgrp:	volume attributes (specifically SGRP)
- * @pent:	current user
- * @err:	error notification
- *
- * Check if the current user has @sgrp as any secondary group.
- */
-static bool volume_check_sgrp(const struct volume_attrs *attr,
-    const char *user, const struct passwd *pent, bool *err)
-{
-	const struct group *gent;
-
-	if ((gent = getgrgid(pent->pw_gid)) == NULL) {
-		w4rn("getgrgid(%ld) failed: %s\n",
-		     static_cast(long, pent->pw_gid), strerror(errno));
-		*err = true;
-		return false;
-	}
-	return user_in_sgrp(user, attr->sgrp) ||
-	       volume_check_pgrp(attr->sgrp, pent, err);
-}
-
-static const char *rc_volume_inter(struct config *config,
-    const struct volume_attrs *attr)
-{
-	bool for_me = true, root = true, err = false;
-	struct passwd *pent;
 	struct vol *vpt;
 	unsigned int i;
+	char *tmp;
 
-	if (strlen(attr->user) > sizeof_z(vpt->user) ||
-	    strlen(attr->fstype) > sizeof_z(vpt->fstype) ||
-	    strlen(attr->server) > sizeof_z(vpt->server) ||
-	    strlen(attr->path) > sizeof_z(vpt->volume) ||
-	    strlen(attr->mntpt) > sizeof_z(vpt->mountpoint) ||
-	    strlen(attr->fskeycipher) > sizeof_z(vpt->fs_key_cipher) ||
-	    strlen(attr->fskeypath) > sizeof_z(vpt->fs_key_path))
-		return "command too long";
-
-	if ((pent = getpwnam(config->user)) == NULL) {
-		w4rn("getpwnam(\"%s\") failed: %s\n",
-		     Config.user, strerror(errno));
-		return NULL;
-	}
-
-	if (strcmp(attr->user, "*") == 0 || *attr->user == '\0')
-		root = false;
-	else if (*attr->user != '\0')
-		for_me &= strcmp(config->user, attr->user) == 0;
-
-	if (*attr->uid != '\0')
-		for_me &= volume_check_uid(attr, pent, &err);
-	if (err)
+	if (strlen(config->user) > sizeof_z(vpt->user))
+		return "config: <volume> components too long\n";
+	if (rc_volume_cond(config->user, node) <= 0)
 		return NULL;
 
-	if (*attr->gid != '\0')
-		for_me &= volume_check_gid(attr, pent, &err);
-	if (err)
-		return NULL;
-
-	if (*attr->pgrp != '\0')
-		for_me &= volume_check_pgrp(attr->pgrp, pent, &err);
-	if (err)
-		return NULL;
-
-	if (*attr->sgrp != '\0')
-		/* checking pgrp on purpose */
-		for_me &= volume_check_sgrp(attr, config->user, pent, &err);
-	if (err)
-		return NULL;
-	for_me ^= attr->invert;
-
-	if (!for_me)
-		goto notforme;
-
-	/* realloc */
 	vpt = xrealloc(config->volume, sizeof(struct vol) *
 	               (config->volcount + 1));
 	if (vpt == NULL)
@@ -835,42 +1092,65 @@ static const char *rc_volume_inter(struct config *config,
 	config->volume = vpt;
 	vpt = &config->volume[config->volcount];
 	memset(vpt, 0, sizeof(*vpt));
-	vpt->uses_ssh = attr->uses_ssh;
 
 	vpt->globalconf = config->level == CONTEXT_GLOBAL;
 	strncpy(vpt->user, config->user, sizeof(vpt->user));
 	vpt->type = CMD_LCLMOUNT;
 	HXclist_init(&vpt->options);
 
-	/* [1] */
-	strncpy(vpt->fstype, attr->fstype, sizeof(vpt->fstype));
-
-	for (i = 0; default_command[i].type != -1; ++i) {
-		const struct pmt_command *c = &default_command[i];
-		if (c->fs != NULL && strcasecmp(attr->fstype, c->fs) == 0) {
-			vpt->type = c->type;
-			break;
-		}
+	/* Eyeball ssh setting */
+	if ((tmp = xmlGetProp_2s(node, "ssh")) != NULL) {
+		vpt->uses_ssh = parse_bool(tmp);
+		free(tmp);
 	}
 
-	/* [2] */
-	if (*attr->server != '\0')
-		strncpy(vpt->server, attr->server, sizeof(vpt->server));
+	/* Filesystem type */
+	if ((tmp = xmlGetProp_2s(node, "fstype")) != NULL) {
+		if (strlen(tmp) > sizeof_z(vpt->fstype))
+			l0g("config: %s \"%s\" truncated\n", "fstype", tmp);
+		strncpy(vpt->fstype, tmp, sizeof(vpt->fstype));
 
-	/* [3] */
-	strncpy(vpt->volume, attr->path, sizeof(vpt->volume));
+		for (i = 0; default_command[i].type != -1; ++i) {
+			const struct pmt_command *c = &default_command[i];
+			if (c->fs != NULL && strcasecmp(tmp, c->fs) == 0) {
+				vpt->type = c->type;
+				break;
+			}
+		}
+		free(tmp);
+	} else {
+		strncpy(vpt->fstype, "auto", sizeof(vpt->fstype));
+	}
 
-	/* [4] */
-	if (*attr->mntpt == '\0') {
+	/* Source location */
+	if ((tmp = xmlGetProp_2s(node, "server")) != NULL) {
+		if (strlen(tmp) > sizeof_z(vpt->server))
+			l0g("config: %s \"%s\" truncated\n", "server", tmp);
+		strncpy(vpt->server, tmp, sizeof(vpt->server));
+		free(tmp);
+	}
+	if ((tmp = xmlGetProp_2s(node, "path")) != NULL) {
+		if (strlen(tmp) > sizeof_z(vpt->volume))
+			l0g("config: %s \"%s\" truncated\n", "path", tmp);
+		strncpy(vpt->volume, tmp, sizeof(vpt->volume));
+		free(tmp);
+	}
+
+	/* Destination */
+	if ((tmp = xmlGetProp_2s(node, "mountpoint")) != NULL) {
+		if (strlen(tmp) > sizeof_z(vpt->mountpoint))
+			l0g("config: %s \"%s\" truncated\n", "mountpoint", tmp);
+		strncpy(vpt->mountpoint, tmp, sizeof(vpt->mountpoint));
+		free(tmp);
+	} else {
 		if (!fstab_value(vpt->volume, FSTAB_MNTPT, vpt->mountpoint,
 		    sizeof(vpt->mountpoint)))
-				return "could not determine mountpoint";
+			return "could not determine mountpoint";
 		vpt->use_fstab = 1;
-	} else {
-		strncpy(vpt->mountpoint, attr->mntpt, sizeof(vpt->mountpoint));
 	}
 
-	if (*attr->options == '\0') {
+	/* Options */
+	if ((tmp = xmlGetProp_2s(node, "options")) == NULL) {
 		/*
 		 * Three options: field defined, field is '-' and fstab should
 		 * be used (when no mount point was provided either) or field
@@ -884,80 +1164,31 @@ static const char *rc_volume_inter(struct config *config,
 			if (!str_to_optkv(&vpt->options, options))
 				return "error parsing mount options";
 		}
-	} else if (!str_to_optkv(&vpt->options, attr->options)) {
+	} else if (!str_to_optkv(&vpt->options, tmp)) {
+		free(tmp);
 		return "error parsing mount options";
+	} else {
+		free(tmp);
 	}
 
-	if (*attr->fskeycipher != '\0')
-		strncpy(vpt->fs_key_cipher, attr->fskeycipher,
-		        sizeof(vpt->fs_key_cipher));
-	if (*attr->fskeypath != '\0')
-		strncpy(vpt->fs_key_path, attr->fskeypath,
-		        sizeof(vpt->fs_key_path));
+	/* Filesystem key */
+	if ((tmp = xmlGetProp_2s(node, "fskeycipher")) != NULL) {
+		if (strlen(tmp) > sizeof_z(vpt->fs_key_cipher))
+			l0g("config: %s \"%s\" truncated\n", "fskeycipher", tmp);
+		strncpy(vpt->fs_key_cipher, tmp, sizeof(vpt->fs_key_cipher));
+		free(tmp);
+	}
+	if ((tmp = xmlGetProp_2s(node, "fskeypath")) != NULL) {
+		if (strlen(tmp) > sizeof_z(vpt->fs_key_path))
+			l0g("config: %s \"%s\" truncated\n", "fskeypath", tmp);
+		strncpy(vpt->fs_key_path, tmp, sizeof(vpt->fs_key_path));
+		free(tmp);
+	}
 
 	/* expandconfig() will set this later */
-	vpt->used_wildcard = 0;
+	vpt->used_wildcard = false;
 	++config->volcount;
 	return NULL;
-
- notforme:
-	w4rn("ignoring volume record... (not for me)\n");
-	return NULL;
-}
-
-static const char *rc_volume(xmlNode *node, struct config *config,
-    unsigned int command)
-{
-	struct volume_attrs norm, orig = {
-		.user        = xmlGetProp_2s(node, "user"),
-		.uid         = xmlGetProp_2s(node, "uid"),
-		.pgrp        = xmlGetProp_2s(node, "pgrp"),
-		.sgrp        = xmlGetProp_2s(node, "sgrp"),
-		.gid         = xmlGetProp_2s(node, "gid"),
-		.fstype      = xmlGetProp_2s(node, "fstype"),
-		.server      = xmlGetProp_2s(node, "server"),
-		.path        = xmlGetProp_2s(node, "path"),
-		.mntpt       = xmlGetProp_2s(node, "mountpoint"),
-		.options     = xmlGetProp_2s(node, "options"),
-		.fskeycipher = xmlGetProp_2s(node, "fskeycipher"),
-		.fskeypath   = xmlGetProp_2s(node, "fskeypath"),
-	};
-	const char *ret;
-	char *tmp;
-
-	if ((tmp = xmlGetProp_2s(node, "invert")) != NULL) {
-		/* "invert" going away sooner or later */
-		orig.invert = strtoul(tmp, NULL, 0);
-		free(tmp);
-	}
-	if ((tmp = xmlGetProp_2s(node, "ssh")) != NULL) {
-		orig.uses_ssh = strtoul(tmp, NULL, 0);
-		free(tmp);
-	}
-
-	memcpy(&norm, &orig, sizeof(norm));
-	if (norm.user        == NULL) norm.user        = "";
-	if (norm.uid         == NULL) norm.uid         = "";
-	if (norm.gid         == NULL) norm.gid         = "";
-	if (norm.pgrp        == NULL) norm.pgrp        = "";
-	if (norm.sgrp        == NULL) norm.sgrp        = "";
-	if (norm.fstype      == NULL) norm.fstype      = "auto";
-	if (norm.server      == NULL) norm.server      = "";
-	if (norm.path        == NULL) norm.path        = "";
-	if (norm.mntpt       == NULL) norm.mntpt       = "";
-	if (norm.options     == NULL) norm.options     = "";
-	if (norm.fskeycipher == NULL) norm.fskeycipher = "";
-	if (norm.fskeypath   == NULL) norm.fskeypath   = "";
-	ret = rc_volume_inter(config, &norm);
-	free(orig.user);
-	free(orig.fstype);
-	free(orig.server);
-	free(orig.path);
-	free(orig.mntpt);
-	free(orig.options);
-	free(orig.fskeycipher);
-	free(orig.fskeypath);
-	return ret;
 }
 
 //-----------------------------------------------------------------------------
