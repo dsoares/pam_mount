@@ -2,6 +2,7 @@
 #define PMT_PRIVATE_H 1
 
 #include <libHX/clist.h>
+#include <libHX/list.h>
 #include <limits.h>
 #include <stdbool.h>
 
@@ -48,6 +49,7 @@ enum command_type {
 };
 
 struct vol {
+	struct HXlist_head list;
 	enum command_type type;
 	/* true if configuration from global config, false if luserconf */
 	bool globalconf;
@@ -74,12 +76,11 @@ struct config {
 	char *user;
 	unsigned int debug;
 	bool mkmntpoint, rmdir_mntpt;
-	unsigned int volcount;
 	char luserconf[PATH_MAX + 1];
 	char fsckloop[PATH_MAX + 1];
 	char *command[_CMD_MAX][MAX_PAR+1];
 	struct HXbtree *options_require, *options_allow, *options_deny;
-	struct vol *volume;
+	struct HXclist_head volume_list;
 	int level;
 	char *msg_authpw, *msg_sessionpw, *path;
 };

@@ -5,6 +5,7 @@ For details, see the history as recorded in the git repository.
   split off into pam_mount.conf(5).
 - extensive user selection for <volume> (revised)
 - case-insensitive matching for user, pgrp, sgrp
+- fixed segfault when more than one volume was defined
 
 
 v0.39 (May 28 2008)

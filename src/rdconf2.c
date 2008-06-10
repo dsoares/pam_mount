@@ -139,10 +139,10 @@ static bool options_ok(const struct config *config, const struct vol *volume)
 	return true;
 }
 
-/*
+/**
  * luserconf_volume_record_sane -
  * @config:	current configuration
- * @vol:	volume index
+ * @vol:	volume descriptor
  *
  * Check whether the per-user volume is in accordance with wildcard and
  * option restrictions.
@@ -151,40 +151,29 @@ static bool options_ok(const struct config *config, const struct vol *volume)
  * rejecting everyhing that is illegal.
  */
 bool luserconf_volume_record_sane(const struct config *config,
-    unsigned int vol)
+    const struct vol *vol)
 {
-	const struct vol *vpt;
-	assert(config != NULL);
-	assert(config->volume != NULL);
-	vpt = &config->volume[vol];
-
-	if (config->volume[vol].used_wildcard) {
+	if (vol->used_wildcard) {
 		l0g("You may not use wildcards in user-defined volumes\n");
 		return false;
 	}
-	if (!options_ok(config, &config->volume[vol])) {
+	if (!options_ok(config, vol)) {
 		l0g("illegal option specified by user\n");
 		return false;
 	}
 	return true;
 }
 
-/*
+/**
  * volume_record_sane -
  * @config:	current configuration
- * @vol:	volume index
+ * @vpt:	volume descriptor
  *
  * FIXME: check to ensure input is legal and reject all else instead of
  * rejecting everyhing that is illegal.
  */
-bool volume_record_sane(const struct config *config, unsigned int vol)
+bool volume_record_sane(const struct config *config, const struct vol *vpt)
 {
-	const struct vol *vpt;
-
-	assert(config != NULL);
-	assert(config->volume != NULL);
-	vpt = &config->volume[vol];
-
 	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
 	if (config->command[vpt->type][0] == NULL) {
 		l0g("mount command not defined for this type\n");

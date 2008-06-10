@@ -81,11 +81,8 @@ bool expandconfig(const struct config *config)
 {
 	const char *u = config->user;
 	struct vol *vpt;
-	unsigned int i;
 
-	for (i = 0; i < config->volcount; ++i) {
-		vpt = &config->volume[i];
-
+	HXlist_for_each_entry(vpt, &config->volume_list, list) {
 		if (expand_home(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
 		    expand_user(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
 		    expand_home(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
@@ -111,6 +108,7 @@ bool expandconfig(const struct config *config)
  */
 void freeconfig(struct config *config)
 {
+	struct vol *vol, *next;
 	unsigned int i, j;
 
 	for (i = 0; i < _CMD_MAX; ++i) {
@@ -119,8 +117,10 @@ void freeconfig(struct config *config)
 			config->command[i][j] = NULL;
 	}
 
-	for (i = 0; i < config->volcount; ++i)
-		kvplist_genocide(&config->volume[i].options);
+	HXlist_for_each_entry_safe(vol, next, &config->volume_list, list) {
+		kvplist_genocide(&vol->options);
+		free(vol);
+	}
 
 	HXbtree_free(config->options_allow);
 	HXbtree_free(config->options_require);
@@ -157,6 +157,8 @@ void initconfig(struct config *config)
 	config->options_allow   = HXbtree_init(flags);
 	config->options_require = HXbtree_init(flags);
 	config->options_deny    = HXbtree_init(flags);
+
+	HXclist_init(&config->volume_list);
 	return;
 }
 
@@ -1084,14 +1086,12 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	if (rc_volume_cond(config->user, node) <= 0)
 		return NULL;
 
-	vpt = xrealloc(config->volume, sizeof(struct vol) *
-	               (config->volcount + 1));
+	vpt = calloc(1, sizeof(struct vol));
 	if (vpt == NULL)
 		return strerror(errno);
 
-	config->volume = vpt;
-	vpt = &config->volume[config->volcount];
-	memset(vpt, 0, sizeof(*vpt));
+	HXlist_init(&vpt->list);
+	HXclist_push(&config->volume_list, &vpt->list);
 
 	vpt->globalconf = config->level == CONTEXT_GLOBAL;
 	strncpy(vpt->user, config->user, sizeof(vpt->user));
@@ -1187,7 +1187,6 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 
 	/* expandconfig() will set this later */
 	vpt->used_wildcard = false;
-	++config->volcount;
 	return NULL;
 }
 

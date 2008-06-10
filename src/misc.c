@@ -18,6 +18,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <libHX/list.h>
 #include <libHX.h>
 #include <pwd.h>
 #include "misc.h"
@@ -226,7 +227,8 @@ int vol_valid(const struct vol *v) {
  */
 int config_valid(const struct config *c)
 {
-	int i;
+	struct vol *vol;
+
 	if (c == NULL || c->user == NULL)
 		return 0;
 	/* bool debug */
@@ -239,8 +241,9 @@ int config_valid(const struct config *c)
 	/* optlist_t *options_require; */
 	/* optlist_t *options_allow; */
 	/* optlist_t *options_deny; */
-	for (i = 0; i < c->volcount; ++i)
-		if (!vol_valid(c->volume))
+
+	HXlist_for_each_entry(vol, &c->volume_list, list)
+		if (!vol_valid(vol))
 			return 0;
 	return 1;
 }

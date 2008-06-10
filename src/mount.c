@@ -47,12 +47,9 @@
 #endif
 
 /* Functions */
-static int already_mounted(const struct config * const, const unsigned int, struct HXbtree *);
-static int check_filesystem(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
-static int do_losetup(const struct config *, const unsigned int, struct HXbtree *, const unsigned char *, size_t);
+static int already_mounted(const struct config * const, const struct vol *, struct HXbtree *);
 static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
-static void log_pm_input(const struct config * const, const unsigned int);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
 static void run_lsof(const struct config * const, struct HXbtree *);
@@ -139,26 +136,25 @@ static void run_lsof(const struct config *const config,
 }
 
 
-/* already_mounted
+/**
+ * already_mounted -
  * @config:	current config
- * @vol:	volume index into @config->volume[]
+ * @vpt:	volume descriptor
  * @vinfo:
  *
  * Checks if @config->volume[@vol] is already mounted, and returns 1 if this
  * the case, 0 if not and -1 on error.
  */
 static int already_mounted(const struct config *const config,
-    const unsigned int vol, struct HXbtree *vinfo)
+    const struct vol *vpt, struct HXbtree *vinfo)
 #if defined(__linux__)
 {
 	char dev[PATH_MAX+1] = {}, real_mpt[PATH_MAX+1];
 	struct mntent *mtab_record;
 	bool mounted = false;
 	FILE *mtab;
-	struct vol *vpt;
 
 	assert(config_valid(config));
-	vpt = &config->volume[vol];
 	vol_to_dev(dev, sizeof(dev), vpt);
 
 	if ((mtab = setmntent("/etc/mtab", "r")) == NULL) {
@@ -365,9 +361,8 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 #endif
 
 static void log_pm_input(const struct config *const config,
-    const unsigned int vol)
+    const struct vol *vpt)
 {
-	const struct vol *vpt = &config->volume[vol];
 	hmc_t *options;
 
 	options = kvplist_to_str(&vpt->options);
@@ -489,27 +484,24 @@ static inline bool mkmountpoint(struct vol *volume, const char *d)
 /*
  * do_unmount
  * @config:	current config
- * @vol:	volume index into @config->vol[]
+ * @vpt:	volume descriptor
  * @vinfo:
  * @password:	always %NULL
  *
  * Returns zero on error, positive non-zero for success.
  */
-int do_unmount(const struct config *config, const unsigned int vol,
+int do_unmount(const struct config *config, struct vol *vpt,
     struct HXbtree *vinfo, const char *const password)
 {
 	int child_exit, _argc = 0, ret = 1, cstderr = -1;
 	pid_t pid = -1;
 	const char *_argv[MAX_PAR + 1];
-	const struct vol *vpt;
 	unsigned int i;
 	int type;
 
 	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
-
-	vpt = &config->volume[vol];
 
 	if (Debug)
 		/*
@@ -605,7 +597,7 @@ static int pipewrite(int fd, const void *buf, size_t count)
 	return fnval;
 }
 
-static int do_losetup(const struct config *config, const unsigned int vol,
+static int do_losetup(const struct config *config, const struct vol *vpt,
     struct HXbtree *vinfo, const unsigned char *password, size_t password_len)
 {
 /* PRE:    config points to a valid struct config
@@ -618,7 +610,6 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	int ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
 	const char *cipher, *keybits;
-	const struct vol *vpt;
 	unsigned int i;
 
 	assert(config_valid(config));
@@ -627,7 +618,6 @@ static int do_losetup(const struct config *config, const unsigned int vol,
 	/* password_len is unsigned */
 	assert(password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
-	vpt     = &config->volume[vol];
 	cipher  = kvplist_get(&vpt->options, "encryption");
 	keybits = kvplist_get(&vpt->options, "keybits");
 
@@ -703,7 +693,7 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 	return !WEXITSTATUS(child_exit);
 }
 
-static int check_filesystem(const struct config *config, const unsigned int vol,
+static int check_filesystem(const struct config *config, const struct vol *vpt,
     struct HXbtree *vinfo, const unsigned char *password, size_t password_len)
 {
 /* PRE:    config points to a valid struct config
@@ -716,7 +706,6 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	int child_exit, _argc = 0, cstdout = -1, cstderr = -1;
 	const char *_argv[MAX_PAR + 1];
 	const char *fsck_target;
-	const struct vol *vpt;
 	unsigned int i;
 
 	assert(config_valid(config));
@@ -725,7 +714,6 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 	assert(password_len >= 0 &&
 	       password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
-	vpt = &config->volume[vol];
 	fsck_target = vpt->volume;
 
 	if (config->command[CMD_FSCK][0] == NULL) {
@@ -739,7 +727,7 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 		return 1;
 
 	if (kvplist_contains(&vpt->options, "loop")) {
-		if (!do_losetup(config, vol, vinfo, password, password_len))
+		if (!do_losetup(config, vpt, vinfo, password, password_len))
 			return 0;
 		fsck_target = config->fsckloop;
 	} else {
@@ -781,13 +769,13 @@ static int check_filesystem(const struct config *config, const unsigned int vol,
 /*
  * do_mount -
  * @config:	current config
- * @vol:	volume index into @config->vol[]
+ * @vpt:	volume descriptor
  * @vinfo:
  * @password:
  *
  * Returns zero on error, positive non-zero for success.
  */
-int do_mount(const struct config *config, const unsigned int vol,
+int do_mount(const struct config *config, struct vol *vpt,
     struct HXbtree *vinfo, const char *password)
 {
 	const char *_argv[MAX_PAR + 1];
@@ -796,7 +784,6 @@ int do_mount(const struct config *config, const unsigned int vol,
 	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
 	char *mount_user;
 	pid_t pid = -1;
-	struct vol *vpt;
 	unsigned int i;
 	int ret;
 
@@ -804,8 +791,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 	assert(vinfo != NULL);
 	assert(password != NULL);
 
-	vpt = &config->volume[vol];
-	ret = already_mounted(config, vol, vinfo);
+	ret = already_mounted(config, vpt, vinfo);
 	if (ret == -1) {
 		l0g("could not determine if %s is already mounted, "
 		    "failing\n", vpt->volume);
@@ -875,7 +861,7 @@ int do_mount(const struct config *config, const unsigned int vol,
 		            config->command[vpt->type][i], vinfo);
 
 	if (vpt->type == CMD_LCLMOUNT &&
-	    !check_filesystem(config, vol, vinfo, _password, _password_len))
+	    !check_filesystem(config, vpt, vinfo, _password, _password_len))
 		l0g("error checking filesystem but will continue\n");
 	/* send password down pipe to mount process */
 	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
@@ -913,28 +899,25 @@ int do_mount(const struct config *config, const unsigned int vol,
 	return !WEXITSTATUS(child_exit);
 }
 
-/*
+/**
  * mount_op -
  * @mnt:	function to execute mount operations (do_mount or do_unmount)
- * @config:
- * @vol:	volume index into @config->volume[]
+ * @config:	current configuration
+ * @vpt:	volume descriptor
  * @password:	password string (may be %NULL on unmount)
  *
  * Returns zero on error, positive non-zero for success.
  * Note: Checked by volume_record_sane() and read_volume()
  */
 int mount_op(mount_op_fn_t *mnt, const struct config *config,
-    const unsigned int vol, const char *password)
+    struct vol *vpt, const char *password)
 {
 	int fnval;
 	struct HXbtree *vinfo;
-	const struct vol *vpt;
 	struct passwd *pe;
 	hmc_t *options;
 
 	assert(config_valid(config));
-
-	vpt = &config->volume[vol];
 
 	vinfo = HXformat_init();
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
@@ -959,9 +942,9 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	format_add(vinfo, "OPTIONS", options);
 
 	if (Debug)
-		log_pm_input(config, vol);
+		log_pm_input(config, vpt);
 
-	fnval = (*mnt)(config, vol, vinfo, password);
+	fnval = (*mnt)(config, vpt, vinfo, password);
 	hmc_free(options);
 	HXformat_free(vinfo);
 	return fnval;

@@ -47,7 +47,7 @@ AC_SUBST(regular_CFLAGS)
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 
-PKG_CHECK_MODULES([libHX], [libHX >= 1.17])
+PKG_CHECK_MODULES([libHX], [libHX >= 1.18])
 PKG_CHECK_MODULES([libxml], [libxml-2.0])
 AC_CHECK_HEADER(security/pam_modules.h, [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.

@@ -441,7 +441,7 @@ static int modify_pm_count(struct config *config, char *user,
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
     int argc, const char **argv)
 {
-	unsigned int vol;
+	struct vol *vol;
 	int ret;
 	unsigned int krb5_set;
 	char *system_authtok;
@@ -487,7 +487,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	} else
 		w4rn("%s does not exist or is not owned by user\n",
 		     Config.luserconf);
-	if (Config.volcount <= 0) {
+	if (Config.volume_list.items == 0) {
 		w4rn("no volumes to mount\n");
 		ret = PAM_SUCCESS;
 		goto out;
@@ -516,7 +516,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	misc_dump_id("Session open");
 
 	envpath_init(Config.path);
-	for (vol = 0; vol < Config.volcount; ++vol) {
+	HXlist_for_each_entry(vol, &Config.volume_list, list) {
 		/*
 		 * luserconf_volume_record_sane() is called here so that a user
 		 * can nest loopback images. otherwise ownership tests will
@@ -525,13 +525,13 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		 */
 		if (!volume_record_sane(&Config, vol))
 			continue;
-		if (!Config.volume[vol].globalconf &&
+		if (!vol->globalconf &&
 		    !luserconf_volume_record_sane(&Config, vol))
 			continue;
 		w4rn("about to perform mount operations\n");
 
 		if (!mount_op(do_mount, &Config, vol, system_authtok)) {
-			l0g("mount of %s failed\n", Config.volume[vol].volume);
+			l0g("mount of %s failed\n", vol->volume);
 			ret = PAM_SERVICE_ERR;
 		}
 	}
@@ -577,13 +577,14 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
     int flags, int argc, const char **argv)
 {
-	int ret = PAM_SUCCESS, vol;
+	int ret = PAM_SUCCESS;
+	struct vol *vol;
 	const char *pam_user = NULL;
 
 	assert(pamh != NULL);
 
 	w4rn("received order to close things\n");
-	if (Config.volcount == 0) {
+	if (Config.volume_list.items == 0) {
 		w4rn("No volumes to umount\n");
 		goto out;
 	}
@@ -613,11 +614,11 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 
 	envpath_init(Config.path);
 	if (modify_pm_count(&Config, Config.user, "-1") <= 0) {
-		for (vol = Config.volcount - 1; vol >= 0; --vol) {
+		HXlist_for_each_entry_rev(vol, &Config.volume_list, list) {
 			w4rn("going to unmount\n");
 			if (!mount_op(do_unmount, &Config, vol, NULL))
 				l0g("unmount of %s failed\n",
-				    Config.volume[vol].volume);
+				    vol->volume);
 		}
 	} else {
 		w4rn("%s seems to have other remaining open sessions\n",
