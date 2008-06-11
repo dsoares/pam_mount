@@ -1,6 +1,9 @@
 
 For details, see the history as recorded in the git repository.
 
+
+v0.40 (June 11 2008)
+====================
 - the documentation in pam_mount.conf.xml has been reworked and
   split off into pam_mount.conf(5).
 - extensive user selection for <volume> (revised)
