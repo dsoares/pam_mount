@@ -183,7 +183,7 @@ if [ ! -b "/dev/mapper/$DMDEVICE" ]; then
 fi;
 
 if [ "$DOFSCK" == "true" ]; then
-	fsck -p "/dev/mapper/$DMDEVICE";
+	${FSCK:-fsck -p} "/dev/mapper/$DMDEVICE";
 	if [ $? -gt 1 ]; then
 		echo "${0##*/}: filesystem $DMDEVICE has errors" >&2;
 		if [ "$LUKS" == true ]; then

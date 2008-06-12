@@ -757,6 +757,34 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 }
 
 /**
+ * mount_set_fsck - set the FSCK environment variable for mount.crypt
+ */
+static void mount_set_fsck(const struct config *config,
+    const struct vol *vol)
+{
+	hmc_t *string;
+	unsigned int i;
+
+	if (vol->type != CMD_CRYPTMOUNT)
+		return;
+
+	string = hmc_sinit("");
+	for (i = 0; config->command[CMD_FSCK][i] != NULL; ++i) {
+		const char *a = config->command[CMD_FSCK][i];
+
+		if (a[0] == '%' && a[1] == '(' && a[strlen(a)-1] == ')')
+			continue;
+
+		if (*string != '\0')
+			hmc_strcat(&string, " ");
+		hmc_strcat(&string, a);
+	}
+
+	setenv("FSCK", string, true);
+	hmc_free(string);
+}
+
+/**
  * do_mount -
  * @config:	current config
  * @vpt:	volume descriptor
@@ -856,6 +884,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 	/* send password down pipe to mount process */
 	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
 		setenv("PASSWD_FD", "0", 1);
+
+	mount_set_fsck(config, vpt);
 	log_argv(_argv);
 	mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
 	             vpt->user : NULL;
