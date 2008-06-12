@@ -63,7 +63,9 @@ static bool required_ok(const struct HXbtree *required,
 	const struct HXbtree_node *e;
 	void *t;
 
-	t = HXbtrav_init(required);
+	if ((t = HXbtrav_init(required)) == NULL)
+		return false;
+
 	while ((e = HXbtraverse(t)) != NULL)
 		if (!kvplist_contains(options, e->data)) {
 			l0g("option %s required\n",
@@ -97,7 +99,9 @@ static bool deny_ok(const struct HXbtree *denied,
 		return false;
 	}
 
-	t = HXbtrav_init(denied);
+	if ((t = HXbtrav_init(denied)) == NULL)
+		return false;
+
 	while ((e = HXbtraverse(t)) != NULL)
 		if (!kvplist_contains(options, e->data)) {
 			l0g("option %s denied\n",

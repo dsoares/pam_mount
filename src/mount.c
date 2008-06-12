@@ -919,7 +919,8 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 
 	assert(config_valid(config));
 
-	vinfo = HXformat_init();
+	if ((vinfo = HXformat_init()) == NULL)
+		return 0;
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
 	format_add(vinfo, "FSCKLOOP", config->fsckloop);
 	format_add(vinfo, "FSTYPE",   vpt->fstype);

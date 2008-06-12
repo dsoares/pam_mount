@@ -378,7 +378,10 @@ static int modify_pm_count(struct config *config, char *user,
 		fnval = -1;
 		goto nosigactout;
 	}
-	vinfo = HXformat_init();
+	if ((vinfo = HXformat_init()) == NULL) {
+		fnval = -1;
+		goto out;
+	}
 	format_add(vinfo, "USER", user);
 	format_add(vinfo, "OPERATION", operation);
 	misc_add_ntdom(vinfo, user);

@@ -247,7 +247,8 @@ static char *expand_user(const char *user, char *dest, size_t size)
 	if (dest == NULL)
 		l0g("expand_user_wildcard(dest=NULL), please fix\n");
 
-	vinfo = HXformat_init();
+	if ((vinfo = HXformat_init()) == NULL)
+		return NULL;
 	HXformat_add(vinfo, "USER", user, HXTYPE_STRING);
 	misc_add_ntdom(vinfo, user);
 	HXformat_sprintf(vinfo, dest, size, dest);
