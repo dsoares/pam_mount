@@ -14,6 +14,7 @@
 
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
@@ -128,6 +129,7 @@ static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode)
 
 	if (data != NULL) {
 		memset(data, 0, strlen(data));
+		munlock(data, strlen(data) + 1);
 		free(data);
 	}
 
@@ -311,6 +313,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		l0g("error trying to save authtok for session code\n");
 		goto out;
 	}
+	if (mlock(authtok, strlen(authtok) + 1) < 0)
+		w4rn("mlock authtok: %s\n", strerror(errno));
 	assert(ret != PAM_SUCCESS ||
 	       pam_get_data(pamh, "pam_mount_system_authtok", &tmp) ==
 	       PAM_SUCCESS);
