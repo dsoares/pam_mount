@@ -16,7 +16,7 @@ READLINK="`which readlink`";
 OPTIONS=""
 USAGE="dir"
 
-if [[ -n "$_PMT_DEBUG_LEVEL" -ge 2 ]]; then
+if [[ -n "$_PMT_DEBUG_LEVEL" && "$_PMT_DEBUG_LEVEL" -ge 2 ]]; then
 	set -x;
 fi;
 

@@ -18,7 +18,7 @@ USAGE="dev dir [-o options]
 
   -o options  set the mount options  [ $OPTIONS ]"
 
-if [[ "$_PMT_DEBUG_LEVEL" -ge 2 ]]; then
+if [[ -n "$_PMT_DEBUG_LEVEL" && "$_PMT_DEBUG_LEVEL" -ge 2 ]]; then
 	set -x;
 fi;
 
