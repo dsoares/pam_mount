@@ -35,14 +35,14 @@ conditions, described further below in the section "Extended user control".
 \fBuser="\fP\fIusername\fP\fB"\fP
 Limit the volume to the specified user, identified by name
 .TP
-\fBuid="\fP\fInumber\fP\fB"\fP or \fBuid="\fP\fInumber\fP\fB-\fP\fInumber\fP\fB"\fP
+\fBuid="\fP\fInumber\fP\fB"\fP or \fBuid="\fP\fInumber\fP\fB\-\fP\fInumber\fP\fB"\fP
 Limit the volume to the specified user(s), identified by UID or UID range.
 .TP
 \fBpgrp="\fP\fIgroupname\fP\fB"\fP
 Limit the volume to users which have the group identified by name as their
 primary group.
 .TP
-\fBgid="\fP\fInumber\fP\fB"\fP or \fBgid="\fP\fInumber\fP\fB-\fP\fInumber\fP\fB"\fP
+\fBgid="\fP\fInumber\fP\fB"\fP or \fBgid="\fP\fInumber\fP\fB\-\fP\fInumber\fP\fB"\fP
 Limit the volume to users which have the group(s) given by GID or GID range as
 a primary group.
 .TP
@@ -304,10 +304,10 @@ The single element within the <not> is logically negated.
 \fB<user>\fP\fIusername\fP\fB</user>\fP
 Match against the given username.
 .TP
-\fB<uid>\fP\fInumber\fP\fB</uid>\fP or \fB<uid>\fP\fInumber\fP\fB-\fP\fInumber\fP\fB</uid>\fP
+\fB<uid>\fP\fInumber\fP\fB</uid>\fP or \fB<uid>\fP\fInumber\fP\fB\-\fP\fInumber\fP\fB</uid>\fP
 Match the UID of the user logging in against a UID or UID range.
 .TP
-\fB<gid>\fP\fInumber\fP\fB</gid>\fP or \fB<gid>\fP\fInumber\fP\fB-\fP\fInumber\fP\fB</gid>\fP
+\fB<gid>\fP\fInumber\fP\fB</gid>\fP or \fB<gid>\fP\fInumber\fP\fB\-\fP\fInumber\fP\fB</gid>\fP
 Match the primary group of the user logging in against a GID or GID range.
 .TP
 \fB<pgrp>\fP\fIgroupname\fP\fB</pgrp>\fP
@@ -320,7 +320,8 @@ Check if the user logging in is a member of the group given by \fIname\fP
 .TP
 \fBicase="yes"\fP or \fBicase="no"\fP
 The \fBicase\fP attribute may be used on \fB<user>\fP, \fB<pgrp>\fP and
-\fB<sgrp>\fP to enable case-insensitive matching (or not). It defaults to "no".
+\fB<sgrp>\fP to enable case\-insensitive matching (or not). It defaults to
+"no".
 .SH Examples
 .PP
 Remember that \fB~\fP can be used in the mountpoint attribute to denote the
