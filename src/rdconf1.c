@@ -896,6 +896,27 @@ static int rc_volume_cond_gid(const struct passwd *pwd, xmlNode *node)
 	return -1;
 }
 
+static int __rc_volume_cond_pgrp(const char *group, unsigned int gid,
+    bool icase)
+{
+	const struct group *grp;
+
+	errno = 0;
+	grp   = getgrgid(gid);
+	if (grp == NULL) {
+		if (errno == 0)
+			return 0; /* just not found */
+
+		w4rn("getgrgid(%u) failed: %s\n", gid, strerror(errno));
+		return -1;
+	}
+
+	if (icase)
+		return strcasecmp(group, grp->gr_name) == 0;
+	else
+		return strcmp(group, grp->gr_name) == 0;
+}
+
 /**
  * rc_volume_cond_pgrp - handle <pgrp> element
  * @pwd:	user logging in
@@ -903,24 +924,15 @@ static int rc_volume_cond_gid(const struct passwd *pwd, xmlNode *node)
  */
 static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
 {
-	const struct group *grp;
 	xmlNode *parent = node;
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
 			continue;
 
-		if ((grp = getgrgid(pwd->pw_gid)) == NULL) {
-			w4rn("getgrgid(%ld) failed: %s\n",
-			     static_cast(long, pwd->pw_gid), strerror(errno));
-			return -1;
-		}
-
-		if (parse_bool_f(xmlGetProp_2s(parent, "icase")))
-			return strcasecmp(signed_cast(const char *,
-			       node->content), grp->gr_name) == 0;
-		else
-			return strcmp_1u(node->content, grp->gr_name) == 0;
+		return __rc_volume_cond_pgrp(
+		       signed_cast(const char *, node->content), pwd->pw_gid,
+		       parse_bool_f(xmlGetProp_2s(parent, "icase")));
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "pgrp");
@@ -1023,6 +1035,22 @@ static int rc_volume_cond_simple(const struct passwd *pwd, xmlNode *node)
 	}
 	if (gid != NULL) {
 		ret = __rc_volume_cond_id(gid, pwd->pw_gid);
+		if (ret < 0)
+			goto out;
+		for_me &= ret;
+	}
+	if (pgrp != NULL) {
+		ret = __rc_volume_cond_pgrp(pgrp, pwd->pw_gid, false);
+		if (ret < 0)
+			goto out;
+		for_me &= ret;
+	}
+	if (sgrp != NULL) {
+		ret = __rc_volume_cond_pgrp(sgrp, pwd->pw_gid, false);
+		if (ret < 0)
+			goto out;
+		for_me &= ret;
+		ret = user_in_sgrp(pwd->pw_name, sgrp, false);
 		if (ret < 0)
 			goto out;
 		for_me &= ret;
