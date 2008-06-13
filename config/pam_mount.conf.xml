@@ -6,16 +6,16 @@
 
 <pam_mount>
 
+
+		<!-- Volume definitions -->
+
+
+		<!-- pam_mount parameters: General tunables -->
+
 <debug enable="0" />
-
-<mkmountpoint enable="1" remove="true" />
-
-<fsckloop device="/dev/loop7" />
-
 <!--
 <luserconf name=".pam_mount.conf.xml" />
 -->
-
 <mntoptions allow="nosuid,nodev,loop,encryption,fsck,nonempty,allow_root,allow_other" />
 <!--
 <mntoptions deny="suid,dev" />
@@ -23,12 +23,30 @@
 <mntoptions deny="*" />
 -->
 <mntoptions require="nosuid,nodev" />
-
 <path>/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin</path>
+
+
+		<!-- pam_mount parameters: Volume-related -->
+
+<mkmountpoint enable="1" remove="true" />
+<fsckloop device="/dev/loop7" />
+
+
+		<!-- pam_mount parameters: Auxiliary programs -->
 
 <lsof>lsof %(MNTPT)</lsof>
 
 <fsck>fsck -p %(FSCKTARGET)</fsck>
+
+<fd0ssh>pmt-fd0ssh</fd0ssh>
+
+<pmvarrun>pmvarrun -u %(USER) -o %(OPERATION)</pmvarrun>
+
+<!-- mntcheck utility for BSDs which lack /etc/mtab -->
+<mntcheck>mount</mntcheck>
+
+
+		<!-- pam_mount parameters: Mount programs -->
 
 <losetup>losetup -p0 "%(before=\"-e\" CIPHER)"
 	"%(ifnempty=\"-k\" KEYBITS)" %(KEYBITS) %(FSCKLOOP) %(VOLUME)</losetup>
@@ -62,8 +80,6 @@
 
 <truecryptumount>truecrypt -d %(MNTPT)</truecryptumount>
 
-<fd0ssh>pmt-fd0ssh</fd0ssh>
-
 <umount>umount %(MNTPT)</umount>
 
 <!-- On OpenBSD try "/usr/local/bin/mount_ehd" (included in pam_mount
@@ -77,10 +93,6 @@ package). -->
 <nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)
 	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</nfsmount>
 
-<!-- mntcheck utility for BSDs which lack /etc/mtab -->
-<mntcheck>mount</mntcheck>
-
-<pmvarrun>pmvarrun -u %(USER) -o %(OPERATION)</pmvarrun>
 
 <!--
 Linux encrypted home directory examples, using dm_crypt:
@@ -166,6 +178,9 @@ following technique may be used (see also README):
 If FSKEYCIPHER is empty, then the user's login password is also the
 volume's password.
 -->
+
+
+		<!-- pam_mount parameters: Messages -->
 
 <msg-authpw>pam_mount password:</msg-authpw>
 
