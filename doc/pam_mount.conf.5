@@ -222,7 +222,7 @@ user sessions.
 Commands to mount/unmount volumes. They can take parameters, as shown. You can
 specify either absolute paths, or relative ones, in which case $PATH will be
 searched. Since login programs have differing default PATHs, pam_mount has its
-own path definition.
+own path definition (see above).
 .TP
 \fB<lclmount>\fP\fImount \-p0 \-t %(FSTYPE) ...\fP\fB</lclmount>\fP
 The regular mount program.
@@ -236,12 +236,18 @@ for encrypted volumes because the underlying device is not unmapped. Loopback
 devices are also affected by this (not being unmapped when files are still
 open). Also, unmount on SMB volumes needs to be called on %(MNTPT) and not
 %(VOLUME).
+.PP
+Commands for various mount programs. Not all have a dedicated umount
+helper because some do not need one.
 .TP
 \fB<losetup>\fP\fIlosetup ...\fP\fB</lsof>\fP
 .TP
 \fB<unlosetup>\fP\fIlosetup \-d ...\fP\fB</unlosetup\fP
 .TP
 \fB<cifsmount>\fP\fImount.cifs ...\fP\fB</cifsmount>\fP
+.TP
+\fB<cryptmount>\fP\fImount.crypt ...\fP\fB</cryptmount>\fP
+Mount helper for dm\-crypt and LUKS volumes.
 .TP
 \fB<davmount>\fP\fImount.davfs ...\fP\fB</davmount>\fP
 .TP
@@ -262,8 +268,6 @@ open). Also, unmount on SMB volumes needs to be called on %(MNTPT) and not
 \fB<truecryptmount>\fP\fItruecrypt ...\fP\fB</truecryptmount>\fP
 .TP
 \fB<truecryptumount>\fP\fItruecrypt \-d ...\fP\fB</truecryptumount>\fP
-Commands for various mount programs. Not all have a dedicated umount
-helper because some do not need one.
 .SS Messages
 .TP
 \fB<msg\-authpw>\fP\fIpam_mount password:\fP\fB</msg\-authpw>\fP
