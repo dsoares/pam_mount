@@ -156,12 +156,11 @@ tracing in mount.crypt.
 .TP
 \fB<luserconf name="\fP\fI.pam_mount.conf.xml\fP\fB" />\fP
 Individual users may define additional volumes (usually in
-~/.pam_mount.conf.xml) to mount if allowed by
-the master configuration file by the presence of the
-\fB<luserconf>\fP element. With it,
-users may mount and unmount any volumes they specify. The mount
-operation is executed under the user account, not with root permissions.
-You also need at least an allow or deny option list (see <mntoptions>).
+~/.pam_mount.conf.xml) to mount if allowed by the master configuration file by
+the presence of the \fB<luserconf>\fP element. With it, users may mount and
+unmount any volumes they specify. The mount operation is executed under the
+user account, not with root permissions. You also need at least an allow or
+deny option list (see <mntoptions>).
 .TP
 \fB<mntoptions allow="\fP\fIoptions,...\fP\fB" />\fP
 The <mntoptions> elements determine which options may be specified in per\-user
@@ -181,6 +180,9 @@ distributions, and so, pam_mount provides its own set of sane defaults which
 you may change at will.
 .SS Volume\-related
 .TP
+\fB<fsckloop device="\fP\fI/dev/loop7\fP\fB" />\fP
+Specify the device used when checking loopback mounts. (This seems unused.)
+.TP
 \fB<mkmountpoint enable="1" remove="true" />\fP
 Controls automatic creation and removal of mountpoints. If a mountpoint does
 not exist when the volume is about to be mounted, pam_mount can be instructed
@@ -188,15 +190,16 @@ to create one using the \fBenable\fP attribute. Normally, directories created
 this way are retained after logout, but \fBremove\fP may be set to \fBtrue\fP
 to remove the mountpoint again, \fIbut only\fP if it was automatically created
 by pam_mount in the same session before.
-.TP
-\fB<fsckloop device="\fP\fI/dev/loop7\fP\fB" />\fP
-Specify the device used when checking loopback mounts. (This seems unused.)
 .SS Auxiliary programs
 .PP
 Some mount programs need special default parameters to properly function. It is
 good practice to specify uid= for CIFS for example, because it is mounted as
 root and would otherwise show files belonging to root instead of the user
 logging in.
+.TP
+\fB<fd0ssh>\fP\fIprogram...\fP\fB</fd0ssh>\fP
+fd0ssh is a hack around OpenSSH that essentially makes it read passwords from
+stdin even though OpenSSH normally does not do that.
 .TP
 \fB<fsck>\fP\fIfsck -p %(FSCKTARGET)\fP\fB</fsck>\fP
 Local volumes will be checked before mounting if this program is set.
@@ -207,17 +210,13 @@ on logout thus preventing successful unmounting of the volume when pam_mount
 would normally close the filesystem. (I.e. when the last login session is
 closed.)
 .TP
-\fB<fd0ssh>\fP\fIprogram...\fP\fB</fd0ssh>\fP
-fd0ssh is a hack around OpenSSH that essentially makes it read passwords from
-stdin even though OpenSSH normally does not do that.
+\fB<mntcheck>\fP\fImntcheck ...\fP\fB</mntcheck>\fP
+Originally intended for use on BSD to check if a volume was mounted. Currently
+unused.
 .TP
 \fB<pmvarrun>\fP\fIpmvarrun ...\fP\fB</pmvarrun>\fP
 \fBpmvarrun\fP(8) is a separate program to manage the reference count tracking
 user sessions.
-.TP
-\fB<mntcheck>\fP\fImntcheck ...\fP\fB</mntcheck>\fP
-Originally intended for use on BSD to check if a volume was mounted. Currently
-unused.
 .SS Mount programs
 .PP
 Commands to mount/unmount volumes. They can take parameters, as shown. You can
@@ -242,23 +241,23 @@ open). Also, unmount on SMB volumes needs to be called on %(MNTPT) and not
 .TP
 \fB<unlosetup>\fP\fIlosetup \-d ...\fP\fB</unlosetup\fP
 .TP
-\fB<nfsmount>\fP\fImount %(SERVER):%(VOLUME) ...\fP\fB</nfsmount>\fP
-.TP
 \fB<cifsmount>\fP\fImount.cifs ...\fP\fB</cifsmount>\fP
 .TP
 \fB<davmount>\fP\fImount.davfs ...\fP\fB</davmount>\fP
 .TP
-\fB<smbmount>\fP\fIsmbmount ...\fP\fB</smbmount>\fP
+\fB<fusemount>\fP\fImount.fuse ...\fP\fB</fusemount>\fP
 .TP
-\fB<smbumount>\fP\fIsmbumount ...\fP\fB</smbumount>\fP
+\fB<fuseumount>\fP\fIfuserumount ...\fP\fB</fuseumount>\fP
 .TP
 \fB<ncpmount>\fP\fIncpmount ...\fP\fB</ncpmount>\fP
 .TP
 \fB<ncpumount>\fP\fIncpumount ...\fP\fB</ncpumount>\fP
 .TP
-\fB<fusemount>\fP\fImount.fuse ...\fP\fB</fusemount>\fP
+\fB<nfsmount>\fP\fImount %(SERVER):%(VOLUME) ...\fP\fB</nfsmount>\fP
 .TP
-\fB<fuseumount>\fP\fIfuserumount ...\fP\fB</fuseumount>\fP
+\fB<smbmount>\fP\fIsmbmount ...\fP\fB</smbmount>\fP
+.TP
+\fB<smbumount>\fP\fIsmbumount ...\fP\fB</smbumount>\fP
 .TP
 \fB<truecryptmount>\fP\fItruecrypt ...\fP\fB</truecryptmount>\fP
 .TP

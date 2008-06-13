@@ -28,25 +28,32 @@
 
 		<!-- pam_mount parameters: Volume-related -->
 
-<mkmountpoint enable="1" remove="true" />
 <fsckloop device="/dev/loop7" />
+<mkmountpoint enable="1" remove="true" />
 
 
 		<!-- pam_mount parameters: Auxiliary programs -->
 
-<lsof>lsof %(MNTPT)</lsof>
+<fd0ssh>pmt-fd0ssh</fd0ssh>
 
 <fsck>fsck -p %(FSCKTARGET)</fsck>
 
-<fd0ssh>pmt-fd0ssh</fd0ssh>
-
-<pmvarrun>pmvarrun -u %(USER) -o %(OPERATION)</pmvarrun>
+<lsof>lsof %(MNTPT)</lsof>
 
 <!-- mntcheck utility for BSDs which lack /etc/mtab -->
 <mntcheck>mount</mntcheck>
 
+<pmvarrun>pmvarrun -u %(USER) -o %(OPERATION)</pmvarrun>
+
 
 		<!-- pam_mount parameters: Mount programs -->
+
+<!-- On OpenBSD try "/usr/local/bin/mount_ehd" (included in pam_mount
+package). -->
+<lclmount>mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
+	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</lclmount>
+
+<umount>umount %(MNTPT)</umount>
 
 <losetup>losetup -p0 "%(before=\"-e\" CIPHER)"
 	"%(ifnempty=\"-k\" KEYBITS)" %(KEYBITS) %(FSCKLOOP) %(VOLUME)</losetup>
@@ -56,42 +63,37 @@
 <cifsmount>mount -t cifs //%(SERVER)/%(VOLUME) %(MNTPT) -o
     "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</cifsmount>
 
+<cryptmount>mount.crypt "%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)
+	%(VOLUME) %(MNTPT)</cryptmount>
+
 <davmount>mount -t davfs %(SERVER)/%(VOLUME) %(MNTPT) -o
 	"username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\"
 	OPTIONS)"</davmount>
-
-<smbmount>smbmount //%(SERVER)/%(VOLUME) %(MNTPT) -o
-    "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</smbmount>
-
-<smbumount>smbumount %(MNTPT)</smbumount>
-
-<ncpmount>ncpmount %(SERVER)/%(USER) %(MNTPT) -o
-    "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)"</ncpmount>
-
-<ncpumount>ncpumount %(MNTPT)</ncpumount>
 
 <fusemount>mount.fuse %(VOLUME) %(MNTPT)
 	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</fusemount>
 
 <fuseumount>fusermount -u %(MNTPT)</fuseumount>
 
+<ncpmount>ncpmount %(SERVER)/%(USER) %(MNTPT) -o
+    "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)"</ncpmount>
+
+<ncpumount>ncpumount %(MNTPT)</ncpumount>
+
+<nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)
+	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</nfsmount>
+
+<smbmount>smbmount //%(SERVER)/%(VOLUME) %(MNTPT) -o
+    "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</smbmount>
+
+<smbumount>smbumount %(MNTPT)</smbumount>
+
 <!-- Only for truecrypt 4.x -->
 <truecryptmount>truecrypt %(VOLUME) %(MNTPT)</truecryptmount>
 
 <truecryptumount>truecrypt -d %(MNTPT)</truecryptumount>
 
-<umount>umount %(MNTPT)</umount>
 
-<!-- On OpenBSD try "/usr/local/bin/mount_ehd" (included in pam_mount
-package). -->
-<lclmount>mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
-	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</lclmount>
-
-<cryptmount>mount.crypt "%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)
-	%(VOLUME) %(MNTPT)</cryptmount>
-
-<nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)
-	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</nfsmount>
 
 
 <!--
