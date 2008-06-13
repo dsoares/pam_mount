@@ -174,6 +174,11 @@ mounts. (Does not apply to the master file.)
 \fB<mntoptions require="\fP\fIoptions,...\fP\fB" />\fP
 All options listed in require must appear in the option list of per\-user
 mounts. (Does not apply to the master file.)
+.TP
+\fB<path>\fP\fIdirectories...\fP\fB</path>\fP
+The default for the PATH environmental variable is not consistent across
+distributions, and so, pam_mount provides its own set of sane defaults which
+you may change at will.
 .SS Volume\-related
 .TP
 \fB<mkmountpoint enable="1" remove="true" />\fP
@@ -186,17 +191,15 @@ by pam_mount in the same session before.
 .TP
 \fB<fsckloop device="\fP\fI/dev/loop7\fP\fB" />\fP
 Specify the device used when checking loopback mounts. (This seems unused.)
-.TP
-\fB<path>\fP\fIdirectories...\fP\fB</path>\fP
-The default for the PATH environmental variable is not consistent across
-distributions, and so, pam_mount provides its own set of sane defaults which
-you may change at will.
 .SS Auxiliary programs
 .PP
 Some mount programs need special default parameters to properly function. It is
 good practice to specify uid= for CIFS for example, because it is mounted as
 root and would otherwise show files belonging to root instead of the user
 logging in.
+.TP
+\fB<fsck>\fP\fIfsck -p %(FSCKTARGET)\fP\fB</fsck>\fP
+Local volumes will be checked before mounting if this program is set.
 .TP
 \fB<lsof>\fP\fIprogram...\fP\fB</lsof>\fP
 lsof is used for debugging only, to show what processes hold which files open
