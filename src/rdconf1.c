@@ -1008,8 +1008,13 @@ static int rc_volume_cond_simple(const struct passwd *pwd, xmlNode *node)
 	    pgrp == NULL && sgrp == NULL)
 		return -1;
 
-	if (user != NULL)
-		for_me &= strcmp(pwd->pw_name, user) == 0;
+	if (user != NULL) {
+		if (strcmp(user, "*") != 0)
+			for_me &= strcmp(pwd->pw_name, user) == 0;
+		else if (pwd->pw_uid == 0 || strcmp(pwd->pw_name, "root") == 0)
+			/* The wildcard never matches root */
+			for_me &= false;
+	}
 	if (uid != NULL) {
 		ret = __rc_volume_cond_id(uid, pwd->pw_uid);
 		if (ret < 0)
