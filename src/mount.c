@@ -511,6 +511,9 @@ int do_unmount(const struct config *config, struct vol *vpt,
 		run_lsof(config, vinfo);
 
 	switch (vpt->type) {
+		case CMD_CRYPTMOUNT:
+			type = CMD_CRYPTUMOUNT;
+			break;
 		case CMD_SMBMOUNT:
 			type = CMD_SMBUMOUNT;
 			break;
@@ -534,15 +537,6 @@ int do_unmount(const struct config *config, struct vol *vpt,
 	for (i = 0; config->command[type][i] != NULL; ++i)
 		add_to_argv(_argv, &_argc, config->command[type][i], vinfo);
 
-	/*
-	 * FIXME: ugly hack to support umount.crypt script. I hope that
-	 * util-linux will have native dm_crypt support some day.
-	 */
-	if (vpt->type == CMD_CRYPTMOUNT) {
-		_argc = 0;
-		add_to_argv(_argv, &_argc, "/sbin/umount.crypt", vinfo);
-		add_to_argv(_argv, &_argc, "%(MNTPT)", vinfo);
-	}
 	log_argv(_argv);
 	if (!spawn_start(_argv, &pid, NULL, NULL, &cstderr, set_myuid, NULL)) {
 		ret = 0;
