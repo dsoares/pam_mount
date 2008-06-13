@@ -124,13 +124,13 @@ static void clean_config(pam_handle_t *pamh, void *data, int err)
  */
 static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode)
 {
-	w4rn("clean system authtok (%d)\n", errcode);
-/*
+	w4rn("clean system authtok=%p (%d)\n", data, errcode);
+
 	if (data != NULL) {
 		memset(data, 0, strlen(data));
 		free(data);
 	}
-*/
+
 	return;
 }
 
@@ -304,7 +304,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		ret = PAM_AUTH_ERR;
 		goto out;
 	}
-	w4rn("saving authtok for session code\n");
+	w4rn("saving authtok for session code (authtok=%p)\n", authtok);
 	ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
 	                   clean_system_authtok);
 	if (ret != PAM_SUCCESS) {
