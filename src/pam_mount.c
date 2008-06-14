@@ -128,8 +128,9 @@ static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode)
 	w4rn("clean system authtok=%p (%d)\n", data, errcode);
 
 	if (data != NULL) {
-		memset(data, 0, strlen(data));
-		munlock(data, strlen(data) + 1);
+		unsigned int len = strlen(data) + 1;
+		memset(data, 0, len);
+		munlock(data, len);
 		free(data);
 	}
 
