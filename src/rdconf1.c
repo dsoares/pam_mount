@@ -729,7 +729,7 @@ static int rc_volume_cond_and(const struct passwd *pwd, xmlNode *node)
  */
 static int rc_volume_cond_or(const struct passwd *pwd, xmlNode *node)
 {
-	unsigned int count;
+	unsigned int count = 0;
 	int ret;
 
 	for (node = node->children; node != NULL; node = node->next) {
@@ -794,7 +794,7 @@ static int rc_volume_cond_xor(const struct passwd *pwd, xmlNode *node)
 static int rc_volume_cond_not(const struct passwd *pwd, xmlNode *node)
 {
 	unsigned int count = 0;
-	bool ret;
+	bool ret = true;
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_ELEMENT_NODE)
@@ -948,6 +948,7 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 {
 	const struct group *grp;
 	xmlNode *parent = node;
+	int ret;
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
@@ -959,8 +960,9 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 			return -1;
 		}
 
-		if (rc_volume_cond_pgrp(pwd, node))
-			return true;
+		ret = rc_volume_cond_pgrp(pwd, parent);
+		if (ret < 0 || ret > 0)
+			return ret;
 		return user_in_sgrp(pwd->pw_name,
 		       signed_cast(const char *, node->content),
 		       parse_bool_f(xmlGetProp_2s(parent, "icase")));
