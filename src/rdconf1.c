@@ -729,7 +729,7 @@ static int rc_volume_cond_and(const struct passwd *pwd, xmlNode *node)
  */
 static int rc_volume_cond_or(const struct passwd *pwd, xmlNode *node)
 {
-	unsigned int count;
+	unsigned int count = 0;
 	int ret;
 
 	for (node = node->children; node != NULL; node = node->next) {
@@ -794,7 +794,7 @@ static int rc_volume_cond_xor(const struct passwd *pwd, xmlNode *node)
 static int rc_volume_cond_not(const struct passwd *pwd, xmlNode *node)
 {
 	unsigned int count = 0;
-	bool ret;
+	bool ret = true;
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_ELEMENT_NODE)
