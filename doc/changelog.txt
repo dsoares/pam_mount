@@ -2,6 +2,16 @@
 For details, see the history as recorded in the git repository.
 
 
+v0.41 (June 17 2008)
+====================
+This is a stable release, no new features, bugfixes only.
+Fixes regressions found in 0.39 and 0.40. Most important changes:
+- add missing pgrp/sgrp attribute handling for simple user control
+- mount.crypt: handle arbitrary argument order
+- correct extended sgrp handling
+- manpages: add missing description for <fsck>, and reorder <path>
+
+
 v0.40 (June 11 2008)
 ====================
 - the documentation in pam_mount.conf.xml has been reworked and
