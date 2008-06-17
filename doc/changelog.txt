@@ -6,6 +6,9 @@ v0.41 (June 17 2008)
 ====================
 This is a stable release, no new features, bugfixes only.
 Fixes regressions found in 0.39 and 0.40. Most important changes:
+- bypass /sbin/mount for mount.crypt
+- umount.crypt: fix expression syntax for _PMT_DEBUG_LEVEL
+- re-add support for user="*" wildcard
 - add missing pgrp/sgrp attribute handling for simple user control
 - mount.crypt: handle arbitrary argument order
 - correct extended sgrp handling
