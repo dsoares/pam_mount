@@ -56,7 +56,6 @@ static void sslerror(const char *msg)
 	unsigned long err = ERR_get_error();
 	if (err != 0)
 		l0g("%s: %s", msg, ERR_error_string(err, NULL));
-	return;
 }
 
 /**

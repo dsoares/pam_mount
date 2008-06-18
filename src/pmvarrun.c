@@ -84,7 +84,6 @@ static void set_defaults(struct settings *settings)
 {
 	*settings->user     = '\0';
 	settings->operation = 1;
-	return;
 }
 
 /*
@@ -155,7 +154,6 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 			break;
 	    }
 	}
-	return;
 }
 
 /**

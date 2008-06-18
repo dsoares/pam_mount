@@ -94,7 +94,6 @@ static void log_output(int fd, const char *cmsg)
 		} while (fgets(buf, sizeof(buf), fp) != NULL);
 	}
 	fclose(fp);
-	return;
 }
 
 /**
@@ -132,7 +131,6 @@ static void run_lsof(const struct config *const config,
 	if (waitpid(pid, NULL, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	return;
 }
 
 
@@ -322,7 +320,6 @@ static void vol_to_dev(char *match, size_t s, const struct vol *vol)
 		match[s-1] = '\0';
 		break;
 	}
-	return;
 }
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -379,7 +376,6 @@ static void log_pm_input(const struct config *const config,
 	w4rn("use_fstab:     %d\n", vpt->use_fstab);
 	w4rn("----------------------\n");
 	hmc_free(options);
-	return;
 }
 
 /**

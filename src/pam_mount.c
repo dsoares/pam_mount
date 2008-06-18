@@ -93,7 +93,6 @@ static void parse_pam_args(int argc, const char **argv)
 		else
 			w4rn("bad pam_mount option \"%s\"\n", argv[i]);
 	}
-	return;
 }
 
 /**
@@ -109,7 +108,6 @@ static void clean_config(pam_handle_t *pamh, void *data, int err)
 {
 	w4rn("Clean global config (%d)\n", err);
 	freeconfig(data);
-	return;
 }
 
 /**
@@ -133,8 +131,6 @@ static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode)
 		munlock(data, len);
 		free(data);
 	}
-
-	return;
 }
 
 /**
@@ -336,7 +332,6 @@ static void envpath_init(const char *new_path)
 {
 	envpath_saved = getenv("PATH");
 	setenv("PATH", new_path, true);
-	return;
 }
 
 static void envpath_restore(void)
@@ -345,7 +340,6 @@ static void envpath_restore(void)
 		unsetenv("PATH");
 	else
 		setenv("PATH", envpath_saved, true);
-	return;
 }
 
 /**

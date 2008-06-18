@@ -129,7 +129,6 @@ void freeconfig(struct config *config)
 	free(config->msg_authpw);
 	free(config->msg_sessionpw);
 	free(config->path);
-	return;
 }
 
 void initconfig(struct config *config)
@@ -159,7 +158,6 @@ void initconfig(struct config *config)
 	config->options_deny    = HXbtree_init(flags);
 
 	HXclist_init(&config->volume_list);
-	return;
 }
 
 bool readconfig(const char *file, bool global_conf, struct config *config)

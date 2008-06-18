@@ -41,7 +41,6 @@ void misc_dump_id(const char *where)
 	     static_cast(unsigned int, geteuid()),
 	     static_cast(unsigned int, getgid()),
 	     static_cast(unsigned int, getegid()));
-	return;
 }
 
 /**
@@ -65,7 +64,6 @@ void misc_log(const char *format, ...)
 	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
-	return;
 }
 
 /**
@@ -89,7 +87,6 @@ void misc_warn(const char *format, ...)
 	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
-	return;
 }
 
 /**
@@ -274,7 +271,6 @@ void log_argv(const char *const *argv)
 
 	w4rn("command: %s\n", str);
 	hmc_free(str);
-	return;
 }
 
 /**
@@ -315,7 +311,6 @@ void add_to_argv(const char **argv, int *const argc, const char *const arg,
 
 	argv[*argc]   = filled;
 	argv[++*argc] = NULL;
-	return;
 }
 
 /**
@@ -370,7 +365,6 @@ void set_myuid(const char *user)
 		setenv("USER", real_user->pw_name, 1);
 	}
 	misc_dump_id("set_myuid<post>");
-	return;
 }
 
 /**
@@ -418,5 +412,4 @@ void misc_add_ntdom(struct HXbtree *v, const char *user)
 
 	HXformat_add(v, "DOMAIN_NAME", domain, HXTYPE_STRING | HXFORMAT_IMMED);
 	HXformat_add(v, "DOMAIN_USER", domain_user, HXTYPE_STRING);
-	return;
 }

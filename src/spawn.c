@@ -75,7 +75,6 @@ static void spawn_close_pipes(int (*p)[2])
 	close(p[1][1]);
 	close(p[2][0]);
 	close(p[2][1]);
-	return;
 }
 
 /**
