@@ -3,14 +3,6 @@
 Known Issues with other programs
 ================================
 
-[ davfs2 - password passing ]
-
-The unmodified davfs mount program will not work with pam_mount because
-it cannot be driven non-interactively. (/etc/davfs2.secrets is not
-really an option since it would expose your password again, and in
-plaintext at that.)
-
-
 [ gksu & kdesu ]
 
 gksu interprets any output on stderr as an error. pam_mount writes

@@ -68,10 +68,6 @@ package). -->
 
 <cryptumount>umount.crypt %(MNTPT)</cryptumount>
 
-<davmount>mount -t davfs %(SERVER)/%(VOLUME) %(MNTPT) -o
-	"username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\"
-	OPTIONS)"</davmount>
-
 <fusemount>mount.fuse %(VOLUME) %(MNTPT)
 	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</fusemount>
 

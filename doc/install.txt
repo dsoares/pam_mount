@@ -28,4 +28,3 @@ Suggested packages for runtime:
 	* sshfs -- SFTP-over-SSH
 	* ccgfs -- ccgfs-over-SSH (full operation support; mknod, acl, xattrs)
 	* cifs-mount -- for CIFS and SMB shares
-	* davfs2 -- HTTP/WebDAV (needs pam_mount patch)

@@ -1,6 +1,6 @@
 <!ELEMENT pam-mount
 	(debug?,mkmountpoint?,fsckloop?,luserconf?,mntoptions*,
-	path?,lsof?,fsck?,losetup?,unlosetup?,cifsmount?,davmount?,
+	path?,lsof?,fsck?,losetup?,unlosetup?,cifsmount?,
 	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
 	fuseumount?,truecryptmount?,truecryptumount?,fd0ssh?,umount?,
 	lclmount?,cryptmount?,nfsmount?,mntcheck?,pmvarrun?,
@@ -33,7 +33,6 @@
 <!ELEMENT losetup (#PCDATA)>
 <!ELEMENT unlosetup (#PCDATA)>
 <!ELEMENT cifsmount (#PCDATA)>
-<!ELEMENT davmount (#PCDATA)>
 <!ELEMENT smbmount (#PCDATA)>
 <!ELEMENT smbumount (#PCDATA)>
 <!ELEMENT ncpmount (#PCDATA)>

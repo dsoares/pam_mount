@@ -1229,7 +1229,6 @@ static const struct pmt_command default_command[] = {
 	{CMD_SMBMOUNT,   "smbfs", "smbmount",   {"smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_SMBUMOUNT,  "smbfs", "smbumount",  {"smbumount", "%(MNTPT)", NULL}},
 	{CMD_CIFSMOUNT,  "cifs",  "cifsmount",  {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_DAVMOUNT,   "davfs", "davmount",   {"mount", "-t", "davfs", "%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_NCPMOUNT,   "ncpfs", "ncpmount",   {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
 	{CMD_NCPUMOUNT,  "ncpfs", "ncpumount",  {"ncpumount", "%(MNTPT)", NULL}},
 	{CMD_FUSEMOUNT,  "fuse",  "fusemount",  {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o \" OPTIONS)", NULL}},
@@ -1261,7 +1260,6 @@ static const struct pmt_command default_command[] = {
 static const struct callbackmap cf_tags[] = {
 	{"cifsmount",       rc_command,             CMD_CIFSMOUNT},
 	{"cryptmount",      rc_command,             CMD_CRYPTMOUNT},
-	{"davmount",        rc_command,             CMD_DAVMOUNT},
 	{"debug",           rc_debug,               CMD_NONE},
 	{"fd0ssh",          rc_command,             CMD_FD0SSH},
 	{"fsckloop",        rc_fsckloop,            CMD_NONE},

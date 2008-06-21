@@ -1,6 +1,8 @@
 
 For details, see the history as recorded in the git repository.
 
+- remove davfs support
+
 
 v0.41 (June 17 2008)
 ====================

@@ -65,7 +65,7 @@ fstype attribute implies \fBfstype="auto"\fP. Note that mounting with \fBauto\fP
 may fail if the filesystem kernel module is not loaded yet, since \fBmount\fP(8)
 will check /proc/partitions.
 .IP ""
-The fstypes \fBcifs\fP, \fBdavfs\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP and
+The fstypes \fBcifs\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP and
 \fBtruecrypt\fP are overriden by pam_mount and we call the respective helpers
 directly without going thorugh \fBmount\fP(8), to have access to more options
 of the helper programs.
@@ -251,8 +251,6 @@ helper because some do not need one.
 \fB<cryptumount>\fP\fIumount.crypt %(MNTPT)\fP\fB</cryptumount>\fP
 Mount helpers for dm\-crypt and LUKS volumes.
 .TP
-\fB<davmount>\fP\fImount.davfs ...\fP\fB</davmount>\fP
-.TP
 \fB<fusemount>\fP\fImount.fuse ...\fP\fB</fusemount>\fP
 .TP
 \fB<fuseumount>\fP\fIfuserumount ...\fP\fB</fuseumount>\fP
@@ -356,10 +354,6 @@ mountpoint="/home/user/krueger" />
 .PP
 <volume user="user" fstype="ncpfs" server="krueger" path="public"
 mountpoint="/home/user/krueger" options="user=user.context" />
-.SS DAVFS
-.PP
-<volume fstype="davfs" server="https://inkscape.svn.sourceforge.net/"
-path="/svnroot/inkscape/trunk" mountpoint="/projects/inkscape" />
 .SS Bind mounts
 .PP
 This may come useful in conjunction with pam_chroot:
