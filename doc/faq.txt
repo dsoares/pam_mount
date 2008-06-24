@@ -107,47 +107,10 @@ Q.  Why does pam_mount not work right with OpenSSH?
 
 A.  As of version 3.3, sshd has a feature called privilege separation
     that is incompatible with PAM modules needing root privileges. In
-    addition, OpenSSH does not use PAM by default. Read the OpenSSH
-    documentation on privilege separation because messing with it may
-    have security implications.
+    addition, OpenSSH does not use PAM by default. OpenSSH before 4.9
+    does not properly deal with PAM. See bugs.txt.
 
-    In order to cause sshd to use PAM, add the following to sshd_config:
-
-        PAMAuthenticationViaKbdInt yes
-
-    If you wish to use sshd with pam_mount either turn of privelege
-    separation in /etc/ssh/sshd_config (UsePrivilegeSeparation no) or
-    ensure that pam_mount can operate without root privileges.
-    Specifying volumes using /etc/fstab and allowing users to mount and
-    unmount them using the user option may help pam_mount to perform
-    without root privileges:
-
-        # /etc/security/pam_mount.conf.xml:
-        <volume user="xyz" path="/home/user.img" />
-
-        # /etc/fstab:
-        /home/user.img /home/user ext2 user,loop,encryption=aes,keybits=256,noauto 0 0
-
-    Please let me know if you have a better idea allowing pam_mount to
-    work with privilege separation.
-
-    In addition, Peter Astrand says:
-
-        RedHat uses a patched version of OpenSSH, which always starts
-        off with calling PAM with bogus auth info. The idea is that
-        successful logins should take the same amount of time as
-        unsuccessful logins. See
-        https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=101157.
-        The problem is that pam_mount catches the first (empty)
-        password, and not the real one. Thus, the mount fails.
-
-    I have found a solution to this problem: I have rearranged my
-    system-auth file like this:
-
-        auth optional   /lib/security/pam_mount.so
-        auth required   /lib/security/pam_env.so
-        auth sufficient /lib/security/pam_unix.so likeauth nullok use_first_pass
-        auth required   /lib/security/pam_deny.so
+    [...]
 
     Finally, Darren Tucker has explained:
 
