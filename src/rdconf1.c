@@ -49,6 +49,11 @@ enum {
 	CMDA_PATH,
 };
 
+enum {
+	OPT_TREE_FLAGS =
+		HXBT_MAP | HXBT_CKEY | HXBT_SCMP | HXBT_CID,
+};
+
 struct callbackmap {
 	const char *name;
 	const char *(*func)(xmlNode *, struct config *, unsigned int);
@@ -69,6 +74,7 @@ static int rc_volume_cond_ext(const struct passwd *, xmlNode *);
 /* Variables */
 static const struct callbackmap cf_tags[];
 static const struct pmt_command default_command[];
+static bool onetime_options_allow, onetime_options_require;
 
 //-----------------------------------------------------------------------------
 /**
@@ -131,11 +137,78 @@ void freeconfig(struct config *config)
 	free(config->path);
 }
 
+/**
+ * str_to_optlist -
+ * @optlist:	destination list
+ * @str:	string to parse
+ *
+ * Break down @str into its option. This function modifies @str in-place.
+ * This is ok, since it is already an allocated string (i.e. does belong to
+ * pam_mount). Caller frees it anyway right away.
+ */
+static bool str_to_optkv(struct HXclist_head *optlist, char *str)
+{
+	char *value, *ptr;
+	struct kvp *kvp;
+
+	if (str == NULL || *str == '\0')
+		return true;
+
+	while ((ptr = HX_strsep(&str, ",")) != NULL) {
+		kvp = xmalloc(sizeof(struct kvp));
+		if (kvp == NULL)
+			return false;
+		HXlist_init(&kvp->list);
+		value = strchr(ptr, '=');
+		if (value != NULL) {
+			*value++ = '\0';
+			kvp->key   = xstrdup(ptr);
+			kvp->value = xstrdup(value);
+			if (kvp->key == NULL || kvp->value == NULL)
+				goto out;
+			HXclist_push(optlist, &kvp->list);
+		} else {
+			kvp->key = xstrdup(ptr);
+			if (kvp->key == NULL)
+				goto out;
+			kvp->value = NULL;
+			HXclist_push(optlist, &kvp->list);
+		}
+	}
+
+	return true;
+ out:
+	free(kvp->key);
+	free(kvp->value);
+	free(kvp);
+	return false;
+}
+
+static bool str_to_optlist(struct HXbtree *optlist, char *str)
+{
+	char *value, *ptr;
+
+	if (str == NULL || *str == '\0')
+		return true;
+
+	while ((ptr = HX_strsep(&str, ",")) != NULL) {
+		value = strchr(ptr, '=');
+		if (value != NULL) {
+			*value++ = '\0';
+			HXbtree_add(optlist, ptr, value);
+		} else {
+			HXbtree_add(optlist, ptr, NULL);
+		}
+	}
+
+	return true;
+}
+
 void initconfig(struct config *config)
 {
 	unsigned int i, j;
-	static const unsigned int flags =
-		HXBT_MAP | HXBT_CKEY | HXBT_SCMP | HXBT_CID;
+	char options_allow[]   = "nosuid,nodev";
+	char options_require[] = "nosuid,nodev";;
 
 	memset(config, 0, sizeof(*config));
 	config->debug      = true;
@@ -153,10 +226,11 @@ void initconfig(struct config *config)
 			config->command[default_command[i].type][j] =
 				xstrdup(default_command[i].def[j]);
 
-	config->options_allow   = HXbtree_init(flags);
-	config->options_require = HXbtree_init(flags);
-	config->options_deny    = HXbtree_init(flags);
-
+	config->options_allow   = HXbtree_init(OPT_TREE_FLAGS);
+	config->options_require = HXbtree_init(OPT_TREE_FLAGS);
+	config->options_deny    = HXbtree_init(OPT_TREE_FLAGS);
+	str_to_optlist(config->options_allow, options_allow);
+	str_to_optlist(config->options_require, options_require);
 	HXclist_init(&config->volume_list);
 }
 
@@ -557,73 +631,6 @@ static const char *rc_mkmountpoint(xmlNode *node, struct config *config,
 	return NULL;
 }
 
-/**
- * str_to_optlist -
- * @optlist:	destination list
- * @str:	string to parse
- *
- * Break down @str into its option. This function modifies @str in-place.
- * This is ok, since it is already an allocated string (i.e. does not
- * belong to libxml but to pam_mount). Caller frees it anyway right away.
- */
-static bool str_to_optkv(struct HXclist_head *optlist, char *str)
-{
-	char *value, *ptr;
-	struct kvp *kvp;
-
-	if (str == NULL || *str == '\0')
-		return true;
-
-	while ((ptr = HX_strsep(&str, ",")) != NULL) {
-		kvp = xmalloc(sizeof(struct kvp));
-		if (kvp == NULL)
-			return false;
-		HXlist_init(&kvp->list);
-		value = strchr(ptr, '=');
-		if (value != NULL) {
-			*value++ = '\0';
-			kvp->key   = xstrdup(ptr);
-			kvp->value = xstrdup(value);
-			if (kvp->key == NULL || kvp->value == NULL)
-				goto out;
-			HXclist_push(optlist, &kvp->list);
-		} else {
-			kvp->key = xstrdup(ptr);
-			if (kvp->key == NULL)
-				goto out;
-			kvp->value = NULL;
-			HXclist_push(optlist, &kvp->list);
-		}
-	}
-
-	return true;
- out:
-	free(kvp->key);
-	free(kvp->value);
-	free(kvp);
-	return false;
-}
-
-static bool str_to_optlist(struct HXbtree *optlist, char *str)
-{
-	char *value, *ptr;
-
-	if (str == NULL || *str == '\0')
-		return true;
-
-	while ((ptr = HX_strsep(&str, ",")) != NULL) {
-		value = strchr(ptr, '=');
-		if (value != NULL) {
-			*value++ = '\0';
-			HXbtree_add(optlist, ptr, value);
-		} else {
-			HXbtree_add(optlist, ptr, NULL);
-		}
-	}
-
-	return true;
-}
-
 static const char *rc_mntoptions(xmlNode *node, struct config *config,
     unsigned int command)
 {
@@ -634,6 +641,11 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 		return "Tried to set <mntoptions allow=...> from user config";
 
 	if ((options = xmlGetProp_2s(node, "allow")) != NULL) {
+		if (!onetime_options_allow) {
+			HXbtree_free(config->options_allow);
+			config->options_allow = HXbtree_init(OPT_TREE_FLAGS);
+			onetime_options_allow = true;
+		}
 		ret = str_to_optlist(config->options_allow, options);
 		free(options);
 		if (!ret)
@@ -648,6 +660,11 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 	}
 
 	if ((options = xmlGetProp_2s(node, "require")) != NULL) {
+		if (!onetime_options_require) {
+			HXbtree_free(config->options_require);
+			config->options_require = HXbtree_init(OPT_TREE_FLAGS);
+			onetime_options_require = true;
+		}
 		ret = str_to_optlist(config->options_require, options);
 		free(options);
 		if (!ret)

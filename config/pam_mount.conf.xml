@@ -2,6 +2,14 @@
 <!DOCTYPE pam_mount SYSTEM "pam_mount.conf.xml.dtd">
 <!--
 	See pam_mount.conf(5) for a description.
+
+	pam_mount internally has a hardcoded set of options, so you
+	can clear this file between <pam_mount> and </pam_mount>.
+
+	The tags you find below equal to the hardcoded options,
+	for your initial configuration convenience.
+	If you change or remove them, please remove this paragraph
+	to not mislead yourself ;-)
 -->
 
 <pam_mount>

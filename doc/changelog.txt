@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 - remove davfs support
 - pass fsck definition from pam_mount.conf.xml to mount.crypt
+- document pam_mount.conf.xml defaults
 
 
 v0.41 (June 17 2008)

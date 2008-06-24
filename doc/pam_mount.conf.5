@@ -152,7 +152,7 @@ control pam_mount's own behavior.
 Enables verbose output during login to stderr and syslog. Some programs do not
 cope with output sent on stderr, see doc/bugs.txt for a list. \fB0\fP disables
 debugging, \fB1\fP enables pam_mount tracing, and \fB2\fP additionally enables
-tracing in mount.crypt.
+tracing in mount.crypt. The default is \fB0\fP.
 .TP
 \fB<luserconf name="\fP\fI.pam_mount.conf.xml\fP\fB" />\fP
 Individual users may define additional volumes (usually in
@@ -160,11 +160,15 @@ Individual users may define additional volumes (usually in
 the presence of the \fB<luserconf>\fP element. With it, users may mount and
 unmount any volumes they specify. The mount operation is executed under the
 user account, not with root permissions. You also need at least an allow or
-deny option list (see <mntoptions>).
+deny option list (see <mntoptions>). Luserconfigs are disabled by default.
 .TP
 \fB<mntoptions allow="\fP\fIoptions,...\fP\fB" />\fP
 The <mntoptions> elements determine which options may be specified in per\-user
 configuration files (see <luserconf>). It does not apply to the master file.
+Specifying <mntoptions> is forbidden and ignored in per\-user configs.
+It defaults to \fIallow="nosuid,nodev"\fP, and the default is cleared when the
+first <mntoptions allow="..."> tag is seen. All further <mntoptions> are
+additive, though.
 .TP
 \fB<mntoptions deny="\fP\fIoptions,...\fP\fB" />\fP
 Any options listed in deny may not appear in the option list of per\-user
@@ -173,6 +177,9 @@ mounts. (Does not apply to the master file.)
 \fB<mntoptions require="\fP\fIoptions,...\fP\fB" />\fP
 All options listed in require must appear in the option list of per\-user
 mounts. (Does not apply to the master file.)
+It defaults to \fInosuid,nodev\fP, and the default is cleared when the
+first <mntoptions require="..."> tag is seen. All further <mntoptions> are
+additive, though.
 .TP
 \fB<path>\fP\fIdirectories...\fP\fB</path>\fP
 The default for the PATH environmental variable is not consistent across
