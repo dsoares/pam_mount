@@ -10,7 +10,8 @@ login. Since pam_mount 0.18, the configuration file is written in XML so as
 to simplify the pam_mount code base while giving formatting freedom to the
 end\-user. Special characters like \fB<\fP, \fB>\fP and \fB&\fP that are used
 by XML itself must be encoded as \fB&lt;\fP, \fB&gt;\fP and \fB&amp;\fP,
-respectively, but these three symbols are unlikely to be seen often anyway.
+respectively; additionally, \fB"\fP must be encoded as \fB&quot;\fP within a
+"" area, but these three/four symbols are unlikely to be seen often anyway.
 .PP
 Do not use comments inside elements taking verbatim text, like <lsof></lsof> -
 this is not handled by the pam_mount XML tree parser.
