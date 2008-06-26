@@ -704,6 +704,15 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	assert(password_len >= 0 &&
 	       password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
+	if (vpt->type == CMD_CRYPTMOUNT)
+		/*
+		 * Cryptmount involves dm-crypt or LUKS, so using the raw
+		 * device as fsck target is meaningless.
+		 * So we do _not_ set FSCKTARGET in vinfo at all, and
+		 * mount_set_fsck() depends on this behavior.
+		 */
+		return 0;
+
 	fsck_target = vpt->volume;
 
 	if (config->command[CMD_FSCK][0] == NULL) {
@@ -725,8 +734,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 		w4rn("volume not a loopback (options: %s)\n", options);
 		hmc_free(options);
 	}
-	/* FIXME: NEW */
-	/* FIXME: need to fsck /dev/mapper/whatever... */
 	format_add(vinfo, "FSCKTARGET", fsck_target);
 	for (i = 0; config->command[CMD_FSCK][i]; ++i)
 		add_to_argv(_argv, &_argc, config->command[CMD_FSCK][i], vinfo);
@@ -758,26 +765,28 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 
 /**
  * mount_set_fsck - set the FSCK environment variable for mount.crypt
+ * @config:	configuration
+ * @vol:	current volume
+ * @vinfo:	variable substituions
  */
 static void mount_set_fsck(const struct config *config,
-    const struct vol *vol)
+    const struct vol *vol, struct HXbtree *vinfo)
 {
-	hmc_t *string;
+	hmc_t *string, *current;
 	unsigned int i;
 
 	if (vol->type != CMD_CRYPTMOUNT)
 		return;
 
+	format_add(vinfo, "FSCKTARGET", "");
 	string = hmc_sinit("");
 	for (i = 0; config->command[CMD_FSCK][i] != NULL; ++i) {
-		const char *a = config->command[CMD_FSCK][i];
-
-		if (a[0] == '%' && a[1] == '(' && a[strlen(a)-1] == ')')
-			continue;
-
-		if (*string != '\0')
+		if (HXformat_aprintf(vinfo, &current,
+		    config->command[CMD_FSCK][i]) > 0) {
+			hmc_strcat(&string, current);
 			hmc_strcat(&string, " ");
-		hmc_strcat(&string, a);
+		}
+		hmc_free(current);
 	}
 
 	setenv("FSCK", string, true);
@@ -885,7 +894,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
 		setenv("PASSWD_FD", "0", 1);
 
-	mount_set_fsck(config, vpt);
+	mount_set_fsck(config, vpt, vinfo);
 	log_argv(_argv);
 	mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
 	             vpt->user : NULL;
