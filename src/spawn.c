@@ -1,26 +1,13 @@
-/*=============================================================================
-pam_mount - spawn.c
-  Copyright © CC Computer Consultants GmbH, 2006 - 2007
-  Contact: Jan Engelhardt <jengelh [at] computergmbh de>
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 2.1 of
-  the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write to:
-  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-  Boston, MA  02110-1301  USA
-
-  -- For details, see the file named "LICENSE.LGPL2"
-=============================================================================*/
+/*
+ *	Copyright © Jan Engelhardt, 2006 - 2008
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -29,6 +16,7 @@ pam_mount - spawn.c
 #include <string.h>
 #include <unistd.h>
 #include "misc.h"
+#include "pam_mount.h"
 #include "spawn.h"
 
 /* Variables */
@@ -148,6 +136,21 @@ bool spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 	}
 
 	return true;
+}
+
+/**
+ * spawn_synchronous - like system(), but uses argz array
+ */
+int spawn_synchronous(const char **argv)
+{
+	pid_t pid;
+	int ret;
+
+	if (!spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
+		return false;
+	waitpid(pid, &ret, 0);
+	spawn_restore_sigchld();
+	return ret;
 }
 
 /**

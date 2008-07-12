@@ -34,4 +34,9 @@ extern unsigned int Debug;
 extern struct config Config;
 extern struct pam_args Args;
 
+/*
+ *	SPAWN.C
+ */
+extern int spawn_synchronous(const char **);
+
 #endif /* PMT_PAM_MOUNT_H */
