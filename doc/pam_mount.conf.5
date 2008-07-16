@@ -156,6 +156,14 @@ cope with output sent on stderr, see doc/bugs.txt for a list. \fB0\fP disables
 debugging, \fB1\fP enables pam_mount tracing, and \fB2\fP additionally enables
 tracing in mount.crypt. The default is \fB0\fP.
 .TP
+\fB<logout wait="\fP\fImicroseconds\fP\fB" hup="\fP\fIyes/no\fP\fB" term="\fP\fIyes/no\fP\fB" kill="\fP\fIyes/no\fP\fB" />\fP
+Programs exist that do not terminate when the session is closed. (This applies
+to the "final" close, i.e. when the last user session ends.) Examples are
+processes still running in the background; or a broken X session manager that
+did not clean up its children, or other X programs that did not react to the
+X server termination notification. pam_mount can be configured to kill these
+processes and optionally wait before sending signals.
+.TP
 \fB<luserconf name="\fP\fI.pam_mount.conf.xml\fP\fB" />\fP
 Individual users may define additional volumes (usually in
 ~/.pam_mount.conf.xml) to mount if allowed by the master configuration file by

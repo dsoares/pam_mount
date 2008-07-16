@@ -613,17 +613,12 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		l0g("could not chdir\n");
 
 	envpath_init(Config.path);
-	if (modify_pm_count(&Config, Config.user, "-1") <= 0) {
-		HXlist_for_each_entry_rev(vol, &Config.volume_list, list) {
-			w4rn("going to unmount\n");
-			if (!mount_op(do_unmount, &Config, vol, NULL))
-				l0g("unmount of %s failed\n",
-				    vol->volume);
-		}
-	} else {
+	if (modify_pm_count(&Config, Config.user, "-1") > 0)
 		w4rn("%s seems to have other remaining open sessions\n",
 		     Config.user);
-	}
+	else
+		umount_final(&Config);
+
 	envpath_restore();
  out:
 	/*

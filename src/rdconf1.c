@@ -47,6 +47,10 @@ enum {
 	CMDA_AUTHPW,
 	CMDA_SESSIONPW,
 	CMDA_PATH,
+	CMDA_LOGOUT_SIGHUP,
+	CMDA_LOGOUT_SIGTERM,
+	CMDA_LOGOUT_SIGKILL,
+	CMDA_LOGOUT_WAIT,
 };
 
 enum {
@@ -591,6 +595,21 @@ static const char *rc_fsckloop(xmlNode *node, struct config *config,
 		free(dev);
 	}
 
+	return NULL;
+}
+
+static const char *rc_logout(xmlNode *node, struct config *config,
+    unsigned int command)
+{
+	char *tmp;
+
+	if ((tmp = xmlGetProp_2s(node, "wait")) != NULL) {
+		config->sig_wait = strtoul(tmp, NULL, 0);
+		free(tmp);
+	}
+	config->sig_hup  = parse_bool_f(xmlGetProp_2s(node, "hup"));
+	config->sig_term = parse_bool_f(xmlGetProp_2s(node, "term"));
+	config->sig_kill = parse_bool_f(xmlGetProp_2s(node, "kill"));
 	return NULL;
 }
 
@@ -1285,6 +1304,7 @@ static const struct callbackmap cf_tags[] = {
 	{"fusemount",       rc_command,             CMD_FUSEMOUNT},
 	{"fuseumount",      rc_command,             CMD_FUSEUMOUNT},
 	{"lclmount",        rc_command,             CMD_LCLMOUNT},
+	{"logout",          rc_logout,              CMD_NONE},
 	{"losetup",         rc_command,             CMD_LOSETUP},
 	{"luserconf",       rc_luserconf,           CMD_NONE},
 	{"mkmountpoint",    rc_mkmountpoint,        CMD_NONE},

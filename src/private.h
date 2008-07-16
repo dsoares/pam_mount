@@ -70,6 +70,13 @@ struct vol {
 	bool uses_ssh;
 };
 
+/**
+ * @sig_hup:	send SIGHUP to processes keeping mountpoint open
+ * @sig_term:	send SIGTERM - " -
+ * @sig_kill:	send SIGKILL - " -
+ * @sig_wait:	wait this many seconds between sending signals,
+ * 		in microseconds
+ */
 struct config {
 	/* user logging in */
 	char *user;
@@ -82,6 +89,9 @@ struct config {
 	struct HXclist_head volume_list;
 	int level;
 	char *msg_authpw, *msg_sessionpw, *path;
+
+	bool sig_hup, sig_term, sig_kill;
+	unsigned int sig_wait;
 };
 
 #endif /* PMT_PRIVATE_H */

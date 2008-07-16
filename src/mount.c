@@ -1004,3 +1004,33 @@ static inline const char *loop_bk(const char *filename, struct loop_info64 *i)
 	return signed_cast(char *, i->lo_file_name);
 }
 #endif
+
+/**
+ * umount_final - called when the last session has exited
+ *
+ * Send signals to processes and then unmount.
+ */
+void umount_final(struct config *config)
+{
+	struct vol *vol;
+
+	if (config->sig_hup)
+		HXlist_for_each_entry_rev(vol, &config->volume_list, list)
+			ofl(vol->mountpoint, SIGHUP);
+	if (config->sig_term) {
+		usleep(config->sig_wait);
+		HXlist_for_each_entry_rev(vol, &config->volume_list, list)
+			ofl(vol->mountpoint, SIGTERM);
+	}
+	if (config->sig_kill) {
+		usleep(config->sig_wait);
+		HXlist_for_each_entry_rev(vol, &config->volume_list, list)
+			ofl(vol->mountpoint, SIGKILL);
+	}
+	HXlist_for_each_entry_rev(vol, &config->volume_list, list) {
+		w4rn("going to unmount\n");
+		if (!mount_op(do_unmount, config, vol, NULL))
+			l0g("unmount of %s failed\n",
+			    vol->volume);
+	}
+}

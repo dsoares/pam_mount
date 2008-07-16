@@ -53,9 +53,10 @@ for ((x = 5; x >= 0; --x)); do
 	sleep 1;
 done;
 
-# Kill all those pesky daemons.
-# pmt-ofl -k KILL "$1";
-
+#
+# <logout...> can be set in pam_mount.conf.xml to kill all processes
+# before attempting to call any umount programs.
+#
 umount "$1";
 if [ $? -ne 0 ]; then
 	echo "${0##*/}: error unmounting $1" >&2
