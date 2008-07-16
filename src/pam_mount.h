@@ -37,6 +37,6 @@ extern struct pam_args Args;
 /*
  *	SPAWN.C
  */
-extern int spawn_synchronous(const char **);
+extern int spawn_synchronous(const char *const *);
 
 #endif /* PMT_PAM_MOUNT_H */

@@ -921,8 +921,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 
 	spawn_restore_sigchld();
 	if (Debug)
-		if (system("df -Ta") < 0)
-			;
+		spawn_synchronous((const char *const []){"df", "-Ta", NULL});
 
 	/* pass on through the result from the umount process */
 	return !WEXITSTATUS(child_exit);

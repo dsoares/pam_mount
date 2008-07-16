@@ -141,7 +141,7 @@ bool spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 /**
  * spawn_synchronous - like system(), but uses argz array
  */
-int spawn_synchronous(const char **argv)
+int spawn_synchronous(const char *const *argv)
 {
 	pid_t pid;
 	int ret;
