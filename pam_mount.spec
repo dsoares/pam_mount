@@ -1,15 +1,15 @@
 
-Name:           pam_mount
-Version:        0.41
-Release:        0
-Group:          System/Libraries
-Summary:        A PAM module that can mount volumes for a user session
-License:        LGPL
-URL:            http://pam-mount.sf.net/
+Name:		pam_mount
+Version:	0.43
+Release:	0
+Group:		System/Libraries
+Summary:	A PAM module that can mount volumes for a user session
+License:	LGPL
+URL:		http://pam-mount.sf.net/
 
-Source:         http://heanet.dl.sf.net/sourceforge/pam-mount/%name-%version.tar.bz2
-BuildRequires:  libtool pam-devel pkg-config
-BuildRequires:  openssl-devel >= 0.9.6, libxml2-devel >= 2.6
+Source:		http://downloads.sf.net/pam-mount/%name-%version.tar.bz2
+BuildRequires:	libtool pam-devel pkg-config
+BuildRequires:	openssl-devel >= 0.9.6, libxml2-devel >= 2.6
 BuildRequires:	libHX-devel >= 1.18
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers >= 2.6
@@ -26,8 +26,8 @@ BuildRequires:	kernel-headers
 Requires:	cryptsetup-luks lsof psmisc samba-client
 %endif
 Requires(post):	perl(XML::Writer)
-BuildRoot:      %_tmppath/%name-%version-build
-Prefix:         %_prefix
+BuildRoot:	%_tmppath/%name-%version-build
+Prefix:		%_prefix
 
 %description
 This module is aimed at environments with central file servers that a

@@ -1,9 +1,15 @@
 
 For details, see the history as recorded in the git repository.
 
+
+v0.43 (July 16 2008)
+====================
+A few accumulated patches, but no real new glaring features.
 - remove davfs support
 - pass fsck definition from pam_mount.conf.xml to mount.crypt
 - document pam_mount.conf.xml defaults
+- do not call fsck from within pam_mount for encrypted devices,
+  let mount.crypt do it
 
 
 v0.41 (June 17 2008)
