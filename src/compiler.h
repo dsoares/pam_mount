@@ -23,7 +23,6 @@ static inline void format_add(struct HXbtree *table, const char *key,
     const char *value)
 {
 	HXformat_add(table, key, value, HXTYPE_STRING | HXFORMAT_IMMED);
-	return;
 }
 
 #endif /* PMT_COMPILER_H */
