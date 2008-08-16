@@ -1,6 +1,12 @@
 
 For details, see the history as recorded in the git repository.
 
+- mount.crypt: fix option slurping
+  (fixes SF bug #2054323)
+- properly handle simple sgrp config items
+  (<volume sgrp="foo" />)
+- src: correct error check in run_lsof()
+
 
 v0.43 (July 16 2008)
 ====================

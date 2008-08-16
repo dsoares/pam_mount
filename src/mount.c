@@ -113,7 +113,7 @@ static void run_lsof(const struct config *const config,
 	unsigned int i;
 	pid_t pid;
 
-	if (stat(HXbtree_get(vinfo, "MNTPT"), &sb) < 0 && errno == EEXIST)
+	if (stat(HXbtree_get(vinfo, "MNTPT"), &sb) < 0 && errno == ENOENT)
 		return;
 
 	if (config->command[CMD_LSOF][0] == NULL)
