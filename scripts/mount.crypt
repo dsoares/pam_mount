@@ -102,7 +102,7 @@ LOOP=false
 DOFSCK=false;
 MOUNTOPTIONS=""
 OLDIFS="$IFS";
-IFS=", ";
+IFS=",";
 
 for opt in $OPTIONS; do
 	KEY="${opt%%=*}";
