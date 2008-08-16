@@ -49,7 +49,7 @@ if [[ "$?" -ne 0 ]]; then
 	help >&2;
 	exit $s;
 fi;
-set -- $(eval echo $argv);
+eval "set -- $argv";
 while [[ "$#" -gt 0 ]]; do
 	case "$1" in
 	(-h)
@@ -63,6 +63,10 @@ while [[ "$#" -gt 0 ]]; do
 	(--)
 		shift;
 		break;
+		;;
+	(*)
+		echo "Dunno what to do with $1" >&2;
+		shift;
 		;;
 	esac;
 done;
