@@ -61,16 +61,11 @@ struct vol {
 	bool globalconf;
 	/* set, so that umount can rmdir it */
 	bool created_mntpt;
+	const char *user;
+	char *fstype, *server, *volume, *mountpoint;
 	char *fs_key_cipher, *fs_key_path;
-	char server[MAX_PAR + 1];
-	/* user field in a single volume record; can be "*" */
-	char user[MAX_PAR + 1];
-	char fstype[MAX_PAR + 1];
-	/* FIXME: PATH_MAX */
-	char volume[MAX_PAR + 1];
 	/* May be NULL if no options */
 	struct HXclist_head options;
-	char mountpoint[PATH_MAX + 1];
 	bool use_fstab;
 	bool used_wildcard;
 	bool uses_ssh;

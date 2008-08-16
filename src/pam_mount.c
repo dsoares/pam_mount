@@ -529,7 +529,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		w4rn("about to perform mount operations\n");
 
 		if (!mount_op(do_mount, &Config, vol, system_authtok)) {
-			l0g("mount of %s failed\n", vol->volume);
+			l0g("mount of %s failed\n", znul(vol->volume));
 			ret = PAM_SERVICE_ERR;
 		}
 	}

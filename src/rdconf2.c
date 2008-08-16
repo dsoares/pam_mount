@@ -188,10 +188,14 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 	}
 	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
 	    vpt->type == CMD_NCPMOUNT || vpt->type == CMD_NFSMOUNT)
-	    	if (strlen(vpt->server) == 0) {
+		if (vpt->server == NULL || strlen(vpt->server) == 0) {
 			l0g("remote mount type specified without server\n");
 			return false;
 		}
+	if (vpt->volume == NULL) {
+		misc_log("volume source is not defined\n");
+		return false;
+	}
 
 	if (vpt->type == CMD_NCPMOUNT &&
 	    !kvplist_contains(&vpt->options, "user")) {

@@ -69,8 +69,6 @@ struct pmt_command {
 };
 
 /* Functions */
-static char *expand_home1(const char *, char *, size_t);
-static char *expand_user1(const char *, char *, size_t);
 static inline int strcmp_1u(const xmlChar *, const char *);
 static int rc_volume_cond_ext(const struct passwd *, xmlNode *);
 
@@ -156,10 +154,10 @@ bool expandconfig(const struct config *config)
 	struct vol *vpt;
 
 	HXlist_for_each_entry(vpt, &config->volume_list, list) {
-		if (expand_home1(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
-		    expand_user1(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
-		    expand_home1(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
-		    expand_user1(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
+		if (!expand_home(u, &vpt->mountpoint) ||
+		    !expand_user(u, &vpt->mountpoint) ||
+		    !expand_home(u, &vpt->volume) ||
+		    !expand_user(u, &vpt->volume) ||
 		    !expand_home(u, &vpt->fs_key_path) ||
 		    !expand_user(u, &vpt->fs_key_path))
 			return false;
@@ -167,7 +165,7 @@ bool expandconfig(const struct config *config)
 		if (strcmp(vpt->user, "*") == 0 || *vpt->user == '@')
 			vpt->used_wildcard = true;
 
-		strcpy(vpt->user, config->user);
+		vpt->user = config->user;
 	}
 
 	return true;
@@ -195,6 +193,9 @@ void freeconfig(struct config *config)
 
 	HXlist_for_each_entry_safe(vol, next, &config->volume_list, list) {
 		kvplist_genocide(&vol->options);
+		free(vol->fstype);
+		free(vol->server);
+		free(vol->volume);
 		free(vol->fs_key_cipher);
 		free(vol->fs_key_path);
 		free(vol);
@@ -338,68 +339,24 @@ bool readconfig(const char *file, bool global_conf, struct config *config)
 }
 
 //-----------------------------------------------------------------------------
-static char *expand_home1(const char *user, char *path, size_t size)
-{
-	struct passwd *pe;
-	char *buf;
-
-	if (path[0] != '~' || path[1] != '/')
-		return path;
-
-	if ((pe = getpwnam(user)) == NULL) {
-		l0g("Could not lookup account information for %s\n", user);
-		return NULL;
-	}
-
-	if ((buf = xmalloc(size)) == NULL) {
-		l0g("%s\n", strerror(errno));
-		return NULL;
-	}
-	if (snprintf(buf, size, "%s%s", pe->pw_dir, path + 1) >= size)
-		l0g("Warning: Not enough buffer space in expand_home()\n");
-
-	strncpy(path, buf, size);
-	free(buf);
-	return path;
-}
-
-static char *expand_user1(const char *user, char *dest, size_t size)
-{
-	struct HXbtree *vinfo;
-
-	if (dest == NULL)
-		l0g("expand_user_wildcard(dest=NULL), please fix\n");
-
-	if ((vinfo = HXformat_init()) == NULL)
-		return NULL;
-	HXformat_add(vinfo, "USER", user, HXTYPE_STRING);
-	misc_add_ntdom(vinfo, user);
-	HXformat_sprintf(vinfo, dest, size, dest);
-	HXformat_free(vinfo);
-	return dest;
-}
-
 /**
  * fstab_value -
  * @volume:	path to volume
  * @field:	-
- * @dest:	destination buffer
- * @size:	size of @dest
  *
  * Search for @volume in /etc/fstab and if it is found, copy the @field'th
- * field to @dest which is of size @size. Returns 0 on error, 1 on success.
+ * field and return it. Returns %NULL on error.
  */
-static int fstab_value(const char *volume, const enum fstab_field field,
-    char *dest, int size)
+static char *fstab_value(const char *volume, const enum fstab_field field)
 {
-	const char *val;
+	char *val;
 #if defined(__linux__)
 	struct mntent *fstab_record;
 	FILE *fstab;
 
 	if ((fstab = setmntent("/etc/fstab", "r")) == NULL) {
 		l0g("could not open fstab\n");
-		return 0;
+		return NULL;
 	}
 
 	for (fstab_record = getmntent(fstab);
@@ -410,7 +367,7 @@ static int fstab_value(const char *volume, const enum fstab_field field,
 
 	if (fstab_record == NULL) {
 		l0g("could not get %dth fstab field for %s\n", field, volume);
-		return 0;
+		return NULL;
 	}
 
 	switch (field) {
@@ -428,18 +385,18 @@ static int fstab_value(const char *volume, const enum fstab_field field,
 			break;
 		default:
 			l0g("field of %d invalid\n", field);
-			return 0;
+			return NULL;
 	}
 #elif defined (__FreeBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
 	struct fstab *fstab_record;
 
 	if (!setfsent()) {
 		l0g("could not open fstab\n");
-		return 0;
+		return NULL;
 	}
 	if ((fstab_record = getfsspec(volume)) == NULL) {
 		l0g("could not get %dth fstab field for %s\n", field, volume);
-		return 0;
+		return NULL;
 	}
 
 	switch (field) {
@@ -457,21 +414,20 @@ static int fstab_value(const char *volume, const enum fstab_field field,
 			break;
 		default:
 			l0g("field of %d invalid\n", field);
-			return 0;
+			return NULL;
 	}
 #else
 	l0g("reading fstab not implemented on arch.\n");
-	return 0;
+	return NULL;
 #endif
 
-	strncpy(dest, val, size);
-	dest[size-1] = '\0';
+	val = xstrdup(val);
 #if defined(__linux__)
 	endmntent(fstab);
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	endfsent();
 #endif
-	return 1;
+	return val;
 }
 
 /**
@@ -1210,7 +1166,7 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	HXclist_push(&config->volume_list, &vpt->list);
 
 	vpt->globalconf = config->level == CONTEXT_GLOBAL;
-	strncpy(vpt->user, config->user, sizeof(vpt->user));
+	vpt->user = config->user;
 	vpt->type = CMD_LCLMOUNT;
 	HXclist_init(&vpt->options);
 
@@ -1235,32 +1191,27 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		}
 		free(tmp);
 	} else {
-		strncpy(vpt->fstype, "auto", sizeof(vpt->fstype));
+		vpt->fstype = xstrdup("auto");
 	}
 
 	/* Source location */
 	if ((tmp = xmlGetProp_2s(node, "server")) != NULL) {
-		if (strlen(tmp) > sizeof_z(vpt->server))
-			l0g("config: %s \"%s\" truncated\n", "server", tmp);
-		strncpy(vpt->server, tmp, sizeof(vpt->server));
-		free(tmp);
+		free(vpt->server);
+		vpt->server = tmp;
 	}
 	if ((tmp = xmlGetProp_2s(node, "path")) != NULL) {
-		if (strlen(tmp) > sizeof_z(vpt->volume))
-			l0g("config: %s \"%s\" truncated\n", "path", tmp);
-		strncpy(vpt->volume, tmp, sizeof(vpt->volume));
-		free(tmp);
+		free(vpt->volume);
+		vpt->volume = tmp;
 	}
 
 	/* Destination */
 	if ((tmp = xmlGetProp_2s(node, "mountpoint")) != NULL) {
-		if (strlen(tmp) > sizeof_z(vpt->mountpoint))
-			l0g("config: %s \"%s\" truncated\n", "mountpoint", tmp);
-		strncpy(vpt->mountpoint, tmp, sizeof(vpt->mountpoint));
-		free(tmp);
+		free(vpt->mountpoint);
+		vpt->mountpoint = tmp;
 	} else {
-		if (!fstab_value(vpt->volume, FSTAB_MNTPT, vpt->mountpoint,
-		    sizeof(vpt->mountpoint)))
+		free(vpt->mountpoint);
+		vpt->mountpoint = fstab_value(vpt->volume, FSTAB_MNTPT);
+		if (vpt->mountpoint == NULL)
 			return "could not determine mountpoint";
 		vpt->use_fstab = 1;
 	}
@@ -1273,12 +1224,12 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		 * is '-' and this means no options.
 		 */
 		if (vpt->use_fstab) {
-			char options[MAX_PAR + 1];
-			if (!fstab_value(vpt->volume, FSTAB_OPTS, options,
-			    sizeof(options)))
+			char *options = fstab_value(vpt->volume, FSTAB_OPTS);
+			if (options == NULL)
 				return "could not determine options";
 			if (!str_to_optkv(&vpt->options, options))
 				return "error parsing mount options";
+			free(options);
 		}
 	} else if (!str_to_optkv(&vpt->options, tmp)) {
 		free(tmp);

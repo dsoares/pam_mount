@@ -52,7 +52,7 @@ static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
 static void run_ofl(const struct config * const, struct HXbtree *);
-static void vol_to_dev(char *, size_t, const struct vol *);
+static hmc_t *vol_to_dev(const struct vol *);
 
 #ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
 static inline const char *loop_bk(const char *, struct loop_info64 *);
@@ -128,15 +128,20 @@ static int already_mounted(const struct config *const config,
     const struct vol *vpt, struct HXbtree *vinfo)
 #if defined(__linux__)
 {
-	char dev[PATH_MAX+1] = {}, real_mpt[PATH_MAX+1];
+	hmc_t *dev;
+	char real_mpt[PATH_MAX+1];
 	struct mntent *mtab_record;
 	bool mounted = false;
 	FILE *mtab;
 
-	vol_to_dev(dev, sizeof(dev), vpt);
+	if ((dev = vol_to_dev(vpt)) == NULL) {
+		misc_log("%s\n", strerror(errno));
+		return -1;
+	}
 
 	if ((mtab = setmntent("/etc/mtab", "r")) == NULL) {
 		l0g("could not open /etc/mtab\n");
+		hmc_free(dev);
 		return -1;
 	}
 	if (realpath(vpt->mountpoint, real_mpt) == NULL) {
@@ -185,18 +190,23 @@ static int already_mounted(const struct config *const config,
 	}
 
 	endmntent(mtab);
+	hmc_free(dev);
 	return mounted;
 }
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 {
-	char *_argv[MAX_PAR + 1], dev[PATH_MAX+1] = {}, mte[BUFSIZ + 1];
+	hmc_t *dev;
+	char *_argv[MAX_PAR + 1], mte[BUFSIZ + 1];
 	int i, _argc = 0, cstdout = -1, mounted = 0;
 	struct vol *vpt;
 	pid_t pid;
 	FILE *fp;
 
 	vpt = &config->volume[vol];
-	vol_to_dev(dev, sizeof(dev), vpt);
+	if ((dev = vol_to_dev(vpt)) == NULL) {
+		misc_log("%s\n", strerror(errno));
+		return -1;
+	}
 
 	/*
 	 * WONTFIX: I am not overly fond of using mount, but BSD has no
@@ -204,6 +214,7 @@ static int already_mounted(const struct config *const config,
 	 */
 	if (config->command[CMD_MNTCHECK][0] == NULL) {
 		l0g("mntcheck not defined in pam_mount.conf.xml\n");
+		hmc_free(dev);
 		return -1;
 	}
 
@@ -212,7 +223,8 @@ static int already_mounted(const struct config *const config,
 		            vinfo);
 	log_argv(_argv);
 
-	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, NULL, NULL))
+	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, NULL, NULL)) {
+		hmc_free(dev);
 		return -1;
 
 	fp = fdopen(cstdout, "r");
@@ -250,6 +262,7 @@ static int already_mounted(const struct config *const config,
 	if (waitpid(pid, NULL, 0) != 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
+	hmc_free(dev);
 	return mounted;
 }
 #else
@@ -261,44 +274,56 @@ static int already_mounted(const struct config *const config,
 
 /**
  * vol_to_dev -
- * @match:
- * @s:
  * @vol:	volume to analyze
+ *
+ * Turn a volume into the mountspec as accepted by the specific mount program.
  */
-static void vol_to_dev(char *match, size_t s, const struct vol *vol)
+static hmc_t *vol_to_dev(const struct vol *vol)
 {
+	unsigned int len;
+	hmc_t *ret;
+	char *p;
+
 	switch (vol->type) {
 	case CMD_SMBMOUNT:
 	case CMD_CIFSMOUNT:
-		snprintf(match, s, "//%s/%s", vol->server, vol->volume);
+		ret = hmc_sinit("//");
+		hmc_strcat(&ret, vol->server);
+		hmc_strcat(&ret, "/");
+		hmc_strcat(&ret, vol->volume);
 		break;
 
 	case CMD_NCPMOUNT:
-		snprintf(match, s, "%s/%s", vol->server,
-		         kvplist_get(&vol->options, "user"));
+		ret = hmc_sinit(vol->server);
+		hmc_strcat(&ret, "/");
+		hmc_strcat(&ret, kvplist_get(&vol->options, "user"));
 		break;
 
 	case CMD_NFSMOUNT:
-		snprintf(match, s, "%s:%s", vol->server, vol->volume);
+		ret = hmc_sinit(vol->server);
+		hmc_strcat(&ret, ":");
+		hmc_strcat(&ret, vol->volume);
 		break;
 
-	case CMD_CRYPTMOUNT: {
+	case CMD_CRYPTMOUNT:
 		/*
 		 * FIXME: ugly hack to support umount.crypt script. I hope that
 		 * util-linux will have native dm_crypt support some day.
 		 */
-		char *wp = match + sizeof_z("/dev/mapper/");
-		snprintf(match, s, "/dev/mapper/%s", vol->volume);
-		while ((wp = strchr(wp, '/')) != NULL)
-			*wp = '_';
+		ret = hmc_sinit("/dev/mapper/");
+		len = strlen(ret);
+		hmc_strcat(&ret, vol->volume);
+		for (p = ret + len; *p != '\0'; ++p)
+			if (*p == '/')
+				*p = '_';
+		break;
+
+	default:
+		ret = hmc_sinit(vol->volume);
 		break;
 	}
 
-	default:
-		strncpy(match, vol->volume, s-1);
-		match[s-1] = '\0';
-		break;
-	}
+	return ret;
 }
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -345,9 +370,9 @@ static void log_pm_input(const struct config *const config,
 	w4rn("information for mount:\n");
 	w4rn("----------------------\n");
 	w4rn("(defined by %s)\n", vpt->globalconf ? "globalconf" : "luserconf");
-	w4rn("user:          %s\n", vpt->user);
-	w4rn("server:        %s\n", vpt->server);
-	w4rn("volume:        %s\n", vpt->volume);
+	w4rn("user:          %s\n", znul(vpt->user));
+	w4rn("server:        %s\n", znul(vpt->server));
+	w4rn("volume:        %s\n", znul(vpt->volume));
 	w4rn("mountpoint:    %s\n", vpt->mountpoint);
 	w4rn("options:       %s\n", options);
 	w4rn("fs_key_cipher: %s\n", znul(vpt->fs_key_cipher));
@@ -783,7 +808,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 	size_t _password_len;
 	unsigned char _password[MAX_PAR + EVP_MAX_BLOCK_LENGTH];
 	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
-	char *mount_user;
+	const char *mount_user;
 	pid_t pid = -1;
 	unsigned int i;
 	int ret;
@@ -961,6 +986,8 @@ static int fstype_nodev(const char *name) {
 	char buf[MAX_PAR];
 	FILE *fp;
 
+	if (name == NULL)
+		return 0;
 	if ((fp = fopen("/proc/filesystems", "r")) == NULL)
 		return -1;
 
