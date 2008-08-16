@@ -280,7 +280,7 @@ static char *expand_home(const char *user, char *path, size_t size)
 	struct passwd *pe;
 	char *buf;
 
-	if (*path != '~')
+	if (path[0] != '~' || path[1] != '/')
 		return path;
 
 	if ((pe = getpwnam(user)) == NULL) {
