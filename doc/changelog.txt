@@ -5,6 +5,7 @@ For details, see the history as recorded in the git repository.
 - properly handle simple sgrp config items (Debian bug #493497)
 - src: correct error check in run_lsof()
 - conf: check that slash follows home tilde
+- conf: wildcard inadvertently matched root sometimes
 
 
 v0.43 (July 16 2008)

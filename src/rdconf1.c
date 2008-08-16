@@ -1043,6 +1043,9 @@ static int rc_volume_cond_simple(const struct passwd *pwd, xmlNode *node)
 		else if (pwd->pw_uid == 0 || strcmp(pwd->pw_name, "root") == 0)
 			/* The wildcard never matches root */
 			for_me &= false;
+	} else if (pwd->pw_uid == 0 || strcmp(pwd->pw_name, "root") == 0) {
+		/* No user field at all generally implies the wildcard */
+		for_me &= false;
 	}
 	if (uid != NULL) {
 		ret = __rc_volume_cond_id(uid, pwd->pw_uid);
