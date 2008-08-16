@@ -164,11 +164,10 @@ that. pam_mount will verify this and will refuse to mount the remote volume if
 the user does not own that directory.
 .PP
 If pam_mount is having trouble unmounting volumes upon logging out, enable the
-debug variable and check the lsof variable in pam_mount.conf.xml. This causes
-pam_mount to run lsof upon logging out and write lsof's output to the system's
-logs.
+debug variable. This causes pam_mount to run ofl on logout and write its output
+to the system's log.
 .SH AUTHORS
 .PP
 W. Michael Petullo <mike@flyn.org>
 .PP
-Jan Engelhardt <jengelh [at] gmx de> (current maintainer)
+Jan Engelhardt <jengelh [at] medozas de> (current maintainer)

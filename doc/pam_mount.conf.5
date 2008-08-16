@@ -13,8 +13,9 @@ by XML itself must be encoded as \fB&lt;\fP, \fB&gt;\fP and \fB&amp;\fP,
 respectively; additionally, \fB"\fP must be encoded as \fB&quot;\fP within a
 "" area, but these three/four symbols are unlikely to be seen often anyway.
 .PP
-Do not use comments inside elements taking verbatim text, like <lsof></lsof> -
-this is not handled by the pam_mount XML tree parser.
+Do not use comments inside elements taking verbatim text, like
+<fusermount></fusermount> - this is not handled by the pam_mount XML tree
+parser.
 .SH Volume definitions
 .PP
 Volumes are defined with the \fB<volume>\fP element, which primarily takes the
@@ -212,12 +213,6 @@ stdin even though OpenSSH normally does not do that.
 \fB<fsck>\fP\fIfsck -p %(FSCKTARGET)\fP\fB</fsck>\fP
 Local volumes will be checked before mounting if this program is set.
 .TP
-\fB<lsof>\fP\fIprogram...\fP\fB</lsof>\fP
-lsof is used for debugging only, to show what processes hold which files open
-on logout thus preventing successful unmounting of the volume when pam_mount
-would normally close the filesystem. (I.e. when the last login session is
-closed.)
-.TP
 \fB<mntcheck>\fP\fImntcheck ...\fP\fB</mntcheck>\fP
 Originally intended for use on BSD to check if a volume was mounted. Currently
 unused.
@@ -248,9 +243,9 @@ open). Also, unmount on SMB volumes needs to be called on %(MNTPT) and not
 Commands for various mount programs. Not all have a dedicated umount
 helper because some do not need one.
 .TP
-\fB<losetup>\fP\fIlosetup ...\fP\fB</lsof>\fP
+\fB<losetup>\fP\fIlosetup ...\fP\fB</losetup>\fP
 .TP
-\fB<unlosetup>\fP\fIlosetup \-d ...\fP\fB</unlosetup\fP
+\fB<unlosetup>\fP\fIlosetup \-d ...\fP\fB</unlosetup>\fP
 .TP
 \fB<cifsmount>\fP\fImount.cifs ...\fP\fB</cifsmount>\fP
 .TP

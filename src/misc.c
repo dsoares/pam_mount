@@ -48,19 +48,21 @@ void misc_dump_id(const char *where)
  * %stderr. Use this for critical messages or issues that cause(d) pam_mount
  * to fail.
  */
-void misc_log(const char *format, ...)
+int misc_log(const char *format, ...)
 {
 	va_list args, arg2;
+	int ret = 0;
 
 	assert(format != NULL);
 
 	va_start(args, format);
 	va_copy(arg2, args);
 	if (Debug)
-		vfprintf(stderr, format, args);
+		ret = vfprintf(stderr, format, args);
 	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
+	return ret;
 }
 
 /**
@@ -70,20 +72,22 @@ void misc_log(const char *format, ...)
  * If debugging is turned on, the message is logged to syslog and %stderr.
  * Use this for debugging messages.
  */
-void misc_warn(const char *format, ...)
+int misc_warn(const char *format, ...)
 {
 	va_list args, arg2;
+	int ret;
 
 	assert(format != NULL);
 	if (Debug == 0)
-		return;
+		return 0;
 
 	va_start(args, format);
 	va_copy(arg2, args);
-	vfprintf(stderr, format, args);
+	ret = vfprintf(stderr, format, args);
 	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
+	return ret;
 }
 
 /**

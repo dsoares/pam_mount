@@ -26,6 +26,7 @@ struct kvp {
 /*
  *	OFL-LIB.C
  */
+extern int (*ofl_printf)(const char *, ...);
 extern bool ofl(const char *, unsigned int);
 
 /*

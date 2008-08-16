@@ -8,6 +8,9 @@ For details, see the history as recorded in the git repository.
 - conf: wildcard inadvertently matched root sometimes
 
 
+- use ofl instead of lsof/fuser
+
+
 v0.43 (July 16 2008)
 ====================
 A few accumulated patches, but no real new glaring features.

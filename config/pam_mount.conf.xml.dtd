@@ -1,6 +1,6 @@
 <!ELEMENT pam-mount
 	(debug?,mkmountpoint?,fsckloop?,luserconf?,mntoptions*,
-	path?,lsof?,fsck?,losetup?,unlosetup?,cifsmount?,
+	path?,fsck?,losetup?,unlosetup?,cifsmount?,
 	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
 	fuseumount?,truecryptmount?,truecryptumount?,fd0ssh?,umount?,
 	lclmount?,cryptmount?,nfsmount?,mntcheck?,pmvarrun?,
@@ -28,7 +28,6 @@
 	require CDATA #IMPLIED
 >
 <!ELEMENT path (#PCDATA)>
-<!ELEMENT lsof (#PCDATA)>
 <!ELEMENT fsck (#PCDATA)>
 <!ELEMENT losetup (#PCDATA)>
 <!ELEMENT unlosetup (#PCDATA)>

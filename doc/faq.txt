@@ -73,8 +73,8 @@ Q.  Why are my volumes not being unmounted when I log out?
 A.  Often this is because processes remaining after logging out are
     holding open files in your home directory. For example, some versions
     of gconf do this. The best way to figure out what programs are guilty
-    is to enable debugging in your pam_mount.conf.xml, configure lsof and
-    watch for lsof's output in your logs.
+    is to enable debugging in your pam_mount.conf.xml, and watch for
+    ofl's output in your logs.
 
 =======================================================================
 

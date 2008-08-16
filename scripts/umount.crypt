@@ -48,10 +48,13 @@ fi;
 REALDEVICE=`cryptsetup status "$DMDEVICE" | sed -n '/device/s/[ ]*device:[ ]*//p'`;
 
 for ((x = 5; x >= 0; --x)); do
-	fuser -m "$1" || break;
+	pmt-ofl "$1" || break;
 	echo "Some program is blocking our unmount. Not nice.";
 	sleep 1;
 done;
+
+# Kill all those pesky daemons.
+# pmt-ofl -k KILL "$1";
 
 umount "$1";
 if [ $? -ne 0 ]; then

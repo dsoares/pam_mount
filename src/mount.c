@@ -52,7 +52,7 @@ static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
-static void run_lsof(const struct config * const, struct HXbtree *);
+static void run_ofl(const struct config * const, struct HXbtree *);
 static void vol_to_dev(char *, size_t, const struct vol *);
 
 #ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
@@ -97,42 +97,24 @@ static void log_output(int fd, const char *cmsg)
 }
 
 /**
- * run_lsof -
+ * run_ofl -
  * @config:	current configuration
  * @vinfo:
  *
- * Runs `lsof` on a directory/mountpoint and logs its output, for debugging
+ * Runs `ofl` on a directory/mountpoint and logs its output, for debugging
  * purposes.
  */
-static void run_lsof(const struct config *const config,
-    struct HXbtree *vinfo)
+static void run_ofl(const struct config *const config, struct HXbtree *vinfo)
 {
-	int _argc = 0, cstdout = -1;
-	const char *_argv[MAX_PAR + 1];
+	const char *mntpt;
 	struct stat sb;
-	unsigned int i;
-	pid_t pid;
 
-	if (stat(HXbtree_get(vinfo, "MNTPT"), &sb) < 0 && errno == ENOENT)
+	mntpt = HXbtree_get(vinfo, "MNTPT");
+	if (stat(mntpt, &sb) < 0 && errno == ENOENT)
 		return;
-
-	if (config->command[CMD_LSOF][0] == NULL)
-		l0g("lsof not defined in pam_mount.conf.xml\n");
-	/* FIXME: NEW */
-	for (i = 0; config->command[CMD_LSOF][i] != NULL; ++i)
-		add_to_argv(_argv, &_argc, config->command[CMD_LSOF][i], vinfo);
-	log_argv(_argv);
-
-	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, NULL, NULL))
-		return;
-
-	log_output(cstdout, "lsof output:\n");
-	w4rn("waiting for lsof\n");
-	if (waitpid(pid, NULL, 0) < 0)
-		l0g("error waiting for child: %s\n", strerror(errno));
-	spawn_restore_sigchld();
+	ofl_printf = misc_warn;
+	ofl(mntpt, 0);
 }
-
 
 /**
  * already_mounted -
@@ -500,7 +482,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 		 * Often, a process still exists with ~ as its pwd after
 		 * logging out.  Running lsof helps debug this.
 		 */
-		run_lsof(config, vinfo);
+		run_ofl(config, vinfo);
 
 	switch (vpt->type) {
 		case CMD_CRYPTMOUNT:

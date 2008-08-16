@@ -13,8 +13,7 @@ BuildRequires:	openssl-devel >= 0.9.6, libxml2-devel >= 2.6
 BuildRequires:	libHX-devel >= 1.18
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers >= 2.6
-# psmisc: /bin/fuser
-Recommends:	cifs-mount lsof psmisc
+Recommends:	cifs-mount
 %if %suse_version < 1030
 Recommends:	util-linux-crypto
 %else
@@ -23,7 +22,7 @@ Recommends:	cryptsetup
 %endif
 %if "%_vendor" == "redhat"
 BuildRequires:	kernel-headers
-Requires:	cryptsetup-luks lsof psmisc samba-client
+Requires:	cryptsetup-luks samba-client
 %endif
 Requires(post):	perl(XML::Writer)
 BuildRoot:	%_tmppath/%name-%version-build

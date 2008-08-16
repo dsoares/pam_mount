@@ -111,17 +111,6 @@ sub callback_options_require
 	$writer->emptyTag("mntoptions", "require" => $fields[1]);
 }
 
-sub callback_lsof
-{
-	my @fields = @_;
-
-	shift @fields;
-
-	$writer->startTag("lsof");
-	$writer->characters(join(" ", @fields));
-	$writer->endTag("lsof");
-}
-
 sub callback_fsck
 {
 	my @fields = @_;

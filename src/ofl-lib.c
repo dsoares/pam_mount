@@ -21,6 +21,8 @@
 #include "pam_mount.h"
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
+int (*ofl_printf)(const char *, ...) = printf;
+
 /**
  * @sb:		just space
  * @pid:	pid for current process
@@ -84,7 +86,7 @@ static bool ofl_file(const char *mnt, const char *file, const char *ll_entry,
 	data->found = true;
 	if (data->signal == 0) {
 		char buf[24];
-		printf("%u(%s): %s -> %s\n", data->pid,
+		(*ofl_printf)("%u(%s): %s -> %s\n", data->pid,
 		       ofl_comm(data->pid, buf, sizeof(buf)), ll_entry, file);
 		return false; /* so that more FDs will be inspected */
 	}

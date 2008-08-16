@@ -46,8 +46,6 @@
 
 <fsck>fsck -p %(FSCKTARGET)</fsck>
 
-<lsof>lsof %(MNTPT)</lsof>
-
 <!-- mntcheck utility for BSDs which lack /etc/mtab -->
 <mntcheck>mount</mntcheck>
 
