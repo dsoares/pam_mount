@@ -1063,14 +1063,13 @@ static int rc_volume_cond_simple(const struct passwd *pwd, xmlNode *node)
 		for_me &= ret;
 	}
 	if (sgrp != NULL) {
-		ret = __rc_volume_cond_pgrp(sgrp, pwd->pw_gid, false);
+		bool ret2 = __rc_volume_cond_pgrp(sgrp, pwd->pw_gid, false);
 		if (ret < 0)
 			goto out;
-		for_me &= ret;
 		ret = user_in_sgrp(pwd->pw_name, sgrp, false);
 		if (ret < 0)
 			goto out;
-		for_me &= ret;
+		for_me &= ret || ret2;
 	}
 	if (invert != NULL) {
 		l0g("The \"invert\" attribute is deprecated, support will "
