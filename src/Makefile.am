@@ -23,14 +23,17 @@
 
 moduledir = @PAM_MODDIR@
 module_LTLIBRARIES = pam_mount.la
-bin_PROGRAMS = pmt-fd0ssh
+bin_PROGRAMS = pmt-fd0ssh pmt-ofl
 sbin_PROGRAMS = pmvarrun
 
-pam_mount_la_SOURCES = crypto.c misc.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
+pam_mount_la_SOURCES = crypto.c misc.c ofl-lib.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
 pam_mount_la_LIBADD  = -lpam ${libHX_LIBS} ${pmt_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS = -module -avoid-version
 
 pmt_fd0ssh_SOURCES = fd0ssh.c
+
+pmt_ofl_SOURCES = ofl.c ofl-lib-nlt.c
+pmt_ofl_LDADD   = ${libHX_LIBS}
 
 pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c xstdlib-nolibtool.c
 pmvarrun_LDADD   = ${libHX_LIBS}

@@ -24,6 +24,11 @@ struct kvp {
 };
 
 /*
+ *	OFL-LIB.C
+ */
+extern bool ofl(const char *, unsigned int);
+
+/*
  *	PAM_MOUNT.C
  */
 #ifndef HAVE_VISIBILITY_HIDDEN
