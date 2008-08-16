@@ -202,11 +202,13 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 		l0g("umount command not defined\n");
 		return false;
 	}
-	if (strlen(vpt->fs_key_cipher) > 0 && strlen(vpt->fs_key_path) == 0) {
+	if ((vpt->fs_key_cipher != NULL && strlen(vpt->fs_key_cipher) > 0) &&
+	    (vpt->fs_key_path == NULL || strlen(vpt->fs_key_path) == 0)) {
 		l0g("fs_key_cipher defined without fs_key_path\n");
 		return false;
 	}
-	if (strlen(vpt->fs_key_cipher) == 0 && strlen(vpt->fs_key_path) > 0) {
+	if ((vpt->fs_key_cipher == NULL || strlen(vpt->fs_key_cipher) == 0) &&
+	    (vpt->fs_key_path != NULL && strlen(vpt->fs_key_path) > 0)) {
 		l0g("fs_key_path defined without fs_key_cipher\n");
 		return false;
 	}

@@ -350,8 +350,8 @@ static void log_pm_input(const struct config *const config,
 	w4rn("volume:        %s\n", vpt->volume);
 	w4rn("mountpoint:    %s\n", vpt->mountpoint);
 	w4rn("options:       %s\n", options);
-	w4rn("fs_key_cipher: %s\n", vpt->fs_key_cipher);
-	w4rn("fs_key_path:   %s\n", vpt->fs_key_path);
+	w4rn("fs_key_cipher: %s\n", znul(vpt->fs_key_cipher));
+	w4rn("fs_key_path:   %s\n", znul(vpt->fs_key_path));
 	w4rn("use_fstab:     %d\n", vpt->use_fstab);
 	w4rn("----------------------\n");
 	hmc_free(options);
@@ -822,7 +822,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 
 	/* FIXME: better done elsewhere? */
 	password = (password != NULL) ? password : "";
-	if (strlen(vpt->fs_key_cipher) > 0) {
+	if (vpt->fs_key_cipher != NULL && strlen(vpt->fs_key_cipher) > 0) {
 		/*
 		 * _password is binary data -- no strlen(), strcpy(), etc.!
 		 */

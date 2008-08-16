@@ -61,8 +61,7 @@ struct vol {
 	bool globalconf;
 	/* set, so that umount can rmdir it */
 	bool created_mntpt;
-	char fs_key_cipher[MAX_PAR + 1];
-	char fs_key_path[PATH_MAX + 1];
+	char *fs_key_cipher, *fs_key_path;
 	char server[MAX_PAR + 1];
 	/* user field in a single volume record; can be "*" */
 	char user[MAX_PAR + 1];
@@ -89,8 +88,8 @@ struct config {
 	char *user;
 	unsigned int debug;
 	bool mkmntpoint, rmdir_mntpt;
-	char luserconf[PATH_MAX + 1];
-	char fsckloop[PATH_MAX + 1];
+	hmc_t *luserconf;
+	char *fsckloop;
 	char *command[_CMD_MAX][MAX_PAR+1];
 	struct HXbtree *options_require, *options_allow, *options_deny;
 	struct HXclist_head volume_list;
@@ -110,6 +109,14 @@ struct kvp {
 	char *key, *value;
 	struct HXlist_head list;
 };
+
+/*
+ *
+ */
+static inline const char *znul(const char *s)
+{
+	return (s == NULL) ? "(null)" : s;
+}
 
 /*
  *	OFL-LIB.C

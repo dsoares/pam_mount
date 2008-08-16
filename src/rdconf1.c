@@ -69,8 +69,8 @@ struct pmt_command {
 };
 
 /* Functions */
-static char *expand_home(const char *, char *, size_t);
-static char *expand_user(const char *, char *, size_t);
+static char *expand_home1(const char *, char *, size_t);
+static char *expand_user1(const char *, char *, size_t);
 static inline int strcmp_1u(const xmlChar *, const char *);
 static int rc_volume_cond_ext(const struct passwd *, xmlNode *);
 
@@ -80,6 +80,70 @@ static const struct pmt_command default_command[];
 static bool onetime_options_allow, onetime_options_require;
 
 //-----------------------------------------------------------------------------
+/**
+ * expand_home -
+ * @user:	username to use for home directory lookup
+ * @path:	pathname to expand
+ * @size:	size of @path
+ *
+ * Expands tildes in @path to the user home directory and updates @path.
+ * Returns @dest.
+ */
+static bool expand_home(const char *user, char **path_pptr)
+{
+	char *buf, *path = *path_pptr;
+	struct passwd *pe;
+	size_t size;
+
+	if (path == NULL)
+		return true;
+	if (*path != '~')
+		return true;
+	if ((pe = getpwnam(user)) == NULL) {
+		misc_log("Could not lookup account info for %s\n", user);
+		return false;
+	}
+	size = strlen(pe->pw_dir) + strlen(path) + 1;
+	if ((buf = xmalloc(size)) == NULL) {
+		l0g("%s\n", strerror(errno));
+		return NULL;
+	}
+	snprintf(buf, size, "%s%s", pe->pw_dir, path + 1);
+	free(path);
+	*path_pptr = buf;
+	return true;
+}
+
+/**
+ * expand_user -
+ * @user:	username to substitue for placeholder
+ * @dest:	buffer to operate on
+ * @size:	size of @dest
+ *
+ * Substitutes all occurrences of %(USER) by the username. Returns NULL on
+ * failure, otherwise @dest.
+ *
+ * (This should probably be done by the fmt_ptrn stuff, but is not at the
+ * moment due to to-XML transition period.)
+ */
+static bool expand_user(const char *user, char **dest_pptr)
+{
+	struct HXbtree *vinfo;
+	hmc_t *tmp = NULL;
+
+	if (*dest_pptr == NULL)
+		return true;
+	if ((vinfo = HXformat_init()) == NULL)
+		return NULL;
+	HXformat_add(vinfo, "USER", user, HXTYPE_STRING);
+	misc_add_ntdom(vinfo, user);
+	HXformat_aprintf(vinfo, &tmp, *dest_pptr);
+	HXformat_free(vinfo);
+	*dest_pptr = xstrdup(tmp);
+	hmc_free(tmp);
+	return true;
+}
+
 /**
  * expandconfig -
  * @config:	configuration structure
@@ -92,12 +156,12 @@ bool expandconfig(const struct config *config)
 	struct vol *vpt;
 
 	HXlist_for_each_entry(vpt, &config->volume_list, list) {
-		if (expand_home(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
-		    expand_user(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
-		    expand_home(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
-		    expand_user(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
-		    expand_home(u, vpt->fs_key_path, sizeof(vpt->fs_key_path)) == NULL ||
-		    expand_user(u, vpt->fs_key_path, sizeof(vpt->fs_key_path)) == NULL)
+		if (expand_home1(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
+		    expand_user1(u, vpt->mountpoint, sizeof(vpt->mountpoint)) == NULL ||
+		    expand_home1(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
+		    expand_user1(u, vpt->volume, sizeof(vpt->volume)) == NULL ||
+		    !expand_home(u, &vpt->fs_key_path) ||
+		    !expand_user(u, &vpt->fs_key_path))
 			return false;
 
 		if (strcmp(vpt->user, "*") == 0 || *vpt->user == '@')
@@ -120,6 +184,9 @@ void freeconfig(struct config *config)
 	struct vol *vol, *next;
 	unsigned int i, j;
 
+	hmc_free(config->luserconf);
+	free(config->fsckloop);
+
 	for (i = 0; i < _CMD_MAX; ++i) {
 		free(config->command[i][0]);
 		for (j = 0; config->command[i][j] != NULL; ++j)
@@ -128,6 +195,8 @@ void freeconfig(struct config *config)
 
 	HXlist_for_each_entry_safe(vol, next, &config->volume_list, list) {
 		kvplist_genocide(&vol->options);
+		free(vol->fs_key_cipher);
+		free(vol->fs_key_path);
 		free(vol);
 	}
 
@@ -211,12 +280,12 @@ void initconfig(struct config *config)
 {
 	unsigned int i, j;
 	char options_allow[]   = "nosuid,nodev";
-	char options_require[] = "nosuid,nodev";;
+	char options_require[] = "nosuid,nodev";
 
 	memset(config, 0, sizeof(*config));
 	config->debug      = true;
 	config->mkmntpoint = true;
-	strcpy(config->fsckloop, "/dev/loop7");
+	config->fsckloop   = xstrdup("/dev/loop7");
 
 	config->msg_authpw    = xstrdup("pam_mount password:");
 	config->msg_sessionpw = xstrdup("reenter password for pam_mount:");
@@ -269,16 +338,7 @@ bool readconfig(const char *file, bool global_conf, struct config *config)
 }
 
 //-----------------------------------------------------------------------------
-/**
- * expand_home -
- * @user:	username to use for home directory lookup
- * @path:	pathname to expand
- * @size:	size of @path
- *
- * Expands tildes in @path to the user home directory and updates @path.
- * Returns @dest.
- */
-static char *expand_home(const char *user, char *path, size_t size)
+static char *expand_home1(const char *user, char *path, size_t size)
 {
 	struct passwd *pe;
 	char *buf;
@@ -303,19 +363,7 @@ static char *expand_home(const char *user, char *path, size_t size)
 	return path;
 }
 
-/**
- * expand_user -
- * @user:	username to substitue for placeholder
- * @dest:	buffer to operate on
- * @size:	size of @dest
- *
- * Substitutes all occurrences of %(USER) by the username. Returns NULL on
- * failure, otherwise @dest.
- *
- * (This should probably be done by the fmt_ptrn stuff, but is not at the
- * moment due to to-XML transition period.)
- */
-static char *expand_user(const char *user, char *dest, size_t size)
+static char *expand_user1(const char *user, char *dest, size_t size)
 {
 	struct HXbtree *vinfo;
 
@@ -590,8 +638,8 @@ static const char *rc_fsckloop(xmlNode *node, struct config *config,
 			free(dev);
 			return "fsckloop device path too long";
 		}
-		strncpy(config->fsckloop, dev, PATH_MAX);
-		free(dev);
+		free(config->fsckloop);
+		config->fsckloop = dev;
 	}
 
 	return NULL;
@@ -624,13 +672,10 @@ static const char *rc_luserconf(xmlNode *node, struct config *config,
 		return "Could not get password entry";
 	if ((s = xmlGetProp_2s(node, "name")) == NULL)
 		return "<luserconf> is missing name= attribute";
-	if (strlen(pent->pw_dir) + 1 + strlen(s) > sizeof_z(config->luserconf)) {
-		free(s);
-		return "expanded luserconf path too long";
-	}
-	HX_strlcpy(config->luserconf, pent->pw_dir, sizeof(config->luserconf));
-	HX_strlcat(config->luserconf, "/", sizeof(config->luserconf));
-	HX_strlcat(config->luserconf, s, sizeof(config->luserconf));
+	hmc_free(config->luserconf);
+	config->luserconf = hmc_sinit(pent->pw_dir);
+	hmc_strcat(&config->luserconf, "/");
+	hmc_strcat(&config->luserconf, s);
 	w4rn("path to luserconf set to %s\n", config->luserconf);
 	free(s);
 	return NULL;
@@ -1244,16 +1289,12 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 
 	/* Filesystem key */
 	if ((tmp = xmlGetProp_2s(node, "fskeycipher")) != NULL) {
-		if (strlen(tmp) > sizeof_z(vpt->fs_key_cipher))
-			l0g("config: %s \"%s\" truncated\n", "fskeycipher", tmp);
-		strncpy(vpt->fs_key_cipher, tmp, sizeof(vpt->fs_key_cipher));
-		free(tmp);
+		free(vpt->fs_key_cipher);
+		vpt->fs_key_cipher = tmp;
 	}
 	if ((tmp = xmlGetProp_2s(node, "fskeypath")) != NULL) {
-		if (strlen(tmp) > sizeof_z(vpt->fs_key_path))
-			l0g("config: %s \"%s\" truncated\n", "fskeypath", tmp);
-		strncpy(vpt->fs_key_path, tmp, sizeof(vpt->fs_key_path));
-		free(tmp);
+		free(vpt->fs_key_path);
+		vpt->fs_key_path = tmp;
 	}
 
 	/* expandconfig() will set this later */

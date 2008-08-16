@@ -473,7 +473,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 
 	w4rn("back from global readconfig\n");
-	if (strlen(Config.luserconf) == 0)
+	if (Config.luserconf == NULL || strlen(Config.luserconf) == 0)
 		w4rn("per-user configurations not allowed by pam_mount.conf.xml\n");
 	else if (exists(Config.luserconf) && owns(Config.user, Config.luserconf)) {
 		w4rn("going to readconfig user\n");
