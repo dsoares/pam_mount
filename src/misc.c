@@ -27,9 +27,6 @@
 #include "readconfig.h"
 #include "xstdlib.h"
 
-/* Functions */
-static int static_string_valid(const char *, const size_t);
-
 //-----------------------------------------------------------------------------
 /**
  * misc_dump_id - print user IDs
@@ -160,90 +157,6 @@ long str_to_long(const char *n)
 		return LONG_MAX;
 	}
 	return val;
-}
-
-/**
- * static_string_valid -
- * @s:		string to analyze
- * @len:	maximum length of string
- *
- * Verifies that there is a '\0' byte within the first @len bytes of @s.
- */
-static int static_string_valid(const char *s, const size_t len)
-{
-	size_t i;
-	if (s == NULL)
-		return 0;
-	/* make sure there is a terminating NUL */
-	for (i = 0; i < len; i++)
-		if (s[i] == '\0')
-			return 1;
-	return 0;
-}
-
-/**
- * vol_valid -
- * @v:	volume to check
- *
- * Verifies that the volume structure is consistent.
- */
-int vol_valid(const struct vol *v) {
-	if (v == NULL)
-		return 0;
-	if (!(v->type >= 0 && v->type < _CMD_MAX))
-		return 0;
-	/* should be guaranteed by volume_record_sane() */
-	/* FIXME: hope to have this in util-linux (LCLMOUNT) some day: */
-	if (!(v->type == CMD_LCLMOUNT || v->type == CMD_CRYPTMOUNT ||
-	    v->type == CMD_FUSEMOUNT || v->type == CMD_TRUECRYPTMOUNT ||
-	    strlen(v->server) > 0))
-		return 0;
-	/* bool globalconf; */
-	/* bool created_mntpt; */
-	if (!static_string_valid(v->fs_key_cipher, MAX_PAR + 1) ||
-	    !static_string_valid(v->fs_key_path, PATH_MAX + 1))
-		return 0;
-	/* should be guaranteed by volume_record_sane(): */
-	if (!(strlen(v->fs_key_cipher) == 0 || strlen(v->fs_key_path) > 0))
-		return 0;
-	if (!static_string_valid(v->server, MAX_PAR + 1) ||
-	    !static_string_valid(v->user, MAX_PAR + 1) ||
-	    !static_string_valid(v->volume, MAX_PAR + 1))
-		return 0;
-	/* optlist_t * options */
-	if (!static_string_valid(v->mountpoint, PATH_MAX + 1))
-		return 0;
-	/* bool use_fstab */
-	return 1;
-}
-
-/**
- * config_valid -
- * @c:	config to check
- *
- * Verifies that the configuration structure is consistent.
- */
-int config_valid(const struct config *c)
-{
-	struct vol *vol;
-
-	if (c == NULL || c->user == NULL)
-		return 0;
-	/* bool debug */
-	/* bool mkmountpoint */
-	/* unsigned int volcount */
-	if (!static_string_valid(c->luserconf, PATH_MAX + 1) ||
-	    !static_string_valid(c->fsckloop, PATH_MAX + 1))
-		return 0;
-	/* FIXME: test char *command[MAX_PAR + 1][COMMAND_MAX]; */
-	/* optlist_t *options_require; */
-	/* optlist_t *options_allow; */
-	/* optlist_t *options_deny; */
-
-	HXlist_for_each_entry(vol, &c->volume_list, list)
-		if (!vol_valid(vol))
-			return 0;
-	return 1;
 }
 
 /**

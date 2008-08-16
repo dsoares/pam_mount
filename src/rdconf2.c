@@ -179,6 +179,10 @@ bool luserconf_volume_record_sane(const struct config *config,
 bool volume_record_sane(const struct config *config, const struct vol *vpt)
 {
 	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
+	if (vpt->type >= _CMD_MAX) {
+		misc_log("Illegal volume type\n");
+		return false;
+	}
 	if (config->command[vpt->type][0] == NULL) {
 		l0g("mount command not defined for this type\n");
 		return false;

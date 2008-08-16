@@ -152,7 +152,6 @@ static int already_mounted(const struct config *const config,
 	bool mounted = false;
 	FILE *mtab;
 
-	assert(config_valid(config));
 	vol_to_dev(dev, sizeof(dev), vpt);
 
 	if ((mtab = setmntent("/etc/mtab", "r")) == NULL) {
@@ -215,7 +214,6 @@ static int already_mounted(const struct config *const config,
 	pid_t pid;
 	FILE *fp;
 
-	assert(config_valid(config));
 	vpt = &config->volume[vol];
 	vol_to_dev(dev, sizeof(dev), vpt);
 
@@ -392,7 +390,6 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 	struct passwd *passwd_ent;
 	char dcopy[PATH_MAX + 1], *parent;
 
-	assert(vol_valid(volume));
 	assert(d != NULL);
 
 	strncpy(dcopy, d, sizeof_z(dcopy));
@@ -495,7 +492,6 @@ int do_unmount(const struct config *config, struct vol *vpt,
 	unsigned int i;
 	int type;
 
-	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
 
@@ -602,7 +598,6 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
 	const char *cipher, *keybits;
 	unsigned int i;
 
-	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 	/* password_len is unsigned */
@@ -660,7 +655,6 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 	int child_exit, _argc = 0;
 	unsigned int i;
 
-	assert(config_valid(config));
 	assert(vinfo != NULL);
 
 	if (config->command[CMD_UNLOSETUP][0] == NULL) {
@@ -698,7 +692,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	const char *fsck_target;
 	unsigned int i;
 
-	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 	assert(password_len >= 0 &&
@@ -814,7 +807,6 @@ int do_mount(const struct config *config, struct vol *vpt,
 	unsigned int i;
 	int ret;
 
-	assert(config_valid(config));
 	assert(vinfo != NULL);
 	assert(password != NULL);
 
@@ -944,8 +936,6 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	struct HXbtree *vinfo;
 	struct passwd *pe;
 	hmc_t *options;
-
-	assert(config_valid(config));
 
 	if ((vinfo = HXformat_init()) == NULL)
 		return 0;

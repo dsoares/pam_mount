@@ -365,7 +365,6 @@ static int modify_pm_count(struct config *config, char *user,
 	struct sigaction sact, oldsact;
 	unsigned int i;
 
-	assert(config_valid(config));
 	assert(user != NULL);
 	assert(operation != NULL);
 
@@ -425,7 +424,6 @@ static int modify_pm_count(struct config *config, char *user,
 	sigaction(SIGPIPE, &oldsact, NULL);
  nosigactout:
 
-	assert(config_valid(config));
 	return fnval;
 }
 
