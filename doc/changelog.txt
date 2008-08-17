@@ -1,6 +1,9 @@
 
 For details, see the history as recorded in the git repository.
 
+
+v0.44 (August 16 2008)
+======================
 - mount.crypt: fix option slurping (SF bug #2054323)
 - properly handle simple sgrp config items (Debian bug #493497)
 - src: correct error check in run_lsof()
