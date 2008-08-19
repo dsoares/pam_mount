@@ -103,11 +103,13 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
 
 /**
  * decrypted_key -
- * @pt_fs_key:		filesystem key
- * @pt_fs_key_len:	filesystem key length
+ * @pt_fs_key:		plaintext filesystem key
  * @fs_key_path:	path to an encrypted file (EFSK)
  * @fs_key_cipher:	the cipher used to encrypt the file
  * @authtok:		key to unlock the file at @fs_key_path
+ *
+ * Decrypts the keyfile given be @fs_key_path,@fs_key_cipher using @authtok and
+ * returns the decrypted contents in @pt_fs_key.
  *
  * Returns zero on error or positive non-zero on success.
  *
@@ -121,13 +123,11 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
  *
  * FIXME: this function may need to be broken up and made more readable.
  */
-int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
-    const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
+int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
+    const char *fs_key_cipher, const char *authtok)
 {
-	int ret = 1;
-	int segment_len;
-	unsigned char ct_fs_key[MAX_PAR];	/* encrypted filesystem key. */
-	size_t ct_fs_key_len;
+	hmc_t *ct_fs_key = NULL, *line = NULL;
+	int segment_len, pt_fs_key_len, ret = 1;
 	unsigned char hashed_authtok[EVP_MAX_KEY_LENGTH];	/* hash(system authtok) */
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 	FILE *fs_key_fp;
@@ -135,67 +135,77 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 	EVP_CIPHER_CTX ctx;
 
 	assert(pt_fs_key != NULL);
-	assert(pt_fs_key_len != NULL);
 	assert(fs_key_cipher != NULL);	/* fs_key_cipher = D, where D_key(efsk) = fsk */
 	assert(fs_key_path != NULL);	/* path to efsk */
 	assert(authtok != NULL);	/* should unlock efsk */
 
-	memset(pt_fs_key, 0, MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 	OpenSSL_add_all_ciphers();
 	EVP_CIPHER_CTX_init(&ctx);
 	SSL_load_error_strings();
 	if ((fs_key_fp = fopen(fs_key_path, "r")) == NULL) {
 		l0g("error opening %s\n", fs_key_path);
 		ret = 0;
-		goto _return_no_close;
+		goto out;
 	}
 	if ((cipher = EVP_get_cipherbyname(fs_key_cipher)) == NULL) {
 		l0g("error getting cipher \"%s\"\n", fs_key_cipher);
 		ret = 0;
-		goto _return;
+		goto out2;
 	}
 	if (hash_authtok(fs_key_fp, cipher, authtok,
 	    hashed_authtok, iv) == 0) {
 		ret = 0;
-		goto _return;
+		goto out2;
 	}
-	ct_fs_key_len = fread(ct_fs_key, 1, sizeof(ct_fs_key), fs_key_fp);
-	if (ct_fs_key_len == 0) {
-		l0g("failed to read encrypted filesystem key from %s\n",
-		    fs_key_path);
+
+	ct_fs_key = hmc_minit(NULL, 0);
+	while (HX_getl(&line, fs_key_fp) != NULL)
+		hmc_memcat(&ct_fs_key, line, hmc_length(line));
+	hmc_free(line);
+
+	if (hmc_length(ct_fs_key) == 0) {
+		misc_log("failed to read encrypted filesystem key from %s, "
+		         "or file empty.\n", fs_key_path);
 		ret = 0;
-		goto _return;
+		goto out3;
 	}
 	if (EVP_DecryptInit_ex(&ctx, cipher, NULL, hashed_authtok, iv) == 0) {
 		sslerror("failed to initialize decryption code");
 		ret = 0;
-		goto _return;
+		goto out3;
 	}
-	/*
-	 * assumes plaintexts is always <= ciphertext + EVP_MAX_BLOCK_LEN in
-	 * length OpenSSL's documentation seems to promise this
-	 */
-	if (EVP_DecryptUpdate(&ctx, pt_fs_key, &segment_len,
-	    ct_fs_key, ct_fs_key_len) == 0) {
+
+	*pt_fs_key = hmc_minit(NULL, 0);
+	hmc_trunc(pt_fs_key, hmc_length(ct_fs_key) + EVP_MAX_BLOCK_LENGTH);
+	if (EVP_DecryptUpdate(&ctx, signed_cast(unsigned char *,
+	    *pt_fs_key), &segment_len, signed_cast(const unsigned char *,
+	    ct_fs_key), hmc_length(ct_fs_key)) == 0) {
 		sslerror("failed to decrypt key");
 		ret = 0;
-		goto _return;
+		goto out4;
 	}
-	*pt_fs_key_len = segment_len;
-	if (EVP_DecryptFinal_ex(&ctx, &pt_fs_key[*pt_fs_key_len],
-	    &segment_len) == 0) {
+	pt_fs_key_len = segment_len;
+	if (EVP_DecryptFinal_ex(&ctx, signed_cast(unsigned char *,
+	    &pt_fs_key[segment_len]), &segment_len) == 0) {
 		sslerror("bad pad on end of encrypted file (wrong algorithm "
 		         "or key size?)");
 		ret = 0;
-		goto _return;
+		goto out4;
 	}
-	*pt_fs_key_len += segment_len;
- _return:
+	pt_fs_key_len += segment_len;
+	hmc_trunc(pt_fs_key, pt_fs_key_len);
+
+ out4:
+	if (ret == 0)
+		hmc_free(*pt_fs_key);
+ out3:
+	hmc_free(ct_fs_key);
+ out2:
 	if (fclose(fs_key_fp) != 0) {
 		l0g("error closing file pointer\n");
 		ret = 0;
 	}
- _return_no_close:
+ out:
 	if (EVP_CIPHER_CTX_cleanup(&ctx) == 0) {
 		sslerror("error cleaning up cipher context");
 		ret = 0;
@@ -203,14 +213,14 @@ int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
 
 	ERR_free_strings();
 	/* pt_fs_key_len is unsigned */
-	assert(ret == 0 || *pt_fs_key_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
+	assert(ret == 0);
 	return ret;
 }
 
 #else /* HAVE_LIBCRYPTO */
 
-int decrypted_key(unsigned char *pt_fs_key, size_t *pt_fs_key_len,
-    const char *fs_key_path, const char *fs_key_cipher, const char *authtok)
+int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
+    const char *fs_key_cipher, const char *authtok)
 {
 	l0g("encrypted filesystem key not supported: no openssl\n");
 	return 0;

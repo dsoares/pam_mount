@@ -590,7 +590,7 @@ static int pipewrite(int fd, const void *buf, size_t count)
 }
 
 static int do_losetup(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, const unsigned char *password, size_t password_len)
+    struct HXbtree *vinfo, hmc_t *password)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -606,8 +606,6 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
 
 	assert(vinfo != NULL);
 	assert(password != NULL);
-	/* password_len is unsigned */
-	assert(password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	cipher  = kvplist_get(&vpt->options, "encryption");
 	keybits = kvplist_get(&vpt->options, "keybits");
@@ -632,9 +630,10 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
 		return 0;
 
 	/* note to self: password is decrypted */
-	if (pipewrite(cstdin, password, password_len) != password_len) {
-	    l0g("error sending password to losetup\n");
-	    ret = 0;
+	if (pipewrite(cstdin, password, hmc_length(password)) !=
+	    hmc_length(password)) {
+		misc_log("error sending password to losetup\n");
+		ret = 0;
 	}
 	close(cstdin);
 	log_output(cstderr, "losetup errors:\n");
@@ -684,7 +683,7 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 }
 
 static int check_filesystem(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, const unsigned char *password, size_t password_len)
+    struct HXbtree *vinfo, hmc_t *password)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -700,8 +699,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 
 	assert(vinfo != NULL);
 	assert(password != NULL);
-	assert(password_len >= 0 &&
-	       password_len <= MAX_PAR + EVP_MAX_BLOCK_LENGTH);
 
 	if (vpt->type == CMD_CRYPTMOUNT)
 		/*
@@ -725,7 +722,7 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 		return 1;
 
 	if (kvplist_contains(&vpt->options, "loop")) {
-		if (!do_losetup(config, vpt, vinfo, password, password_len))
+		if (!do_losetup(config, vpt, vinfo, password))
 			return 0;
 		fsck_target = config->fsckloop;
 	} else {
@@ -797,7 +794,7 @@ static void mount_set_fsck(const struct config *config,
  * @config:	current config
  * @vpt:	volume descriptor
  * @vinfo:
- * @password:
+ * @password:	login password
  *
  * Returns zero on error, positive non-zero for success.
  */
@@ -805,8 +802,7 @@ int do_mount(const struct config *config, struct vol *vpt,
     struct HXbtree *vinfo, const char *password)
 {
 	const char *_argv[MAX_PAR + 1];
-	size_t _password_len;
-	unsigned char _password[MAX_PAR + EVP_MAX_BLOCK_LENGTH];
+	hmc_t *ll_password = NULL;
 	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
 	const char *mount_user;
 	pid_t pid = -1;
@@ -848,26 +844,17 @@ int do_mount(const struct config *config, struct vol *vpt,
 	/* FIXME: better done elsewhere? */
 	password = (password != NULL) ? password : "";
 	if (vpt->fs_key_cipher != NULL && strlen(vpt->fs_key_cipher) > 0) {
-		/*
-		 * _password is binary data -- no strlen(), strcpy(), etc.!
-		 */
+		/* ll_password is binary data */
 		w4rn("decrypting FS key using system auth. token and "
 		     "%s\n", vpt->fs_key_cipher);
 		/*
 		 * vpt->fs_key_path contains real filesystem key.
 		 */
-		if (!decrypted_key(_password, &_password_len,
+		if (!decrypted_key(&ll_password,
 		    vpt->fs_key_path, vpt->fs_key_cipher, password))
 			return 0;
 	} else {
-		/*
-		 * _password is an ASCII string in this case -- we'll
-		 * treat its MAX_PAR + EVP_MAX_BLOCK_LENGTH size as the
-		 * standard string MAX_PAR + 1 in this case
-		 */
-		strncpy(signed_cast(char *, _password), password, MAX_PAR);
-		_password[MAX_PAR-1] = '\0';
-		_password_len = strlen(password);
+		ll_password = hmc_sinit(password);
 	}
 	w4rn("about to start building mount command\n");
 	/* FIXME: NEW */
@@ -886,7 +873,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		            config->command[vpt->type][i], vinfo);
 
 	if (vpt->type == CMD_LCLMOUNT &&
-	    !check_filesystem(config, vpt, vinfo, _password, _password_len))
+	    !check_filesystem(config, vpt, vinfo, ll_password))
 		l0g("error checking filesystem but will continue\n");
 	/* send password down pipe to mount process */
 	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
@@ -897,18 +884,21 @@ int do_mount(const struct config *config, struct vol *vpt,
 	mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
 	             vpt->user : NULL;
 	if (!spawn_start(_argv, &pid, &cstdin, NULL, &cstderr,
-	    set_myuid, mount_user))
+	    set_myuid, mount_user)) {
+		hmc_free(ll_password);
 		return 0;
+	}
 
 	if (vpt->type != CMD_NFSMOUNT)
-		if (pipewrite(cstdin, _password, _password_len) !=
-		    _password_len)
+		if (pipewrite(cstdin, ll_password, hmc_length(ll_password)) !=
+		    hmc_length(ll_password))
 			/* FIXME: clean: returns value of exit below */
 			l0g("error sending password to mount\n");
 	close(cstdin);
 
 	/* Paranoia? */
-	memset(_password, 0, sizeof(_password));
+	memset(ll_password, 0, hmc_length(ll_password));
+	hmc_free(ll_password);
 	log_output(cstderr, "mount errors:\n");
 	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
