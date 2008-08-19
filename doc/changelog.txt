@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- Fix double-freeing the authentication token
+
+
 v0.44 (August 16 2008)
 ======================
 - mount.crypt: fix option slurping (SF bug #2054323)
