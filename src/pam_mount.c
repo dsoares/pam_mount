@@ -128,6 +128,7 @@ static void clean_system_authtok(pam_handle_t *pamh, void *data, int errcode)
 		unsigned int len = strlen(data) + 1;
 		memset(data, 0, len);
 		munlock(data, len);
+		free(data);
 	}
 }
 
