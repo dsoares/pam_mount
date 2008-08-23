@@ -57,12 +57,18 @@ static inline int spawn_build_pipes(const int **fd_request, int (*p)[2])
  */
 static void spawn_close_pipes(int (*p)[2])
 {
-	close(p[0][0]);
-	close(p[0][1]);
-	close(p[1][0]);
-	close(p[1][1]);
-	close(p[2][0]);
-	close(p[2][1]);
+	if (p[0][0] >= 0)
+		close(p[0][0]);
+	if (p[0][1] >= 0)
+		close(p[0][1]);
+	if (p[1][0] >= 0)
+		close(p[1][0]);
+	if (p[1][1] >= 0)
+		close(p[1][1]);
+	if (p[2][0] >= 0)
+		close(p[2][0]);
+	if (p[2][1] >= 0)
+		close(p[2][1]);
 }
 
 /**
