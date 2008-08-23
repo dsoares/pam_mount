@@ -156,6 +156,7 @@ bool expandconfig(const struct config *config)
 	HXlist_for_each_entry(vpt, &config->volume_list, list) {
 		if (!expand_home(u, &vpt->mountpoint) ||
 		    !expand_user(u, &vpt->mountpoint) ||
+		    !expand_user(u, &vpt->server) ||
 		    !expand_home(u, &vpt->volume) ||
 		    !expand_user(u, &vpt->volume) ||
 		    !expand_home(u, &vpt->fs_key_path) ||
