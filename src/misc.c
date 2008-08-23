@@ -23,7 +23,6 @@
 #include <pwd.h>
 #include "misc.h"
 #include "pam_mount.h"
-#include "private.h"
 #include "readconfig.h"
 #include "xstdlib.h"
 

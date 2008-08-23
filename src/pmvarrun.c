@@ -33,7 +33,6 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"
-#include "private.h"
 
 /* Definitions */
 #undef PMPREFIX

@@ -30,7 +30,6 @@
 #include "misc.h"
 #include "mount.h"
 #include "pam_mount.h"
-#include "private.h"
 #include "readconfig.h"
 #include "spawn.h"
 #include "xstdlib.h"

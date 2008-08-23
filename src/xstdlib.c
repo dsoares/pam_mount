@@ -15,7 +15,6 @@
 #include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"
-#include "private.h"
 #include "xstdlib.h"
 
 bool kvplist_contains(const struct HXclist_head *head, const char *key)

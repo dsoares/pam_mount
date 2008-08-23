@@ -34,7 +34,7 @@ pam_mount - crypto.c
 #include "compiler.h"
 #include "crypto.h"
 #include "misc.h"
-#include "private.h"
+#include "pam_mount.h"
 
 /* Functions */
 #ifdef HAVE_LIBCRYPTO
