@@ -6,6 +6,7 @@ For details, see the history as recorded in the git repository.
 - use ofl instead of lsof/fuser
 - kill-on-logout support (terminate processes that would stand in the  
   way of unmounting)
+- mount.crypt: auto-detect necessity for running losetup
 
 
 v0.44 (August 16 2008)

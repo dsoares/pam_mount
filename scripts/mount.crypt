@@ -72,6 +72,7 @@ while [[ "$#" -gt 0 ]]; do
 done;
 
 DEVICE="$1";
+DMDEVICE="$1";
 MOUNT_POINT="$2";
 shift 2;
 
@@ -81,16 +82,28 @@ if [ -z "$DEVICE" ]; then
 	exit 1;
 fi
 
-if [ ! -f "$DEVICE" -a ! -b "$DEVICE" ]; then
-	echo "${0##*/}: $DEVICE is neither a block device nor file" >&2;
-	exit 1
-fi
-
 if [ ! -d "$MOUNT_POINT" ]; then
 	echo "${0##*/}: $MOUNT_POINT not specified or is not a directory" >&2;
 	help >&2;
 	exit 1
 fi
+
+if [ -b "$DEVICE" ]; then
+	# $DEVICE already refers to a block device.
+else
+	tgt=$(readlink -f "$DEVICE");
+	if [ -f "$tgt" ]; then
+		DEVICE=$(_losetup "$DEVICE");
+		if [ -z "$DEVICE" ]; then
+			exit 1;
+		fi;
+		LOOP=true;
+	else
+		# Anything but files do not make sense.
+		echo "${0##*/}: $DEVICE is neither a block device nor file" >&2;
+		exit 1;
+	fi;
+fi;
 
 CIPHER=""
 dm_timeout=5;
@@ -98,7 +111,6 @@ KEYSIZE=""
 keyfile="";
 HASH=""
 luks_ro="";
-LOOP=false
 DOFSCK=false;
 MOUNTOPTIONS=""
 OLDIFS="$IFS";
@@ -117,9 +129,7 @@ for opt in $OPTIONS; do
 		(keyfile)
 			keyfile="$VAL";;
 		(loop)
-			if [ "`stat --format=\"%t\" \"$DEVICE\"`" != 7 ]; then
-				LOOP="true";
-			fi;
+			echo "\"loop\" option ignored by mount.crypt - autodetected" >&2;
 			;;
 		(*)
 			if [ "$opt" == "ro" ]; then
@@ -137,20 +147,7 @@ for opt in $OPTIONS; do
 done
 IFS="$OLDIFS";
 
-if [ "$LOOP" == true ]; then
-	DEVICE=`_losetup "$DEVICE"`;
-fi
-
-# if loop device, make device mapper name based on file pointed to
-case "$DEVICE" in
-    /dev/loop*)
-	DMDEVICE=`losetup "$DEVICE" 2>/dev/null | sed 's/.*(\(.\+\)).*/\1/'`;
-esac;
-# if not a loop device or previous command fails use $DEVICE
-: ${DMDEVICE:=$DEVICE}
-
-# FIXME: blind replacement of / with _ may be a bad idea.
-DMDEVICE=`echo "$DMDEVICE" | sed 's/\//_/g'`;
+DMDEVICE="${DMDEVICE//\//_}";
 
 # Check for LUKS
 if cryptsetup isLuks "$DEVICE" 2>/dev/null; then
