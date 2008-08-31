@@ -1,14 +1,14 @@
 
 Name:		pam_mount
-Version:	0.44
+Version:	0.45
 Release:	0
 Group:		System/Libraries
 Summary:	A PAM module that can mount volumes for a user session
 License:	LGPL
 URL:		http://pam-mount.sf.net/
 
-Source:		http://downloads.sf.net/pam-mount/%name-%version.tar.bz2
-BuildRequires:	libtool pam-devel pkg-config
+Source:		http://downloads.sf.net/pam-mount/%name-%version.tar.lzma
+BuildRequires:	libtool lzma pam-devel pkg-config
 BuildRequires:	openssl-devel >= 0.9.6, libxml2-devel >= 2.6
 BuildRequires:	libHX-devel >= 1.18
 %if "%_vendor" == "suse"

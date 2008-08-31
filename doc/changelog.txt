@@ -2,15 +2,18 @@
 For details, see the history as recorded in the git repository.
 
 
+v0.45 (August 31 2008)
+======================
 - fix double-freeing the authentication token
 - use ofl instead of lsof/fuser
-- kill-on-logout support (terminate processes that would stand in the  
+- kill-on-logout support (terminate processes that would stand in the
   way of unmounting)
 - mount.crypt: auto-detect necessity for running losetup
 
 
 v0.44 (August 16 2008)
 ======================
+Bugfixes only.
 - mount.crypt: fix option slurping (SF bug #2054323)
 - properly handle simple sgrp config items (Debian bug #493497)
 - src: correct error check in run_lsof()
