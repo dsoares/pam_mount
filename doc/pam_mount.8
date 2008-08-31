@@ -27,8 +27,7 @@ The module also supports mounting local filesystems of any kind the normal
 mount utility supports, with extra code to make sure certain volumes are set up
 properly because often they need more than just a mount call, such as encrypted
 volumes. This includes SMB/CIFS, NCP, FUSE, losetup crypto,
-dm-crypt/cryptsetup and truecrypt-4.x. Truecrypt 5.x removed the CLI component
-that pam_mount requires.
+dm-crypt/cryptsetup.
 .PP
 If you intend to use pam_mount to protect volumes on your computer using an
 encrypted filesystem system, please know that there are many other issues you

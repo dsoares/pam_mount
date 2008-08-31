@@ -60,6 +60,13 @@ Unverified programs:
 	* GDM on Ubuntu
 
 
+[ truecrypt ]
+
+
+The scriptable interface of Truecrypt 5 and upwards is broken and
+cannot be used by pam_mount.
+
+
 [ vsftpd - not using PAM ]
 
 vsftpd does not run through the PAM session code, hence will never

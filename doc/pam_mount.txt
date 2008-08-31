@@ -29,24 +29,23 @@ OVERVIEW
        normal  mount  utility  supports,  with extra code to make sure certain
        volumes are set up properly because often they need more  than  just  a
        mount  call,  such  as  encrypted volumes. This includes SMB/CIFS, NCP,
-       FUSE, losetup crypto, dm-crypt/cryptsetup and truecrypt-4.x.  Truecrypt
-       5.x removed the CLI component that pam_mount requires.
+       FUSE, losetup crypto, dm-crypt/cryptsetup.
 
-       If  you  intend  to  use  pam_mount to protect volumes on your computer
-       using an encrypted filesystem system, please know that there  are  many
-       other  issues  you  need to consider in order to protect your data. For
-       example, you probably want to disable or encrypt  your  swap  partition
+       If you intend to use pam_mount to  protect  volumes  on  your  computer
+       using  an  encrypted filesystem system, please know that there are many
+       other issues you need to consider in order to protect  your  data.  For
+       example,  you  probably  want to disable or encrypt your swap partition
        (the cryptoswap can help you do this). Do not assume a system is secure
        without carefully considering potential threats.
 
 NASTY DETAILS
-       The  primary  configuration  file   for   the   pam_mount   module   is
-       pam_mount.conf.xml.    On   most  platforms  this  file  is  read  from
-       /etc/security/pam_mount.conf.xml. On OpenBSD pam_mount reads  its  con‐
-       figuration  file from /etc/pam_mount.conf.xml.  pam_mount.conf.xml con‐
+       The   primary   configuration   file   for   the  pam_mount  module  is
+       pam_mount.conf.xml.   On  most  platforms  this  file  is   read   from
+       /etc/security/pam_mount.conf.xml.  On  OpenBSD pam_mount reads its con‐
+       figuration file from /etc/pam_mount.conf.xml.  pam_mount.conf.xml  con‐
        tains many comments documenting its use.
 
-       In addition, you must include two entries in  the  system’s  applicable
+       In  addition,  you  must include two entries in the system's applicable
        /etc/pam.d/service config files, as the following example shows:
 
                   auth     required  pam_securetty.so
@@ -61,15 +60,15 @@ NASTY DETAILS
               +++ session  optional  pam_mount.so
 
        When "sufficient" is used in the second column, you must make sure that
-       pam_mount is added before this entry. Otherwise pam_mount will not  get
-       executed  should  a  previous  PAM module succeed. Also be aware of the
-       "include" statements. These make PAM look into the specified  file.  If
+       pam_mount  is added before this entry. Otherwise pam_mount will not get
+       executed should a previous PAM module succeed. Also  be  aware  of  the
+       "include"  statements.  These make PAM look into the specified file. If
        there is a "sufficient" statement, then the pam_mount entry must either
        be in the included file before the "sufficient" statement or before the
        "include" statement.
 
-       If  you use pam_ldap, pam_winbind, or any other authentication services
-       that make use of PAM’s sufficient keyword, model your configuration  on
+       If you use pam_ldap, pam_winbind, or any other authentication  services
+       that  make use of PAM's sufficient keyword, model your configuration on
        the following order:
 
               ···
@@ -82,18 +81,18 @@ NASTY DETAILS
 
        This allows for:
 
-       1.  pam_mount,  as  the first "auth" module, will prompt for a password
+       1.  pam_mount, as the first "auth" module, will prompt for  a  password
            and export it to the PAM system.
 
-       2.  pam_ldap will use the password from  the  PAM  system  to  try  and
+       2.  pam_ldap  will  use  the  password  from  the PAM system to try and
            authenticate the user. If this succedes, the user will be authenti‐
            cated. If it fails, pam_unix will try to authenticate.
 
-       3.  pam_unix will try to authenticate the user if pam_ldap  failed.  If
+       3.  pam_unix  will  try to authenticate the user if pam_ldap failed. If
            pam_unix fails, then the authentication will be refused (due to the
            "required").
 
-       Alternatively, the following is possible (thanks to Andrew  Morgan  for
+       Alternatively,  the  following is possible (thanks to Andrew Morgan for
        the hint!):
 
               auth [success=2 default=ignore] pam_unix2.so
@@ -101,20 +100,20 @@ NASTY DETAILS
               auth requisite pam_deny.so
               auth optional pam_mount.so use_first_pass
 
-       It  may  seem  odd,  but  the first three lines will make it so that at
-       least one of pam_unix2 or pam_ldap has to  succeed.  As  you  can  see,
+       It may seem odd, but the first three lines will  make  it  so  that  at
+       least  one  of  pam_unix2  or  pam_ldap has to succeed. As you can see,
        pam_mount will be run after successful authentification with these sub‐
        systems.
 
-       If your volume has a different password than your system account,  then
-       encrypt  the  password to the volume you wish mounted using your system
-       password as the key and store  it  somewhere  on  your  system’s  local
+       If  your volume has a different password than your system account, then
+       encrypt the password to the volume you wish mounted using  your  system
+       password  as  the  key  and  store  it somewhere on your system's local
        filesystem. pam_mount supports transparently decrypting this filesystem
        key, as long as the cipher used is supported by openssl. Given:
 
        sk     system key, the key or password used to log into the system
 
-       fsk    filesystem key, the key that allows you to  use  the  filesystem
+       fsk    filesystem  key,  the  key that allows you to use the filesystem
               you wish pam_mount to mount for you
 
        E and D
@@ -123,48 +122,48 @@ NASTY DETAILS
        efsk   encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on
               the local filesystem (ie: /home/user.key)
 
-       pam_mount  will read efsk from the local filesystem, perform fsk = D_sk
-       (efsk) and use fsk to mount the filesystem. If you change  your  system
-       password,  simply  regenerate efsk using efsk = E_sk (fsk). If you want
-       to mount this volume by  hand,  use  something  like  ‘openssl  enc  -d
-       -aes-256-ecb  -in /home/user.key | mount -p0 /home/user‘. More informa‐
+       pam_mount will read efsk from the local filesystem, perform fsk =  D_sk
+       (efsk)  and  use fsk to mount the filesystem. If you change your system
+       password, simply regenerate efsk using efsk = E_sk (fsk). If  you  want
+       to  mount  this  volume  by  hand,  use  something like `openssl enc -d
+       -aes-256-ecb -in /home/user.key | mount -p0 /home/user`. More  informa‐
        tion about this technique is included in pam_mount.conf.xml.
 
-       A script  named  mkehd  is  provided  with  pam_mount  to  help  create
-       encrypted  home  directories.  If  you  have  an entry for a user using
-       encrypted home directories in  pam_mount.conf.xml,  mkehd  will  create
+       A  script  named  mkehd  is  provided  with  pam_mount  to  help create
+       encrypted home directories. If you have  an  entry  for  a  user  using
+       encrypted  home  directories  in  pam_mount.conf.xml, mkehd will create
        necessary filesystem images and possibly encrypted filesystem keys.
 
-       Individual  users  may define additional volumes to mount if allowed by
-       pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume  keyword
+       Individual users may define additional volumes to mount if  allowed  by
+       pam_mount.conf.xml  (usually ~/.pam_mount.conf.xml). The volume keyword
        is the only valid keyword in these per-user configuration files. If the
        luserconf parameter is set in pam_mount.conf.xml, allowing user-defined
-       volume,  then  users  may  mount and unmount any volume they own at any
-       mount point they own. On some filesystem configurations this may  be  a
-       security  flaw  so  user-defined volumes are not allowed by the example
+       volume, then users may mount and unmount any volume  they  own  at  any
+       mount  point  they own. On some filesystem configurations this may be a
+       security flaw so user-defined volumes are not allowed  by  the  example
        pam_mount.conf.xml distributed with pam_mount.
 
-       In general, you will leave all the first (general) parameters  as  pro‐
-       vided  by default. You only have to provide the user/volume list in the
+       In  general,  you will leave all the first (general) parameters as pro‐
+       vided by default. You only have to provide the user/volume list in  the
        end of the file, following the examples.
 
-       To ensure that your system and, possibly, the  remote  server  are  all
+       To  ensure  that  your  system and, possibly, the remote server are all
        properly configured, you should try to mount all or some of the volumes
        by  hand,  using  the  same  commands  and  mount  points  provided  in
        pam_mount.conf.xml. This will save you a lot of grief, since it is more
        difficult to debug the mounting process via pam_mount.
 
-       If you can mount the volumes by  hand  but  it  is  not  happening  via
-       pam_mount,   you   may   want   to   enable   the   "debug"  option  in
+       If  you  can  mount  the  volumes  by  hand but it is not happening via
+       pam_mount,  you  may   want   to   enable   the   "debug"   option   in
        pam_mount.conf.xml to see what is happening.
 
-       Verify if the user owns the mount point and has sufficient  permissions
-       over  that.  pam_mount  will  verify  this and will refuse to mount the
+       Verify  if the user owns the mount point and has sufficient permissions
+       over that. pam_mount will verify this and  will  refuse  to  mount  the
        remote volume if the user does not own that directory.
 
-       If pam_mount is having trouble unmounting  volumes  upon  logging  out,
-       enable  the  debug variable. This causes pam_mount to run ofl on logout
-       and write its output to the system’s log.
+       If  pam_mount  is  having  trouble unmounting volumes upon logging out,
+       enable the debug variable. This causes pam_mount to run ofl  on  logout
+       and write its output to the system's log.
 
 AUTHORS
        W. Michael Petullo <mike@flyn.org>
