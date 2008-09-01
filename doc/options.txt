@@ -10,7 +10,9 @@ Options are listed in the 4th column of a PAM file, e.g.:
 
 use_first_pass
 	Always take the password from the PAM subsystem;
-	if it is not available, fail the module.
+	if it is not available, fail the module. The error returned
+	to the PAM core will be whatever error was encountered,
+	e.g. Out of memory, etc.
 
 try_first_pass
 	Try taking the password from the PAM subsystem;
@@ -18,7 +20,8 @@ try_first_pass
 
 soft_try_pass
 	Try taking the password from the PAM subsystem;
-	if it fails, do not ask.
+	if it fails, do not ask and return "Authentication token
+	unavailable" instead. (Not quite the same as use_first_pass.)
 
 nullok
 	Do not fail if the authentication token was NULL (i.e. if
