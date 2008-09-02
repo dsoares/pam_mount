@@ -28,7 +28,7 @@ sbin_PROGRAMS = pmvarrun
 ssbin_PROGRAMS = mount.encfs13
 
 pam_mount_la_SOURCES = crypto.c misc.c ofl-lib.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
-pam_mount_la_LIBADD  = -lpam ${libHX_LIBS} ${pmt_LIBS} ${libxml_LIBS}
+pam_mount_la_LIBADD  = -lpam ${libHX_LIBS} ${libcrypto_LIBS} ${libssl_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS = -module -avoid-version
 
 mount_encfs13_SOURCES = mtencfs13.c

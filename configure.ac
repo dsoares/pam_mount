@@ -30,12 +30,6 @@ AC_ARG_WITH([selinux], AS_HELP_STRING([--with-selinux],
 AM_CONDITIONAL(SELINUX, $with_selinux)
 
 m4_sinclude(m4lib/gcc4_visibility.m4)
-# RH 8.0's OpenSSL does not have?
-AC_CHECK_LIB(crypto, EVP_DecryptInit_ex)
-AC_CHECK_LIB(ssl, SSL_load_error_strings)
-pmt_LIBS="$LIBS";
-LIBS="";
-AC_SUBST(pmt_LIBS)
 
 regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-D_FILE_OFFSET_BITS=64 \
@@ -49,6 +43,13 @@ AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 
 PKG_CHECK_MODULES([libHX], [libHX >= 1.23])
 PKG_CHECK_MODULES([libxml], [libxml-2.0])
+PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
+	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
+	[OpenSSL libcrypto available])])
+PKG_CHECK_MODULES([libssl], [libssl >= 0.9.8],
+	[AC_DEFINE_UNQUOTED([HAVE_LIBSSL], [1],
+	[OpenSSL libssl available])])
+
 AC_CHECK_HEADER(security/pam_modules.h, [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
 AC_CHECK_HEADER(pam/pam_modules.h, [have_pamheader="yes"])

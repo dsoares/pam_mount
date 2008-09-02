@@ -27,7 +27,7 @@ pam_mount - crypto.c
 #include <stdio.h>
 #include <string.h>
 #include <libHX/defs.h>
-#ifdef HAVE_LIBCRYPTO
+#if defined(HAVE_LIBCRYPTO) && defined(HAVE_LIBSSL)
 #	include <openssl/ssl.h>
 #	include <openssl/evp.h>
 #	include <openssl/err.h>
@@ -37,14 +37,14 @@ pam_mount - crypto.c
 #include "pam_mount.h"
 
 /* Functions */
-#ifdef HAVE_LIBCRYPTO
+#if defined(HAVE_LIBCRYPTO) && defined(HAVE_LIBSSL)
 static int hash_authtok(FILE *, const EVP_CIPHER *, const char *,
 	unsigned char *, unsigned char *);
 static void sslerror(const char *);
 #endif
 
 //-----------------------------------------------------------------------------
-#ifdef HAVE_LIBCRYPTO
+#if defined(HAVE_LIBCRYPTO) && defined(HAVE_LIBSSL)
 /**
  * sslerror -
  * @msg:	Prefix to display
@@ -217,7 +217,7 @@ int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
 	return ret;
 }
 
-#else /* HAVE_LIBCRYPTO */
+#else /* HAVE_LIBCRYPTO && HAVE_LIBSSL */
 
 int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
     const char *fs_key_cipher, const char *authtok)
@@ -226,4 +226,4 @@ int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
 	return 0;
 }
 
-#endif /* HAVE_LIBCRYPTO */
+#endif /* HAVE_LIBCRYPTO && HAVE_LIBSSL */
