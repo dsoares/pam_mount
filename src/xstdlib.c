@@ -10,9 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libHX/clist.h>
+#include <libHX/defs.h>
 #include <libHX/list.h>
 #include <libHX/string.h>
-#include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"
 #include "xstdlib.h"

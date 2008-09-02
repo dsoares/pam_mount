@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/defs.h>
 #include <libHX.h>
-#include "compiler.h"
 #include "misc.h"
 #include "mount.h"
 #include "pam_mount.h"

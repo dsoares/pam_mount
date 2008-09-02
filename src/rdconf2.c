@@ -16,8 +16,8 @@
 #include <string.h>
 #include <libHX/arbtree.h>
 #include <libHX/clist.h>
+#include <libHX/defs.h>
 #include <pwd.h>
-#include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"
 #include "readconfig.h"

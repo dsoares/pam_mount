@@ -5,14 +5,16 @@
 #include <stdbool.h>
 #include <libHX/clist.h>
 #include <libHX/list.h>
+#include <libHX/option.h>
+#include "config.h"
+
+#ifdef HAVE_VISIBILITY_HIDDEN
+#	define EXPORT_SYMBOL __attribute__((visibility("default")))
+#else
+#	define EXPORT_SYMBOL
+#endif
 
 #define MAX_PAR         127
-#ifndef S_IRUGO
-#	define S_IRUGO (S_IRUSR | S_IRGRP | S_IROTH)
-#endif
-#ifndef S_IRWXU
-#	define S_IRWXU (S_IRUSR | S_IWUSR | S_IWOTH)
-#endif
 #ifndef S_IRXG
 #	define S_IRXG (S_IRGRP | S_IXGRP)
 #endif
@@ -20,6 +22,8 @@
 #	define S_IRXO (S_IROTH | S_IXOTH)
 #endif
 #define sizeof_z(x) (sizeof(x) - 1)
+
+struct HXbtree;
 
 enum auth_type {
 	GET_PASS,
@@ -108,6 +112,12 @@ struct kvp {
 /*
  *
  */
+static inline void format_add(struct HXbtree *table, const char *key,
+    const char *value)
+{
+	HXformat_add(table, key, value, HXTYPE_STRING | HXFORMAT_IMMED);
+}
+
 static inline const char *znul(const char *s)
 {
 	return (s == NULL) ? "(null)" : s;

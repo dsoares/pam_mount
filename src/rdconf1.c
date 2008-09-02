@@ -21,9 +21,9 @@
 #	include <mntent.h>
 #endif
 #include <libHX/arbtree.h>
+#include <libHX/defs.h>
 #include <libHX/option.h>
 #include <libHX/string.h>
-#include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"
 #include "readconfig.h"

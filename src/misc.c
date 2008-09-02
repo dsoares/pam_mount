@@ -18,6 +18,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <libHX/defs.h>
 #include <libHX/list.h>
 #include <libHX.h>
 #include <pwd.h>

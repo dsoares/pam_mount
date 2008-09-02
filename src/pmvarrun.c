@@ -28,9 +28,9 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/defs.h>
 #include <libHX/string.h>
 #include <pwd.h>
-#include "compiler.h"
 #include "misc.h"
 #include "pam_mount.h"
 

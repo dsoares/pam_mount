@@ -22,9 +22,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/defs.h>
 #include <libHX.h>
 #include <pwd.h>
-#include "compiler.h"
 #include "crypto.h"
 #include "misc.h"
 #include "mount.h"

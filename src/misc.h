@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <stdbool.h>
 #include <libHX/string.h>
-#include "compiler.h"
 
 #define __STRINGIFY_EXPAND(s) #s
 #define __STRINGIFY(s)        __STRINGIFY_EXPAND(s)

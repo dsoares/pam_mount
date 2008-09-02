@@ -26,12 +26,12 @@ pam_mount - crypto.c
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <libHX/defs.h>
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/ssl.h>
 #	include <openssl/evp.h>
 #	include <openssl/err.h>
 #endif
-#include "compiler.h"
 #include "crypto.h"
 #include "misc.h"
 #include "pam_mount.h"
