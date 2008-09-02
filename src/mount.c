@@ -226,6 +226,7 @@ static int already_mounted(const struct config *const config,
 	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, NULL, NULL)) {
 		hmc_free(dev);
 		return -1;
+	}
 
 	fp = fdopen(cstdout, "r");
 	while (fgets(mte, sizeof(mte), fp) != NULL) {
