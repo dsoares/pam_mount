@@ -27,7 +27,7 @@ bin_PROGRAMS = pmt-fd0ssh pmt-ofl
 sbin_PROGRAMS = pmvarrun
 ssbin_PROGRAMS = mount.encfs13
 
-pam_mount_la_SOURCES = crypto.c misc.c ofl-lib.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
+pam_mount_la_SOURCES = crypto.c loop.c misc.c ofl-lib.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c xstdlib.c
 pam_mount_la_LIBADD  = -lpam ${libHX_LIBS} ${libcrypto_LIBS} ${libssl_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS = -module -avoid-version
 

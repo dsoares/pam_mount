@@ -24,6 +24,7 @@
 #define sizeof_z(x) (sizeof(x) - 1)
 
 struct HXbtree;
+struct loop_info64;
 
 enum auth_type {
 	GET_PASS,
@@ -122,6 +123,11 @@ static inline const char *znul(const char *s)
 {
 	return (s == NULL) ? "(null)" : s;
 }
+
+/*
+ *	LOOP.C
+ */
+extern const char *loop_file_name(const char *, struct loop_info64 *);
 
 /*
  *	OFL-LIB.C

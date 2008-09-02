@@ -54,9 +54,6 @@ static int pipewrite(int, const void *, size_t);
 static void run_ofl(const struct config * const, struct HXbtree *);
 static hmc_t *vol_to_dev(const struct vol *);
 
-#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-static inline const char *loop_bk(const char *, struct loop_info64 *);
-#endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 static int split_bsd_mount(char *, const char **, const char **, const char **);
 #endif
@@ -174,7 +171,7 @@ static int already_mounted(const struct config *const config,
 			 * device instead of the real device will be listed --
 			 * resolve it.
 			 */
-			fsname = loop_bk(fsname, &loopdev);
+			fsname = loop_file_name(fsname, &loopdev);
 #endif
 
 		xcmp = (strcmp(fstype, "smbfs") == 0 ||
@@ -996,31 +993,6 @@ static int fstype_nodev(const char *name) {
 	fclose(fp);
 	return -1;
 }
-
-#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-/**
- * loop_bk -
- * @filename:	block device to query
- * @i:		pointer to result storage
- *
- * Run the LOOP_GET_STATUS64 ioctl on @filename and store the result in @i.
- * Returns the underlying file of the loop device, or @filename if @filename
- * does not seem to be a loop device at all.
- */
-static inline const char *loop_bk(const char *filename, struct loop_info64 *i)
-{
-	int fd;
-	if ((fd = open(filename, O_RDONLY)) < 0)
-		return filename;
-
-	if (ioctl(fd, LOOP_GET_STATUS64, i) != 0) {
-		close(fd);
-		return filename;
-	}
-	close(fd);
-	return signed_cast(char *, i->lo_file_name);
-}
-#endif
 
 /**
  * umount_final - called when the last session has exited
