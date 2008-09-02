@@ -65,7 +65,7 @@ struct callbackmap {
 
 struct pmt_command {
 	enum command_type type;
-	const char *fs, *command_name, *def[MAX_PAR + 1];
+	const char *fs, *command_name, *def[8];
 };
 
 /* Functions */
