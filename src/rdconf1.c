@@ -1154,8 +1154,6 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	unsigned int i;
 	char *tmp;
 
-	if (strlen(config->user) > sizeof_z(vpt->user))
-		return "config: <volume> components too long\n";
 	if (rc_volume_cond(config->user, node) <= 0)
 		return NULL;
 
@@ -1172,16 +1170,13 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	HXclist_init(&vpt->options);
 
 	/* Eyeball ssh setting */
-	if ((tmp = xmlGetProp_2s(node, "ssh")) != NULL) {
-		vpt->uses_ssh = parse_bool(tmp);
-		free(tmp);
-	}
+	if ((tmp = xmlGetProp_2s(node, "ssh")) != NULL)
+		vpt->uses_ssh = parse_bool_f(tmp);
 
 	/* Filesystem type */
 	if ((tmp = xmlGetProp_2s(node, "fstype")) != NULL) {
-		if (strlen(tmp) > sizeof_z(vpt->fstype))
-			l0g("config: %s \"%s\" truncated\n", "fstype", tmp);
-		strncpy(vpt->fstype, tmp, sizeof(vpt->fstype));
+		free(vpt->fstype);
+		vpt->fstype = tmp;
 
 		for (i = 0; default_command[i].type != -1; ++i) {
 			const struct pmt_command *c = &default_command[i];
@@ -1190,7 +1185,6 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 				break;
 			}
 		}
-		free(tmp);
 	} else {
 		vpt->fstype = xstrdup("auto");
 	}
