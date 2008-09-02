@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- add support for encfs 1.3.x (1.4.x already has been in for long)
+
+
 v0.45 (August 31 2008)
 ======================
 - fix double-freeing the authentication token

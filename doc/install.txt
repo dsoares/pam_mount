@@ -21,7 +21,7 @@ Optional packages for building:
 Suggested packages for runtime:
 
 	local targets:
-	* encfs -- file-level encryption
+	* encfs 1.3 or up -- file-level encryption
 	* cryptsetup 1.0.5 or up -- block-level encryption
 
 	remote targets:
