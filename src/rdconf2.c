@@ -114,35 +114,6 @@ static bool deny_ok(const struct HXbtree *denied,
 }
 
 /**
- * options_ok - checks options
- * @config:	current configuration
- * @vol:	current volume
- *
- * Returns whether the volume is ok.
- */
-static bool options_ok(const struct config *config, const struct vol *volume)
-{
-	assert(config != NULL);
-	assert(volume != NULL);
-
-	if (!volume->use_fstab) {
-		if (!required_ok(config->options_require, &volume->options))
-			return false;
-		if (config->options_allow->items != 0 &&
-		    !allow_ok(config->options_allow, &volume->options))
-			return false;
-		if (config->options_deny->items != 0 &&
-		    !deny_ok(config->options_deny, &volume->options))
-			return false;
-		if (volume->options.items != 0) {
-			l0g("user specified options denied by default\n");
-			return false;
-		}
-	}
-	return true;
-}
-
-/**
  * luserconf_volume_record_sane -
  * @config:	current configuration
  * @vol:	volume descriptor
@@ -154,15 +125,41 @@ static bool options_ok(const struct config *config, const struct vol *volume)
  * rejecting everyhing that is illegal.
  */
 bool luserconf_volume_record_sane(const struct config *config,
-    const struct vol *vol)
+    const struct vol *volume)
 {
-	if (vol->used_wildcard) {
+	w4rn("checking sanity of luserconf volume record (%s)\n",
+	     volume->volume);
+
+	if (volume->used_wildcard) {
 		l0g("You may not use wildcards in user-defined volumes\n");
 		return false;
 	}
-	if (!options_ok(config, vol)) {
-		l0g("illegal option specified by user\n");
-		return false;
+
+	if (!volume->use_fstab) {
+		if (!required_ok(config->options_require, &volume->options)) {
+			misc_log("Luser volume for %s is missing options that "
+			         "are required by global <mntoptions>\n",
+			         volume->mountpoint);
+			return false;
+		}
+		if (config->options_allow->items != 0 &&
+		    !allow_ok(config->options_allow, &volume->options)) {
+			misc_log("Luser volume for %s has options that are "
+			         "not allowed per global <mntoptions>\n",
+			         volume->mountpoint);
+			return false;
+		}
+		if (config->options_deny->items != 0 &&
+		    !deny_ok(config->options_deny, &volume->options)) {
+			misc_log("Luser volume for %s has options that are "
+			         "denied by global <mntoptions>\n",
+			         volume->mountpoint);
+			return false;
+		}
+		if (volume->options.items != 0) {
+			l0g("user specified options denied by default\n");
+			return false;
+		}
 	}
 	return true;
 }
