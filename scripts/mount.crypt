@@ -90,6 +90,7 @@ fi
 
 if [ -b "$DEVICE" ]; then
 	# $DEVICE already refers to a block device.
+	:;
 else
 	tgt=$(readlink -f "$DEVICE");
 	if [ -f "$tgt" ]; then
