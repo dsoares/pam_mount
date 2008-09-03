@@ -14,7 +14,6 @@
 #	define EXPORT_SYMBOL
 #endif
 
-#define MAX_PAR         127
 #ifndef S_IRXG
 #	define S_IRXG (S_IRGRP | S_IXGRP)
 #endif

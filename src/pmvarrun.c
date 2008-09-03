@@ -42,7 +42,7 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #define VAR_RUN_PMT     VAR_RUN "/pam_mount"
 
 struct settings {
-	char user[MAX_PAR + 1];
+	char *user;
 	long operation;
 };
 
@@ -81,7 +81,7 @@ static void usage(const int exitcode, const char *error)
  */
 static void set_defaults(struct settings *settings)
 {
-	*settings->user     = '\0';
+	settings->user      = NULL;
 	settings->operation = 1;
 }
 
@@ -145,13 +145,13 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 				fprintf(stderr, "Invalid user name\n");
 				exit(EXIT_FAILURE);
 			}
-			HX_strlcpy(settings->user, optarg,
-			           sizeof(settings->user));
+			if ((settings->user = HX_strdup(optarg)) == NULL)
+				perror("malloc");
 			break;
 		default:
 			usage(EXIT_FAILURE, NULL);
 			break;
-	    }
+		}
 	}
 }
 

@@ -114,12 +114,9 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
  * Returns zero on error or positive non-zero on success.
  *
  * NOTES:
- * - @pt_fs_key must point to a memory block large enough to hold fsk
- *   (MAX_PAR + EVP_MAX_BLOCK_LENGTH -- length of @ct_fs_key + one block)
  * - efsk = encrypted filesystem key (stored in filesystem)
  * - fsk = filesystem key (D(efsk))
  * - @pt_fs_key will contain binary data; do not use strlen(), strcpy(), etc.
- * - @pt_fs_key may contain trailing garbage; use @pt_fs_key_len
  *
  * FIXME: this function may need to be broken up and made more readable.
  */

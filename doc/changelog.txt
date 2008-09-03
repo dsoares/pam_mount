@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 
 - add support for encfs 1.3.x (1.4.x already has been in for long)
+- replace fixed-size buffers and arrays with dynamic ones (complete)
 
 
 v0.45 (August 31 2008)
@@ -12,6 +13,7 @@ v0.45 (August 31 2008)
 - kill-on-logout support (terminate processes that would stand in the
   way of unmounting)
 - mount.crypt: auto-detect necessity for running losetup
+- replace fixed-size buffers with dynamic ones (first part)
 
 
 v0.44 (August 16 2008)

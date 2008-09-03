@@ -227,11 +227,6 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	 * disappears (valgrind)
 	 */
 	Config.user = relookup_user(pam_user);
-	if (strlen(Config.user) > MAX_PAR) {
-		l0g("username %s is too long\n", Config.user);
-		return PAM_SERVICE_ERR;
-	}
-
 	if (!readconfig(CONFIGFILE, true, &Config))
 		return PAM_SERVICE_ERR;
 
@@ -295,11 +290,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			l0g("error trying to export password\n");
 			goto out;
 		}
-	}
-	if (strlen(authtok) > MAX_PAR) {
-		l0g("password too long\n");
-		ret = PAM_AUTH_ERR;
-		goto out;
 	}
 	w4rn("saving authtok for session code (authtok=%p)\n", authtok);
 	ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
