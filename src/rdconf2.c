@@ -156,6 +156,23 @@ bool luserconf_volume_record_sane(const struct config *config,
 		l0g("You may not use wildcards in user-defined volumes\n");
 		return false;
 	}
+	if (vol->type == CMD_LCLMOUNT || vol->type == CMD_CRYPTMOUNT) {
+		if (!owns(config->user, vol->volume)) {
+			l0g("user-defined volume (%s), volume not owned "
+			    "by user\n", vol->volume);
+			return false;
+		}
+		/*
+		 * If it does not already exist then it is okay, pam_mount will
+		 * mkdir it (if configured to do so)
+		 */
+		if (exists(vol->mountpoint) &&
+		    !owns(config->user, vol->mountpoint)) {
+			l0g("user-defined volume (%s), mountpoint not owned "
+			    "by user\n", vol->volume);
+			return false;
+		}
+	}
 	if (!options_ok(config, vol)) {
 		l0g("illegal option specified by user\n");
 		return false;

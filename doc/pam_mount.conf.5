@@ -168,9 +168,10 @@ processes and optionally wait before sending signals.
 Individual users may define additional volumes (usually in
 ~/.pam_mount.conf.xml) to mount if allowed by the master configuration file by
 the presence of the \fB<luserconf>\fP element. With it, users may mount and
-unmount any volumes they specify. The mount operation is executed under the
-user account, not with root permissions. You also need at least an allow or
-deny option list (see <mntoptions>). Luserconfigs are disabled by default.
+unmount \fBany\fP volumes they specify - the mount process is called \fBas
+superuser\fP. On some filesystem configurations this may be a security flaw so
+user-defined volumes are not allowed by the default pam_mount.conf.xml
+distributed with pam_mount.
 .TP
 \fB<mntoptions allow="\fP\fIoptions,...\fP\fB" />\fP
 The <mntoptions> elements determine which options may be specified in per\-user

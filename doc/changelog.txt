@@ -5,6 +5,7 @@ For details, see the history as recorded in the git repository.
 - mount.crypt: add missing null command to conform to sh syntax
   (SF bug #2089446)
 - conf: fix printing of strings when luser volume options were not ok
+- conf: re-add luserconf security checks
 
 
 v0.45 (August 31 2008)
