@@ -576,7 +576,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
     int flags, int argc, const char **argv)
 {
 	int ret = PAM_SUCCESS;
-	struct vol *vol;
 	const char *pam_user = NULL;
 
 	assert(pamh != NULL);

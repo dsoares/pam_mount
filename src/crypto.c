@@ -164,8 +164,8 @@ int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
 	hmc_free(line);
 
 	if (hmc_length(ct_fs_key) == 0) {
-		misc_log("failed to read encrypted filesystem key from %s, "
-		         "or file empty.\n", fs_key_path);
+		l0g("failed to read encrypted filesystem key from %s, "
+		    "or file empty.\n", fs_key_path);
 		ret = 0;
 		goto out3;
 	}

@@ -47,6 +47,9 @@ void misc_dump_id(const char *where)
  * Message is logged to syslog, and, if debugging is turned on, printed to
  * %stderr. Use this for critical messages or issues that cause(d) pam_mount
  * to fail.
+ *
+ * Do not call this function directly; use the l0g() macro instead, so that
+ * file name and line number show up.
  */
 int misc_log(const char *format, ...)
 {
@@ -71,6 +74,9 @@ int misc_log(const char *format, ...)
  *
  * If debugging is turned on, the message is logged to syslog and %stderr.
  * Use this for debugging messages.
+ *
+ * Do not call this function directly; use the w4rn() macro instead, so that
+ * file name and line number show up.
  */
 int misc_warn(const char *format, ...)
 {

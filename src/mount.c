@@ -132,7 +132,7 @@ static int already_mounted(const struct config *const config,
 	FILE *mtab;
 
 	if ((dev = vol_to_dev(vpt)) == NULL) {
-		misc_log("%s\n", strerror(errno));
+		l0g("pmt::vol_to_dev: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -201,7 +201,7 @@ static int already_mounted(const struct config *const config,
 
 	vpt = &config->volume[vol];
 	if ((dev = vol_to_dev(vpt)) == NULL) {
-		misc_log("%s\n", strerror(errno));
+		l0g("pmt::vol_to_dev: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -630,7 +630,7 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
 	/* note to self: password is decrypted */
 	if (pipewrite(cstdin, password, hmc_length(password)) !=
 	    hmc_length(password)) {
-		misc_log("error sending password to losetup\n");
+		l0g("error sending password to losetup\n");
 		ret = 0;
 	}
 	close(cstdin);

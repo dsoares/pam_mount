@@ -179,7 +179,8 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 {
 	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
 	if (vpt->type >= _CMD_MAX) {
-		misc_log("Illegal volume type\n");
+		l0g("Illegal volume type %u (max is %u)\n",
+		    vpt->type, _CMD_MAX - 1);
 		return false;
 	}
 	if (config->command[vpt->type][0] == NULL) {
@@ -193,7 +194,7 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 			return false;
 		}
 	if (vpt->volume == NULL) {
-		misc_log("volume source is not defined\n");
+		l0g("volume source is not defined\n");
 		return false;
 	}
 

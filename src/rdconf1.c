@@ -98,7 +98,7 @@ static bool expand_home(const char *user, char **path_pptr)
 	if (*path != '~')
 		return true;
 	if ((pe = getpwnam(user)) == NULL) {
-		misc_log("Could not lookup account info for %s\n", user);
+		l0g("Could not lookup account info for %s\n", user);
 		return false;
 	}
 	size = strlen(pe->pw_dir) + strlen(path) + 1;
