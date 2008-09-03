@@ -67,10 +67,15 @@ fstype attribute implies \fBfstype="auto"\fP. Note that mounting with \fBauto\fP
 may fail if the filesystem kernel module is not loaded yet, since \fBmount\fP(8)
 will check /proc/partitions.
 .IP ""
-The fstypes \fBcifs\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP and
+The fstypes \fBcifs\fP, \fBencfs13\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP and
 \fBtruecrypt\fP are overriden by pam_mount and we call the respective helpers
 directly without going thorugh \fBmount\fP(8), to have access to more options
 of the helper programs.
+.TP
+\fBnoroot="1"\fP
+Call the mount program without root privileges. It defaults to yes for the
+\fBencfs13\fP and \fBfuse\fP fstypes, because FUSE volumes must be mounted as
+the user that logs in to get access to the files by default.
 .TP
 \fBserver="\fP\fIname\fP\fB"\fP
 Defines the server to which to connect in case of \fBcifs\fP, \fBsmbfs\fP and

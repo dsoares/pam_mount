@@ -865,8 +865,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 
 	mount_set_fsck(config, vpt, vinfo);
 	arglist_log(argv);
-	mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
-	             vpt->user : NULL;
+	mount_user = vpt->noroot ? vpt->user : NULL;
 	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr,
 	    set_myuid, mount_user)) {
 		hmc_free(ll_password);

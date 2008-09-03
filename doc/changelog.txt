@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 
 - add support for encfs 1.3.x (1.4.x already has been in for long)
+- conf: add the "noroot" attribute for <volume> to force mounting with
+  the unprivileged user account (required for FUSE filesystems)
 - replace fixed-size buffers and arrays with dynamic ones (complete)
 
 

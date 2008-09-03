@@ -74,6 +74,7 @@ struct vol {
 	bool use_fstab;
 	bool used_wildcard;
 	bool uses_ssh;
+	bool noroot;
 };
 
 /**
