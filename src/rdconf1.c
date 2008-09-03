@@ -22,6 +22,7 @@
 #endif
 #include <libHX/arbtree.h>
 #include <libHX/defs.h>
+#include <libHX/deque.h>
 #include <libHX/option.h>
 #include <libHX/string.h>
 #include "misc.h"
@@ -180,16 +181,28 @@ bool expandconfig(const struct config *config)
  */
 void freeconfig(struct config *config)
 {
+	struct HXdeque *cmd;
 	struct vol *vol, *next;
-	unsigned int i, j;
+	unsigned int i;
 
 	hmc_free(config->luserconf);
 	free(config->fsckloop);
 
 	for (i = 0; i < _CMD_MAX; ++i) {
-		free(config->command[i][0]);
-		for (j = 0; config->command[i][j] != NULL; ++j)
-			config->command[i][j] = NULL;
+		/*
+		 * This comment shall denote the awareness of a slight memory
+		 * leak. In initconfig(), all strings of a command are
+		 * duplicated when added to the list, while here we only free
+		 * the first element. Because if the default hardcoded argument
+		 * list is overriden using .conf.xml, only the first element is
+		 * allocated and the rest are pointers to the same memory
+		 * block.
+		 */
+		if ((cmd = config->command[i]) == NULL)
+			continue;
+		if (cmd->items > 0)
+			free(cmd->first->ptr);
+		HXdeque_free(cmd);
 	}
 
 	HXlist_for_each_entry_safe(vol, next, &config->volume_list, list) {
@@ -209,6 +222,7 @@ void freeconfig(struct config *config)
 	free(config->msg_authpw);
 	free(config->msg_sessionpw);
 	free(config->path);
+	memset(config, 0, sizeof(*config));
 }
 
 /**
@@ -295,10 +309,17 @@ void initconfig(struct config *config)
 	config->path = xstrdup("/sbin:/bin:/usr/sbin:/usr/bin:"
 	               "/usr/local/sbin:/usr/local/bin");
 
-	for (i = 0; default_command[i].type != -1; ++i)
+	/* Initialize all. Makes it easier. */
+	for (i = 0; i < _CMD_MAX; ++i)
+		if ((config->command[i] = HXdeque_init()) == NULL)
+			perror("malloc");
+
+	for (i = 0; default_command[i].type != -1; ++i) {
+		struct HXdeque *cmd = config->command[default_command[i].type];
+
 		for (j = 0; default_command[i].def[j] != NULL; ++j)
-			config->command[default_command[i].type][j] =
-				xstrdup(default_command[i].def[j]);
+			HXdeque_push(cmd, xstrdup(default_command[i].def[j]));
+	}
 
 	config->options_allow   = HXbtree_init(OPT_TREE_FLAGS);
 	config->options_require = HXbtree_init(OPT_TREE_FLAGS);
@@ -544,15 +565,31 @@ static inline char *xmlGetProp_2s(xmlNode *node, const char *attr)
 
 //-----------------------------------------------------------------------------
 static const char *rc_command(xmlNode *node, struct config *config,
-    unsigned int command)
+    unsigned int cmdnr)
 {
-	unsigned int n = 0;
+	struct HXdeque *this_cmd;
 	char *arg, *wp;
 
 	if (config->level != CONTEXT_GLOBAL)
 		return "Tried to set command from user config\n";
 	if ((node = node->children) == NULL)
 		return NULL;
+
+	/*
+	 * If the command was previously defined, delete the first node. The
+	 * stored pointer is returned and we free that. Since the other
+	 * pointers are not an allocation head, we only free their nodes.
+	 * List has zero elements afterwards.
+	 */
+	if ((this_cmd = config->command[cmdnr]) != NULL &&
+	    this_cmd->items > 0) {
+		free(HXdeque_del(this_cmd->first));
+		HXdeque_free(this_cmd);
+		this_cmd = NULL;
+	}
+	if (this_cmd == NULL)
+		this_cmd = config->command[cmdnr] = HXdeque_init();
+
 	for (; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
 			continue;
@@ -565,7 +602,7 @@ static const char *rc_command(xmlNode *node, struct config *config,
 			 * @config->command[command][0] will be the pointer to
 			 * the block to free later.
 			 */
-			config->command[command][n++] = arg;
+			HXdeque_push(this_cmd, arg);
 
 		/* No hassle to support comment-split tags. */
 		break;

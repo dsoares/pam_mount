@@ -24,6 +24,7 @@
 #define sizeof_z(x) (sizeof(x) - 1)
 
 struct HXbtree;
+struct HXdeque;
 struct loop_info64;
 
 enum auth_type {
@@ -90,7 +91,7 @@ struct config {
 	bool mkmntpoint, rmdir_mntpt;
 	hmc_t *luserconf;
 	char *fsckloop;
-	char *command[_CMD_MAX][MAX_PAR+1];
+	struct HXdeque *command[_CMD_MAX];
 	struct HXbtree *options_require, *options_allow, *options_deny;
 	struct HXclist_head volume_list;
 	int level;

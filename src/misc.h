@@ -9,6 +9,7 @@
 #define __STRINGIFY(s)        __STRINGIFY_EXPAND(s)
 
 struct HXbtree;
+struct HXdeque;
 struct config;
 struct vol;
 
@@ -24,11 +25,13 @@ struct vol;
 	misc_warn((PMPREFIX fmt), HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 
-extern void add_to_argv(const char **, int * const, const char * const,
-	struct HXbtree *);
+extern void arglist_add(struct HXdeque *, const char *,
+	const struct HXbtree *);
+extern struct HXdeque *arglist_build(const struct HXdeque *,
+	const struct HXbtree *);
+extern void arglist_log(const struct HXdeque *);
 extern int config_valid(const struct config *);
 extern int exists(const char *);
-extern void log_argv(const char * const *);
 extern void misc_add_ntdom(struct HXbtree *, const char *);
 extern void misc_dump_id(const char *);
 extern int misc_log(const char *, ...);

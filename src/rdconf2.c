@@ -17,6 +17,7 @@
 #include <libHX/arbtree.h>
 #include <libHX/clist.h>
 #include <libHX/defs.h>
+#include <libHX/deque.h>
 #include <pwd.h>
 #include "misc.h"
 #include "pam_mount.h"
@@ -180,7 +181,7 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 		    vpt->type, _CMD_MAX - 1);
 		return false;
 	}
-	if (config->command[vpt->type][0] == NULL) {
+	if (config->command[vpt->type]->items == 0) {
 		l0g("mount command not defined for this type\n");
 		return false;
 	}
@@ -200,7 +201,7 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 		l0g("NCP volume definition missing user option\n");
 		return false;
 	}
-	if (config->command[CMD_UMOUNT][0] == NULL) {
+	if (config->command[CMD_UMOUNT]->items == 0) {
 		l0g("umount command not defined\n");
 		return false;
 	}

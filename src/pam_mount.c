@@ -357,11 +357,10 @@ static int modify_pm_count(struct config *config, char *user,
 {
 	FILE *fp;
 	struct HXbtree *vinfo;
-	int _argc = 0, child_exit, cstdout = -1, fnval = -1;
-	const char *_argv[MAX_PAR + 1];
+	int child_exit, cstdout = -1, fnval = -1;
+	struct HXdeque *argv;
 	pid_t pid;
 	struct sigaction sact, oldsact;
-	unsigned int i;
 
 	assert(user != NULL);
 	assert(operation != NULL);
@@ -382,13 +381,8 @@ static int modify_pm_count(struct config *config, char *user,
 	format_add(vinfo, "OPERATION", operation);
 	misc_add_ntdom(vinfo, user);
 
-	for (i = 0; config->command[CMD_PMVARRUN][i] != NULL; ++i)
-		add_to_argv(_argv, &_argc,
-		            config->command[CMD_PMVARRUN][i], vinfo);
-	HXformat_free(vinfo);
-	log_argv(_argv);
-
-	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, set_myuid, NULL)) {
+	argv = arglist_build(config->command[CMD_PMVARRUN], vinfo);
+	if (!spawn_start(argv, &pid, NULL, &cstdout, NULL, set_myuid, NULL)) {
 		l0g("error executing pmvarrun\n");
 		fnval = -1;
 		goto out;
@@ -421,7 +415,6 @@ static int modify_pm_count(struct config *config, char *user,
  out:
 	sigaction(SIGPIPE, &oldsact, NULL);
  nosigactout:
-
 	return fnval;
 }
 

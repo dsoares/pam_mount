@@ -16,6 +16,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <libHX/defs.h>
+#include <libHX/deque.h>
+#include <libHX/misc.h>
 #include "misc.h"
 #include "pam_mount.h"
 #include "spawn.h"
@@ -96,7 +98,7 @@ static void spawn_close_pipes(int (*p)[2])
  * On failure, this function returns false and the original %SIGCHLD handler
  * will be restored.
  */
-bool spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
+static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
     int *fd_stdout, int *fd_stderr, void (*setup)(const char *),
     const char *user)
 {
@@ -145,6 +147,23 @@ bool spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 	return true;
 }
 
+bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
+    int *fd_stdout, int *fd_stderr, void (*setup)(const char *),
+    const char *user)
+{
+	char **argv = reinterpret_cast(char **, HXdeque_to_vec(argq, NULL));
+	const struct HXdeque_node *n;
+	bool ret;
+
+	ret = __spawn_start(const_cast(const char * const *, argv),
+	      pid, fd_stdin, fd_stdout, fd_stderr, setup, user);
+	free(argv);
+	for (n = argq->first; n != NULL; n = n->next)
+		hmc_free(n->ptr);
+	HXdeque_free(argq);
+	return ret;
+}
+
 /**
  * spawn_synchronous - like system(), but uses argz array
  */
@@ -153,7 +172,7 @@ int spawn_synchronous(const char *const *argv)
 	pid_t pid;
 	int ret;
 
-	if (!spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
+	if (!__spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
 		return false;
 	waitpid(pid, &ret, 0);
 	spawn_restore_sigchld();

@@ -8,9 +8,9 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include <config.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -18,14 +18,19 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <libHX/arbtree.h>
 #include <libHX/defs.h>
+#include <libHX/deque.h>
 #include <libHX/list.h>
-#include <libHX.h>
+#include <libHX/option.h>
+#include <libHX/string.h>
 #include <pwd.h>
 #include "misc.h"
 #include "pam_mount.h"
 #include "readconfig.h"
 #include "xstdlib.h"
+#include "pam_mount.h"
+#include "misc.h"
 
 //-----------------------------------------------------------------------------
 /**
@@ -170,70 +175,77 @@ long str_to_long(const char *n)
 }
 
 /**
- * log_argv -
- * @argv:	argument vector
+ * arglist_log - dump command
+ * @argq:	argument list
  *
- * Log @argv using w4rn() when debugging is turned on.
+ * Log @argq using misc_warn() when debugging is turned on.
  */
-void log_argv(const char *const *argv)
+void arglist_log(const struct HXdeque *argq)
 {
+	const struct HXdeque_node *n;
 	hmc_t *str = NULL;
-	unsigned int i;
 
 	if (!Debug)
 		return;
 
-	hmc_strasg(&str, *argv);
-	hmc_strcat(&str, " ");
-
-	for (i = 1; argv[i] != NULL; ++i) {
+	str = hmc_sinit("");
+	for (n = argq->first; n != NULL; n = n->next) {
 		hmc_strcat(&str, "[");
-		hmc_strcat(&str, argv[i]);
+		hmc_strcat(&str, n->ptr);
 		hmc_strcat(&str, "] ");
 	}
 
-	w4rn("command: %s\n", str);
+	misc_warn("command: %s\n", str);
 	hmc_free(str);
 }
 
 /**
- * add_to_argv -
- * @argv:	argument vector to add to
- * @argc:	pointer to current argument count
- * @arg:	argument to add
- * @vinfo:
+ * arglist_add -
+ * @argq:	argument list to add to
+ * @arg:	raw argument
+ * @vinfo:	substitution map
  *
- * Expands @arg according to @vinfo and adds it to the @argv vector which is
- * (and will be) %NULL-terminated. @argc is increased by one.
- *
- * There is a compile-time limit imposed: there can not be more than MAX_PAR-1
- * elements in the @argv vector.
+ * Expands @arg according to @vinfo and adds it to the @argq list.
  */
-void add_to_argv(const char **argv, int *const argc, const char *const arg,
-    struct HXbtree *vinfo)
+void arglist_add(struct HXdeque *argq, const char *arg,
+    const struct HXbtree *vinfo)
 {
 	char *filled;
 
-	assert(argv != NULL);
-	/* need room for one more + terminating NULL for execv */
-	assert(argc != NULL && *argc >= 0 && *argc <= MAX_PAR - 1);
-	assert(arg != NULL);
-	assert(vinfo != NULL);
-
-	if (*argc == MAX_PAR) {
-		/* FIXME: this is protected by assert above */
-		l0g("too many arguments to mount command\n");
-		return;
-	}
 	if (HXformat_aprintf(vinfo, &filled, arg) == 0)
 		/*
 		 * This case may happen with e.g. %(before="-o" OPTIONS) where
-		 * OPTIONS is empty. And empty options is certainly valid.
+		 * OPTIONS is empty. And options expanding to nothing are
+		 * certainly valid.
 		 */
 		return;
 
-	argv[*argc]   = filled;
-	argv[++*argc] = NULL;
+	if (filled == NULL || HXdeque_push(argq, filled) == NULL)
+		misc_log("malloc: %s\n", strerror(errno));
+}
+
+/**
+ * arglist_build - build argument list
+ * @cmd:	raw unsubstituted command
+ * @vinfo:	substitution map
+ *
+ * Substitutes %() placeholders in the commands (@cmd) with values from @vinfo
+ * and returns the result, suitable for spawn_qstart().
+ */
+struct HXdeque *arglist_build(const struct HXdeque *cmd,
+    const struct HXbtree *vinfo)
+{
+	const struct HXdeque_node *n;
+	struct HXdeque *aq;
+
+	if ((aq = HXdeque_init()) == NULL)
+		misc_log("malloc: %s\n", strerror(errno));
+
+	for (n = cmd->first; n != NULL; n = n->next)
+		arglist_add(aq, n->ptr, vinfo);
+
+	arglist_log(aq);
+	return aq;
 }
 
 /**

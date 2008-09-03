@@ -193,8 +193,9 @@ static int already_mounted(const struct config *const config,
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 {
 	hmc_t *dev;
-	char *_argv[MAX_PAR + 1], mte[BUFSIZ + 1];
-	int i, _argc = 0, cstdout = -1, mounted = 0;
+	struct HXdeque *argv;
+	char mte[BUFSIZ + 1];
+	int i, cstdout = -1, mounted = 0;
 	struct vol *vpt;
 	pid_t pid;
 	FILE *fp;
@@ -215,12 +216,8 @@ static int already_mounted(const struct config *const config,
 		return -1;
 	}
 
-	for (i = 0; config->command[CMD_MNTCHECK][i] != NULL; ++i)
-		add_to_argv(_argv, &_argc, config->command[CMD_MNTCHECK][i],
-		            vinfo);
-	log_argv(_argv);
-
-	if (!spawn_start(_argv, &pid, NULL, &cstdout, NULL, NULL, NULL)) {
+	argv = arglist_build(config->command[CMD_MNTCHECK}, vinfo);
+	if (!spawn_start(argv, &pid, NULL, &cstdout, NULL, NULL, NULL)) {
 		hmc_free(dev);
 		return -1;
 	}
@@ -490,10 +487,9 @@ static inline bool mkmountpoint(struct vol *volume, const char *d)
 int do_unmount(const struct config *config, struct vol *vpt,
     struct HXbtree *vinfo, const char *const password)
 {
-	int child_exit, _argc = 0, ret = 1, cstderr = -1;
+	struct HXdeque *argv;
+	int child_exit, ret = 1, cstderr = -1;
 	pid_t pid = -1;
-	const char *_argv[MAX_PAR + 1];
-	unsigned int i;
 	int type;
 
 	assert(vinfo != NULL);
@@ -527,17 +523,15 @@ int do_unmount(const struct config *config, struct vol *vpt,
 			break;
 	}
 
-	if (config->command[type][0] == NULL)
+	if (config->command[type] == NULL || config->command[type]->first == 0)
 		l0g("{smb,ncp}umount not defined in pam_count.conf.xml\n");
 
-	for (i = 0; config->command[type][i] != NULL; ++i)
-		add_to_argv(_argv, &_argc, config->command[type][i], vinfo);
-
-	log_argv(_argv);
-	if (!spawn_start(_argv, &pid, NULL, NULL, &cstderr, set_myuid, NULL)) {
+	argv = arglist_build(config->command[type], vinfo);
+	if (!spawn_start(argv, &pid, NULL, NULL, &cstderr, set_myuid, NULL)) {
 		ret = 0;
 		goto out;
 	}
+
 	log_output(cstderr, "umount errors:\n");
 	w4rn("waiting for umount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
@@ -596,11 +590,10 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
  */
+	struct HXdeque *argv;
 	pid_t pid;
-	int ret = 1, child_exit, _argc = 0, cstdin = -1, cstderr = -1;
-	const char *_argv[MAX_PAR + 1];
+	int ret = 1, child_exit, cstdin = -1, cstderr = -1;
 	const char *cipher, *keybits;
-	unsigned int i;
 
 	assert(vinfo != NULL);
 	assert(password != NULL);
@@ -608,7 +601,7 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
 	cipher  = kvplist_get(&vpt->options, "encryption");
 	keybits = kvplist_get(&vpt->options, "keybits");
 
-	if (config->command[CMD_LOSETUP][0] == NULL) {
+	if (config->command[CMD_LOSETUP]->items == 0) {
 		l0g("losetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
@@ -619,12 +612,9 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
 		if (keybits != NULL)
 			format_add(vinfo, "KEYBITS", keybits);
 	}
-	for (i = 0; config->command[CMD_LOSETUP][i] != NULL; ++i)
-		add_to_argv(_argv, &_argc,
-		            config->command[CMD_LOSETUP][i], vinfo);
 
-	log_argv(_argv);
-	if (!spawn_start(_argv, &pid, &cstdin, NULL, &cstderr, set_myuid, NULL))
+	argv = arglist_build(config->command[CMD_LOSETUP], vinfo);
+	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr, set_myuid, NULL))
 		return 0;
 
 	/* note to self: password is decrypted */
@@ -653,25 +643,23 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
  * POST:   volume has associated with a loopback device
  * FN VAL: if error 0 else 1, errors are logged
  */
+	struct HXdeque *argv;
 	pid_t pid;
-	const char *_argv[MAX_PAR + 1];
-	int child_exit, _argc = 0;
-	unsigned int i;
+	int child_exit;
 
 	assert(vinfo != NULL);
 
-	if (config->command[CMD_UNLOSETUP][0] == NULL) {
+	if (config->command[CMD_UNLOSETUP]->first == 0) {
 		l0g("unlosetup not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
 	/* FIXME: support OpenBSD */
 	/* FIXME: NEW */
-	for (i = 0; config->command[CMD_UNLOSETUP][i] != NULL; ++i)
-		add_to_argv(_argv, &_argc,
-		            config->command[CMD_UNLOSETUP][i], vinfo);
-	log_argv(_argv);
-	if (!spawn_start(_argv, &pid, NULL, NULL, NULL, NULL, NULL))
+
+	argv = arglist_build(config->command[CMD_UNLOSETUP], vinfo);
+	if (!spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
 		return 0;
+
 	w4rn("waiting for losetup delete\n");
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
@@ -690,10 +678,9 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
  */
 #if defined (__linux__)
 	pid_t pid;
-	int child_exit, _argc = 0, cstdout = -1, cstderr = -1;
-	const char *_argv[MAX_PAR + 1];
+	int child_exit, cstdout = -1, cstderr = -1;
 	const char *fsck_target;
-	unsigned int i;
+	struct HXdeque *argv;
 
 	assert(vinfo != NULL);
 	assert(password != NULL);
@@ -709,7 +696,7 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 
 	fsck_target = vpt->volume;
 
-	if (config->command[CMD_FSCK][0] == NULL) {
+	if (config->command[CMD_FSCK]->items == 0) {
 		l0g("fsck not defined in pam_mount.conf.xml\n");
 		return 0;
 	}
@@ -729,11 +716,9 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 		hmc_free(options);
 	}
 	format_add(vinfo, "FSCKTARGET", fsck_target);
-	for (i = 0; config->command[CMD_FSCK][i]; ++i)
-		add_to_argv(_argv, &_argc, config->command[CMD_FSCK][i], vinfo);
 
-	log_argv(_argv);
-	if (!spawn_start(_argv, &pid, NULL, &cstdout, &cstderr, NULL, NULL))
+	argv = arglist_build(config->command[CMD_FSCK], vinfo);
+	if (!spawn_start(argv, &pid, NULL, &cstdout, &cstderr, NULL, NULL))
 		return 0;
 
 	/* stdout and stderr must be logged for fsck */
@@ -766,17 +751,17 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 static void mount_set_fsck(const struct config *config,
     const struct vol *vol, struct HXbtree *vinfo)
 {
+	const struct HXdeque_node *i;
 	hmc_t *string, *current;
-	unsigned int i;
 
 	if (vol->type != CMD_CRYPTMOUNT)
 		return;
 
 	format_add(vinfo, "FSCKTARGET", "");
 	string = hmc_sinit("");
-	for (i = 0; config->command[CMD_FSCK][i] != NULL; ++i) {
-		if (HXformat_aprintf(vinfo, &current,
-		    config->command[CMD_FSCK][i]) > 0) {
+
+	for (i = config->command[CMD_FSCK]->first; i != NULL; i = i->next) {
+		if (HXformat_aprintf(vinfo, &current, i->ptr) > 0) {
 			hmc_strcat(&string, current);
 			hmc_strcat(&string, " ");
 		}
@@ -799,12 +784,12 @@ static void mount_set_fsck(const struct config *config,
 int do_mount(const struct config *config, struct vol *vpt,
     struct HXbtree *vinfo, const char *password)
 {
-	const char *_argv[MAX_PAR + 1];
+	const struct HXdeque_node *n;
+	struct HXdeque *argv;
 	hmc_t *ll_password = NULL;
-	int _argc = 0, child_exit = 0, cstdin = -1, cstderr = -1;
+	int child_exit = 0, cstdin = -1, cstderr = -1;
 	const char *mount_user;
 	pid_t pid = -1;
-	unsigned int i;
 	int ret;
 
 	assert(vinfo != NULL);
@@ -832,7 +817,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		}
 	}
 
-	if (config->command[vpt->type][0] == NULL) {
+	if (config->command[vpt->type]->items == 0) {
 		l0g("proper mount command not defined in "
 		    "pam_mount.conf.xml\n");
 		return 0;
@@ -861,14 +846,15 @@ int do_mount(const struct config *config, struct vol *vpt,
 	   return 0;
 	 */
 
+	if ((argv = HXdeque_init()) == NULL)
+		misc_log("malloc: %s\n", strerror(errno));
 	if (vpt->uses_ssh)
-		for (i = 0; config->command[CMD_FD0SSH][i] != NULL; ++i)
-			add_to_argv(_argv, &_argc,
-			            config->command[CMD_FD0SSH][i], vinfo);
+		for (n = config->command[CMD_FD0SSH]->first;
+		     n != NULL; n = n->next)
+			arglist_add(argv, n->ptr, vinfo);
 
-	for (i = 0; config->command[vpt->type][i] != NULL; ++i)
-		add_to_argv(_argv, &_argc,
-		            config->command[vpt->type][i], vinfo);
+	for (n = config->command[vpt->type]->first; n != NULL; n = n->next)
+		arglist_add(argv, n->ptr, vinfo);
 
 	if (vpt->type == CMD_LCLMOUNT &&
 	    !check_filesystem(config, vpt, vinfo, ll_password))
@@ -878,10 +864,10 @@ int do_mount(const struct config *config, struct vol *vpt,
 		setenv("PASSWD_FD", "0", 1);
 
 	mount_set_fsck(config, vpt, vinfo);
-	log_argv(_argv);
+	arglist_log(argv);
 	mount_user = strcmp(vpt->fstype, "fuse") == 0 ?
 	             vpt->user : NULL;
-	if (!spawn_start(_argv, &pid, &cstdin, NULL, &cstderr,
+	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr,
 	    set_myuid, mount_user)) {
 		hmc_free(ll_password);
 		return 0;
@@ -971,7 +957,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
  * require a block device, -1 if we could not find out.
  */
 static int fstype_nodev(const char *name) {
-	char buf[MAX_PAR];
+	char buf[80];
 	FILE *fp;
 
 	if (name == NULL)
