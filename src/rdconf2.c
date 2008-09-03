@@ -41,7 +41,7 @@ static bool allow_ok(const struct HXbtree *allowed,
 
 	HXlist_for_each_entry(kvp, options, list)
 		if (HXbtree_find(allowed, kvp->key) == NULL) {
-			l0g("option %s not allowed\n", kvp->key);
+			l0g("option \"%s\" not allowed\n", kvp->key);
 			return false;
 		}
 
@@ -66,9 +66,9 @@ static bool required_ok(const struct HXbtree *required,
 		return false;
 
 	while ((e = HXbtraverse(t)) != NULL)
-		if (!kvplist_contains(options, e->data)) {
-			l0g("option %s required\n",
-			    static_cast(const char *, e->data));
+		if (!kvplist_contains(options, e->key)) {
+			l0g("option \"%s\" required\n",
+			    static_cast(const char *, e->key));
 			HXbtrav_free(t);
 			return false;
 		}
@@ -102,9 +102,9 @@ static bool deny_ok(const struct HXbtree *denied,
 		return false;
 
 	while ((e = HXbtraverse(t)) != NULL)
-		if (!kvplist_contains(options, e->data)) {
-			l0g("option %s denied\n",
-			    static_cast(const char *, e->data));
+		if (!kvplist_contains(options, e->key)) {
+			l0g("option \"%s\" denied\n",
+			    static_cast(const char *, e->key));
 			HXbtrav_free(t);
 			return false;
 		}
@@ -134,10 +134,6 @@ static bool options_ok(const struct config *config, const struct vol *volume)
 		if (config->options_deny->items != 0 &&
 		    !deny_ok(config->options_deny, &volume->options))
 			return false;
-		if (volume->options.items != 0) {
-			l0g("user specified options denied by default\n");
-			return false;
-		}
 	}
 	return true;
 }
