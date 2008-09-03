@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+- mount.crypt: add missing null command to conform to sh syntax
+  (SF bug #2089446)
+- conf: fix printing of strings when luser volume options were not ok
+- conf: re-add luserconf security checks
 - add support for encfs 1.3.x (1.4.x already has been in for long)
 - conf: add the "noroot" attribute for <volume> to force mounting with
   the unprivileged user account (required for FUSE filesystems)

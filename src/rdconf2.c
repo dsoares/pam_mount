@@ -42,7 +42,7 @@ static bool allow_ok(const struct HXbtree *allowed,
 
 	HXlist_for_each_entry(kvp, options, list)
 		if (HXbtree_find(allowed, kvp->key) == NULL) {
-			l0g("option %s not allowed\n", kvp->key);
+			l0g("option \"%s\" not allowed\n", kvp->key);
 			return false;
 		}
 
@@ -67,9 +67,9 @@ static bool required_ok(const struct HXbtree *required,
 		return false;
 
 	while ((e = HXbtraverse(t)) != NULL)
-		if (!kvplist_contains(options, e->data)) {
-			l0g("option %s required\n",
-			    static_cast(const char *, e->data));
+		if (!kvplist_contains(options, e->key)) {
+			l0g("option \"%s\" required\n",
+			    static_cast(const char *, e->key));
 			HXbtrav_free(t);
 			return false;
 		}
@@ -103,9 +103,9 @@ static bool deny_ok(const struct HXbtree *denied,
 		return false;
 
 	while ((e = HXbtraverse(t)) != NULL)
-		if (!kvplist_contains(options, e->data)) {
-			l0g("option %s denied\n",
-			    static_cast(const char *, e->data));
+		if (!kvplist_contains(options, e->key)) {
+			l0g("option \"%s\" denied\n",
+			    static_cast(const char *, e->key));
 			HXbtrav_free(t);
 			return false;
 		}
@@ -136,12 +136,29 @@ bool luserconf_volume_record_sane(const struct config *config,
 		return false;
 	}
 
+	if (vol->type == CMD_LCLMOUNT || vol->type == CMD_CRYPTMOUNT) {
+		if (!owns(config->user, vol->volume)) {
+			l0g("user-defined volume (%s), volume not owned "
+			    "by user\n", vol->volume);
+			return false;
+		}
+		/*
+		 * If it does not already exist then it is okay, pam_mount will
+		 * mkdir it (if configured to do so)
+		 */
+		if (exists(vol->mountpoint) &&
+		    !owns(config->user, vol->mountpoint)) {
+			l0g("user-defined volume (%s), mountpoint not owned "
+			    "by user\n", vol->volume);
+			return false;
+		}
+	}
+
 	if (!vol->use_fstab) {
 		if (!required_ok(config->options_require, &vol->options)) {
 			misc_log("Luser volume for %s is missing options that "
 			         "are required by global <mntoptions>\n",
 			         vol->mountpoint);
-			return false;
 		}
 		if (config->options_allow->items != 0 &&
 		    !allow_ok(config->options_allow, &vol->options)) {
@@ -155,9 +172,9 @@ bool luserconf_volume_record_sane(const struct config *config,
 			misc_log("Luser volume for %s has options that are "
 			         "denied by global <mntoptions>\n",
 			         vol->mountpoint);
-			return false;
 		}
 	}
+
 	return true;
 }
 

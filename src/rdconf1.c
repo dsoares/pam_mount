@@ -344,6 +344,7 @@ bool readconfig(const char *file, bool global_conf, struct config *config)
 		return false;
 	}
 
+	config->level = global_conf ? CONTEXT_GLOBAL : CONTEXT_LUSER;
 	for (ptr = ptr->children; ptr != NULL; ptr = ptr->next) {
 		if (ptr->type != XML_ELEMENT_NODE)
 			continue;

@@ -257,6 +257,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
 	if ((ret = common_init(pamh, argc, argv)) != -1)
 		return ret;
+	w4rn(PACKAGE_STRING ": entering auth stage\n");
 
 	if (Args.auth_type != GET_PASS) { /* get password from PAM system */
 		char *ptr = NULL;
@@ -434,7 +435,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	if ((ret = common_init(pamh, argc, argv)) != -1)
 		return ret;
 
-	w4rn("Entered pam_mount session stage\n");
+	w4rn(PACKAGE_STRING ": entering session stage\n");
 
 	/*
 	 * Get the Kerberos CCNAME so we can make it available to the
