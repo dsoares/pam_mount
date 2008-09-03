@@ -126,35 +126,35 @@ static bool deny_ok(const struct HXbtree *denied,
  * rejecting everyhing that is illegal.
  */
 bool luserconf_volume_record_sane(const struct config *config,
-    const struct vol *volume)
+    const struct vol *vol)
 {
 	w4rn("checking sanity of luserconf volume record (%s)\n",
-	     volume->volume);
+	     vol->volume);
 
-	if (volume->used_wildcard) {
+	if (vol->used_wildcard) {
 		l0g("You may not use wildcards in user-defined volumes\n");
 		return false;
 	}
 
-	if (!volume->use_fstab) {
-		if (!required_ok(config->options_require, &volume->options)) {
+	if (!vol->use_fstab) {
+		if (!required_ok(config->options_require, &vol->options)) {
 			misc_log("Luser volume for %s is missing options that "
 			         "are required by global <mntoptions>\n",
-			         volume->mountpoint);
+			         vol->mountpoint);
 			return false;
 		}
 		if (config->options_allow->items != 0 &&
-		    !allow_ok(config->options_allow, &volume->options)) {
+		    !allow_ok(config->options_allow, &vol->options)) {
 			misc_log("Luser volume for %s has options that are "
 			         "not allowed per global <mntoptions>\n",
-			         volume->mountpoint);
+			         vol->mountpoint);
 			return false;
 		}
 		if (config->options_deny->items != 0 &&
-		    !deny_ok(config->options_deny, &volume->options)) {
+		    !deny_ok(config->options_deny, &vol->options)) {
 			misc_log("Luser volume for %s has options that are "
 			         "denied by global <mntoptions>\n",
-			         volume->mountpoint);
+			         vol->mountpoint);
 			return false;
 		}
 	}
