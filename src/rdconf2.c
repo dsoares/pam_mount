@@ -157,10 +157,6 @@ bool luserconf_volume_record_sane(const struct config *config,
 			         volume->mountpoint);
 			return false;
 		}
-		if (volume->options.items != 0) {
-			l0g("user specified options denied by default\n");
-			return false;
-		}
 	}
 	return true;
 }
