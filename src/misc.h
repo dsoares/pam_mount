@@ -31,7 +31,6 @@ extern void arglist_add(struct HXdeque *, const char *,
 extern struct HXdeque *arglist_build(const struct HXdeque *,
 	const struct HXbtree *);
 extern void arglist_log(const struct HXdeque *);
-extern int config_valid(const struct config *);
 extern int exists(const char *);
 extern bool kvplist_contains(const struct HXclist_head *, const char *);
 extern char *kvplist_get(const struct HXclist_head *, const char *);
@@ -45,7 +44,6 @@ extern int owns(const char *, const char *);
 extern char *relookup_user(const char *);
 extern void set_myuid(const char *);
 extern long str_to_long(const char *);
-extern int vol_valid(const struct vol *);
 extern void *xmalloc(size_t);
 extern void *xrealloc(void *, size_t);
 extern char *xstrdup(const char *);
