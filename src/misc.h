@@ -9,6 +9,7 @@
 #define __STRINGIFY(s)        __STRINGIFY_EXPAND(s)
 
 struct HXbtree;
+struct HXclist_head;
 struct HXdeque;
 struct config;
 struct vol;
@@ -32,6 +33,10 @@ extern struct HXdeque *arglist_build(const struct HXdeque *,
 extern void arglist_log(const struct HXdeque *);
 extern int config_valid(const struct config *);
 extern int exists(const char *);
+extern bool kvplist_contains(const struct HXclist_head *, const char *);
+extern char *kvplist_get(const struct HXclist_head *, const char *);
+extern void kvplist_genocide(struct HXclist_head *);
+extern hmc_t *kvplist_to_str(const struct HXclist_head *);
 extern void misc_add_ntdom(struct HXbtree *, const char *);
 extern void misc_dump_id(const char *);
 extern int misc_log(const char *, ...);
@@ -41,5 +46,8 @@ extern char *relookup_user(const char *);
 extern void set_myuid(const char *);
 extern long str_to_long(const char *);
 extern int vol_valid(const struct vol *);
+extern void *xmalloc(size_t);
+extern void *xrealloc(void *, size_t);
+extern char *xstrdup(const char *);
 
 #endif /* PMT_MISC_H */

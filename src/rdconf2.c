@@ -22,7 +22,6 @@
 #include "misc.h"
 #include "pam_mount.h"
 #include "readconfig.h"
-#include "xstdlib.h"
 
 /**
  * allow_ok - check for disallowed options

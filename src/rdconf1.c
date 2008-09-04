@@ -28,7 +28,6 @@
 #include "misc.h"
 #include "pam_mount.h"
 #include "readconfig.h"
-#include "xstdlib.h"
 
 /* Definitions */
 enum {
