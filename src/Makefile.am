@@ -36,10 +36,10 @@ mount_encfs13_LDADD   = ${libHX_LIBS}
 
 pmt_fd0ssh_SOURCES = fd0ssh.c
 
-pmt_ofl_SOURCES = ofl.c ofl-lib-nlt.c
+pmt_ofl_SOURCES = ofl.c nlt-ofl-lib.c
 pmt_ofl_LDADD   = ${libHX_LIBS}
 
-pmvarrun_SOURCES = pmvarrun.c misc-nolibtool.c
+pmvarrun_SOURCES = pmvarrun.c nlt-misc.c
 pmvarrun_LDADD   = ${libHX_LIBS}
 
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} ${libHX_CFLAGS} ${libxml_CFLAGS}
