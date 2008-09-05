@@ -70,7 +70,8 @@ will check /proc/partitions.
 The fstypes \fBcifs\fP, \fBencfs13\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP and
 \fBtruecrypt\fP are overriden by pam_mount and we call the respective helpers
 directly without going thorugh \fBmount\fP(8), to have access to more options
-of the helper programs.
+of the helper programs. See this manpage's section "Examples" below for more
+details.
 .TP
 \fBnoroot="1"\fP
 Call the mount program without root privileges. It defaults to yes for the
@@ -349,20 +350,30 @@ The \fBicase\fP attribute may be used on \fB<user>\fP, \fB<pgrp>\fP and
 .PP
 Remember that \fB~\fP can be used in the mountpoint attribute to denote the
 home directory as retrievable through getpwent(3).
-.SS FUSE mounts
+.SS sshfs and ccgfs
 .PP
 Not specifying any path after the colon (:) uses the path whereever ssh will
 put you in, usually the home directory.
 .PP
-<volume fstype="fuse" path="sshfs#%(USER)@fileserver:"
-mountpoint="~" />
+<volume fstype="fuse" path="sshfs#%(USER)@fileserver:" mountpoint="~" />
 .PP
-<volume fstype="fuse" path="encfs#/crypto/%(USER)"
+<volume fstype="fuse" path="ccgfs\-ssh\-pull#%(USER)@host:directory"
 mountpoint="~" />
+.SS encfs 1.4.x and up
+.PP
+<volume fstype="fuse" path="encfs#/crypto/%(USER)" mountpoint="~"
+options="nonempty" />
+.SS encfs 1.3.x
+.PP
+encfs 1.3.x did not support option passthrough, which is why a separate helper
+(/sbin/mount.encfs13, installed by pam_mount) is needed. This variant also
+supports 1.4.x, but it is encouraged to use fstype=fuse in that case.
+.PP
+<volume fstype="encfs13" path="/crypto/%(USER)" mountpoint="~"
+options="nonempty" />
 .SS NFS mounts
 .PP
-<volume fstype="nfs" server="fileserver" path="/home/%(USER)"
-mountpoint="~" />
+<volume fstype="nfs" server="fileserver" path="/home/%(USER)" mountpoint="~" />
 .SS CIFS/SMB mounts
 .PP
 <volume user="user" fstype="smbfs" server="krueger" path="public"
@@ -378,7 +389,7 @@ This may come useful in conjunction with pam_chroot:
 <volume path="/bin" mountpoint="~/bin" options="bind" />
 .SS Encrypted mounts
 .PP
-Section unsorted.
+(Section incomplete.)
 .PP
 <volume path="/home/%(USER).img" mountpoint="~" fskeycipher="aes\-256\-cbc"
 fskeypath="/etc/ehd/%(USER)" />
