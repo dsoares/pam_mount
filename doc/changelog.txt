@@ -2,6 +2,12 @@
 For details, see the history as recorded in the git repository.
 
 
+v0.47 (September 04 2008)
+=========================
+This release incorporates a security fix (item 3 on the list).
+All administrators who have enabled <luserconf> in the configuration
+file should upgrade. A workaround is to comment out <luserconf>.
+
 - mount.crypt: add missing null command to conform to sh syntax
   (SF bug #2089446)
 - conf: fix printing of strings when luser volume options were not ok
