@@ -172,6 +172,17 @@ bool expandconfig(const struct config *config)
 	return true;
 }
 
+static void volume_free(struct vol *vol)
+{
+	kvplist_genocide(&vol->options);
+	free(vol->fstype);
+	free(vol->server);
+	free(vol->volume);
+	free(vol->fs_key_cipher);
+	free(vol->fs_key_path);
+	free(vol);
+}
+
 /**
  * freeconfig -
  * @config:	config struct
@@ -204,15 +215,8 @@ void freeconfig(struct config *config)
 		HXdeque_free(cmd);
 	}
 
-	HXlist_for_each_entry_safe(vol, next, &config->volume_list, list) {
-		kvplist_genocide(&vol->options);
-		free(vol->fstype);
-		free(vol->server);
-		free(vol->volume);
-		free(vol->fs_key_cipher);
-		free(vol->fs_key_path);
-		free(vol);
-	}
+	HXlist_for_each_entry_safe(vol, next, &config->volume_list, list)
+		volume_free(vol);
 
 	HXbtree_free(config->options_allow);
 	HXbtree_free(config->options_require);
@@ -1187,6 +1191,7 @@ static int rc_volume_cond(const char *user, xmlNode *node)
 static const char *rc_volume(xmlNode *node, struct config *config,
     unsigned int command)
 {
+	const char *err;
 	struct vol *vpt;
 	unsigned int i;
 	char *tmp;
@@ -1252,8 +1257,10 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	} else {
 		free(vpt->mountpoint);
 		vpt->mountpoint = fstab_value(vpt->volume, FSTAB_MNTPT);
-		if (vpt->mountpoint == NULL)
-			return "could not determine mountpoint";
+		if (vpt->mountpoint == NULL) {
+			err = "could not determine mountpoint";
+			goto out;
+		}
 		vpt->use_fstab = 1;
 	}
 
@@ -1266,15 +1273,20 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		 */
 		if (vpt->use_fstab) {
 			char *options = fstab_value(vpt->volume, FSTAB_OPTS);
-			if (options == NULL)
-				return "could not determine options";
-			if (!str_to_optkv(&vpt->options, options))
-				return "error parsing mount options";
+			if (options == NULL) {
+				err = "could not determine options";
+				goto out;
+			}
+			if (!str_to_optkv(&vpt->options, options)) {
+				err = "error parsing mount options";
+				goto out;
+			}
 			free(options);
 		}
 	} else if (!str_to_optkv(&vpt->options, tmp)) {
 		free(tmp);
-		return "error parsing mount options";
+		err = "error parsing mount options";
+		goto out;
 	} else {
 		free(tmp);
 	}
@@ -1292,6 +1304,11 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	/* expandconfig() will set this later */
 	vpt->used_wildcard = false;
 	return NULL;
+
+ out:
+	HXclist_del(&config->volume_list, &vpt->list);
+	volume_free(vpt);
+	return err;
 }
 
 //-----------------------------------------------------------------------------
