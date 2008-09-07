@@ -120,10 +120,10 @@ static int hash_authtok(FILE *fp, const EVP_CIPHER *cipher,
  *
  * FIXME: this function may need to be broken up and made more readable.
  */
-int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
+int decrypted_key(hxmc_t **pt_fs_key, const char *fs_key_path,
     const char *fs_key_cipher, const char *authtok)
 {
-	hmc_t *ct_fs_key = NULL, *line = NULL;
+	hxmc_t *ct_fs_key = NULL, *line = NULL;
 	int segment_len, pt_fs_key_len, ret = 1;
 	unsigned char hashed_authtok[EVP_MAX_KEY_LENGTH];	/* hash(system authtok) */
 	unsigned char iv[EVP_MAX_IV_LENGTH];
@@ -155,12 +155,12 @@ int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
 		goto out2;
 	}
 
-	ct_fs_key = hmc_minit(NULL, 0);
+	ct_fs_key = HXmc_meminit(NULL, 0);
 	while (HX_getl(&line, fs_key_fp) != NULL)
-		hmc_memcat(&ct_fs_key, line, hmc_length(line));
-	hmc_free(line);
+		HXmc_memcat(&ct_fs_key, line, HXmc_length(line));
+	HXmc_free(line);
 
-	if (hmc_length(ct_fs_key) == 0) {
+	if (HXmc_length(ct_fs_key) == 0) {
 		l0g("failed to read encrypted filesystem key from %s, "
 		    "or file empty.\n", fs_key_path);
 		ret = 0;
@@ -172,11 +172,11 @@ int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
 		goto out3;
 	}
 
-	*pt_fs_key = hmc_minit(NULL, 0);
-	hmc_trunc(pt_fs_key, hmc_length(ct_fs_key) + EVP_MAX_BLOCK_LENGTH);
+	*pt_fs_key = HXmc_meminit(NULL, 0);
+	HXmc_trunc(pt_fs_key, HXmc_length(ct_fs_key) + EVP_MAX_BLOCK_LENGTH);
 	if (EVP_DecryptUpdate(&ctx, signed_cast(unsigned char *,
 	    *pt_fs_key), &segment_len, signed_cast(const unsigned char *,
-	    ct_fs_key), hmc_length(ct_fs_key)) == 0) {
+	    ct_fs_key), HXmc_length(ct_fs_key)) == 0) {
 		sslerror("failed to decrypt key");
 		ret = 0;
 		goto out4;
@@ -190,13 +190,13 @@ int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
 		goto out4;
 	}
 	pt_fs_key_len += segment_len;
-	hmc_trunc(pt_fs_key, pt_fs_key_len);
+	HXmc_trunc(pt_fs_key, pt_fs_key_len);
 
  out4:
 	if (ret == 0)
-		hmc_free(*pt_fs_key);
+		HXmc_free(*pt_fs_key);
  out3:
-	hmc_free(ct_fs_key);
+	HXmc_free(ct_fs_key);
  out2:
 	if (fclose(fs_key_fp) != 0) {
 		l0g("error closing file pointer\n");
@@ -216,7 +216,7 @@ int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
 
 #else /* HAVE_LIBCRYPTO && HAVE_LIBSSL */
 
-int decrypted_key(hmc_t **pt_fs_key, const char *fs_key_path,
+int decrypted_key(hxmc_t **pt_fs_key, const char *fs_key_path,
     const char *fs_key_cipher, const char *authtok)
 {
 	l0g("encrypted filesystem key not supported: no openssl\n");

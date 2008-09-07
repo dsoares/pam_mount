@@ -15,6 +15,6 @@
 #	define EVP_MAX_BLOCK_LENGTH 0
 #endif
 
-int decrypted_key(hmc_t **, const char *, const char *,	const char *);
+int decrypted_key(hxmc_t **, const char *, const char *,	const char *);
 
 #endif /* PMT_CRYPTO_H */

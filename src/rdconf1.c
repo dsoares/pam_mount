@@ -127,7 +127,7 @@ static bool expand_home(const char *user, char **path_pptr)
 static bool expand_user(const char *user, char **dest_pptr)
 {
 	struct HXbtree *vinfo;
-	hmc_t *tmp = NULL;
+	hxmc_t *tmp = NULL;
 
 	if (*dest_pptr == NULL)
 		return true;
@@ -138,7 +138,7 @@ static bool expand_user(const char *user, char **dest_pptr)
 	HXformat_aprintf(vinfo, &tmp, *dest_pptr);
 	HXformat_free(vinfo);
 	*dest_pptr = xstrdup(tmp);
-	hmc_free(tmp);
+	HXmc_free(tmp);
 	return true;
 }
 
@@ -195,7 +195,7 @@ void freeconfig(struct config *config)
 	struct vol *vol, *next;
 	unsigned int i;
 
-	hmc_free(config->luserconf);
+	HXmc_free(config->luserconf);
 	free(config->fsckloop);
 
 	for (i = 0; i < _CMD_MAX; ++i) {
@@ -670,10 +670,10 @@ static const char *rc_luserconf(xmlNode *node, struct config *config,
 		return "Could not get password entry";
 	if ((s = xmlGetProp_2s(node, "name")) == NULL)
 		return "<luserconf> is missing name= attribute";
-	hmc_free(config->luserconf);
-	config->luserconf = hmc_sinit(pent->pw_dir);
-	hmc_strcat(&config->luserconf, "/");
-	hmc_strcat(&config->luserconf, s);
+	HXmc_free(config->luserconf);
+	config->luserconf = HXmc_strinit(pent->pw_dir);
+	HXmc_strcat(&config->luserconf, "/");
+	HXmc_strcat(&config->luserconf, s);
 	w4rn("path to luserconf set to %s\n", config->luserconf);
 	free(s);
 	return NULL;

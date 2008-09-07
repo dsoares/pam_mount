@@ -183,20 +183,20 @@ long str_to_long(const char *n)
 void arglist_log(const struct HXdeque *argq)
 {
 	const struct HXdeque_node *n;
-	hmc_t *str = NULL;
+	hxmc_t *str = NULL;
 
 	if (!Debug)
 		return;
 
-	str = hmc_sinit("");
+	str = HXmc_meminit(NULL, 80);
 	for (n = argq->first; n != NULL; n = n->next) {
-		hmc_strcat(&str, "[");
-		hmc_strcat(&str, n->ptr);
-		hmc_strcat(&str, "] ");
+		HXmc_strcat(&str, "[");
+		HXmc_strcat(&str, n->ptr);
+		HXmc_strcat(&str, "] ");
 	}
 
 	misc_warn("command: %s\n", str);
-	hmc_free(str);
+	HXmc_free(str);
 }
 
 /**
@@ -387,21 +387,21 @@ void kvplist_genocide(struct HXclist_head *head)
  * Transform the option list into a flat string. Allocates and returns the
  * string. Caller has to free it. Used for debugging.
  */
-hmc_t *kvplist_to_str(const struct HXclist_head *optlist)
+hxmc_t *kvplist_to_str(const struct HXclist_head *optlist)
 {
 	const struct kvp *kvp;
-	hmc_t *ret = hmc_sinit("");
+	hxmc_t *ret = HXmc_meminit(NULL, 0);
 
 	if (optlist == NULL)
 		return ret;
 
 	HXlist_for_each_entry(kvp, optlist, list) {
-		hmc_strcat(&ret, kvp->key);
+		HXmc_strcat(&ret, kvp->key);
 		if (kvp->value != NULL && *kvp->value != '\0') {
-			hmc_strcat(&ret, "=");
-			hmc_strcat(&ret, kvp->value);
+			HXmc_strcat(&ret, "=");
+			HXmc_strcat(&ret, kvp->value);
 		}
-		hmc_strcat(&ret, ",");
+		HXmc_strcat(&ret, ",");
 	}
 
 	if (*ret != '\0')
@@ -409,7 +409,7 @@ hmc_t *kvplist_to_str(const struct HXclist_head *optlist)
 		 * When string is not empty, there is always at least one
 		 * comma -- nuke it.
 		 */
-		ret[hmc_length(ret)-1] = '\0';
+		ret[HXmc_length(ret)-1] = '\0';
 
 	return ret;
 }

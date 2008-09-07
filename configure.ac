@@ -35,13 +35,13 @@ regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-D_FILE_OFFSET_BITS=64 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
-	-Winline -Wformat=2 -pipe"
+	-Wformat=2 -pipe"
 AC_SUBST(regular_CFLAGS)
 
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 
-PKG_CHECK_MODULES([libHX], [libHX >= 1.23])
+PKG_CHECK_MODULES([libHX], [libHX >= 1.25])
 PKG_CHECK_MODULES([libxml], [libxml-2.0])
 PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],

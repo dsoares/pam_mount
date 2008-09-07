@@ -89,7 +89,7 @@ struct config {
 	char *user;
 	unsigned int debug;
 	bool mkmntpoint, rmdir_mntpt;
-	hmc_t *luserconf;
+	hxmc_t *luserconf;
 	char *fsckloop;
 	struct HXdeque *command[_CMD_MAX];
 	struct HXbtree *options_require, *options_allow, *options_deny;

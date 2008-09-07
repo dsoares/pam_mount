@@ -51,7 +51,7 @@ static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
 static void run_ofl(const struct config * const, struct HXbtree *);
-static hmc_t *vol_to_dev(const struct vol *);
+static hxmc_t *vol_to_dev(const struct vol *);
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 static int split_bsd_mount(char *, const char **, const char **, const char **);
@@ -124,7 +124,7 @@ static int already_mounted(const struct config *const config,
     const struct vol *vpt, struct HXbtree *vinfo)
 #if defined(__linux__)
 {
-	hmc_t *dev;
+	hxmc_t *dev;
 	char real_mpt[PATH_MAX+1];
 	struct mntent *mtab_record;
 	bool mounted = false;
@@ -137,7 +137,7 @@ static int already_mounted(const struct config *const config,
 
 	if ((mtab = setmntent("/etc/mtab", "r")) == NULL) {
 		l0g("could not open /etc/mtab\n");
-		hmc_free(dev);
+		HXmc_free(dev);
 		return -1;
 	}
 	if (realpath(vpt->mountpoint, real_mpt) == NULL) {
@@ -186,12 +186,12 @@ static int already_mounted(const struct config *const config,
 	}
 
 	endmntent(mtab);
-	hmc_free(dev);
+	HXmc_free(dev);
 	return mounted;
 }
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 {
-	hmc_t *dev;
+	hxmc_t *dev;
 	struct HXdeque *argv;
 	char mte[BUFSIZ + 1];
 	int i, cstdout = -1, mounted = 0;
@@ -211,13 +211,13 @@ static int already_mounted(const struct config *const config,
 	 */
 	if (config->command[CMD_MNTCHECK][0] == NULL) {
 		l0g("mntcheck not defined in pam_mount.conf.xml\n");
-		hmc_free(dev);
+		HXmc_free(dev);
 		return -1;
 	}
 
 	argv = arglist_build(config->command[CMD_MNTCHECK}, vinfo);
 	if (!spawn_start(argv, &pid, NULL, &cstdout, NULL, NULL, NULL)) {
-		hmc_free(dev);
+		HXmc_free(dev);
 		return -1;
 	}
 
@@ -256,7 +256,7 @@ static int already_mounted(const struct config *const config,
 	if (waitpid(pid, NULL, 0) != 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	hmc_free(dev);
+	HXmc_free(dev);
 	return mounted;
 }
 #else
@@ -272,31 +272,31 @@ static int already_mounted(const struct config *const config,
  *
  * Turn a volume into the mountspec as accepted by the specific mount program.
  */
-static hmc_t *vol_to_dev(const struct vol *vol)
+static hxmc_t *vol_to_dev(const struct vol *vol)
 {
 	unsigned int len;
-	hmc_t *ret;
+	hxmc_t *ret;
 	char *p;
 
 	switch (vol->type) {
 	case CMD_SMBMOUNT:
 	case CMD_CIFSMOUNT:
-		ret = hmc_sinit("//");
-		hmc_strcat(&ret, vol->server);
-		hmc_strcat(&ret, "/");
-		hmc_strcat(&ret, vol->volume);
+		ret = HXmc_strinit("//");
+		HXmc_strcat(&ret, vol->server);
+		HXmc_strcat(&ret, "/");
+		HXmc_strcat(&ret, vol->volume);
 		break;
 
 	case CMD_NCPMOUNT:
-		ret = hmc_sinit(vol->server);
-		hmc_strcat(&ret, "/");
-		hmc_strcat(&ret, kvplist_get(&vol->options, "user"));
+		ret = HXmc_strinit(vol->server);
+		HXmc_strcat(&ret, "/");
+		HXmc_strcat(&ret, kvplist_get(&vol->options, "user"));
 		break;
 
 	case CMD_NFSMOUNT:
-		ret = hmc_sinit(vol->server);
-		hmc_strcat(&ret, ":");
-		hmc_strcat(&ret, vol->volume);
+		ret = HXmc_strinit(vol->server);
+		HXmc_strcat(&ret, ":");
+		HXmc_strcat(&ret, vol->volume);
 		break;
 
 	case CMD_CRYPTMOUNT:
@@ -304,16 +304,16 @@ static hmc_t *vol_to_dev(const struct vol *vol)
 		 * FIXME: ugly hack to support umount.crypt script. I hope that
 		 * util-linux will have native dm_crypt support some day.
 		 */
-		ret = hmc_sinit("/dev/mapper/");
+		ret = HXmc_strinit("/dev/mapper/");
 		len = strlen(ret);
-		hmc_strcat(&ret, vol->volume);
+		HXmc_strcat(&ret, vol->volume);
 		for (p = ret + len; *p != '\0'; ++p)
 			if (*p == '/')
 				*p = '_';
 		break;
 
 	default:
-		ret = hmc_sinit(vol->volume);
+		ret = HXmc_strinit(vol->volume);
 		break;
 	}
 
@@ -358,7 +358,7 @@ static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
 static void log_pm_input(const struct config *const config,
     const struct vol *vpt)
 {
-	hmc_t *options;
+	hxmc_t *options;
 
 	options = kvplist_to_str(&vpt->options);
 	w4rn("information for mount:\n");
@@ -373,7 +373,7 @@ static void log_pm_input(const struct config *const config,
 	w4rn("fs_key_path:   %s\n", znul(vpt->fs_key_path));
 	w4rn("use_fstab:     %d\n", vpt->use_fstab);
 	w4rn("----------------------\n");
-	hmc_free(options);
+	HXmc_free(options);
 }
 
 /**
@@ -581,7 +581,7 @@ static int pipewrite(int fd, const void *buf, size_t count)
 }
 
 static int do_losetup(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, hmc_t *password)
+    struct HXbtree *vinfo, hxmc_t *password)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -617,8 +617,8 @@ static int do_losetup(const struct config *config, const struct vol *vpt,
 		return 0;
 
 	/* note to self: password is decrypted */
-	if (pipewrite(cstdin, password, hmc_length(password)) !=
-	    hmc_length(password)) {
+	if (pipewrite(cstdin, password, HXmc_length(password)) !=
+	    HXmc_length(password)) {
 		l0g("error sending password to losetup\n");
 		ret = 0;
 	}
@@ -668,7 +668,7 @@ static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
 }
 
 static int check_filesystem(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, hmc_t *password)
+    struct HXbtree *vinfo, hxmc_t *password)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -710,9 +710,9 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 			return 0;
 		fsck_target = config->fsckloop;
 	} else {
-		hmc_t *options = kvplist_to_str(&vpt->options);
+		hxmc_t *options = kvplist_to_str(&vpt->options);
 		w4rn("volume not a loopback (options: %s)\n", options);
-		hmc_free(options);
+		HXmc_free(options);
 	}
 	format_add(vinfo, "FSCKTARGET", fsck_target);
 
@@ -751,24 +751,24 @@ static void mount_set_fsck(const struct config *config,
     const struct vol *vol, struct HXbtree *vinfo)
 {
 	const struct HXdeque_node *i;
-	hmc_t *string, *current;
+	hxmc_t *string, *current;
 
 	if (vol->type != CMD_CRYPTMOUNT)
 		return;
 
 	format_add(vinfo, "FSCKTARGET", "");
-	string = hmc_sinit("");
+	string = HXmc_meminit(NULL, 0);
 
 	for (i = config->command[CMD_FSCK]->first; i != NULL; i = i->next) {
 		if (HXformat_aprintf(vinfo, &current, i->ptr) > 0) {
-			hmc_strcat(&string, current);
-			hmc_strcat(&string, " ");
+			HXmc_strcat(&string, current);
+			HXmc_strcat(&string, " ");
 		}
-		hmc_free(current);
+		HXmc_free(current);
 	}
 
 	setenv("FSCK", string, true);
-	hmc_free(string);
+	HXmc_free(string);
 }
 
 /**
@@ -785,7 +785,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 {
 	const struct HXdeque_node *n;
 	struct HXdeque *argv;
-	hmc_t *ll_password = NULL;
+	hxmc_t *ll_password = NULL;
 	int child_exit = 0, cstdin = -1, cstderr = -1;
 	const char *mount_user;
 	pid_t pid = -1;
@@ -836,7 +836,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		    vpt->fs_key_path, vpt->fs_key_cipher, password))
 			return 0;
 	} else {
-		ll_password = hmc_sinit(password);
+		ll_password = HXmc_strinit(password);
 	}
 	w4rn("about to start building mount command\n");
 	/* FIXME: NEW */
@@ -867,20 +867,20 @@ int do_mount(const struct config *config, struct vol *vpt,
 	mount_user = vpt->noroot ? vpt->user : NULL;
 	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr,
 	    set_myuid, mount_user)) {
-		hmc_free(ll_password);
+		HXmc_free(ll_password);
 		return 0;
 	}
 
 	if (vpt->type != CMD_NFSMOUNT)
-		if (pipewrite(cstdin, ll_password, hmc_length(ll_password)) !=
-		    hmc_length(ll_password))
+		if (pipewrite(cstdin, ll_password, HXmc_length(ll_password)) !=
+		    HXmc_length(ll_password))
 			/* FIXME: clean: returns value of exit below */
 			l0g("error sending password to mount\n");
 	close(cstdin);
 
 	/* Paranoia? */
-	memset(ll_password, 0, hmc_length(ll_password));
-	hmc_free(ll_password);
+	memset(ll_password, 0, HXmc_length(ll_password));
+	HXmc_free(ll_password);
 	log_output(cstderr, "mount errors:\n");
 	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
@@ -913,7 +913,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	int fnval;
 	struct HXbtree *vinfo;
 	struct passwd *pe;
-	hmc_t *options;
+	hxmc_t *options;
 
 	if ((vinfo = HXformat_init()) == NULL)
 		return 0;
@@ -942,7 +942,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 		log_pm_input(config, vpt);
 
 	fnval = (*mnt)(config, vpt, vinfo, password);
-	hmc_free(options);
+	HXmc_free(options);
 	HXformat_free(vinfo);
 	return fnval;
 }

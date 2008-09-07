@@ -159,7 +159,7 @@ bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
 	      pid, fd_stdin, fd_stdout, fd_stderr, setup, user);
 	free(argv);
 	for (n = argq->first; n != NULL; n = n->next)
-		hmc_free(n->ptr);
+		HXmc_free(n->ptr);
 	HXdeque_free(argq);
 	return ret;
 }
