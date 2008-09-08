@@ -25,6 +25,7 @@
 #include <libHX/deque.h>
 #include <libHX/option.h>
 #include <libHX/string.h>
+#include <libHX/libxml_helper.h>
 #include "misc.h"
 #include "pam_mount.h"
 #include "readconfig.h"
@@ -69,7 +70,6 @@ struct pmt_command {
 };
 
 /* Functions */
-static inline int strcmp_1u(const xmlChar *, const char *);
 static int rc_volume_cond_ext(const struct passwd *, xmlNode *);
 
 /* Variables */
@@ -342,7 +342,7 @@ bool readconfig(const char *file, bool global_conf, struct config *config)
 	if ((doc = xmlParseFile(file)) == NULL)
 		return false;
 	ptr = xmlDocGetRootElement(doc);
-	if (ptr == NULL || strcmp_1u(ptr->name, "pam_mount") != 0) {
+	if (ptr == NULL || xml_strcmp(ptr->name, "pam_mount") != 0) {
 		xmlFreeDoc(doc);
 		return false;
 	}
@@ -352,7 +352,7 @@ bool readconfig(const char *file, bool global_conf, struct config *config)
 		if (ptr->type != XML_ELEMENT_NODE)
 			continue;
 		for (cmp = cf_tags; cmp->name != NULL; ++cmp)
-			if (strcmp_1u(ptr->name, cmp->name) == 0) {
+			if (xml_strcmp(ptr->name, cmp->name) == 0) {
 				err = (*cmp->func)(ptr, config, cmp->cmd);
 				if (err != NULL)
 					l0g("%s\n", err);
@@ -526,11 +526,6 @@ static inline bool parse_bool_f(char *s)
 	return ret;
 }
 
-static inline int strcmp_1u(const xmlChar *a, const char *b)
-{
-	return strcmp(reinterpret_cast(const char *, a), b);
-}
-
 /**
  * user_in_sgrp -
  * @user:	user to check
@@ -559,12 +554,6 @@ static bool user_in_sgrp(const char *user, const char *grp, bool icase)
 	}
 
 	return false;
-}
-
-static inline char *xmlGetProp_2s(xmlNode *node, const char *attr)
-{
-	return reinterpret_cast(char *, xmlGetProp(node,
-	       reinterpret_cast(const xmlChar *, attr)));
 }
 
 //-----------------------------------------------------------------------------
@@ -618,7 +607,7 @@ static const char *rc_debug(xmlNode *node, struct config *config,
     unsigned int cmd)
 {
 	char *s;
-	if ((s = xmlGetProp_2s(node, "enable")) != NULL)
+	if ((s = xml_getprop(node, "enable")) != NULL)
 		Debug = config->debug = strtoul(s, NULL, 0);
 	free(s);
 	return NULL;
@@ -631,7 +620,7 @@ static const char *rc_fsckloop(xmlNode *node, struct config *config,
 
 	if (config->level != CONTEXT_GLOBAL)
 		return "Tried to set <fsckloop> from user config";
-	if ((dev = xmlGetProp_2s(node, "device")) != NULL) {
+	if ((dev = xml_getprop(node, "device")) != NULL) {
 		if (strlen(dev) > PATH_MAX) {
 			free(dev);
 			return "fsckloop device path too long";
@@ -648,13 +637,13 @@ static const char *rc_logout(xmlNode *node, struct config *config,
 {
 	char *tmp;
 
-	if ((tmp = xmlGetProp_2s(node, "wait")) != NULL) {
+	if ((tmp = xml_getprop(node, "wait")) != NULL) {
 		config->sig_wait = strtoul(tmp, NULL, 0);
 		free(tmp);
 	}
-	config->sig_hup  = parse_bool_f(xmlGetProp_2s(node, "hup"));
-	config->sig_term = parse_bool_f(xmlGetProp_2s(node, "term"));
-	config->sig_kill = parse_bool_f(xmlGetProp_2s(node, "kill"));
+	config->sig_hup  = parse_bool_f(xml_getprop(node, "hup"));
+	config->sig_term = parse_bool_f(xml_getprop(node, "term"));
+	config->sig_kill = parse_bool_f(xml_getprop(node, "kill"));
 	return NULL;
 }
 
@@ -668,7 +657,7 @@ static const char *rc_luserconf(xmlNode *node, struct config *config,
 		return "Tried to set <luserconf> from user config";
 	if ((pent = getpwnam(config->user)) == NULL)
 		return "Could not get password entry";
-	if ((s = xmlGetProp_2s(node, "name")) == NULL)
+	if ((s = xml_getprop(node, "name")) == NULL)
 		return "<luserconf> is missing name= attribute";
 	HXmc_free(config->luserconf);
 	config->luserconf = HXmc_strinit(pent->pw_dir);
@@ -683,10 +672,10 @@ static const char *rc_mkmountpoint(xmlNode *node, struct config *config,
     unsigned int command)
 {
 	char *s;
-	if ((s = xmlGetProp_2s(node, "enable")) != NULL)
+	if ((s = xml_getprop(node, "enable")) != NULL)
 		config->mkmntpoint = strtol(s, NULL, 0);
 	free(s);
-	if ((s = xmlGetProp_2s(node, "remove")) != NULL)
+	if ((s = xml_getprop(node, "remove")) != NULL)
 		config->rmdir_mntpt = parse_bool(s);
 	free(s);
 	return NULL;
@@ -701,7 +690,7 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 	if (config->level != CONTEXT_GLOBAL)
 		return "Tried to set <mntoptions allow=...> from user config";
 
-	if ((options = xmlGetProp_2s(node, "allow")) != NULL) {
+	if ((options = xml_getprop(node, "allow")) != NULL) {
 		if (!onetime_options_allow) {
 			HXbtree_free(config->options_allow);
 			config->options_allow = HXbtree_init(OPT_TREE_FLAGS);
@@ -713,14 +702,14 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 			return "Error parsing allowed options";
 	}
 
-	if ((options = xmlGetProp_2s(node, "deny")) != NULL) {
+	if ((options = xml_getprop(node, "deny")) != NULL) {
 		ret = str_to_optlist(config->options_deny, options);
 		free(options);
 		if (!ret)
 			return "Error parsing denied options";
 	}
 
-	if ((options = xmlGetProp_2s(node, "require")) != NULL) {
+	if ((options = xml_getprop(node, "require")) != NULL) {
 		if (!onetime_options_require) {
 			HXbtree_free(config->options_require);
 			config->options_require = HXbtree_init(OPT_TREE_FLAGS);
@@ -902,11 +891,11 @@ static int rc_volume_cond_user(const struct passwd *pwd, xmlNode *node)
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
 			continue;
-		if (parse_bool_f(xmlGetProp_2s(parent, "icase")))
+		if (parse_bool_f(xml_getprop(parent, "icase")))
 			return strcasecmp(signed_cast(const char *,
 			       node->content), pwd->pw_name) == 0;
 		else
-			return strcmp_1u(node->content, pwd->pw_name) == 0;
+			return xml_strcmp(node->content, pwd->pw_name) == 0;
 	}
 
 	return false;
@@ -1008,7 +997,7 @@ static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
 
 		return __rc_volume_cond_pgrp(
 		       signed_cast(const char *, node->content), pwd->pw_gid,
-		       parse_bool_f(xmlGetProp_2s(parent, "icase")));
+		       parse_bool_f(xml_getprop(parent, "icase")));
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "pgrp");
@@ -1041,7 +1030,7 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 			return ret;
 		return user_in_sgrp(pwd->pw_name,
 		       signed_cast(const char *, node->content),
-		       parse_bool_f(xmlGetProp_2s(parent, "icase")));
+		       parse_bool_f(xml_getprop(parent, "icase")));
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "sgrp");
@@ -1055,23 +1044,23 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
  */
 static int rc_volume_cond_ext(const struct passwd *pwd, xmlNode *node)
 {
-	if (strcmp_1u(node->name, "and") == 0)
+	if (xml_strcmp(node->name, "and") == 0)
 		return rc_volume_cond_and(pwd, node);
-	else if (strcmp_1u(node->name, "or") == 0)
+	else if (xml_strcmp(node->name, "or") == 0)
 		return rc_volume_cond_or(pwd, node);
-	else if (strcmp_1u(node->name, "xor") == 0)
+	else if (xml_strcmp(node->name, "xor") == 0)
 		return rc_volume_cond_xor(pwd, node);
-	else if (strcmp_1u(node->name, "not") == 0)
+	else if (xml_strcmp(node->name, "not") == 0)
 		return rc_volume_cond_not(pwd, node);
-	else if (strcmp_1u(node->name, "user") == 0)
+	else if (xml_strcmp(node->name, "user") == 0)
 		return rc_volume_cond_user(pwd, node);
-	else if (strcmp_1u(node->name, "uid") == 0)
+	else if (xml_strcmp(node->name, "uid") == 0)
 		return rc_volume_cond_uid(pwd, node);
-	else if (strcmp_1u(node->name, "gid") == 0)
+	else if (xml_strcmp(node->name, "gid") == 0)
 		return rc_volume_cond_gid(pwd, node);
-	else if (strcmp_1u(node->name, "pgrp") == 0)
+	else if (xml_strcmp(node->name, "pgrp") == 0)
 		return rc_volume_cond_pgrp(pwd, node);
-	else if (strcmp_1u(node->name, "sgrp") == 0)
+	else if (xml_strcmp(node->name, "sgrp") == 0)
 		return rc_volume_cond_sgrp(pwd, node);
 
 	l0g("config: unknown element <%s>\n", node->name);
@@ -1085,12 +1074,12 @@ static int rc_volume_cond_ext(const struct passwd *pwd, xmlNode *node)
  */
 static int rc_volume_cond_simple(const struct passwd *pwd, xmlNode *node)
 {
-	char *user   = xmlGetProp_2s(node, "user");
-	char *invert = xmlGetProp_2s(node, "invert");
-	char *uid    = xmlGetProp_2s(node, "uid");
-	char *gid    = xmlGetProp_2s(node, "gid");
-	char *pgrp   = xmlGetProp_2s(node, "pgrp");
-	char *sgrp   = xmlGetProp_2s(node, "sgrp");
+	char *user   = xml_getprop(node, "user");
+	char *invert = xml_getprop(node, "invert");
+	char *uid    = xml_getprop(node, "uid");
+	char *gid    = xml_getprop(node, "gid");
+	char *pgrp   = xml_getprop(node, "pgrp");
+	char *sgrp   = xml_getprop(node, "sgrp");
 	bool for_me  = true;
 	int ret      = true;
 
@@ -1212,11 +1201,11 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	HXclist_init(&vpt->options);
 
 	/* Eyeball ssh setting */
-	if ((tmp = xmlGetProp_2s(node, "ssh")) != NULL)
+	if ((tmp = xml_getprop(node, "ssh")) != NULL)
 		vpt->uses_ssh = parse_bool_f(tmp);
 
 	/* Filesystem type */
-	if ((tmp = xmlGetProp_2s(node, "fstype")) != NULL) {
+	if ((tmp = xml_getprop(node, "fstype")) != NULL) {
 		free(vpt->fstype);
 		vpt->fstype = tmp;
 
@@ -1231,7 +1220,7 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		vpt->fstype = xstrdup("auto");
 	}
 
-	if ((tmp = xmlGetProp_2s(node, "noroot")) != NULL) {
+	if ((tmp = xml_getprop(node, "noroot")) != NULL) {
 		vpt->noroot = parse_bool_f(tmp);
 	} else if (vpt->fstype != NULL) {
 		/* Figure out whether we want to act as user. */
@@ -1241,17 +1230,17 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	}
 
 	/* Source location */
-	if ((tmp = xmlGetProp_2s(node, "server")) != NULL) {
+	if ((tmp = xml_getprop(node, "server")) != NULL) {
 		free(vpt->server);
 		vpt->server = tmp;
 	}
-	if ((tmp = xmlGetProp_2s(node, "path")) != NULL) {
+	if ((tmp = xml_getprop(node, "path")) != NULL) {
 		free(vpt->volume);
 		vpt->volume = tmp;
 	}
 
 	/* Destination */
-	if ((tmp = xmlGetProp_2s(node, "mountpoint")) != NULL) {
+	if ((tmp = xml_getprop(node, "mountpoint")) != NULL) {
 		free(vpt->mountpoint);
 		vpt->mountpoint = tmp;
 	} else {
@@ -1265,7 +1254,7 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	}
 
 	/* Options */
-	if ((tmp = xmlGetProp_2s(node, "options")) == NULL) {
+	if ((tmp = xml_getprop(node, "options")) == NULL) {
 		/*
 		 * Three options: field defined, field is '-' and fstab should
 		 * be used (when no mount point was provided either) or field
@@ -1292,11 +1281,11 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	}
 
 	/* Filesystem key */
-	if ((tmp = xmlGetProp_2s(node, "fskeycipher")) != NULL) {
+	if ((tmp = xml_getprop(node, "fskeycipher")) != NULL) {
 		free(vpt->fs_key_cipher);
 		vpt->fs_key_cipher = tmp;
 	}
-	if ((tmp = xmlGetProp_2s(node, "fskeypath")) != NULL) {
+	if ((tmp = xml_getprop(node, "fskeypath")) != NULL) {
 		free(vpt->fs_key_path);
 		vpt->fs_key_path = tmp;
 	}
