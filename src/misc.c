@@ -32,7 +32,8 @@
 #include "pam_mount.h"
 #include "misc.h"
 
-//-----------------------------------------------------------------------------
+unsigned int Debug = true;
+
 /**
  * misc_dump_id - print user IDs
  */

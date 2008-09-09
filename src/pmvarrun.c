@@ -56,10 +56,6 @@ static void set_defaults(struct settings *);
 static void usage(int, const char *);
 static int write_count(int, long, const char *);
 
-/* Variables */
-unsigned int Debug = false;
-
-//-----------------------------------------------------------------------------
 /**
  * usage - display help
  * @exitcode:	numeric value we will be exiting with

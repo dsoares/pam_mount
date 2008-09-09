@@ -53,7 +53,6 @@ static int read_password(pam_handle_t *, const char *, char **);
 
 /* Variables */
 static const char *envpath_saved;
-unsigned int Debug = true;
 struct config Config = {};
 struct pam_args Args = {};
 
