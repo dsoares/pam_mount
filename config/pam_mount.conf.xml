@@ -103,49 +103,6 @@ package). -->
 
 
 <!--
-Linux encrypted home directory examples, using dm_crypt:
-
-crypt mounts require a kernel with CONFIG_BLK_DEV_DM and CONFIG_DM_CRYPT
-enabled as well as all the used ciphers (e.g. CONFIG_CRYPTO_AES_586,
-CONFIG_CRYPTO_TWOFISH, etc.). crypt mounts must be in the global config
-file /etc/security/pam_mount.conf.xml.
-
-Linux encrypted home directory examples, using dm_crypt:
-
-    <volume fstype="crypt" path="/dev/sda2" mountpoint="/home/user"
-        options="cipher=aes" fskeycipher="aes-256-ecb"
-        fskeypath="/home/user.key" />
-
-cryptoloop mounts require a kernel with CONFIG_BLK_DEV_CRYPTOLOOP enabled.
-cryptoloop mounts must be in the global config
-/etc/security/pam_mount.conf.xml. Linux encrypted home directory examples,
-using cryptoloop:
-
-    <volume path="/dev/hda123" mountpoint="/home/user"
-        options="loop,encryption=aes" />
-
-    <volume path="/home/user.img" mountpoint="/home/user"
-        options="loop,user,exec,encryption=aes,keybits=256" />
-
-    <volume path="/home/user.img" />
-
-    <volume path="/home/user.img" fskeycipher="aes-256-ecb"
-        fskeypath="/home/user4.key" />
-
-The last two examples (^^) need a line like the following in /etc/fstab:
-
-    /home/user4.img /home/user4 xfs user,loop,encryption=aes,keybits=256,noauto 0 0
-
-OpenBSD encrypted home directory example (see also lclmount above):
-
-    <volume path="/home/user.img" mountpoint="/home/user"
-        options="svnd0" />
-
-Volatile tmpfs mount with restricted size (thanks to Mike Hommey for this
-example):
-
-    <volume user="test" fstype="tmpfs" path="none" mountpoint="/home/test"
-        options="size=10M,uid=test,gid=users,mode=0700" />
 
 See http://www.tldp.org/HOWTO/Loopback-Encrypted-Filesystem-HOWTO.html to
 learn how to create a encrypted loopback filesystem.

@@ -387,9 +387,41 @@ mountpoint="/home/user/krueger" options="user=user.context" />
 This may come useful in conjunction with pam_chroot:
 .PP
 <volume path="/bin" mountpoint="~/bin" options="bind" />
-.SS Encrypted mounts
+.SS tmpfs mounts
 .PP
-(Section incomplete.)
+Volatile tmpfs mount with restricted size (thanks to Mike Hommey for this
+example):
 .PP
-<volume path="/home/%(USER).img" mountpoint="~" fskeycipher="aes\-256\-cbc"
+<volume user="test" fstype="tmpfs" path="none" mountpoint="/home/test"
+options="size=10M,uid=%(USER),mode=0700" />
+.SS dm-crypt volumes
+.PP
+Crypt mounts require a kernel with CONFIG_BLK_DEV_DM and CONFIG_DM_CRYPT
+enabled, as well as all the ciphers that are going to be used, e.g.
+CONFIG_CRYPTO_AES, CONFIG_CRYPTO_BLOWFISH, CONFIG_CRYPTO_TWOFISH.
+.PP
+<volume path="/home/%(USER).img" mountpoint="~" options="cipher-fskeycipher="aes\-256\-cbc"
 fskeypath="/etc/ehd/%(USER)" />
+.SS cryptoloop volumes
+.PP
+cryptoloop mounts require a kernel with CONFIG_BLK_DEV_CRYPTOLOOP enabled.
+Linux encrypted home directory examples, using cryptoloop:
+.PP
+<volume path="/dev/hda123" mountpoint="/home/user"
+options="loop,encryption=aes" />
+.PP
+<volume path="/home/user.img" mountpoint="/home/user"
+options="loop,user,exec,encryption=aes,keybits=256" />
+.PP
+<volume path="/home/user.img" />
+.PP
+<volume path="/home/user.img" fskeycipher="aes-256-ecb"
+fskeypath="/home/user4.key" />
+.PP
+The last two preceding examples need a line like the following in /etc/fstab:
+.PP
+/home/user4.img /home/user4 xfs user,loop,encryption=aes,keybits=256,noauto 0 0
+.SS OpenBSD encrypted home
+OpenBSD encrypted home directory example:
+.PP
+<volume path="/home/user.img" mountpoint="/home/user" options="svnd0" />
