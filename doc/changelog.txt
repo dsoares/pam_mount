@@ -2,6 +2,12 @@
 For details, see the history as recorded in the git repository.
 
 
+v0.48 (September 10 2008)
+=========================
+- upgrade for libHX 1.25
+No further changes.
+
+
 v0.47 (September 04 2008)
 =========================
 This release incorporates a security fix (item 3 on the list).

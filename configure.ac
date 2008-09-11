@@ -7,7 +7,7 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [0.47])
+AC_INIT([pam_mount], [0.48])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_INSTALL
 AM_INIT_AUTOMAKE
