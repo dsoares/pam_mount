@@ -2,10 +2,8 @@
 #
 #	convert tool for pam_mount.conf 
 #
-#	Copyright (c) 2007 SUSE LINUX Products GmbH, Nuernberg, Germany.
+#	Copyright (c) 2007 SUSE LINUX Products GmbH, Nürnberg, Germany.
 #	This file is under the same license as pam_mount itself.
-#
-#	Please submit bugfixes or comments via http://bugs.opensuse.org/
 #
 use Data::Dumper;
 use Getopt::Long;
