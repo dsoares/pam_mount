@@ -1325,10 +1325,6 @@ static const struct pmt_command default_command[] = {
 	{CMD_LOSETUP,    NULL,    "losetup",    {"losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
 	{CMD_UNLOSETUP,  NULL,    "unlosetup",  {"losetup", "-d", "%(FSCKLOOP)", NULL}},
 	{CMD_PMVARRUN,   NULL,    "pmvarrun",   {"pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
-
-	{CMD_TRUECRYPTMOUNT,  "truecrypt", "truecrypt", {"truecryptmount", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_TRUECRYPTUMOUNT, "truecrypt", "truecrypt", {"truecryptumount", "-d", "%(MNTPT)", NULL}},
-
 	{-1},
 };
 
@@ -1357,8 +1353,6 @@ static const struct callbackmap cf_tags[] = {
 	{"pmvarrun",        rc_command,             CMD_PMVARRUN},
 	{"smbmount",        rc_command,             CMD_SMBMOUNT},
 	{"smbumount",       rc_command,             CMD_SMBUMOUNT},
-	{"truecryptmount",  rc_command,             CMD_TRUECRYPTMOUNT},
-	{"truecryptumount", rc_command,             CMD_TRUECRYPTUMOUNT},
 	{"umount",          rc_command,             CMD_UMOUNT},
 	{"unlosetup",       rc_command,             CMD_UNLOSETUP},
 	{"volume",          rc_volume,              CMD_NONE},

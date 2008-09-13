@@ -67,8 +67,8 @@ fstype attribute implies \fBfstype="auto"\fP. Note that mounting with \fBauto\fP
 may fail if the filesystem kernel module is not loaded yet, since \fBmount\fP(8)
 will check /proc/partitions.
 .IP ""
-The fstypes \fBcifs\fP, \fBencfs13\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP and
-\fBtruecrypt\fP are overriden by pam_mount and we call the respective helpers
+The fstypes \fBcifs\fP, \fBencfs13\fP, \fBsmbfs\fP, \fBncpfs\fP, and \fBfuse\fP
+are overriden by pam_mount and we call the respective helpers
 directly without going thorugh \fBmount\fP(8), to have access to more options
 of the helper programs. See this manpage's section "Examples" below for more
 details.
@@ -282,10 +282,6 @@ Mount helpers for dm\-crypt and LUKS volumes.
 \fB<smbmount>\fP\fIsmbmount ...\fP\fB</smbmount>\fP
 .TP
 \fB<smbumount>\fP\fIsmbumount ...\fP\fB</smbumount>\fP
-.TP
-\fB<truecryptmount>\fP\fItruecrypt ...\fP\fB</truecryptmount>\fP
-.TP
-\fB<truecryptumount>\fP\fItruecrypt \-d ...\fP\fB</truecryptumount>\fP
 .SS Messages
 .TP
 \fB<msg\-authpw>\fP\fIpam_mount password:\fP\fB</msg\-authpw>\fP

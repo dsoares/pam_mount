@@ -514,9 +514,6 @@ int do_unmount(const struct config *config, struct vol *vpt,
 		case CMD_FUSEMOUNT:
 			type = CMD_FUSEUMOUNT;
 			break;
-		case CMD_TRUECRYPTMOUNT:
-			type = CMD_TRUECRYPTUMOUNT;
-			break;
 		default:
 			type = CMD_UMOUNT;
 			break;

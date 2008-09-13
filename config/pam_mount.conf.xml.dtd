@@ -2,7 +2,7 @@
 	(debug?,mkmountpoint?,fsckloop?,luserconf?,mntoptions*,
 	path?,fsck?,losetup?,unlosetup?,cifsmount?,
 	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
-	fuseumount?,truecryptmount?,truecryptumount?,fd0ssh?,umount?,
+	fuseumount?,fd0ssh?,umount?,
 	lclmount?,cryptmount?,nfsmount?,mntcheck?,pmvarrun?,
 	volume*,msg-authpw?,msg-sessionpw?)>
 <!ELEMENT debug EMPTY>
@@ -38,8 +38,6 @@
 <!ELEMENT ncpumount (#PCDATA)>
 <!ELEMENT fusemount (#PCDATA)>
 <!ELEMENT fuseumount (#PCDATA)>
-<!ELEMENT truecryptmount (#PCDATA)>
-<!ELEMENT truecryptumount (#PCDATA)>
 <!ELEMENT fd0ssh (#PCDATA)>
 <!ELEMENT umount (#PCDATA)>
 <!ELEMENT lclmount (#PCDATA)>

@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 
 - convert_pam_mount_conf.pl: ignore unknown commands
+- remove legacy truecrypt 4.x support
 
 
 v0.48 (September 10 2008)

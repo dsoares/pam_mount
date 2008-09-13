@@ -94,13 +94,6 @@ package). -->
 
 <smbumount>smbumount %(MNTPT)</smbumount>
 
-<!-- Only for truecrypt 4.x -->
-<truecryptmount>truecrypt %(VOLUME) %(MNTPT)</truecryptmount>
-
-<truecryptumount>truecrypt -d %(MNTPT)</truecryptumount>
-
-
-
 
 <!--
 
