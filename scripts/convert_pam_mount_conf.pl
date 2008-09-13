@@ -32,7 +32,6 @@ my %callbacks = (
 	"options_allow"   => \&callback_options_allow,
 	"options_deny"    => \&callback_options_deny,
 	"options_require" => \&callback_options_require,
-	"lsof"            => \&callback_lsof,
 	"fsck"            => \&callback_fsck,
 	"losetup"         => \&callback_losetup,
 	"unlosetup"       => \&callback_unlosetup,
@@ -395,21 +394,15 @@ sub parse_conf
 			$writer->raw("\n\n");
 		} else {
 			print STDERR "-" x 40, "\n",
-			      "Unknown command: \"$fields[0]\" near ",
+			      "Ignoring unknown command: \"$fields[0]\" near ",
 			      "line $.:\n",
 			      $line, "\n",
 			      "-" x 40, "\n";
-			return 1;
 		}
 	}
-
-	return 0;
 }
 
-my $ret = parse_conf();
-
+parse_conf();
 $writer->endTag("pam_mount");
 $writer->end();
 $output->close();
-
-exit $ret;

@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- convert_pam_mount_conf.pl: ignore unknown commands
+
+
 v0.48 (September 10 2008)
 =========================
 - upgrade for libHX 1.25
