@@ -29,7 +29,7 @@ OVERVIEW
        normal  mount  utility  supports,  with extra code to make sure certain
        volumes are set up properly because often they need more  than  just  a
        mount  call,  such  as  encrypted volumes. This includes SMB/CIFS, NCP,
-       FUSE, losetup crypto, dm-crypt/cryptsetup.
+       FUSE, dm-crypt and LUKS.
 
        If you intend to use pam_mount to  protect  volumes  on  your  computer
        using  an  encrypted filesystem system, please know that there are many
@@ -45,7 +45,7 @@ NASTY DETAILS
        figuration file from /etc/pam_mount.conf.xml.  pam_mount.conf.xml  con‐
        tains many comments documenting its use.
 
-       In  addition,  you  must include two entries in the system's applicable
+       In  addition,  you  must include two entries in the system’s applicable
        /etc/pam.d/service config files, as the following example shows:
 
                   auth     required  pam_securetty.so
@@ -68,7 +68,7 @@ NASTY DETAILS
        "include" statement.
 
        If you use pam_ldap, pam_winbind, or any other authentication  services
-       that  make use of PAM's sufficient keyword, model your configuration on
+       that  make use of PAM’s sufficient keyword, model your configuration on
        the following order:
 
               ···
@@ -107,7 +107,7 @@ NASTY DETAILS
 
        If  your volume has a different password than your system account, then
        encrypt the password to the volume you wish mounted using  your  system
-       password  as  the  key  and  store  it somewhere on your system's local
+       password  as  the  key  and  store  it somewhere on your system’s local
        filesystem. pam_mount supports transparently decrypting this filesystem
        key, as long as the cipher used is supported by openssl. Given:
 
@@ -125,8 +125,8 @@ NASTY DETAILS
        pam_mount will read efsk from the local filesystem, perform fsk =  D_sk
        (efsk)  and  use fsk to mount the filesystem. If you change your system
        password, simply regenerate efsk using efsk = E_sk (fsk). If  you  want
-       to  mount  this  volume  by  hand,  use  something like `openssl enc -d
-       -aes-256-ecb -in /home/user.key | mount -p0 /home/user`. More  informa‐
+       to  mount  this  volume  by  hand,  use  something like ‘openssl enc -d
+       -aes-256-ecb -in /home/user.key | mount -p0 /home/user‘. More  informa‐
        tion about this technique is included in pam_mount.conf.xml.
 
        A  script  named  mkehd  is  provided  with  pam_mount  to  help create
@@ -163,7 +163,7 @@ NASTY DETAILS
 
        If  pam_mount  is  having  trouble unmounting volumes upon logging out,
        enable the debug variable. This causes pam_mount to run ofl  on  logout
-       and write its output to the system's log.
+       and write its output to the system’s log.
 
 AUTHORS
        W. Michael Petullo <mike@flyn.org>

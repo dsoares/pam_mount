@@ -400,23 +400,10 @@ CONFIG_CRYPTO_AES, CONFIG_CRYPTO_BLOWFISH, CONFIG_CRYPTO_TWOFISH.
 fskeypath="/etc/ehd/%(USER)" />
 .SS cryptoloop volumes
 .PP
-cryptoloop mounts require a kernel with CONFIG_BLK_DEV_CRYPTOLOOP enabled.
-Linux encrypted home directory examples, using cryptoloop:
-.PP
-<volume path="/dev/hda123" mountpoint="/home/user"
-options="loop,encryption=aes" />
-.PP
-<volume path="/home/user.img" mountpoint="/home/user"
-options="loop,user,exec,encryption=aes,keybits=256" />
-.PP
-<volume path="/home/user.img" />
-.PP
-<volume path="/home/user.img" fskeycipher="aes-256-ecb"
-fskeypath="/home/user4.key" />
-.PP
-The last two preceding examples need a line like the following in /etc/fstab:
-.PP
-/home/user4.img /home/user4 xfs user,loop,encryption=aes,keybits=256,noauto 0 0
+cryptoloop is not explicitly supported by pam_mount. Citing the Linux kernel
+config help text: "WARNING: This device [cryptoloop] is not safe for
+journal[l]ed filesystems[...]. Please use the Device Mapper [dm-crypt] module
+instead."
 .SS OpenBSD encrypted home
 OpenBSD encrypted home directory example:
 .PP

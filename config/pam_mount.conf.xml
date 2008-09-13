@@ -95,49 +95,6 @@ package). -->
 <smbumount>smbumount %(MNTPT)</smbumount>
 
 
-<!--
-
-See http://www.tldp.org/HOWTO/Loopback-Encrypted-Filesystem-HOWTO.html to
-learn how to create a encrypted loopback filesystem.
-
-If the volume's password is different than the user's login password, the
-following technique may be used (see also README):
-
-{...} are placeholders, insert the proper value there!
-
-1.  Create a file containing the volume's password (FS key). If you are
-    using pam_mount to mount an loopback encrypted volume, this password
-    should be generated with /dev/urandom.
-
-    Simple example:
-    echo {volume password} | openssl enc -aes-256-ecb >/home/user.key
-    Encrypt this file using the user's login password as the key.
-
-    Verbose loopback encrypted volume example:
-    a.  dd if=/dev/urandom of=/home/user.img bs=1M count={image size in MB}
-    b.  dd if=/dev/urandom bs=1c count={keysize/8} | \
-        openssl enc -{fs key cipher} >/home/user.key
-        Encrypt this file using the user's login password as the key.
-    c.  modprobe -q cryptoloop
-    d.  openssl enc -d -{fs key cipher} -in /home/user.key | \
-        losetup -e aes -k {keysize} -p0 /dev/loop0 /home/user.img
-    e.  mkfs -t ext2 /dev/loop0
-    f.  losetup -d /dev/loop0
-
-3.  In pam_mount.conf.xml:
-        a.  Set the fs key cipher variable to the cipher used
-            (ie: aes-256-ecb).
-        b.  Set the fs key path variable to the key's path
-            (ie: /home/user.key)
-
-4.  If a user changes his login password, regenerate the efsk that was
-    created in step 1b.  A script named passwdehd is provided to do this.
-
-If FSKEYCIPHER is empty, then the user's login password is also the
-volume's password.
--->
-
-
 		<!-- pam_mount parameters: Messages -->
 
 <msg-authpw>pam_mount password:</msg-authpw>
