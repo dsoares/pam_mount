@@ -5,7 +5,8 @@ For details, see the history as recorded in the git repository.
 v0.48 (September 10 2008)
 =========================
 - upgrade for libHX 1.25
-No further changes.
+  (this fixes a potential crash in the fskey decryption routine)
+- move more documentation from pam_mount.conf.xml into pam_mount.conf.5
 
 
 v0.47 (September 04 2008)
