@@ -136,7 +136,7 @@ bool luserconf_volume_record_sane(const struct config *config,
 	}
 
 	if (vol->type == CMD_LCLMOUNT || vol->type == CMD_CRYPTMOUNT) {
-		if (!owns(config->user, vol->volume)) {
+		if (!pmt_fileop_owns(config->user, vol->volume)) {
 			l0g("user-defined volume (%s), volume not owned "
 			    "by user\n", vol->volume);
 			return false;
@@ -145,8 +145,8 @@ bool luserconf_volume_record_sane(const struct config *config,
 		 * If it does not already exist then it is okay, pam_mount will
 		 * mkdir it (if configured to do so)
 		 */
-		if (exists(vol->mountpoint) &&
-		    !owns(config->user, vol->mountpoint)) {
+		if (pmt_fileop_exists(vol->mountpoint) &&
+		    !pmt_fileop_owns(config->user, vol->mountpoint)) {
 			l0g("user-defined volume (%s), mountpoint not owned "
 			    "by user\n", vol->volume);
 			return false;

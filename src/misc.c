@@ -103,14 +103,14 @@ int misc_warn(const char *format, ...)
 }
 
 /**
- * exists -
+ * pmt_fileop_exists -
  * @file:	file to check
  *
  * Check if a file exists (if it can be stat()'ed) and return positive
  * non-zero if that was successful. Returns 0 for error. %errno will be set
  * in case of error.
  */
-int exists(const char *file)
+int pmt_fileop_exists(const char *file)
 {
 	struct stat sb;
 	assert(file != NULL);
@@ -119,7 +119,7 @@ int exists(const char *file)
 
 
 /**
- * owns -
+ * pmt_fileop_owns -
  * @user:	user to check for
  * @file:	file to check
  *
@@ -127,7 +127,7 @@ int exists(const char *file)
  * case, otherwise zero. If an error occurred, zero is returned and %errno
  * is set. (For the success case, %errno is undefined.)
  */
-int owns(const char *user, const char *file)
+int pmt_fileop_owns(const char *user, const char *file)
 {
 	struct stat filestat;
 	struct passwd *userinfo;

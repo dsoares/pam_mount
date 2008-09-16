@@ -395,7 +395,7 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 	strncpy(dcopy, d, sizeof_z(dcopy));
 	dcopy[sizeof_z(dcopy)] = '\0';
 	parent = HX_dirname(dcopy);
-	if (!exists(parent) && mkmountpoint(volume, parent) == 0) {
+	if (!pmt_fileop_exists(parent) && mkmountpoint(volume, parent) == 0) {
 		ret = false;
 		goto out;
 	}
@@ -801,7 +801,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		     "skipping\n", vpt->volume, vpt->mountpoint);
 		return 1;
 	}
-	if (!exists(vpt->mountpoint)) {
+	if (!pmt_fileop_exists(vpt->mountpoint)) {
 		if (config->mkmntpoint) {
 			if (!mkmountpoint(vpt, vpt->mountpoint))
 				return 0;

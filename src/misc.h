@@ -31,7 +31,6 @@ extern void arglist_add(struct HXdeque *, const char *,
 extern struct HXdeque *arglist_build(const struct HXdeque *,
 	const struct HXbtree *);
 extern void arglist_log(const struct HXdeque *);
-extern int exists(const char *);
 extern bool kvplist_contains(const struct HXclist_head *, const char *);
 extern char *kvplist_get(const struct HXclist_head *, const char *);
 extern void kvplist_genocide(struct HXclist_head *);
@@ -40,7 +39,8 @@ extern void misc_add_ntdom(struct HXbtree *, const char *);
 extern void misc_dump_id(const char *);
 extern int misc_log(const char *, ...);
 extern int misc_warn(const char *, ...);
-extern int owns(const char *, const char *);
+extern int pmt_fileop_exists(const char *);
+extern int pmt_fileop_owns(const char *, const char *);
 extern char *relookup_user(const char *);
 extern void set_myuid(const char *);
 extern long str_to_long(const char *);
