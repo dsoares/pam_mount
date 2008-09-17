@@ -37,7 +37,7 @@ The module also supports mounting local filesystems of any kind the
 normal mount utility supports, with extra code to make sure certain
 volumes are set up properly because often they need more than just a
 mount call, such as encrypted volumes. This includes SMB/CIFS, NCP,
-FUSE, losetup crypto, dm-crypt/cryptsetup.
+FUSE, dm-crypt and LUKS.
 
 %if "%_vendor" != "redhat"
 %debug_package
@@ -93,9 +93,7 @@ fi;
 %_sbindir/pmvarrun
 %_bindir/*
 %_sbindir/*
-/sbin/mount.crypt
-/sbin/mount.encfs13
-/sbin/umount.crypt
+/sbin/*
 %_mandir/*/*
 %doc doc/*.txt
 %if 0%{?_with_selinux:1}
