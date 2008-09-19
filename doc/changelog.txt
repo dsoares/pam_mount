@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 
 - convert_pam_mount_conf.pl: ignore unknown commands
+- fix leftover assertion in crypto.c
 - remove legacy truecrypt 4.x support
 - deprecate cryptoloop (unsafe for journalled fs)
 

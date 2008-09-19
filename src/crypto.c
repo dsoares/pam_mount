@@ -209,8 +209,6 @@ int decrypted_key(hxmc_t **pt_fs_key, const char *fs_key_path,
 	}
 
 	ERR_free_strings();
-	/* pt_fs_key_len is unsigned */
-	assert(ret == 0);
 	return ret;
 }
 
