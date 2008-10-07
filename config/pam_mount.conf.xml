@@ -2,14 +2,6 @@
 <!DOCTYPE pam_mount SYSTEM "pam_mount.conf.xml.dtd">
 <!--
 	See pam_mount.conf(5) for a description.
-
-	pam_mount internally has a hardcoded set of options, so you
-	can clear this file between <pam_mount> and </pam_mount>.
-
-	The tags you find below equal to the hardcoded options,
-	for your initial configuration convenience.
-	If you change or remove them, please remove this paragraph
-	to not mislead yourself ;-)
 -->
 
 <pam_mount>
@@ -40,54 +32,5 @@
 
 <mkmountpoint enable="1" remove="true" />
 
-
-		<!-- pam_mount parameters: Auxiliary programs -->
-
-<fd0ssh>pmt-fd0ssh</fd0ssh>
-
-<fsck>fsck -p %(FSCKTARGET)</fsck>
-
-<pmvarrun>pmvarrun -u %(USER) -o %(OPERATION)</pmvarrun>
-
-
-		<!-- pam_mount parameters: Mount programs -->
-
-<lclmount>mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
-	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</lclmount>
-
-<umount>umount %(MNTPT)</umount>
-
-<cifsmount>mount -t cifs //%(SERVER)/%(VOLUME) %(MNTPT) -o
-    "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</cifsmount>
-
-<cryptmount>mount.crypt "%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)
-	%(VOLUME) %(MNTPT)</cryptmount>
-
-<cryptumount>umount.crypt %(MNTPT)</cryptumount>
-
-<fusemount>mount.fuse %(VOLUME) %(MNTPT)
-	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</fusemount>
-
-<fuseumount>fusermount -u %(MNTPT)</fuseumount>
-
-<ncpmount>ncpmount %(SERVER)/%(USER) %(MNTPT) -o
-    "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)"</ncpmount>
-
-<ncpumount>ncpumount %(MNTPT)</ncpumount>
-
-<nfsmount>mount %(SERVER):%(VOLUME) %(MNTPT)
-	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</nfsmount>
-
-<smbmount>smbmount //%(SERVER)/%(VOLUME) %(MNTPT) -o
-    "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</smbmount>
-
-<smbumount>smbumount %(MNTPT)</smbumount>
-
-
-		<!-- pam_mount parameters: Messages -->
-
-<msg-authpw>pam_mount password:</msg-authpw>
-
-<msg-sessionpw>reenter password for pam_mount:</msg-sessionpw>
 
 </pam_mount>
