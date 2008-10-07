@@ -44,7 +44,6 @@ my %callbacks = (
 	"lclmount"        => \&callback_lclmount,
 	"cryptmount"      => \&callback_cryptmount,
 	"nfsmount"        => \&callback_nfsmount,
-	"mntagain"        => \&callback_mntagain,
 	"pmvarrun"        => \&callback_pmvarrun,
 	"volume"          => \&callback_volume,
 );
@@ -245,11 +244,6 @@ sub callback_nfsmount
 	$writer->startTag("nfsmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("nfsmount");
-}
-
-sub callback_mntagain
-{
-	# not translated - removed in pam_mount 0.32
 }
 
 sub callback_pmvarrun

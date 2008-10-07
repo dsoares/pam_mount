@@ -7,6 +7,7 @@ For details, see the history as recorded in the git repository.
 - remove legacy truecrypt 4.x support
 - deprecate cryptoloop (unsafe for journalled fs)
 - remove BSD mntcheck code
+- remove BSD mntagain leftovers
 
 
 v0.48 (September 10 2008)
