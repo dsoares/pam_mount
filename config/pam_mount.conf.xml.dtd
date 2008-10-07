@@ -3,7 +3,7 @@
 	path?,fsck?,losetup?,unlosetup?,cifsmount?,
 	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
 	fuseumount?,fd0ssh?,umount?,
-	lclmount?,cryptmount?,nfsmount?,mntcheck?,pmvarrun?,
+	lclmount?,cryptmount?,nfsmount?,pmvarrun?,
 	volume*,msg-authpw?,msg-sessionpw?)>
 <!ELEMENT debug EMPTY>
 <!ATTLIST debug
@@ -43,7 +43,6 @@
 <!ELEMENT lclmount (#PCDATA)>
 <!ELEMENT cryptmount (#PCDATA)>
 <!ELEMENT nfsmount (#PCDATA)>
-<!ELEMENT mntcheck (#PCDATA)>
 <!ELEMENT pmvarrun (#PCDATA)>
 <!ELEMENT volume (and|or|xor|not|user|uid|gid|pgrp|sgrp)>
 <!ELEMENT and ((and|or|xor|not|user|uid|gid|pgrp|sgrp)*)>

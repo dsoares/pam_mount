@@ -48,9 +48,6 @@
 
 <fsck>fsck -p %(FSCKTARGET)</fsck>
 
-<!-- mntcheck utility for BSDs which lack /etc/mtab -->
-<mntcheck>mount</mntcheck>
-
 <pmvarrun>pmvarrun -u %(USER) -o %(OPERATION)</pmvarrun>
 
 

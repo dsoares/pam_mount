@@ -53,10 +53,6 @@ static int pipewrite(int, const void *, size_t);
 static void run_ofl(const struct config * const, struct HXbtree *);
 static hxmc_t *vol_to_dev(const struct vol *);
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-static int split_bsd_mount(char *, const char **, const char **, const char **);
-#endif
-
 //-----------------------------------------------------------------------------
 /**
  * log_output
@@ -205,48 +201,28 @@ static int already_mounted(const struct config *const config,
 		return -1;
 	}
 
-	/*
-	 * WONTFIX: I am not overly fond of using mount, but BSD has no
-	 * /etc/mtab?
-	 */
-	if (config->command[CMD_MNTCHECK][0] == NULL) {
-		l0g("mntcheck not defined in pam_mount.conf.xml\n");
-		HXmc_free(dev);
-		return -1;
-	}
-
-	argv = arglist_build(config->command[CMD_MNTCHECK}, vinfo);
-	if (!spawn_start(argv, &pid, NULL, &cstdout, NULL, NULL, NULL)) {
-		HXmc_free(dev);
-		return -1;
-	}
-
-	fp = fdopen(cstdout, "r");
-	while (fgets(mte, sizeof(mte), fp) != NULL) {
+	//getmntinfo() or getfsstat()
+	while (...) {
+		struct statfs *sb;
 		/* FIXME: Test it. */
 		int (*xcmp)(const char *, const char *);
-		const char *fsname, *fstype, *fspt;
-
-		w4rn("mounted filesystem: %s", mte); /* @mte includes '\n' */
-		if (!split_bsd_mount(mte, &fsname, &fspt, &fstype)) {
-			mounted = -1;
-			break;
-		}
 
 		/* 
 		 * Use case-insensitive for SMB, etc. FIXME: Is it called
 		 * "smbfs" under BSD too?
 		 */
-		xcmp = (fstype != NULL && (strcmp(fstype, "smbfs") == 0 ||
-		       strcmp(fstype, "cifs") == 0 ||
-		       strcmp(fstype, "ncpfs") == 0)) ? strcasecmp : strcmp;
+		xcmp = (sb->f_fstypename != NULL &&
+		       (strcmp(sb->f_fstypename, "smbfs") == 0 ||
+		       strcmp(sb->f_fstypename, "cifs") == 0 ||
+		       strcmp(sb->f_fstypename, "ncpfs") == 0)) ?
+		       strcasecmp : strcmp;
 
 		/*
 		 * FIXME: Does BSD also turn "symlink mountpoints" into "real
 		 * mountpoints"?
 		 */
-		if (xcmp(fsname, dev) == 0 &&
-		    strcmp(fspt, vpt->mountpoint) == 0) {
+		if (xcmp(sb->f_mntfromname, dev) == 0 &&
+		    strcmp(sb->f_mntonname, vpt->mountpoint) == 0) {
 			mounted = 1;
 			break;
 		}
@@ -319,41 +295,6 @@ static hxmc_t *vol_to_dev(const struct vol *vol)
 
 	return ret;
 }
-
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
-    const char **fstype)
-{
-	/*
-	 * mntcheck is currently defined as "/bin/mount" in pam_mount.conf.xml
-	 * so a line that we read is going to look like
-	 * "/dev/ad0s1 on / (ufs, local)".
-	 */
-
-	*fsname = wp;
-	if ((wp = strchr(wp, ' ')) == NULL) /* parse error */
-		return 0;
-
-	/* @wp now at " on ..." */
-	*wp++ = '\0';
-	if ((wp = strchr(wp, ' ')) == NULL)
-		return 0;
-
-	/* wp now at " fspt" */
-	*fspt = ++wp;
-	if ((wp = strchr(wp, ' ')) == NULL)
-		return 0;
-
-	/* wp now at " (fstype, local?, options)" */
-	*wp++ = '\0';
-	*fstype = ++wp;
-	while (isalnum(*wp))
-		++wp;
-	*wp = '\0';
-
-	return 1;
-}
-#endif
 
 static void log_pm_input(const struct config *const config,
     const struct vol *vpt)
