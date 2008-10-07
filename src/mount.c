@@ -46,7 +46,6 @@
 
 /* Functions */
 static int already_mounted(const struct config * const, const struct vol *, struct HXbtree *);
-static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
@@ -518,95 +517,8 @@ static int pipewrite(int fd, const void *buf, size_t count)
 	return fnval;
 }
 
-static int do_losetup(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, hxmc_t *password)
-{
-/* PRE:    config points to a valid struct config
- *         config->volume[vol] is a valid struct vol
- *         config->volume[vol].options is valid
- * POST:   volume has associated with a loopback device
- * FN VAL: if error 0 else 1, errors are logged
- */
-	struct HXdeque *argv;
-	pid_t pid;
-	int ret = 1, child_exit, cstdin = -1, cstderr = -1;
-	const char *cipher, *keybits;
-
-	assert(vinfo != NULL);
-	assert(password != NULL);
-
-	cipher  = kvplist_get(&vpt->options, "encryption");
-	keybits = kvplist_get(&vpt->options, "keybits");
-
-	if (config->command[CMD_LOSETUP]->items == 0) {
-		l0g("losetup not defined in pam_mount.conf.xml\n");
-		return 0;
-	}
-	/* FIXME: support OpenBSD */
-	/* FIXME: NEW */
-	if (cipher != NULL) {
-		format_add(vinfo, "CIPHER", cipher);
-		if (keybits != NULL)
-			format_add(vinfo, "KEYBITS", keybits);
-	}
-
-	argv = arglist_build(config->command[CMD_LOSETUP], vinfo);
-	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr, set_myuid, NULL))
-		return 0;
-
-	/* note to self: password is decrypted */
-	if (pipewrite(cstdin, password, HXmc_length(password)) !=
-	    HXmc_length(password)) {
-		l0g("error sending password to losetup\n");
-		ret = 0;
-	}
-	close(cstdin);
-	log_output(cstderr, "losetup errors:\n");
-	w4rn("waiting for losetup\n");
-	if (waitpid(pid, &child_exit, 0) < 0) {
-		l0g("error waiting for child: %s\n", strerror(errno));
-		ret = 0;
-	} else if (ret > 0) {
-		/* pass on through the result from the losetup process */
-		ret = !WEXITSTATUS(child_exit);
-	}
-	spawn_restore_sigchld();
-	return ret;
-}
-
-static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
-{
-/* PRE:    config points to a valid struct config
- * POST:   volume has associated with a loopback device
- * FN VAL: if error 0 else 1, errors are logged
- */
-	struct HXdeque *argv;
-	pid_t pid;
-	int child_exit;
-
-	assert(vinfo != NULL);
-
-	if (config->command[CMD_UNLOSETUP]->first == 0) {
-		l0g("unlosetup not defined in pam_mount.conf.xml\n");
-		return 0;
-	}
-	/* FIXME: support OpenBSD */
-	/* FIXME: NEW */
-
-	argv = arglist_build(config->command[CMD_UNLOSETUP], vinfo);
-	if (!spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
-		return 0;
-
-	w4rn("waiting for losetup delete\n");
-	if (waitpid(pid, &child_exit, 0) < 0)
-		l0g("error waiting for child: %s\n", strerror(errno));
-	spawn_restore_sigchld();
-	/* pass on through the result */
-	return !WEXITSTATUS(child_exit);
-}
-
 static int check_filesystem(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, hxmc_t *password)
+    struct HXbtree *vinfo)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -620,7 +532,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	struct HXdeque *argv;
 
 	assert(vinfo != NULL);
-	assert(password != NULL);
 
 	if (vpt->type == CMD_CRYPTMOUNT)
 		/*
@@ -643,15 +554,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	    fstype_nodev(vpt->fstype) != 0)
 		return 1;
 
-	if (kvplist_contains(&vpt->options, "loop")) {
-		if (!do_losetup(config, vpt, vinfo, password))
-			return 0;
-		fsck_target = config->fsckloop;
-	} else {
-		hxmc_t *options = kvplist_to_str(&vpt->options);
-		w4rn("volume not a loopback (options: %s)\n", options);
-		HXmc_free(options);
-	}
 	format_add(vinfo, "FSCKTARGET", fsck_target);
 
 	argv = arglist_build(config->command[CMD_FSCK], vinfo);
@@ -665,9 +567,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	if (kvplist_contains(&vpt->options, "loop"))
-		if (!do_unlosetup(config, vinfo))
-			return 0;
 	/*
 	 * pass on through the result -- okay if 0 (no errors) or 1 (errors
 	 * corrected)
@@ -794,7 +693,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		arglist_add(argv, n->ptr, vinfo);
 
 	if (vpt->type == CMD_LCLMOUNT &&
-	    !check_filesystem(config, vpt, vinfo, ll_password))
+	    !check_filesystem(config, vpt, vinfo))
 		l0g("error checking filesystem but will continue\n");
 	/* send password down pipe to mount process */
 	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
@@ -856,7 +755,6 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	if ((vinfo = HXformat_init()) == NULL)
 		return 0;
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
-	format_add(vinfo, "FSCKLOOP", config->fsckloop);
 	format_add(vinfo, "FSTYPE",   vpt->fstype);
 	format_add(vinfo, "VOLUME",   vpt->volume);
 	format_add(vinfo, "SERVER",   vpt->server);

@@ -204,9 +204,6 @@ distributions, and so, pam_mount provides its own set of sane defaults which
 you may change at will.
 .SS Volume\-related
 .TP
-\fB<fsckloop device="\fP\fI/dev/loop7\fP\fB" />\fP
-Specify the device used when checking loopback mounts. (This seems unused.)
-.TP
 \fB<mkmountpoint enable="1" remove="true" />\fP
 Controls automatic creation and removal of mountpoints. If a mountpoint does
 not exist when the volume is about to be mounted, pam_mount can be instructed
@@ -253,10 +250,6 @@ open). Also, unmount on SMB volumes needs to be called on %(MNTPT) and not
 .PP
 Commands for various mount programs. Not all have a dedicated umount
 helper because some do not need one.
-.TP
-\fB<losetup>\fP\fIlosetup ...\fP\fB</losetup>\fP
-.TP
-\fB<unlosetup>\fP\fIlosetup \-d ...\fP\fB</unlosetup>\fP
 .TP
 \fB<cifsmount>\fP\fImount.cifs ...\fP\fB</cifsmount>\fP
 .TP

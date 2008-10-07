@@ -29,8 +29,6 @@ conf/pam_mount.conf?  How does hashing/not hashing effect scripts?
 
 o ensure '\0'-termination is guarenteed everytime strlen is used.
 
-o If losetup does not regain -k option, modify scripts.
-
 o Get rid of FIXMEs.
 
 = OpenBSD =====================================================================

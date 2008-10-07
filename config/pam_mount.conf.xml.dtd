@@ -1,6 +1,6 @@
 <!ELEMENT pam-mount
-	(debug?,mkmountpoint?,fsckloop?,luserconf?,mntoptions*,
-	path?,fsck?,losetup?,unlosetup?,cifsmount?,
+	(debug?,mkmountpoint?,luserconf?,mntoptions*,
+	path?,fsck?,cifsmount?,
 	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
 	fuseumount?,fd0ssh?,umount?,
 	lclmount?,cryptmount?,nfsmount?,pmvarrun?,
@@ -13,7 +13,6 @@
 	enable CDATA #IMPLIED
 	remove CDATA #IMPLIED
 >
-<!ELEMENT fsckloop EMPTY>
 <!ATTLIST fsckloop
 	device CDATA #IMPLIED
 >
@@ -29,8 +28,6 @@
 >
 <!ELEMENT path (#PCDATA)>
 <!ELEMENT fsck (#PCDATA)>
-<!ELEMENT losetup (#PCDATA)>
-<!ELEMENT unlosetup (#PCDATA)>
 <!ELEMENT cifsmount (#PCDATA)>
 <!ELEMENT smbmount (#PCDATA)>
 <!ELEMENT smbumount (#PCDATA)>

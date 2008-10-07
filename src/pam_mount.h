@@ -48,8 +48,6 @@ enum command_type {
 	CMD_UMOUNT,
 	CMD_PMHELPER,
 	CMD_FSCK,
-	CMD_LOSETUP,
-	CMD_UNLOSETUP,
 	CMD_PMVARRUN,
 	CMD_FD0SSH,
 	_CMD_MAX,
@@ -87,7 +85,6 @@ struct config {
 	unsigned int debug;
 	bool mkmntpoint, rmdir_mntpt;
 	hxmc_t *luserconf;
-	char *fsckloop;
 	struct HXdeque *command[_CMD_MAX];
 	struct HXbtree *options_require, *options_allow, *options_deny;
 	struct HXclist_head volume_list;

@@ -38,7 +38,6 @@
 
 		<!-- pam_mount parameters: Volume-related -->
 
-<fsckloop device="/dev/loop7" />
 <mkmountpoint enable="1" remove="true" />
 
 
@@ -57,11 +56,6 @@
 	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</lclmount>
 
 <umount>umount %(MNTPT)</umount>
-
-<losetup>losetup -p0 "%(before=\"-e\" CIPHER)"
-	"%(ifnempty=\"-k\" KEYBITS)" %(KEYBITS) %(FSCKLOOP) %(VOLUME)</losetup>
-
-<unlosetup>losetup -d %(FSCKLOOP)</unlosetup>
 
 <cifsmount>mount -t cifs //%(SERVER)/%(VOLUME) %(MNTPT) -o
     "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)"</cifsmount>
