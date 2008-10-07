@@ -53,8 +53,6 @@
 
 		<!-- pam_mount parameters: Mount programs -->
 
-<!-- On OpenBSD try "/usr/local/bin/mount_ehd" (included in pam_mount
-package). -->
 <lclmount>mount -p0 -t %(FSTYPE) %(VOLUME) %(MNTPT)
 	"%(ifnempty=\"-o\" OPTIONS)" %(OPTIONS)</lclmount>
 
