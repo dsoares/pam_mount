@@ -6,6 +6,7 @@ For details, see the history as recorded in the git repository.
 - fix leftover assertion in crypto.c
 - remove legacy truecrypt 4.x support
 - deprecate cryptoloop (unsafe for journalled fs)
+- revert "mount.crypt: default to aes-cbc-essiv:sha256/sha512"
 
 
 v0.48 (September 10 2008)
