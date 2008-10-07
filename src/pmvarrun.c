@@ -35,8 +35,6 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include "pam_mount.h"
 
 /* Definitions */
-#undef PMPREFIX
-#define PMPREFIX        "pmvarrun(%s:%u): "
 #define ASCIIZ_LLX      sizeof("0xFFFFFFFF""FFFFFFFF")
 #define VAR_RUN         "/var/run"
 #define VAR_RUN_PMT     VAR_RUN "/pam_mount"
@@ -217,6 +215,10 @@ int main(int argc, const char **argv)
 
 	set_defaults(&settings);
 	parse_args(argc, argv, &settings);
+
+	/* pmt will pick stderr up */
+	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
+	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 
 	if (strlen(settings.user) == 0)
 		usage(EXIT_FAILURE, NULL);

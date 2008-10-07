@@ -205,6 +205,12 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	char buf[8];
 	int ret;
 
+	pmtlog_prefix = "pam_mount";
+	pmtlog_path[PMTLOG_ERR][PMTLOG_SYSLOG] = true;
+	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = Debug;
+	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;
+	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+
 	initconfig(&Config);
 	parse_pam_args(argc, argv);
 	/*
@@ -227,6 +233,11 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	Config.user = relookup_user(pam_user);
 	if (!readconfig(CONFIGFILE, true, &Config))
 		return PAM_SERVICE_ERR;
+
+	/* reinitialize after @Debug may have changed */
+	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = Debug;
+	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;
 
 	snprintf(buf, sizeof(buf), "%u", Debug);
 	setenv("_PMT_DEBUG_LEVEL", buf, true);

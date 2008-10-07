@@ -18,14 +18,30 @@ struct vol;
  *	MISC.C
  */
 /* Note that you will also need to change PMPREFIX in pmvarrun.c then! */
-#define PMPREFIX       "pam_mount(%s:%u) "
 #define l0g(fmt, ...) \
-	misc_log((PMPREFIX fmt), HX_basename(__FILE__), \
+	misc_log(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 #define w4rn(fmt, ...) \
-	misc_warn((PMPREFIX fmt), HX_basename(__FILE__), \
+	misc_warn(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 
+enum {
+	/* src */
+	PMTLOG_ERR = 0,
+	PMTLOG_DBG,
+	PMTLOG_SRCMAX,
+
+	/* dst */
+	PMTLOG_SYSLOG = 0,
+	PMTLOG_STDERR,
+	PMTLOG_DSTMAX,
+};
+
+/* Variables */
+extern const char *pmtlog_prefix;
+extern bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
+
+/* Functions */
 extern void arglist_add(struct HXdeque *, const char *,
 	const struct HXbtree *);
 extern struct HXdeque *arglist_build(const struct HXdeque *,
