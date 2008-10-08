@@ -551,14 +551,18 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 
 static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 {
+	hxmc_t *password;
+
 	if (!ehd_get_options(&argc, &argv, pg))
 		return false;
 	if (!ehd_check(pg))
 		return false;
 	if (!ehd_create_container(pg))
 		return false;
-	if (!ehd_init_volume(pg, "testpassword1234"))
+	password = pmt_get_password();
+	if (!ehd_init_volume(pg, password != NULL ? password : ""))
 		return false;
+	HXmc_free(password);
 	return true;
 }
 

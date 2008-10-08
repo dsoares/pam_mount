@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX/string.h>
@@ -362,7 +363,6 @@ static unsigned int __cipher_digest_security(const char *s)
 		"ecb",
 		"rc2", "rc4", "des", "des3",
 		"md2", "md4",
-		NULL,
 	};
 	unsigned int i;
 
@@ -395,5 +395,67 @@ unsigned int cipher_digest_security(const char *s)
 			break;
 
 	free(base);
+	return ret;
+}
+
+static struct {
+	struct sigaction oldact;
+	bool echo;
+	int fd;
+} pmt_pwq_restore;
+
+static void pmt_password_stop(int s)
+{
+	struct termios ti;
+
+	if (!pmt_pwq_restore.echo)
+		return;
+	if (tcgetattr(pmt_pwq_restore.fd, &ti) == 0) {
+		ti.c_lflag |= ECHO;
+		tcsetattr(pmt_pwq_restore.fd, TCSANOW, &ti);
+	}
+	sigaction(s, &pmt_pwq_restore.oldact, NULL);
+	if (s != 0)
+		kill(0, s);
+}
+
+static hxmc_t *__pmt_get_password(FILE *fp)
+{
+	hxmc_t *ret = NULL;
+	memset(&pmt_pwq_restore, 0, sizeof(pmt_pwq_restore));
+	pmt_pwq_restore.fd = fileno(fp);
+
+	if (isatty(fileno(fp))) {
+		struct sigaction sa;
+		struct termios ti;
+
+		if (tcgetattr(fileno(fp), &ti) == 0) {
+			pmt_pwq_restore.echo = ti.c_lflag & ECHO;
+			if (pmt_pwq_restore.echo) {
+				sigemptyset(&sa.sa_mask);
+				sa.sa_handler = pmt_password_stop;
+				sa.sa_flags   = SA_RESETHAND;
+				sigaction(SIGINT, &sa, NULL);
+				ti.c_lflag &= ~ECHO;
+				tcsetattr(fileno(fp), TCSANOW, &ti);
+			}
+		}
+	}
+
+	HX_getl(&ret, fp);
+	if (ret != NULL)
+		HX_chomp(ret);
+	pmt_password_stop(0);
+	return ret;
+}
+
+hxmc_t *pmt_get_password(void)
+{
+	hxmc_t *ret;
+
+	printf("Password: ");
+	fflush(stdout);
+	ret = __pmt_get_password(stdin);
+	printf("\n");
 	return ret;
 }
