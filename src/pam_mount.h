@@ -22,6 +22,12 @@
 #endif
 #define sizeof_z(x) (sizeof(x) - 1)
 
+/*
+ * So many programs trash a useful $PATH (including mount(8)),
+ * so just provide our own.
+ */
+#define PMT_DFL_PATH \
+	"/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 #define PMT_DFL_DMCRYPT_CIPHER "aes-cbc-essiv:sha256"
 #define PMT_DFL_FSK_CIPHER     "aes-256-cbc"
 #define PMT_DFL_FSK_HASH       "md5"

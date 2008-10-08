@@ -307,8 +307,7 @@ void initconfig(struct config *config)
 	config->msg_authpw    = xstrdup("pam_mount password:");
 	config->msg_sessionpw = xstrdup("reenter password for pam_mount:");
 
-	config->path = xstrdup("/sbin:/bin:/usr/sbin:/usr/bin:"
-	               "/usr/local/sbin:/usr/local/bin");
+	config->path = xstrdup(PMT_DFL_PATH);
 
 	/* Initialize all. Makes it easier. */
 	for (i = 0; i < _CMD_MAX; ++i)

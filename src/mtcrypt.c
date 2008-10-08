@@ -435,6 +435,7 @@ int main(int argc, const char **argv)
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_prefix = HX_basename(*argv);
 
+	setenv("PATH", PMT_DFL_PATH, true);
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 

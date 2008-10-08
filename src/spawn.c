@@ -131,7 +131,7 @@ static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 			dup2(pipes[2][1], STDERR_FILENO);
 		spawn_close_pipes(pipes);
 		execvp(*argv, const_cast(char * const *, argv));
-		l0g("execvp: %s\n", strerror(errno));
+		l0g("execvp: %s: %s\n", *argv, strerror(errno));
 		_exit(-1);
 	}
 	
