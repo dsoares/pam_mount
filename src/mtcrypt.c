@@ -41,6 +41,7 @@ struct mount_options {
 	const char *dmcrypt_cipher, *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
+	int dm_timeout;
 	bool blkdev;
 };
 
@@ -119,7 +120,7 @@ static void mtcr_parse_suboptions(struct mount_options *mo, char *copt)
 		else if (strcmp(key, "fsk_hash") == 0)
 			mo->fsk_hash = value;
 		else if (strcmp(key, "dm-timeout") == 0)
-			/* not handled atm */;
+			mo->dm_timeout = strtoul(value, NULL, 0);
 		else if (strcmp(key, "fstype") == 0)
 			mo->fstype = value;
 		else if (strcmp(key, "keyfile") == 0)
@@ -232,6 +233,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 static int mtcr_mount(struct mount_options *opt)
 {
 	const char *mount_args[7];
+	struct stat sb;
 	int ret, argk = 0;
 	FILE *fp;
 	hxmc_t *cd, *key;
@@ -250,6 +252,10 @@ static int mtcr_mount(struct mount_options *opt)
 		fprintf(stderr, "No crypto device assigned\n");
 		return 0;
 	}
+
+	opt->dm_timeout *= 3;
+	while (stat(cd, &sb) < 0 && errno == ENOENT && opt->dm_timeout-- > 0)
+		usleep(333333);
 
 	mount_args[argk++] = "mount";
 	mount_args[argk++] = "-n";
