@@ -183,7 +183,7 @@ int decrypted_key(hxmc_t **pt_fs_key, const char *fs_key_path,
 	}
 	pt_fs_key_len = segment_len;
 	if (EVP_DecryptFinal_ex(&ctx, signed_cast(unsigned char *,
-	    &pt_fs_key[segment_len]), &segment_len) == 0) {
+	    &((*pt_fs_key)[segment_len])), &segment_len) == 0) {
 		sslerror("bad pad on end of encrypted file (wrong algorithm "
 		         "or key size?)");
 		ret = 0;
