@@ -385,8 +385,9 @@ Crypt mounts require a kernel with CONFIG_BLK_DEV_DM and CONFIG_DM_CRYPT
 enabled, as well as all the ciphers that are going to be used, e.g.
 CONFIG_CRYPTO_AES, CONFIG_CRYPTO_BLOWFISH, CONFIG_CRYPTO_TWOFISH.
 .PP
-<volume path="/home/%(USER).img" mountpoint="~" options="cipher-fskeycipher="aes\-256\-cbc"
-fskeypath="/etc/ehd/%(USER)" />
+<volume path="/home/%(USER).img" mountpoint="~"
+options="cipher=aes\-cbc\-essiv:sha256" fskeycipher="aes\-256\-cbc"
+fskeypath="/home/%(USER).key" />
 .SS cryptoloop volumes
 .PP
 cryptoloop is not explicitly supported by pam_mount. Citing the Linux kernel

@@ -1,19 +1,19 @@
-.TH pam_mount 8
-.SH NAME
+.TH pam_mount 8 2008\-10\-08
+.SH Name
 .PP
 pam_mount - A PAM module that can mount volumes for a user session
-.SH OVERVIEW
+.SH Overview
 .PP
 This module is aimed at environments with central file servers that a user
-wishes to mount on login and unmount on logout, such as (semi-)diskless
+wishes to mount on login and unmount on logout, such as (semi\-)diskless
 stations where many users can logon and where statically mounting the entire
 /home from a server is a security risk, or listing all possible volumes in
 /etc/fstab is not feasible.
 .IP "\(bu" 4
 Users can define their own list of volumes without having to change
-(possibly non-writable) global config files.
+(possibly non\-writable) global config files.
 .IP "\(bu" 4
-Single sign-on feature - the user needs to type the password just once
+Single sign\-on feature - the user needs to type the password just once
 (at login)
 .IP "\(bu" 4
 Transparent mount process
@@ -26,7 +26,7 @@ not leaving data exposed.
 The module also supports mounting local filesystems of any kind the normal
 mount utility supports, with extra code to make sure certain volumes are set up
 properly because often they need more than just a mount call, such as encrypted
-volumes. This includes SMB/CIFS, FUSE, dm-crypt and LUKS.
+volumes. This includes SMB/CIFS, FUSE, dm\-crypt and LUKS.
 .PP
 If you intend to use pam_mount to protect volumes on your computer using an
 encrypted filesystem system, please know that there are many other issues you
@@ -34,7 +34,7 @@ need to consider in order to protect your data. For example, you probably want
 to disable or encrypt your swap partition (the cryptoswap can help you do
 this). Do not assume a system is secure without carefully considering potential
 threats.
-.SH NASTY DETAILS
+.SH Configuration
 .PP
 The primary configuration file for the pam_mount module is pam_mount.conf.xml.
 On most platforms this file is read from /etc/security/pam_mount.conf.xml. On
@@ -104,36 +104,6 @@ It may seem odd, but the first three lines will make it so that at least one of
 pam_unix2 or pam_ldap has to succeed. As you can see, pam_mount will be run
 \fBafter\fR successful authentification with these subsystems.
 .PP
-If your volume has a different password than your system account, then encrypt
-the password to the volume you wish mounted using your system password as the
-key and store it somewhere on your system's local filesystem. pam_mount
-supports transparently decrypting this filesystem key, as long as the cipher
-used is supported by openssl. Given:
-.TP
-\fIsk\fP
-system key, the key or password used to log into the system
-.TP
-\fIfsk\fP
-filesystem key, the key that allows you to use the filesystem you wish pam_mount to mount for you
-.TP
-\fIE and D\fP
-an openssl supported synchronous encryption/decryption algorithm
-.TP
-\fIefsk\fP
-encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on the local filesystem (ie: /home/user.key)
-.PP
-pam_mount will read efsk from the local filesystem, perform fsk = D_sk (efsk)
-and use fsk to mount the filesystem. If you change your system password, simply
-regenerate efsk using efsk = E_sk (fsk). If you want to mount this volume by
-hand, use something like `openssl enc \-d \-aes\-256\-ecb \-in /home/user.key |
-mount \-p0 /home/user`. More information about this technique is included in
-pam_mount.conf.xml.
-.PP
-A script named mkehd is provided with pam_mount to help create encrypted home
-directories. If you have an entry for a user using encrypted home directories
-in pam_mount.conf.xml, mkehd will create necessary filesystem images and
-possibly encrypted filesystem keys.
-.PP
 Individual users may define additional volumes to mount if allowed by
 pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume keyword is the
 only valid keyword in these per\-user configuration files. If the luserconf
@@ -142,10 +112,20 @@ users may mount and unmount any volume they own at any mount point they own. On
 some filesystem configurations this may be a security flaw so user\-defined
 volumes are not allowed by the example pam_mount.conf.xml distributed with
 pam_mount.
+.SH Encrypted Disks
 .PP
-In general, you will leave all the first (general) parameters as provided by
-default. You only have to provide the user/volume list in the end of the file,
-following the examples.
+There are various ways to store data encrypted. encfs, dm\-crypt and
+dm\-crypt+LUKS. If you only ever need a single password for accessing the
+encrypted volume, the first two will do. encfs directories are created using
+the encfs(1) program. dm\-crypt volumes can be easily created using
+pmt\-ehd(8). See pam_mount.conf(5) how the configuration file definitions look
+for these volume types.
+.PP
+pmt\-ehd creates an fskey which is a bunch of random bytes that will be used to
+decrypt the volume. The binary fskey data itself is encrypted with your own
+password - this is done so that you can change the password without having to
+reencrypt all of your data.
+.SH Troubleshooting
 .PP
 To ensure that your system and, possibly, the remote server are all properly
 configured, you should try to mount all or some of the volumes by hand, using
@@ -164,7 +144,7 @@ the user does not own that directory.
 If pam_mount is having trouble unmounting volumes upon logging out, enable the
 debug variable. This causes pam_mount to run ofl on logout and write its output
 to the system's log.
-.SH AUTHORS
+.SH Authors
 .PP
 W. Michael Petullo <mike@flyn.org>
 .PP
