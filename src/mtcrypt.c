@@ -118,10 +118,20 @@ static void mtcr_parse_suboptions(struct mount_options *mo, char *copt)
 			mo->fsk_cipher = value;
 		else if (strcmp(key, "fsk_hash") == 0)
 			mo->fsk_hash = value;
+		else if (strcmp(key, "dm-timeout") == 0)
+			/* not handled atm */;
 		else if (strcmp(key, "fstype") == 0)
 			mo->fstype = value;
 		else if (strcmp(key, "keyfile") == 0)
 			mo->fsk_file = value;
+		else if (strcmp(key, "keysize") == 0)
+			/* automatically determined from keyfile size */;
+		else if (strcmp(key, "fsck") == 0)
+			/* not handled atm */;
+		else if (strcmp(key, "loop") == 0)
+			/* ignored - automatically detected */;
+		else if (strcmp(key, "hash") == 0)
+			/* not handled atm */;
 		else {
 			if (!first)
 				HXmc_strcat(&passthru, ",");
