@@ -4,6 +4,8 @@
  *	passthrough so that <volume fstype="fuse" ...> won't work.
  *	Now use <volume fstype="encfs13" ...>
  *	Passthrough works in encfs 1.4.0 and up.
+ *
+ *	Released in the Public Domain.
  */
 #include <stdio.h>
 #include <stdlib.h>
