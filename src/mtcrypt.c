@@ -102,11 +102,18 @@ static hxmc_t *readlinkf(const char *file)
 	return NULL;
 }
 
-static void mtcr_parse_suboptions(struct mount_options *mo, char *copt)
+static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 {
-	hxmc_t *passthru = HXmc_meminit(NULL, (copt == NULL) ? 0 : strlen(copt));
+	struct mount_options *mo = cbi->current->uptr;
+	hxmc_t *passthru;
 	bool first = true;
+	char *copt;
 	char *key;
+
+	if ((copt = xstrdup(cbi->data)) == NULL)
+		return;
+	if ((passthru = HXmc_meminit(NULL, strlen(copt))) == NULL)
+		abort();
 
 	while ((key = HX_strsep(&copt, ",")) != NULL) {
 		char *value = strchr(key, '=');
@@ -145,22 +152,31 @@ static void mtcr_parse_suboptions(struct mount_options *mo, char *copt)
 		}
 	}
 
-	mo->extra_opts = passthru;
+	if (*passthru != '\0') {
+		if (mo->extra_opts == NULL) {
+			mo->extra_opts = passthru;
+		} else if (*mo->extra_opts != '\0') {
+			HXmc_strcat(&mo->extra_opts, ",");
+			HXmc_strcat(&mo->extra_opts, passthru);
+			HXmc_free(passthru);
+		}
+	} else {
+		HXmc_free(passthru);
+	}
 }
 
 static bool mtcr_get_mount_options(int *argc, const char ***argv,
     struct mount_options *opt)
 {
 	struct stat sb;
-	char *o_flag = NULL;
 	/* options accepted but ignored for mount(8) interface compat */
 	struct HXoption options_table[] = {
 		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &Debug,
 		 .help = "Enable debugging"},
 		{.sh = 'n', .type = HXTYPE_NONE,
 		 .help = "(Option ignored)"},
-		{.sh = 'o', .type = HXTYPE_STRING, .ptr = &o_flag,
-		 .help = "Mount options"},
+		{.sh = 'o', .type = HXTYPE_STRING, .cb = mtcr_parse_suboptions,
+		 .uptr = opt, .help = "Mount options"},
 		{.sh = 'r', .type = HXTYPE_NONE,
 		 .help = "(Option ignored)"},
 		HXOPT_AUTOHELP,
@@ -208,7 +224,6 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		return false;
 	}
 
-	mtcr_parse_suboptions(opt, o_flag);
 	if (opt->fsk_file == NULL) {
 		fprintf(stderr, "%s: No keyfile specified "
 		        "(use -o keyfile=xxx)\n", **argv);
