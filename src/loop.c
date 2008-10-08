@@ -168,6 +168,13 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	int fd_stdin, ret;
 	pid_t pid;
 	char keysize[16];
+	bool is_luks = false;
+	const char *const lukscheck_args[] = {
+		"cryptsetup", "isLuks", ctl->lower_device, NULL,
+	};
+	const char *const luksopen_args[] = {
+		"cryptsetup", "luksOpen", ctl->lower_device, ctl->crypto_name, NULL,
+	};
 	const char *const start_args[] = {
 		"cryptsetup", "create", "-c", ctl->cipher,
 		"-h", "plain", "-s", keysize /* bits */,
@@ -175,8 +182,19 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 		ctl->lower_device, NULL,
 	};
 
+	ret = spawn_synchronous(lukscheck_args);
+	if (WIFEXITED(ret)) {
+		is_luks = WEXITSTATUS(ret) == 0;
+	} else {
+		l0g("cryptsetup isLuks got termined, signal %d\n",
+		    WTERMSIG(ret));
+		return false;
+	}
+
 	snprintf(keysize, sizeof(keysize), "%u", ctl->fskey_size * 8);
-	if (!spawn_startl(start_args, &pid, &fd_stdin, NULL)) {
+	ret = spawn_startl(is_luks ? luksopen_args : start_args,
+	      &pid, &fd_stdin, NULL);
+	if (!ret) {
 		l0g("Error setting up crypto device: %s\n",
 		    strerror(errno));
 		return false;
