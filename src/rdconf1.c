@@ -1290,7 +1290,7 @@ static const struct pmt_command default_command[] = {
 	/* Do not use LCLMOUNT to avoid calling fsck */
 	{CMD_NFSMOUNT,   "nfs",   "nfsmount",   {"mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}},
 	{CMD_LCLMOUNT,   NULL,    "lclmount",   {"mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
-	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount.crypt", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount.crypt", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTUMOUNT, "crypt", "cryptumount", {"umount.crypt", "%(MNTPT)", NULL}},
 	{CMD_UMOUNT,     NULL,    "umount",     {"umount", "%(MNTPT)", NULL}},
 	{CMD_FSCK,       NULL,    "fsck",       {"fsck", "-p", "%(FSCKTARGET)", NULL}},

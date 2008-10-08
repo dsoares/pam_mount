@@ -3,9 +3,6 @@
 
 o unit tests
 
-o already_mounted() needs to handle /etc/mtab entries for dm-crypt volumes
-mounted with patched util-linux.
-
 o get test account working with patched mount and remove "crypt" type support.
 	- see FIXME: ugly hack...
 	- ensure "check for existing mount works with patched mount

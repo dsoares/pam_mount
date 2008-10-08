@@ -25,7 +25,6 @@
 #include <libHX/defs.h>
 #include <libHX.h>
 #include <pwd.h>
-#include "crypto.h"
 #include "misc.h"
 #include "mount.h"
 #include "pam_mount.h"
@@ -294,8 +293,6 @@ static void log_pm_input(const struct config *const config,
 	w4rn("volume:        %s\n", znul(vpt->volume));
 	w4rn("mountpoint:    %s\n", vpt->mountpoint);
 	w4rn("options:       %s\n", options);
-	w4rn("fs_key_cipher: %s\n", znul(vpt->fs_key_cipher));
-	w4rn("fs_key_path:   %s\n", znul(vpt->fs_key_path));
 	w4rn("use_fstab:     %d\n", vpt->use_fstab);
 	w4rn("----------------------\n");
 	HXmc_free(options);
@@ -607,7 +604,6 @@ int do_mount(const struct config *config, struct vol *vpt,
 {
 	const struct HXdeque_node *n;
 	struct HXdeque *argv;
-	hxmc_t *ll_password = NULL;
 	int child_exit = 0, cstdin = -1, cstderr = -1;
 	const char *mount_user;
 	pid_t pid = -1;
@@ -645,28 +641,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 	}
 	w4rn("checking for encrypted filesystem key configuration\n");
 
-	/* FIXME: better done elsewhere? */
 	password = (password != NULL) ? password : "";
-	if (vpt->fs_key_cipher != NULL && strlen(vpt->fs_key_cipher) > 0) {
-		/* ll_password is binary data */
-		w4rn("decrypting FS key using system auth. token and "
-		     "%s\n", vpt->fs_key_cipher);
-		/*
-		 * vpt->fs_key_path contains real filesystem key.
-		 */
-		if (!decrypted_key(&ll_password,
-		    vpt->fs_key_path, vpt->fs_key_cipher, password))
-			return 0;
-	} else {
-		ll_password = HXmc_strinit(password);
-	}
 	w4rn("about to start building mount command\n");
-	/* FIXME: NEW */
-	/* FIXME:
-	   l0g("volume type (%d) is unknown\n", vpt->type);
-	   return 0;
-	 */
-
 	if ((argv = HXdeque_init()) == NULL)
 		misc_log("malloc: %s\n", strerror(errno));
 	if (vpt->uses_ssh)
@@ -688,21 +664,16 @@ int do_mount(const struct config *config, struct vol *vpt,
 	arglist_log(argv);
 	mount_user = vpt->noroot ? vpt->user : NULL;
 	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr,
-	    set_myuid, mount_user)) {
-		HXmc_free(ll_password);
+	    set_myuid, mount_user))
 		return 0;
-	}
 
 	if (vpt->type != CMD_NFSMOUNT)
-		if (pipewrite(cstdin, ll_password, HXmc_length(ll_password)) !=
-		    HXmc_length(ll_password))
+		if (pipewrite(cstdin, password, strlen(password)) !=
+		    strlen(password))
 			/* FIXME: clean: returns value of exit below */
 			l0g("error sending password to mount\n");
 	close(cstdin);
 
-	/* Paranoia? */
-	memset(ll_password, 0, HXmc_length(ll_password));
-	HXmc_free(ll_password);
 	log_output(cstderr, "mount errors:\n");
 	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
@@ -744,6 +715,10 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	format_add(vinfo, "VOLUME",   vpt->volume);
 	format_add(vinfo, "SERVER",   vpt->server);
 	format_add(vinfo, "USER",     vpt->user);
+	if (vpt->fs_key_cipher != NULL)
+		format_add(vinfo, "FSKEYCIPHER", vpt->fs_key_cipher);
+	if (vpt->fs_key_path != NULL)
+		format_add(vinfo, "FSKEYPATH", vpt->fs_key_path);
 	misc_add_ntdom(vinfo, vpt->user);
 
 	if ((pe = getpwnam(vpt->user)) == NULL) {

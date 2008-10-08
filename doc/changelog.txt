@@ -12,6 +12,7 @@ For details, see the history as recorded in the git repository.
 - remove code that set up a loop device for fsck
   (fsck can operate on normal files)
 - new crypto helper: pmt-ehd replaces scripts/mkehd
+- new crypto helper: mount.crypt is now a proper program
 
 
 v0.48 (September 10 2008)
