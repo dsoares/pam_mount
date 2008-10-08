@@ -249,9 +249,7 @@ static int already_mounted(const struct config *const config,
  */
 static hxmc_t *vol_to_dev(const struct vol *vol)
 {
-	unsigned int len;
 	hxmc_t *ret;
-	char *p;
 
 	switch (vol->type) {
 	case CMD_SMBMOUNT:
@@ -272,19 +270,6 @@ static hxmc_t *vol_to_dev(const struct vol *vol)
 		ret = HXmc_strinit(vol->server);
 		HXmc_strcat(&ret, ":");
 		HXmc_strcat(&ret, vol->volume);
-		break;
-
-	case CMD_CRYPTMOUNT:
-		/*
-		 * FIXME: ugly hack to support umount.crypt script. I hope that
-		 * util-linux will have native dm_crypt support some day.
-		 */
-		ret = HXmc_strinit("/dev/mapper/");
-		len = strlen(ret);
-		HXmc_strcat(&ret, vol->volume);
-		for (p = ret + len; *p != '\0'; ++p)
-			if (*p == '/')
-				*p = '_';
 		break;
 
 	default:

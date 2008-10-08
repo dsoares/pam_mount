@@ -1,12 +1,19 @@
-.TH umount.crypt 8 "15 June 2004"
-.SH NAME
+.TH umount.crypt 8 2008\-09\-19
+.SH Name
 umount.crypt - unmount a dm\-crypt encrypted volume
-.SH SYNOPSIS
+.SH Syntax
 \fBumount.crypt\fP \fIdirectory\fP
-.SH AUTHOR
-This manpage was originally written by Bastian Kleineidam
-<calvin@debian.org> for the Debian distribution of libpam\-mount but
-may be used by others.
-
-See /usr/share/doc/packages/pam_mount/AUTHORS for the list of original authors
-of pam_mount.
+.SH Options
+.TP
+\fB\-f\fP
+This option is ignored (originally is "force unmount for NFS").
+.TP
+\fB\-n\fP
+Do not update /etc/mtab.
+.TP
+\fB\-r\fP
+Try mounting read\-only if unmounting fails.
+.SH Description
+.PP
+umount.crypt will unmount \fIdirectory\fP and disassociates the underlying
+crypto device, and loop device if such was used.

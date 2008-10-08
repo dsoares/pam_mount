@@ -357,6 +357,101 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 	return f_ret;
 }
 
+struct decrypt_info {
+	const char *keyfile, *password;
+	const EVP_CIPHER *cipher;
+	const EVP_MD *digest;
+
+	const unsigned char *data;
+	unsigned int keysize;
+
+	const unsigned char *salt;
+};
+
+static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
+{
+	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
+	unsigned int out_cumul_len = 0;
+	EVP_CIPHER_CTX ctx;
+	int out_len = 0;
+	hxmc_t *out;
+
+	if (EVP_BytesToKey(info->cipher, info->digest, info->salt,
+	    signed_cast(const unsigned char *, info->password),
+	    strlen(info->password), 1, key, iv) <= 0) {
+		l0g("EVP_BytesToKey failed\n");
+		return false;
+	}
+
+	out = HXmc_meminit(NULL, info->keysize + info->cipher->block_size);
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_DecryptInit_ex(&ctx, info->cipher, NULL, key, iv);
+	EVP_DecryptUpdate(&ctx, reinterpret_cast(unsigned char *,
+		&out[out_len]), &out_len, info->data, info->keysize);
+	out_cumul_len += out_len;
+	EVP_DecryptFinal_ex(&ctx, reinterpret_cast(unsigned char *,
+		&out[out_len]), &out_len);
+	out_cumul_len += out_len;
+	HXmc_memcat(&out, out, out_cumul_len);
+	EVP_CIPHER_CTX_cleanup(&ctx);
+
+	return out;
+}
+
+hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
+    const char *cipher_name, const char *password)
+{
+	struct decrypt_info info = {
+		.keyfile  = keyfile,
+		.digest   = EVP_get_digestbyname(digest_name),
+		.cipher   = EVP_get_cipherbyname(cipher_name),
+		.password = password,
+	};
+	unsigned int buf_size;
+	hxmc_t *f_ret = NULL;
+	unsigned char *buf;
+	struct stat sb;
+	ssize_t i_ret;
+	int fd;
+
+	if (info.digest == NULL) {
+		l0g("Unknown digest: %s\n", digest_name);
+		return false;
+	}
+	if (info.cipher == NULL) {
+		l0g("Unknown cipher: %s\n", cipher_name);
+		return false;
+	}
+	if ((fd = open(info.keyfile, O_RDONLY)) < 0) {
+		l0g("Could not open %s: %s\n", info.keyfile, strerror(errno));
+		return false;
+	}
+	if (fstat(fd, &sb) < 0) {
+		l0g("stat: %s\n", strerror(errno));
+		goto out;
+	}
+
+	if ((buf = xmalloc(sb.st_size)) == NULL)
+		return false;
+
+	if ((i_ret = read(fd, buf, sb.st_size)) != sb.st_size) {
+		l0g("Incomplete read of %u bytes got %Zd bytes\n",
+		    buf_size, i_ret);
+		goto out2;
+	}
+
+	info.salt    = &buf[strlen("Salted__")];
+	info.data    = info.salt + PKCS5_SALT_LEN;
+	info.keysize = sb.st_size - (info.data - buf);
+	f_ret = ehd_decrypt_key2(&info);
+
+ out2:
+	free(buf);
+ out:
+	close(fd);
+	return f_ret;
+}
+
 static unsigned int __cipher_digest_security(const char *s)
 {
 	static const char *const blacklist[] = {

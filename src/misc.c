@@ -203,6 +203,25 @@ void arglist_log(const struct HXdeque *argq)
 	HXmc_free(str);
 }
 
+void arglist_llog(const char *const *argv)
+{
+	hxmc_t *str = NULL;
+
+	if (!Debug)
+		return;
+
+	str = HXmc_meminit(NULL, 80);
+	while (*argv != NULL) {
+		HXmc_strcat(&str, "[");
+		HXmc_strcat(&str, *argv);
+		HXmc_strcat(&str, "] ");
+		++argv;
+	}
+
+	misc_warn("command: %s\n", str);
+	HXmc_free(str);
+}
+
 /**
  * arglist_add -
  * @argq:	argument list to add to

@@ -47,6 +47,7 @@ extern void arglist_add(struct HXdeque *, const char *,
 extern struct HXdeque *arglist_build(const struct HXdeque *,
 	const struct HXbtree *);
 extern void arglist_log(const struct HXdeque *);
+extern void arglist_llog(const char *const *);
 extern bool kvplist_contains(const struct HXclist_head *, const char *);
 extern char *kvplist_get(const struct HXclist_head *, const char *);
 extern void kvplist_genocide(struct HXclist_head *);

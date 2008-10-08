@@ -26,10 +26,14 @@ module_LTLIBRARIES = pam_mount.la
 bin_PROGRAMS = pmt-fd0ssh pmt-ofl
 sbin_PROGRAMS = pmt-ehd pmvarrun
 ssbin_PROGRAMS = mount.encfs13
+noinst_PROGRAMS = mount.crypt umount.crypt
 
 pam_mount_la_SOURCES = crypto.c loop.c misc.c ofl-lib.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c
 pam_mount_la_LIBADD  = -lpam ${libHX_LIBS} ${libcrypto_LIBS} ${libssl_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS = -module -avoid-version
+
+mount_crypt_SOURCES   = mtcrypt.c nlt-loop.c nlt-misc.c nlt-spawn.c
+mount_crypt_LDADD     = ${libHX_LIBS} ${libcrypto_LIBS} ${libssl_LIBS}
 
 mount_encfs13_SOURCES = mtencfs13.c
 mount_encfs13_LDADD   = ${libHX_LIBS}
@@ -46,6 +50,9 @@ pmvarrun_SOURCES = pmvarrun.c nlt-misc.c
 pmvarrun_LDADD   = ${libHX_LIBS}
 
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} ${libHX_CFLAGS} ${libxml_CFLAGS}
+
+umount.crypt: mount.crypt
+	-ln -s $^ $@;
 
 install-data-hook:
 	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;
