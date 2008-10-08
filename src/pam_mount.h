@@ -22,6 +22,10 @@
 #endif
 #define sizeof_z(x) (sizeof(x) - 1)
 
+#define PMT_DFL_DMCRYPT_CIPHER "aes-cbc-essiv:sha256"
+#define PMT_DFL_FSK_CIPHER     "aes-256-cbc"
+#define PMT_DFL_FSK_HASH       "md5"
+
 struct HXbtree;
 struct HXdeque;
 struct loop_info64;
@@ -123,6 +127,12 @@ static inline const char *znul(const char *s)
  *	LOOP.C
  */
 extern const char *loop_file_name(const char *, struct loop_info64 *);
+extern int ehd_load(const char *, hxmc_t **, const char *,
+	const unsigned char *, unsigned int);
+extern int ehd_unload(const char *, bool);
+extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
+	const char *);
+extern unsigned int cipher_digest_security(const char *);
 
 /*
  *	OFL-LIB.C

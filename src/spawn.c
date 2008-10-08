@@ -151,6 +151,12 @@ static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 	return true;
 }
 
+bool spawn_startl(const char *const *argv, pid_t *pid, int *fd_stdin,
+    int *fd_stdout)
+{
+	return __spawn_start(argv, pid, fd_stdin, fd_stdout, NULL, NULL, NULL);
+}
+
 bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
     int *fd_stdout, int *fd_stderr, void (*setup)(const char *),
     const char *user)

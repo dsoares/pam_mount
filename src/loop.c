@@ -1,11 +1,49 @@
-#ifdef __linux__
+/*
+ *	Copyright © Jan Engelhardt, 2008
+ *
+ *	This file is part of pam_mount; you can redistribute it and/or
+ *	modify it under the terms of the GNU Lesser General Public License
+ *	as published by the Free Software Foundation; either version 2.1
+ *	of the License, or (at your option) any later version.
+ */
 #include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <libHX/defs.h>
+#include <libHX/string.h>
+#include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
 #include <linux/loop.h>
 #include "pam_mount.h"
+#include "misc.h"
+#include "spawn.h"
+
+/**
+ * @lower_device:	path to container, if it is a block device, otherwise
+ * 			path to a loop device translating it into a bdev
+ * @crypto_device:	path to crypto device (/dev/mapper/X)
+ * @crypto_name:	random crypto device name we chose
+ * @cipher:		cipher to use with cryptsetup
+ * @keysize:		and the keysize
+ * @fskey:		the actual filesystem key
+ * @fskey_size:		fskey size, in bytes
+ */
+struct ehdmount_ctl {
+	char *lower_device;
+	hxmc_t *crypto_device;
+	char crypto_name[15];
+	const char *cipher;
+	const unsigned char *fskey;
+	unsigned int fskey_size;
+};
 
 /**
  * loop_file_name -
@@ -34,4 +72,328 @@ const char *loop_file_name(const char *filename, struct loop_info64 *i)
 #endif
 }
 
-#endif /* __linux__ */
+static const unsigned int LINUX_MAX_MINOR = 1 << 20;
+
+/**
+ * loop_setup - associate file to a loop device
+ * @filename:	file to associate
+ * @result:	result buffer for path to loop device
+ *
+ * Returns -errno on error, or positive on success.
+ */
+static int loop_setup(const char *filename, char **result)
+{
+	struct loop_info64 info;
+	const char *dev_prefix;
+	unsigned int i = 0;
+	struct stat sb;
+	int filefd, loopfd, ret = -ENXIO;
+	char dev[64];
+
+	*result = NULL;
+
+	if (stat("/dev/loop0", &sb) == 0)
+		dev_prefix = "/dev/loop";
+	else if (stat("/dev/loop/0", &sb) == 0)
+		dev_prefix = "/dev/loop/";
+	else
+		return -ENXIO;
+
+	if ((filefd = open(filename, O_RDWR)) < 0)
+		return -errno;
+
+	for (i = 0; i < LINUX_MAX_MINOR; ++i) {
+		snprintf(dev, sizeof(dev), "%s%u", dev_prefix, i);
+		loopfd = open(dev, O_RDWR | O_EXCL);
+		if (loopfd < 0) {
+			if (errno == ENOENT)
+				/* Assume we already went past the last device */
+				break;
+			if (errno == EPERM || errno == EACCES)
+				/*
+				 * Note error and try other devices
+				 * before bailing out later.
+				 */
+				ret = -errno;
+			continue;
+		}
+		if (ioctl(loopfd, LOOP_GET_STATUS64, &info) >= 0 ||
+		    errno != ENXIO) {
+			close(loopfd);
+			continue;
+		}
+		memset(&info, 0, sizeof(info));
+		strncpy(signed_cast(char *, info.lo_file_name),
+		        filename, LO_NAME_SIZE);
+		if (ioctl(loopfd, LOOP_SET_FD, filefd) < 0) {
+			close(loopfd);
+			continue;
+		}
+		ioctl(loopfd, LOOP_SET_STATUS64, &info);
+		close(loopfd);
+		*result = xstrdup(dev);
+		if (*result == NULL)
+			ret = -ENOMEM;
+		else
+			ret = 1;
+		break;
+	}
+
+	close(filefd);
+	return ret;
+}
+
+/**
+ * loop_release - release a loop device
+ * @device:	loop node
+ */
+static int loop_release(const char *device)
+{
+	int loopfd, ret = 1;
+
+	if ((loopfd = open(device, O_RDONLY)) < 0)
+		return -errno;
+	if (ioctl(loopfd, LOOP_CLR_FD) < 0)
+		ret = -errno;
+	close(loopfd);
+	return ret;
+}
+
+/**
+ * ehd_load_2 - set up dm-crypt device
+ */
+static bool ehd_load_2(struct ehdmount_ctl *ctl)
+{
+	int fd_stdin, ret;
+	pid_t pid;
+	char keysize[16];
+	const char *const start_args[] = {
+		"cryptsetup", "create", "-c", ctl->cipher,
+		"-h", "plain", "-s", keysize /* bits */,
+		"--key-file=-", ctl->crypto_name,
+		ctl->lower_device, NULL,
+	};
+
+	snprintf(keysize, sizeof(keysize), "%u", ctl->fskey_size * 8);
+	if (!spawn_startl(start_args, &pid, &fd_stdin, NULL)) {
+		l0g("Error setting up crypto device: %s\n",
+		    strerror(errno));
+		return false;
+	}
+
+	write(fd_stdin, ctl->fskey, ctl->fskey_size);
+	close(fd_stdin);
+	waitpid(pid, &ret, 0);
+	if (!WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
+		l0g("cryptsetup exited with non-zero status %d\n",
+		    WEXITSTATUS(ret));
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * ehd_load - set up crypto device for an EHD container
+ * @cont_path:		path to the container
+ * @crypto_device:	store crypto device here
+ * @cipher:		filesystem cipher
+ * @fskey:		unencrypted fskey data (not path)
+ * @fskey_size:		size of @fskey, in bytes
+ */
+int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
+    const char *cipher, const unsigned char *fskey, unsigned int fskey_size)
+{
+	struct ehdmount_ctl ctl = {
+		.cipher     = cipher,
+		.fskey      = fskey,
+		.fskey_size = fskey_size,
+	};
+	unsigned char name_bin[6];
+	bool cont_blkdev;
+	struct stat sb;
+	int ret;
+
+	if (stat(cont_path, &sb) < 0) {
+		l0g("Could not stat %s: %s\n", cont_path, strerror(errno));
+		return -errno;
+	}
+
+	if (S_ISBLK(sb.st_mode)) {
+		cont_blkdev      = true;
+		ctl.lower_device = const_cast(char *, cont_path);
+	} else {
+		/* need losetup since cryptsetup needs block device */
+		w4rn("Setting up loop device for file %s\n", cont_path);
+		ret = loop_setup(cont_path, &ctl.lower_device);
+		if (ret <= 0) {
+			l0g("Error setting up loopback device for %s: %s\n",
+			    cont_path, strerror(-ret));
+			return false;
+		} else {
+			w4rn("Using %s\n", ctl.lower_device);
+		}
+	}
+
+	RAND_bytes(name_bin, sizeof(name_bin));
+	snprintf(ctl.crypto_name, sizeof(ctl.crypto_name),
+	         "%02x%02x%02x%02x%02x%02x",
+	         name_bin[0], name_bin[1], name_bin[2], name_bin[3],
+	         name_bin[4], name_bin[5]);
+	w4rn("Using %s as dmdevice name\n", ctl.crypto_name);
+
+	ctl.crypto_device = HXmc_strinit("/dev/mapper/");
+	HXmc_strcat(&ctl.crypto_device, ctl.crypto_name);
+
+	ret = ehd_load_2(&ctl);
+	if (!ret)
+		crypto_device_pptr = NULL;
+	if (ctl.lower_device != cont_path) {
+		loop_release(ctl.lower_device);
+		free(ctl.lower_device);
+	}
+	if (crypto_device_pptr != NULL)
+		*crypto_device_pptr = ctl.crypto_device;
+	else
+		HXmc_free(ctl.crypto_device);
+	return ret;
+}
+
+/**
+ * ehd_unload_crypto - deactivate crypto device
+ * @crypto_device:	full path to the crypto device (/dev/mapper/X)
+ */
+static bool ehd_unload_crypto(const char *crypto_device)
+{
+	const char *crypto_name = HX_basename(crypto_device);
+	const char *const args[] = {
+		"cryptsetup", "remove", crypto_name, NULL,
+	};
+	int ret;
+
+	ret = spawn_synchronous(args);
+	if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0)
+		return true;
+
+	l0g("Could not unload dm-crypt device \"%s\" (%s), "
+	    "cryptsetup %s with status %d\n",
+	    crypto_name, crypto_device,
+	    WIFEXITED(ret) ? "exited" : "terminated",
+	    WIFEXITED(ret) ? WEXITSTATUS(ret) : WTERMSIG(ret));
+	return false;
+}
+
+/**
+ * ehd_unload -
+ * @crypto_device:	dm-crypt device (/dev/mapper/X)
+ * @only_crypto:	do not unload any lower device
+ *
+ * Determines the underlying device of the crypto target. Unloads the crypto
+ * device, and then the loop device if one is used.
+ *
+ * Using the external cryptsetup program because the cryptsetup C API does
+ * not look as easy as the loop one, and does not look shared (i.e. available
+ * as a system library) either.
+ */
+int ehd_unload(const char *crypto_device, bool only_crypto)
+{
+	const char *const args[] = {
+		"cryptsetup", "status", HX_basename(crypto_device), NULL,
+	};
+	const char *lower_device = NULL;
+	hxmc_t *line = NULL;
+	bool f_ret = false;
+	int fd_stdout;
+	pid_t pid;
+	FILE *fp;
+
+	if (!spawn_startl(args, &pid, NULL, &fd_stdout)) {
+		l0g("%s: could not run %s: %s\n",
+		    __func__, *args, strerror(errno));
+		return -errno;
+	}
+
+	fp = fdopen(fd_stdout, "r");
+	if (fp == NULL)
+		goto out;
+
+	while (HX_getl(&line, fp) != NULL) {
+		const char *p = line;
+		HX_chomp(line);
+
+		while (isspace(*p))
+			++p;
+		if (strncmp(p, "device:", strlen("device:")) != 0)
+			continue;
+		while (!isspace(*p))
+			++p;
+		/*
+		 * Relying on the fact that dmcrypt does not
+		 * allow spaces or newlines in filenames.
+		 */
+		while (isspace(*p))
+			++p;
+		lower_device = p;
+		break;
+	}
+
+	if (!ehd_unload_crypto(crypto_device))
+		goto out;
+	if (!only_crypto) {
+		int ret = loop_release(lower_device);
+		/*
+		 * Success, not-assigned (ENXIO) or not-a-loop-device (ENOTTY)
+		 * shall pass.
+		 */
+		if (ret <= 0 && ret != -ENXIO && ret != -ENOTTY)
+			goto out;
+	}
+
+	f_ret = true;
+ out:
+	spawn_restore_sigchld();
+	waitpid(pid, NULL, 0);
+	return f_ret;
+}
+
+static unsigned int __cipher_digest_security(const char *s)
+{
+	static const char *const blacklist[] = {
+		"ecb",
+		"rc2", "rc4", "des", "des3",
+		"md2", "md4",
+		NULL,
+	};
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(blacklist); ++i)
+		if (strcmp(s, blacklist[i]) == 0)
+			return 0;
+
+	return 2;
+}
+
+/**
+ * cipher_digest_security - returns the secure level of a cipher/digest
+ * @s:	name of the cipher or digest specification
+ * 	(can either be OpenSSL or cryptsetup name)
+ *
+ * Returns 0 if it is considered insecure, 1 if I would have a bad feeling
+ * using it, and 2 if it is appropriate.
+ */
+unsigned int cipher_digest_security(const char *s)
+{
+	char *base, *tmp, *wp;
+	unsigned int ret;
+
+	if ((base = xstrdup(s)) == NULL)
+		return 2;
+
+	tmp = base;
+	while ((wp = HX_strsep(&tmp, ",-.:_")) != NULL)
+		if ((ret = __cipher_digest_security(wp)) < 2)
+			break;
+
+	free(base);
+	return ret;
+}

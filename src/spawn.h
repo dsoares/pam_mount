@@ -6,6 +6,7 @@
 /*
  *	SPAWN.C
  */
+extern bool spawn_startl(const char *const *, pid_t *, int *, int *);
 extern bool spawn_start(struct HXdeque *, pid_t *, int *, int *, int *,
 	void (*)(const char *), const char *);
 extern int spawn_restore_sigchld(void);
