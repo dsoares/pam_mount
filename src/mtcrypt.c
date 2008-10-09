@@ -320,7 +320,7 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 		{.sh = 'f', .type = HXTYPE_NONE,
 		 .help = "(Option ignored)"},
 		{.sh = 'n', .type = HXTYPE_NONE, .ptr = &opt->no_update,
-		 .help = "(Option ignored)"},
+		 .help = "Do not update /etc/mtab"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->ro_fallback,
 		 .help = "(Option ignored)"},
 		HXOPT_AUTOHELP,
@@ -363,12 +363,11 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
  */
 static int mtcr_umount(struct umount_options *opt)
 {
-	const char *umount_args[] =
-		{"umount", "-i", NULL /* placeholder */, NULL};
+	const char *umount_args[5];
 	char *final_dir = NULL, *final_fsname = NULL;
 	const struct mntent *mnt;
 	FILE *fp;
-	int ret;
+	int ret, argk = 0;
 
 	if (opt->is_cont) {
 		/*
@@ -415,7 +414,12 @@ static int mtcr_umount(struct umount_options *opt)
 		        opt->object, kmtab_file);
 	}
 
-	umount_args[2] = opt->object;
+	umount_args[argk++] = "umount";
+	umount_args[argk++] = "-i";
+	if (opt->no_update)
+		umount_args[argk++] = "-n";
+	umount_args[argk++] = opt->object;
+	umount_args[argk]   = NULL;
 	arglist_llog(umount_args);
 	if ((ret = spawn_synchronous(umount_args)) != 0) {
 		fprintf(stderr, "umount %s failed with status %d\n",
