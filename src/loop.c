@@ -44,6 +44,7 @@ struct ehdmount_ctl {
 	const char *cipher;
 	const unsigned char *fskey;
 	unsigned int fskey_size;
+	bool readonly;
 };
 
 /**
@@ -79,10 +80,11 @@ static const unsigned int LINUX_MAX_MINOR = 1 << 20;
  * loop_setup - associate file to a loop device
  * @filename:	file to associate
  * @result:	result buffer for path to loop device
+ * @ro:		readonly
  *
  * Returns -errno on error, or positive on success.
  */
-static int loop_setup(const char *filename, char **result)
+static int loop_setup(const char *filename, char **result, bool ro)
 {
 	struct loop_info64 info;
 	const char *dev_prefix;
@@ -105,7 +107,7 @@ static int loop_setup(const char *filename, char **result)
 
 	for (i = 0; i < LINUX_MAX_MINOR; ++i) {
 		snprintf(dev, sizeof(dev), "%s%u", dev_prefix, i);
-		loopfd = open(dev, O_RDWR | O_EXCL);
+		loopfd = open(dev, (ro ? O_RDONLY : O_RDWR) | O_EXCL);
 		if (loopfd < 0) {
 			if (errno == ENOENT)
 				/* Assume we already went past the last device */
@@ -169,31 +171,46 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	pid_t pid;
 	char keysize[16];
 	bool is_luks = false;
+	const char *start_args[13];
 	const char *const lukscheck_args[] = {
 		"cryptsetup", "isLuks", ctl->lower_device, NULL,
-	};
-	const char *const luksopen_args[] = {
-		"cryptsetup", "luksOpen", ctl->lower_device, ctl->crypto_name, NULL,
-	};
-	const char *const start_args[] = {
-		"cryptsetup", "create", "-c", ctl->cipher,
-		"-h", "plain", "-s", keysize /* bits */,
-		"--key-file=-", ctl->crypto_name,
-		ctl->lower_device, NULL,
 	};
 
 	ret = spawn_synchronous(lukscheck_args);
 	if (WIFEXITED(ret)) {
+		int argk = 0;
+
 		is_luks = WEXITSTATUS(ret) == 0;
+		start_args[argk++] = "cryptsetup";
+		if (ctl->readonly)
+			start_args[argk++] = "--readonly";
+		if (is_luks) {
+			start_args[argk++] = "luksOpen";
+			start_args[argk++] = ctl->lower_device;
+			start_args[argk++] = ctl->crypto_name;
+			start_args[argk++] = NULL;
+		} else {
+			snprintf(keysize, sizeof(keysize),
+			         "%u", ctl->fskey_size * 8);
+			start_args[argk++] = "create";
+			start_args[argk++] = "--key-file=-";
+			start_args[argk++] = "-c";
+			start_args[argk++] = ctl->cipher;
+			start_args[argk++] = "-h";
+			start_args[argk++] = "plain";
+			start_args[argk++] = "-s";
+			start_args[argk++] = keysize;
+			start_args[argk++] = ctl->crypto_name;
+			start_args[argk++] = ctl->lower_device;
+			start_args[argk]   = NULL;
+		}
 	} else {
 		l0g("cryptsetup isLuks got termined, signal %d\n",
 		    WTERMSIG(ret));
 		return false;
 	}
 
-	snprintf(keysize, sizeof(keysize), "%u", ctl->fskey_size * 8);
-	ret = spawn_startl(is_luks ? luksopen_args : start_args,
-	      &pid, &fd_stdin, NULL);
+	ret = spawn_startl(start_args, &pid, &fd_stdin, NULL);
 	if (!ret) {
 		l0g("Error setting up crypto device: %s\n",
 		    strerror(errno));
@@ -219,14 +236,17 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
  * @cipher:		filesystem cipher
  * @fskey:		unencrypted fskey data (not path)
  * @fskey_size:		size of @fskey, in bytes
+ * @readonly:		set up loop device as readonly
  */
 int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
-    const char *cipher, const unsigned char *fskey, unsigned int fskey_size)
+    const char *cipher, const unsigned char *fskey, unsigned int fskey_size,
+    bool readonly)
 {
 	struct ehdmount_ctl ctl = {
 		.cipher     = cipher,
 		.fskey      = fskey,
 		.fskey_size = fskey_size,
+		.readonly   = readonly,
 	};
 	unsigned char name_bin[6];
 	bool cont_blkdev;
@@ -244,7 +264,7 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 	} else {
 		/* need losetup since cryptsetup needs block device */
 		w4rn("Setting up loop device for file %s\n", cont_path);
-		ret = loop_setup(cont_path, &ctl.lower_device);
+		ret = loop_setup(cont_path, &ctl.lower_device, readonly);
 		if (ret <= 0) {
 			l0g("Error setting up loopback device for %s: %s\n",
 			    cont_path, strerror(-ret));

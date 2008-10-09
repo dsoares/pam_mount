@@ -41,7 +41,7 @@ struct mount_options {
 	const char *dmcrypt_cipher, *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
-	unsigned int no_update;
+	unsigned int no_update, readonly;
 	int dm_timeout;
 	bool blkdev;
 };
@@ -133,6 +133,8 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			mo->fstype = value;
 		else if (strcmp(key, "keyfile") == 0)
 			mo->fsk_file = value;
+		else if (strcmp(key, "ro") == 0)
+			mo->readonly = true;
 		else if (strcmp(key, "keysize") == 0)
 			/* automatically determined from keyfile size */;
 		else if (strcmp(key, "fsck") == 0)
@@ -177,8 +179,8 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		 .help = "Do not update /etc/mtab"},
 		{.sh = 'o', .type = HXTYPE_STRING, .cb = mtcr_parse_suboptions,
 		 .uptr = opt, .help = "Mount options"},
-		{.sh = 'r', .type = HXTYPE_NONE,
-		 .help = "(Option ignored)"},
+		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->readonly,
+		 .help = "Set up devices and mounts as read-only"},
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
 	};
@@ -262,7 +264,7 @@ static int mtcr_mount(struct mount_options *opt)
 
 	ehd_load(opt->container, &cd, opt->dmcrypt_cipher,
 	         reinterpret_cast(const unsigned char *, key),
-	         HXmc_length(key));
+	         HXmc_length(key), opt->readonly);
 	if (cd == NULL) {
 		fprintf(stderr, "No crypto device assigned\n");
 		return 0;

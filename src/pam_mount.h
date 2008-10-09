@@ -134,7 +134,7 @@ static inline const char *znul(const char *s)
  */
 extern const char *loop_file_name(const char *, struct loop_info64 *);
 extern int ehd_load(const char *, hxmc_t **, const char *,
-	const unsigned char *, unsigned int);
+	const unsigned char *, unsigned int, bool);
 extern int ehd_unload(const char *, bool);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	const char *);
