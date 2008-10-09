@@ -41,6 +41,7 @@ struct mount_options {
 	const char *dmcrypt_cipher, *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
+	unsigned int no_update;
 	int dm_timeout;
 	bool blkdev;
 };
@@ -169,12 +170,11 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
     struct mount_options *opt)
 {
 	struct stat sb;
-	/* options accepted but ignored for mount(8) interface compat */
 	struct HXoption options_table[] = {
 		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &Debug,
 		 .help = "Enable debugging"},
-		{.sh = 'n', .type = HXTYPE_NONE,
-		 .help = "(Option ignored)"},
+		{.sh = 'n', .type = HXTYPE_NONE, .ptr = &opt->no_update,
+		 .help = "Do not update /etc/mtab"},
 		{.sh = 'o', .type = HXTYPE_STRING, .cb = mtcr_parse_suboptions,
 		 .uptr = opt, .help = "Mount options"},
 		{.sh = 'r', .type = HXTYPE_NONE,
@@ -287,6 +287,8 @@ static int mtcr_mount(struct mount_options *opt)
 		fprintf(stderr, "mount failed with exit status %d\n",
 		        WEXITSTATUS(ret));
 		ehd_unload(cd, opt->blkdev);
+	} else if (opt->no_update) {
+		/* awesome logic */;
 	} else if ((fp = fopen(mtab_file, "a")) == NULL) {
 		fprintf(stderr, "Could not open %s: %s\n",
 		        mtab_file, strerror(errno));

@@ -2,7 +2,8 @@
 .SH Name
 mount.crypt - mount a dm\-crypt encrypted volume
 .SH Syntax
-\fBmount.crypt\fP [\fB\-o\fP \fIoptions\fP] \fIdevice\fP \fIdirectory\fP
+\fBmount.crypt\fP [\fB-n\fP] [\fB\-o\fP \fIoptions\fP]
+\fIdevice\fP \fIdirectory\fP
 .SH Options
 .TP
 \fB\-o\fP \fIoptions\fP
@@ -10,8 +11,9 @@ Set the mount options. mount.crypt will take out its own options it recognizes
 and passes any remaining options on to the underlying mount program.
 .TP
 \fB\-n\fP
-Do not update /etc/mtab. This option is currently not implemented and is
-ignored.
+Do not update /etc/mtab. Note that this makes it impossible to unmount the
+volume by naming the container - you will have to pass the mountpoint to
+umount.crypt.
 .SH Mount options
 .TP
 \fBdm\-wait\fP
