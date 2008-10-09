@@ -555,6 +555,11 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 
 	if (!ehd_get_options(&argc, &argv, pg))
 		return false;
+
+	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
+	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	pmtlog_prefix = "ehd";
+
 	if (!ehd_check(pg))
 		return false;
 	if (!ehd_create_container(pg))

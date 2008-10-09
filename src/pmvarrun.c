@@ -216,9 +216,10 @@ int main(int argc, const char **argv)
 	set_defaults(&settings);
 	parse_args(argc, argv, &settings);
 
-	/* pmt will pick stderr up */
+	/* pam_mount.so will pick stderr up */
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	pmtlog_prefix = "pmvarrun";
 
 	if (strlen(settings.user) == 0)
 		usage(EXIT_FAILURE, NULL);
