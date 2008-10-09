@@ -32,6 +32,8 @@
 #include "pam_mount.h"
 #include "misc.h"
 
+const char *pmtlog_prefix;
+bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
 unsigned int Debug = true;
 
 /**
@@ -47,12 +49,8 @@ void misc_dump_id(const char *where)
 }
 
 /**
- * misc_log - log to syslog
+ * misc_log - log an error/warning
  * @format:	printf(3)-style format specifier
- *
- * Message is logged to syslog, and, if debugging is turned on, printed to
- * %stderr. Use this for critical messages or issues that cause(d) pam_mount
- * to fail.
  *
  * Do not call this function directly; use the l0g() macro instead, so that
  * file name and line number show up.
@@ -66,9 +64,10 @@ int misc_log(const char *format, ...)
 
 	va_start(args, format);
 	va_copy(arg2, args);
-	if (Debug)
+	if (pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR])
 		ret = vfprintf(stderr, format, args);
-	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
+	if (pmtlog_path[PMTLOG_ERR][PMTLOG_SYSLOG])
+		vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
 	return ret;
@@ -90,13 +89,16 @@ int misc_warn(const char *format, ...)
 	int ret;
 
 	assert(format != NULL);
-	if (Debug == 0)
+	if (!pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] &&
+	    !pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
 		return 0;
 
 	va_start(args, format);
 	va_copy(arg2, args);
-	ret = vfprintf(stderr, format, args);
-	vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
+	if (pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR])
+		ret = vfprintf(stderr, format, args);
+	if (pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
+		vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 	va_end(args);
 	va_end(arg2);
 	return ret;
@@ -186,7 +188,8 @@ void arglist_log(const struct HXdeque *argq)
 	const struct HXdeque_node *n;
 	hxmc_t *str = NULL;
 
-	if (!Debug)
+	if (!pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] &&
+	    !pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
 		return;
 
 	str = HXmc_meminit(NULL, 80);
@@ -194,6 +197,25 @@ void arglist_log(const struct HXdeque *argq)
 		HXmc_strcat(&str, "[");
 		HXmc_strcat(&str, n->ptr);
 		HXmc_strcat(&str, "] ");
+	}
+
+	misc_warn("command: %s\n", str);
+	HXmc_free(str);
+}
+
+void arglist_llog(const char *const *argv)
+{
+	hxmc_t *str = NULL;
+
+	if (!Debug)
+		return;
+
+	str = HXmc_meminit(NULL, 80);
+	while (*argv != NULL) {
+		HXmc_strcat(&str, "[");
+		HXmc_strcat(&str, *argv);
+		HXmc_strcat(&str, "] ");
+		++argv;
 	}
 
 	misc_warn("command: %s\n", str);

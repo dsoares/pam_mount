@@ -22,6 +22,16 @@
 #endif
 #define sizeof_z(x) (sizeof(x) - 1)
 
+/*
+ * So many programs trash a useful $PATH (including mount(8)),
+ * so just provide our own.
+ */
+#define PMT_DFL_PATH \
+	"/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+#define PMT_DFL_DMCRYPT_CIPHER "aes-cbc-essiv:sha256"
+#define PMT_DFL_FSK_CIPHER     "aes-256-cbc"
+#define PMT_DFL_FSK_HASH       "md5"
+
 struct HXbtree;
 struct HXdeque;
 struct loop_info64;
@@ -47,10 +57,7 @@ enum command_type {
 	CMD_NFSMOUNT,
 	CMD_UMOUNT,
 	CMD_PMHELPER,
-	CMD_MNTCHECK,
 	CMD_FSCK,
-	CMD_LOSETUP,
-	CMD_UNLOSETUP,
 	CMD_PMVARRUN,
 	CMD_FD0SSH,
 	_CMD_MAX,
@@ -88,7 +95,6 @@ struct config {
 	unsigned int debug;
 	bool mkmntpoint, rmdir_mntpt;
 	hxmc_t *luserconf;
-	char *fsckloop;
 	struct HXdeque *command[_CMD_MAX];
 	struct HXbtree *options_require, *options_allow, *options_deny;
 	struct HXclist_head volume_list;
@@ -127,6 +133,13 @@ static inline const char *znul(const char *s)
  *	LOOP.C
  */
 extern const char *loop_file_name(const char *, struct loop_info64 *);
+extern int ehd_load(const char *, hxmc_t **, const char *,
+	const unsigned char *, unsigned int);
+extern int ehd_unload(const char *, bool);
+extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
+	const char *);
+extern unsigned int cipher_digest_security(const char *);
+extern hxmc_t *pmt_get_password(void);
 
 /*
  *	OFL-LIB.C

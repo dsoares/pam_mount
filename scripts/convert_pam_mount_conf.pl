@@ -25,14 +25,11 @@ GetOptions(
 my %callbacks = (
 	"debug"           => \&callback_debug,
 	"mkmountpoint"    => \&callback_mkmountpoint,
-	"fsckloop"        => \&callback_fsckloop,
 	"luserconf"       => \&callback_luserconf,
 	"options_allow"   => \&callback_options_allow,
 	"options_deny"    => \&callback_options_deny,
 	"options_require" => \&callback_options_require,
 	"fsck"            => \&callback_fsck,
-	"losetup"         => \&callback_losetup,
-	"unlosetup"       => \&callback_unlosetup,
 	"cifsmount"       => \&callback_cifsmount,
 	"smbmount"        => \&callback_smbmount,
 	"ncpmount"        => \&callback_ncpmount,
@@ -44,8 +41,6 @@ my %callbacks = (
 	"lclmount"        => \&callback_lclmount,
 	"cryptmount"      => \&callback_cryptmount,
 	"nfsmount"        => \&callback_nfsmount,
-	"mntagain"        => \&callback_mntagain,
-	"mntcheck"        => \&callback_mntcheck,
 	"pmvarrun"        => \&callback_pmvarrun,
 	"volume"          => \&callback_volume,
 );
@@ -69,13 +64,6 @@ sub callback_mkmountpoint
 	my @fields = @_;
 
 	$writer->emptyTag("mkmountpoint", "enable" => $fields[1]);
-}
-
-sub callback_fsckloop
-{
-	my @fields = @_;
-
-	$writer->emptyTag("fsckloop", "device" => $fields[1]);
 }
 
 sub callback_luserconf
@@ -116,26 +104,6 @@ sub callback_fsck
 	$writer->startTag("fsck");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("fsck");
-}
-
-sub callback_losetup
-{
-	my @fields = @_;
-
-	shift @fields;
-	$writer->startTag("losetup");
-	$writer->characters(join(" ", @fields));
-	$writer->endTag("losetup");
-}
-
-sub callback_unlosetup
-{
-	my @fields = @_;
-
-	shift @fields;
-	$writer->startTag("unlosetup");
-	$writer->characters(join(" ", @fields));
-	$writer->endTag("unlosetup");
 }
 
 sub callback_cifsmount
@@ -246,21 +214,6 @@ sub callback_nfsmount
 	$writer->startTag("nfsmount");
 	$writer->characters(join(" ", @fields));
 	$writer->endTag("nfsmount");
-}
-
-sub callback_mntagain
-{
-	# not translated - removed in pam_mount 0.32
-}
-
-sub callback_mntcheck
-{
-	my @fields = @_;
-
-	shift @fields;
-	$writer->startTag("mntcheck");
-	$writer->characters(join(" ", @fields));
-	$writer->endTag("mntcheck");
 }
 
 sub callback_pmvarrun

@@ -103,18 +103,22 @@ static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
     const char *user)
 {
 	const int *fd_rq[] = {fd_stdin, fd_stdout, fd_stderr};
-	int pipes[3][2], ret;
+	int pipes[3][2], ret, saved_errno;
 
 	if ((ret = spawn_build_pipes(fd_rq, pipes)) < 0) {
+		saved_errno = -ret;
 		l0g("pipe(): %s\n", strerror(-ret));
+		errno = ret;
 		return false;
 	}
 
 	spawn_set_sigchld();
 	if ((*pid = fork()) < 0) {
+		saved_errno = errno;
 		l0g("fork(): %s\n", strerror(errno));
 		spawn_restore_sigchld();
 		spawn_close_pipes(pipes);
+		errno = saved_errno;
 		return false;
 	} else if (*pid == 0) {
 		if (setup != NULL)
@@ -127,7 +131,7 @@ static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 			dup2(pipes[2][1], STDERR_FILENO);
 		spawn_close_pipes(pipes);
 		execvp(*argv, const_cast(char * const *, argv));
-		l0g("execvp: %s\n", strerror(errno));
+		l0g("execvp: %s: %s\n", *argv, strerror(errno));
 		_exit(-1);
 	}
 	
@@ -145,6 +149,12 @@ static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 	}
 
 	return true;
+}
+
+bool spawn_startl(const char *const *argv, pid_t *pid, int *fd_stdin,
+    int *fd_stdout)
+{
+	return __spawn_start(argv, pid, fd_stdin, fd_stdout, NULL, NULL, NULL);
 }
 
 bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
@@ -173,7 +183,7 @@ int spawn_synchronous(const char *const *argv)
 	int ret;
 
 	if (!__spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
-		return false;
+		return -errno;
 	waitpid(pid, &ret, 0);
 	spawn_restore_sigchld();
 	return ret;

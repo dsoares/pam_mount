@@ -3,9 +3,6 @@
 
 o unit tests
 
-o already_mounted() needs to handle /etc/mtab entries for dm-crypt volumes
-mounted with patched util-linux.
-
 o get test account working with patched mount and remove "crypt" type support.
 	- see FIXME: ugly hack...
 	- ensure "check for existing mount works with patched mount
@@ -28,8 +25,6 @@ o Should -N go in pam_mount.conf like it is now?  Shall I put this in
 conf/pam_mount.conf?  How does hashing/not hashing effect scripts?
 
 o ensure '\0'-termination is guarenteed everytime strlen is used.
-
-o If losetup does not regain -k option, modify scripts.
 
 o Get rid of FIXMEs.
 

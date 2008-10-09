@@ -6,6 +6,13 @@ For details, see the history as recorded in the git repository.
 - fix leftover assertion in crypto.c
 - remove legacy truecrypt 4.x support
 - deprecate cryptoloop (unsafe for journalled fs)
+- remove BSD mntcheck code
+- remove BSD mntagain leftovers
+- remove BSD mount_ehd/vnconfig scripts
+- remove code that set up a loop device for fsck
+  (fsck can operate on normal files)
+- new crypto helper: pmt-ehd replaces scripts/mkehd
+- new crypto helper: mount.crypt is now a proper program
 
 
 v0.48 (September 10 2008)

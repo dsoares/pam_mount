@@ -196,7 +196,6 @@ void freeconfig(struct config *config)
 	unsigned int i;
 
 	HXmc_free(config->luserconf);
-	free(config->fsckloop);
 
 	for (i = 0; i < _CMD_MAX; ++i) {
 		/*
@@ -304,13 +303,11 @@ void initconfig(struct config *config)
 	memset(config, 0, sizeof(*config));
 	config->debug      = true;
 	config->mkmntpoint = true;
-	config->fsckloop   = xstrdup("/dev/loop7");
 
 	config->msg_authpw    = xstrdup("pam_mount password:");
 	config->msg_sessionpw = xstrdup("reenter password for pam_mount:");
 
-	config->path = xstrdup("/sbin:/bin:/usr/sbin:/usr/bin:"
-	               "/usr/local/sbin:/usr/local/bin");
+	config->path = xstrdup(PMT_DFL_PATH);
 
 	/* Initialize all. Makes it easier. */
 	for (i = 0; i < _CMD_MAX; ++i)
@@ -610,25 +607,6 @@ static const char *rc_debug(xmlNode *node, struct config *config,
 	if ((s = xml_getprop(node, "enable")) != NULL)
 		Debug = config->debug = strtoul(s, NULL, 0);
 	free(s);
-	return NULL;
-}
-
-static const char *rc_fsckloop(xmlNode *node, struct config *config,
-    unsigned int cmd)
-{
-	char *dev;
-
-	if (config->level != CONTEXT_GLOBAL)
-		return "Tried to set <fsckloop> from user config";
-	if ((dev = xml_getprop(node, "device")) != NULL) {
-		if (strlen(dev) > PATH_MAX) {
-			free(dev);
-			return "fsckloop device path too long";
-		}
-		free(config->fsckloop);
-		config->fsckloop = dev;
-	}
-
 	return NULL;
 }
 
@@ -1312,18 +1290,10 @@ static const struct pmt_command default_command[] = {
 	/* Do not use LCLMOUNT to avoid calling fsck */
 	{CMD_NFSMOUNT,   "nfs",   "nfsmount",   {"mount", "%(SERVER):%(VOLUME)", "%(MNTPT)%(before=\"-o\" OPTIONS)", NULL}},
 	{CMD_LCLMOUNT,   NULL,    "lclmount",   {"mount", "-p0", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", "%(before=\"-o\" OPTIONS)", NULL}},
-	/* Hope to have this in util-linux (LCLMOUNT) some day: */
-	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount.crypt", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT, "crypt", "cryptmount", {"mount.crypt", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(before=\"-o \" OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTUMOUNT, "crypt", "cryptumount", {"umount.crypt", "%(MNTPT)", NULL}},
 	{CMD_UMOUNT,     NULL,    "umount",     {"umount", "%(MNTPT)", NULL}},
-	/*
-	 *  Leave mntcheck available on GNU/Linux so I can ship one
-	 *  config file example
-	 */
-	{CMD_MNTCHECK,   NULL,    "mntcheck",   {"mount", NULL}},
 	{CMD_FSCK,       NULL,    "fsck",       {"fsck", "-p", "%(FSCKTARGET)", NULL}},
-	{CMD_LOSETUP,    NULL,    "losetup",    {"losetup", "-p0", "%(before=\"-e\" CIPHER)", "%(before=\"-k\" KEYBITS)", "%(FSCKLOOP)", "%(VOLUME)", NULL}},
-	{CMD_UNLOSETUP,  NULL,    "unlosetup",  {"losetup", "-d", "%(FSCKLOOP)", NULL}},
 	{CMD_PMVARRUN,   NULL,    "pmvarrun",   {"pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
 	{-1},
 };
@@ -1333,16 +1303,13 @@ static const struct callbackmap cf_tags[] = {
 	{"cryptmount",      rc_command,             CMD_CRYPTMOUNT},
 	{"debug",           rc_debug,               CMD_NONE},
 	{"fd0ssh",          rc_command,             CMD_FD0SSH},
-	{"fsckloop",        rc_fsckloop,            CMD_NONE},
 	{"fsck",            rc_command,             CMD_FSCK},
 	{"fusemount",       rc_command,             CMD_FUSEMOUNT},
 	{"fuseumount",      rc_command,             CMD_FUSEUMOUNT},
 	{"lclmount",        rc_command,             CMD_LCLMOUNT},
 	{"logout",          rc_logout,              CMD_NONE},
-	{"losetup",         rc_command,             CMD_LOSETUP},
 	{"luserconf",       rc_luserconf,           CMD_NONE},
 	{"mkmountpoint",    rc_mkmountpoint,        CMD_NONE},
-	{"mntcheck",        rc_command,             CMD_MNTCHECK},
 	{"mntoptions",      rc_mntoptions,          CMD_NONE},
 	{"msg-authpw",      rc_string,              CMDA_AUTHPW},
 	{"msg-sessionpw",   rc_string,              CMDA_SESSIONPW},
@@ -1354,7 +1321,6 @@ static const struct callbackmap cf_tags[] = {
 	{"smbmount",        rc_command,             CMD_SMBMOUNT},
 	{"smbumount",       rc_command,             CMD_SMBUMOUNT},
 	{"umount",          rc_command,             CMD_UMOUNT},
-	{"unlosetup",       rc_command,             CMD_UNLOSETUP},
 	{"volume",          rc_volume,              CMD_NONE},
 	{NULL},
 };

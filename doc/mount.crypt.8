@@ -1,17 +1,16 @@
-.TH mount.crypt 8 "15 June 2004"
-.SH NAME
+.TH mount.crypt 8 2008-09-19
+.SH Name
 mount.crypt - mount a dm\-crypt encrypted volume
-.SH SYNOPSIS
-\fBmount.crypt\fP \fIdevice\fP \fIdirectory\fP [\fB\-o\fP \fIoptions\fP]
-.br
-\fBmount.crypt\fP {\fB\-h\fP|\fB\-?\fP}
-.SH OPTIONS
+.SH Syntax
+\fBmount.crypt\fP [\fB\-o\fP \fIoptions\fP] \fIdevice\fP \fIdirectory\fP
+.SH Options
 .TP
 \fB\-o\fP \fIoptions\fP
-set the mount options
+Set the mount options. mount.crypt will take out its own options it recognizes
+and passes any remaining options on to the underlying mount program.
 .TP
-\fB\-h\fP, \fB\-?\fP
-display help
+\fB\-n\fP
+Do not update /etc/mtab.
 .SH MOUNT OPTIONS
 .TP
 \fBdm\-wait\fP

@@ -73,4 +73,4 @@ case "$host" in
 esac
 AC_SUBST(PAM_MODDIR)
 
-AC_OUTPUT([Makefile config/Makefile doc/Makefile src/Makefile scripts/Makefile])
+AC_OUTPUT([Makefile config/Makefile doc/Makefile src/Makefile])

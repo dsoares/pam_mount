@@ -25,7 +25,6 @@
 #include <libHX/defs.h>
 #include <libHX.h>
 #include <pwd.h>
-#include "crypto.h"
 #include "misc.h"
 #include "mount.h"
 #include "pam_mount.h"
@@ -46,16 +45,11 @@
 
 /* Functions */
 static int already_mounted(const struct config * const, const struct vol *, struct HXbtree *);
-static int do_unlosetup(const struct config *, struct HXbtree *);
 static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
 static void run_ofl(const struct config * const, struct HXbtree *);
 static hxmc_t *vol_to_dev(const struct vol *);
-
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-static int split_bsd_mount(char *, const char **, const char **, const char **);
-#endif
 
 //-----------------------------------------------------------------------------
 /**
@@ -205,48 +199,28 @@ static int already_mounted(const struct config *const config,
 		return -1;
 	}
 
-	/*
-	 * WONTFIX: I am not overly fond of using mount, but BSD has no
-	 * /etc/mtab?
-	 */
-	if (config->command[CMD_MNTCHECK][0] == NULL) {
-		l0g("mntcheck not defined in pam_mount.conf.xml\n");
-		HXmc_free(dev);
-		return -1;
-	}
-
-	argv = arglist_build(config->command[CMD_MNTCHECK}, vinfo);
-	if (!spawn_start(argv, &pid, NULL, &cstdout, NULL, NULL, NULL)) {
-		HXmc_free(dev);
-		return -1;
-	}
-
-	fp = fdopen(cstdout, "r");
-	while (fgets(mte, sizeof(mte), fp) != NULL) {
+	//getmntinfo() or getfsstat()
+	while (...) {
+		struct statfs *sb;
 		/* FIXME: Test it. */
 		int (*xcmp)(const char *, const char *);
-		const char *fsname, *fstype, *fspt;
-
-		w4rn("mounted filesystem: %s", mte); /* @mte includes '\n' */
-		if (!split_bsd_mount(mte, &fsname, &fspt, &fstype)) {
-			mounted = -1;
-			break;
-		}
 
 		/* 
 		 * Use case-insensitive for SMB, etc. FIXME: Is it called
 		 * "smbfs" under BSD too?
 		 */
-		xcmp = (fstype != NULL && (strcmp(fstype, "smbfs") == 0 ||
-		       strcmp(fstype, "cifs") == 0 ||
-		       strcmp(fstype, "ncpfs") == 0)) ? strcasecmp : strcmp;
+		xcmp = (sb->f_fstypename != NULL &&
+		       (strcmp(sb->f_fstypename, "smbfs") == 0 ||
+		       strcmp(sb->f_fstypename, "cifs") == 0 ||
+		       strcmp(sb->f_fstypename, "ncpfs") == 0)) ?
+		       strcasecmp : strcmp;
 
 		/*
 		 * FIXME: Does BSD also turn "symlink mountpoints" into "real
 		 * mountpoints"?
 		 */
-		if (xcmp(fsname, dev) == 0 &&
-		    strcmp(fspt, vpt->mountpoint) == 0) {
+		if (xcmp(sb->f_mntfromname, dev) == 0 &&
+		    strcmp(sb->f_mntonname, vpt->mountpoint) == 0) {
 			mounted = 1;
 			break;
 		}
@@ -274,9 +248,7 @@ static int already_mounted(const struct config *const config,
  */
 static hxmc_t *vol_to_dev(const struct vol *vol)
 {
-	unsigned int len;
 	hxmc_t *ret;
-	char *p;
 
 	switch (vol->type) {
 	case CMD_SMBMOUNT:
@@ -299,19 +271,6 @@ static hxmc_t *vol_to_dev(const struct vol *vol)
 		HXmc_strcat(&ret, vol->volume);
 		break;
 
-	case CMD_CRYPTMOUNT:
-		/*
-		 * FIXME: ugly hack to support umount.crypt script. I hope that
-		 * util-linux will have native dm_crypt support some day.
-		 */
-		ret = HXmc_strinit("/dev/mapper/");
-		len = strlen(ret);
-		HXmc_strcat(&ret, vol->volume);
-		for (p = ret + len; *p != '\0'; ++p)
-			if (*p == '/')
-				*p = '_';
-		break;
-
 	default:
 		ret = HXmc_strinit(vol->volume);
 		break;
@@ -319,41 +278,6 @@ static hxmc_t *vol_to_dev(const struct vol *vol)
 
 	return ret;
 }
-
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-static int split_bsd_mount(char *wp, const char **fsname, const char **fspt,
-    const char **fstype)
-{
-	/*
-	 * mntcheck is currently defined as "/bin/mount" in pam_mount.conf.xml
-	 * so a line that we read is going to look like
-	 * "/dev/ad0s1 on / (ufs, local)".
-	 */
-
-	*fsname = wp;
-	if ((wp = strchr(wp, ' ')) == NULL) /* parse error */
-		return 0;
-
-	/* @wp now at " on ..." */
-	*wp++ = '\0';
-	if ((wp = strchr(wp, ' ')) == NULL)
-		return 0;
-
-	/* wp now at " fspt" */
-	*fspt = ++wp;
-	if ((wp = strchr(wp, ' ')) == NULL)
-		return 0;
-
-	/* wp now at " (fstype, local?, options)" */
-	*wp++ = '\0';
-	*fstype = ++wp;
-	while (isalnum(*wp))
-		++wp;
-	*wp = '\0';
-
-	return 1;
-}
-#endif
 
 static void log_pm_input(const struct config *const config,
     const struct vol *vpt)
@@ -369,8 +293,6 @@ static void log_pm_input(const struct config *const config,
 	w4rn("volume:        %s\n", znul(vpt->volume));
 	w4rn("mountpoint:    %s\n", vpt->mountpoint);
 	w4rn("options:       %s\n", options);
-	w4rn("fs_key_cipher: %s\n", znul(vpt->fs_key_cipher));
-	w4rn("fs_key_path:   %s\n", znul(vpt->fs_key_path));
 	w4rn("use_fstab:     %d\n", vpt->use_fstab);
 	w4rn("----------------------\n");
 	HXmc_free(options);
@@ -577,95 +499,8 @@ static int pipewrite(int fd, const void *buf, size_t count)
 	return fnval;
 }
 
-static int do_losetup(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, hxmc_t *password)
-{
-/* PRE:    config points to a valid struct config
- *         config->volume[vol] is a valid struct vol
- *         config->volume[vol].options is valid
- * POST:   volume has associated with a loopback device
- * FN VAL: if error 0 else 1, errors are logged
- */
-	struct HXdeque *argv;
-	pid_t pid;
-	int ret = 1, child_exit, cstdin = -1, cstderr = -1;
-	const char *cipher, *keybits;
-
-	assert(vinfo != NULL);
-	assert(password != NULL);
-
-	cipher  = kvplist_get(&vpt->options, "encryption");
-	keybits = kvplist_get(&vpt->options, "keybits");
-
-	if (config->command[CMD_LOSETUP]->items == 0) {
-		l0g("losetup not defined in pam_mount.conf.xml\n");
-		return 0;
-	}
-	/* FIXME: support OpenBSD */
-	/* FIXME: NEW */
-	if (cipher != NULL) {
-		format_add(vinfo, "CIPHER", cipher);
-		if (keybits != NULL)
-			format_add(vinfo, "KEYBITS", keybits);
-	}
-
-	argv = arglist_build(config->command[CMD_LOSETUP], vinfo);
-	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr, set_myuid, NULL))
-		return 0;
-
-	/* note to self: password is decrypted */
-	if (pipewrite(cstdin, password, HXmc_length(password)) !=
-	    HXmc_length(password)) {
-		l0g("error sending password to losetup\n");
-		ret = 0;
-	}
-	close(cstdin);
-	log_output(cstderr, "losetup errors:\n");
-	w4rn("waiting for losetup\n");
-	if (waitpid(pid, &child_exit, 0) < 0) {
-		l0g("error waiting for child: %s\n", strerror(errno));
-		ret = 0;
-	} else if (ret > 0) {
-		/* pass on through the result from the losetup process */
-		ret = !WEXITSTATUS(child_exit);
-	}
-	spawn_restore_sigchld();
-	return ret;
-}
-
-static int do_unlosetup(const struct config *config, struct HXbtree *vinfo)
-{
-/* PRE:    config points to a valid struct config
- * POST:   volume has associated with a loopback device
- * FN VAL: if error 0 else 1, errors are logged
- */
-	struct HXdeque *argv;
-	pid_t pid;
-	int child_exit;
-
-	assert(vinfo != NULL);
-
-	if (config->command[CMD_UNLOSETUP]->first == 0) {
-		l0g("unlosetup not defined in pam_mount.conf.xml\n");
-		return 0;
-	}
-	/* FIXME: support OpenBSD */
-	/* FIXME: NEW */
-
-	argv = arglist_build(config->command[CMD_UNLOSETUP], vinfo);
-	if (!spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
-		return 0;
-
-	w4rn("waiting for losetup delete\n");
-	if (waitpid(pid, &child_exit, 0) < 0)
-		l0g("error waiting for child: %s\n", strerror(errno));
-	spawn_restore_sigchld();
-	/* pass on through the result */
-	return !WEXITSTATUS(child_exit);
-}
-
 static int check_filesystem(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo, hxmc_t *password)
+    struct HXbtree *vinfo)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -679,7 +514,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	struct HXdeque *argv;
 
 	assert(vinfo != NULL);
-	assert(password != NULL);
 
 	if (vpt->type == CMD_CRYPTMOUNT)
 		/*
@@ -702,15 +536,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	    fstype_nodev(vpt->fstype) != 0)
 		return 1;
 
-	if (kvplist_contains(&vpt->options, "loop")) {
-		if (!do_losetup(config, vpt, vinfo, password))
-			return 0;
-		fsck_target = config->fsckloop;
-	} else {
-		hxmc_t *options = kvplist_to_str(&vpt->options);
-		w4rn("volume not a loopback (options: %s)\n", options);
-		HXmc_free(options);
-	}
 	format_add(vinfo, "FSCKTARGET", fsck_target);
 
 	argv = arglist_build(config->command[CMD_FSCK], vinfo);
@@ -724,9 +549,6 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	if (waitpid(pid, &child_exit, 0) < 0)
 		l0g("error waiting for child: %s\n", strerror(errno));
 	spawn_restore_sigchld();
-	if (kvplist_contains(&vpt->options, "loop"))
-		if (!do_unlosetup(config, vinfo))
-			return 0;
 	/*
 	 * pass on through the result -- okay if 0 (no errors) or 1 (errors
 	 * corrected)
@@ -782,7 +604,6 @@ int do_mount(const struct config *config, struct vol *vpt,
 {
 	const struct HXdeque_node *n;
 	struct HXdeque *argv;
-	hxmc_t *ll_password = NULL;
 	int child_exit = 0, cstdin = -1, cstderr = -1;
 	const char *mount_user;
 	pid_t pid = -1;
@@ -820,28 +641,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 	}
 	w4rn("checking for encrypted filesystem key configuration\n");
 
-	/* FIXME: better done elsewhere? */
 	password = (password != NULL) ? password : "";
-	if (vpt->fs_key_cipher != NULL && strlen(vpt->fs_key_cipher) > 0) {
-		/* ll_password is binary data */
-		w4rn("decrypting FS key using system auth. token and "
-		     "%s\n", vpt->fs_key_cipher);
-		/*
-		 * vpt->fs_key_path contains real filesystem key.
-		 */
-		if (!decrypted_key(&ll_password,
-		    vpt->fs_key_path, vpt->fs_key_cipher, password))
-			return 0;
-	} else {
-		ll_password = HXmc_strinit(password);
-	}
 	w4rn("about to start building mount command\n");
-	/* FIXME: NEW */
-	/* FIXME:
-	   l0g("volume type (%d) is unknown\n", vpt->type);
-	   return 0;
-	 */
-
 	if ((argv = HXdeque_init()) == NULL)
 		misc_log("malloc: %s\n", strerror(errno));
 	if (vpt->uses_ssh)
@@ -853,7 +654,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		arglist_add(argv, n->ptr, vinfo);
 
 	if (vpt->type == CMD_LCLMOUNT &&
-	    !check_filesystem(config, vpt, vinfo, ll_password))
+	    !check_filesystem(config, vpt, vinfo))
 		l0g("error checking filesystem but will continue\n");
 	/* send password down pipe to mount process */
 	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT)
@@ -863,21 +664,16 @@ int do_mount(const struct config *config, struct vol *vpt,
 	arglist_log(argv);
 	mount_user = vpt->noroot ? vpt->user : NULL;
 	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr,
-	    set_myuid, mount_user)) {
-		HXmc_free(ll_password);
+	    set_myuid, mount_user))
 		return 0;
-	}
 
 	if (vpt->type != CMD_NFSMOUNT)
-		if (pipewrite(cstdin, ll_password, HXmc_length(ll_password)) !=
-		    HXmc_length(ll_password))
+		if (pipewrite(cstdin, password, strlen(password)) !=
+		    strlen(password))
 			/* FIXME: clean: returns value of exit below */
 			l0g("error sending password to mount\n");
 	close(cstdin);
 
-	/* Paranoia? */
-	memset(ll_password, 0, HXmc_length(ll_password));
-	HXmc_free(ll_password);
 	log_output(cstderr, "mount errors:\n");
 	w4rn("waiting for mount\n");
 	if (waitpid(pid, &child_exit, 0) < 0) {
@@ -915,11 +711,14 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	if ((vinfo = HXformat_init()) == NULL)
 		return 0;
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
-	format_add(vinfo, "FSCKLOOP", config->fsckloop);
 	format_add(vinfo, "FSTYPE",   vpt->fstype);
 	format_add(vinfo, "VOLUME",   vpt->volume);
 	format_add(vinfo, "SERVER",   vpt->server);
 	format_add(vinfo, "USER",     vpt->user);
+	if (vpt->fs_key_cipher != NULL)
+		format_add(vinfo, "FSKEYCIPHER", vpt->fs_key_cipher);
+	if (vpt->fs_key_path != NULL)
+		format_add(vinfo, "FSKEYPATH", vpt->fs_key_path);
 	misc_add_ntdom(vinfo, vpt->user);
 
 	if ((pe = getpwnam(vpt->user)) == NULL) {

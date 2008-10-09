@@ -2,10 +2,10 @@ pam_mount(8)                                                      pam_mount(8)
 
 
 
-NAME
+Name
        pam_mount - A PAM module that can mount volumes for a user session
 
-OVERVIEW
+Overview
        This  module  is aimed at environments with central file servers that a
        user  wishes  to  mount  on  login  and  unmount  on  logout,  such  as
        (semi-)diskless  stations  where  many users can logon and where stati‐
@@ -38,7 +38,7 @@ OVERVIEW
        (the cryptoswap can help you do this). Do not assume a system is secure
        without carefully considering potential threats.
 
-NASTY DETAILS
+Configuration
        The   primary   configuration   file   for   the  pam_mount  module  is
        pam_mount.conf.xml.   On  most  platforms  this  file  is   read   from
        /etc/security/pam_mount.conf.xml.  On  OpenBSD pam_mount reads its con‐
@@ -105,71 +105,52 @@ NASTY DETAILS
        pam_mount will be run after successful authentification with these sub‐
        systems.
 
-       If  your volume has a different password than your system account, then
-       encrypt the password to the volume you wish mounted using  your  system
-       password  as  the  key  and  store  it somewhere on your system’s local
-       filesystem. pam_mount supports transparently decrypting this filesystem
-       key, as long as the cipher used is supported by openssl. Given:
-
-       sk     system key, the key or password used to log into the system
-
-       fsk    filesystem  key,  the  key that allows you to use the filesystem
-              you wish pam_mount to mount for you
-
-       E and D
-              an openssl supported synchronous encryption/decryption algorithm
-
-       efsk   encrypted filesystem key, efsk = E_sk (fsk), stored somewhere on
-              the local filesystem (ie: /home/user.key)
-
-       pam_mount will read efsk from the local filesystem, perform fsk =  D_sk
-       (efsk)  and  use fsk to mount the filesystem. If you change your system
-       password, simply regenerate efsk using efsk = E_sk (fsk). If  you  want
-       to  mount  this  volume  by  hand,  use  something like ‘openssl enc -d
-       -aes-256-ecb -in /home/user.key | mount -p0 /home/user‘. More  informa‐
-       tion about this technique is included in pam_mount.conf.xml.
-
-       A  script  named  mkehd  is  provided  with  pam_mount  to  help create
-       encrypted home directories. If you have  an  entry  for  a  user  using
-       encrypted  home  directories  in  pam_mount.conf.xml, mkehd will create
-       necessary filesystem images and possibly encrypted filesystem keys.
-
-       Individual users may define additional volumes to mount if  allowed  by
-       pam_mount.conf.xml  (usually ~/.pam_mount.conf.xml). The volume keyword
+       Individual  users  may define additional volumes to mount if allowed by
+       pam_mount.conf.xml (usually ~/.pam_mount.conf.xml). The volume  keyword
        is the only valid keyword in these per-user configuration files. If the
        luserconf parameter is set in pam_mount.conf.xml, allowing user-defined
-       volume, then users may mount and unmount any volume  they  own  at  any
-       mount  point  they own. On some filesystem configurations this may be a
-       security flaw so user-defined volumes are not allowed  by  the  example
+       volume,  then  users  may  mount and unmount any volume they own at any
+       mount point they own. On some filesystem configurations this may  be  a
+       security  flaw  so  user-defined volumes are not allowed by the example
        pam_mount.conf.xml distributed with pam_mount.
 
-       In  general,  you will leave all the first (general) parameters as pro‐
-       vided by default. You only have to provide the user/volume list in  the
-       end of the file, following the examples.
+Encrypted Disks
+       There are various ways to store data  encrypted.  encfs,  dm-crypt  and
+       dm-crypt+LUKS.  If  you  only ever need a single password for accessing
+       the encrypted volume, the first two will do. encfs directories are cre‐
+       ated using the encfs(1) program. dm-crypt volumes can be easily created
+       using pmt-ehd(8). See pam_mount.conf(5) how the configuration file def‐
+       initions look for these volume types.
 
-       To  ensure  that  your  system and, possibly, the remote server are all
+       pmt-ehd  creates an fskey which is a bunch of random bytes that will be
+       used to decrypt the volume. The binary fskey data itself  is  encrypted
+       with  your own password - this is done so that you can change the pass‐
+       word without having to reencrypt all of your data.
+
+Troubleshooting
+       To ensure that your system and, possibly, the  remote  server  are  all
        properly configured, you should try to mount all or some of the volumes
        by  hand,  using  the  same  commands  and  mount  points  provided  in
        pam_mount.conf.xml. This will save you a lot of grief, since it is more
        difficult to debug the mounting process via pam_mount.
 
-       If  you  can  mount  the  volumes  by  hand but it is not happening via
-       pam_mount,  you  may   want   to   enable   the   "debug"   option   in
+       If you can mount the volumes by  hand  but  it  is  not  happening  via
+       pam_mount,   you   may   want   to   enable   the   "debug"  option  in
        pam_mount.conf.xml to see what is happening.
 
-       Verify  if the user owns the mount point and has sufficient permissions
-       over that. pam_mount will verify this and  will  refuse  to  mount  the
+       Verify if the user owns the mount point and has sufficient  permissions
+       over  that.  pam_mount  will  verify  this and will refuse to mount the
        remote volume if the user does not own that directory.
 
-       If  pam_mount  is  having  trouble unmounting volumes upon logging out,
-       enable the debug variable. This causes pam_mount to run ofl  on  logout
+       If pam_mount is having trouble unmounting  volumes  upon  logging  out,
+       enable  the  debug variable. This causes pam_mount to run ofl on logout
        and write its output to the system’s log.
 
-AUTHORS
+Authors
        W. Michael Petullo <mike@flyn.org>
 
        Jan Engelhardt <jengelh [at] medozas de> (current maintainer)
 
 
 
-                                                                  pam_mount(8)
+                                  2008-10-08                      pam_mount(8)
