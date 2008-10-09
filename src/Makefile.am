@@ -25,8 +25,7 @@ moduledir = @PAM_MODDIR@
 module_LTLIBRARIES = pam_mount.la
 bin_PROGRAMS = pmt-fd0ssh pmt-ofl
 sbin_PROGRAMS = pmt-ehd pmvarrun
-ssbin_PROGRAMS = mount.encfs13
-noinst_PROGRAMS = mount.crypt umount.crypt
+ssbin_PROGRAMS = mount.crypt mount.encfs13 umount.crypt
 
 pam_mount_la_SOURCES = loop.c misc.c ofl-lib.c pam_mount.c rdconf1.c rdconf2.c mount.c spawn.c
 pam_mount_la_LIBADD  = -lpam ${libHX_LIBS} ${libcrypto_LIBS} ${libssl_LIBS} ${libxml_LIBS}
