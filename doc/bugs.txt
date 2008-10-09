@@ -10,13 +10,6 @@ debug output to stderr, so this combination will only work if debugging
 is disabled in pam_mount, or gksu gets fixed.
 
 
-[ pam_mount < 0.19 - config file ]
-
-Our config file format changed from plaintext to XML with version 0.19.
-A Perl script to convert it can be found in the scripts/ directory
-beginning with version 0.20.
-
-
 [ sshd - various ]
 
 The "UsePAM" configuration option is required to be enabled to make

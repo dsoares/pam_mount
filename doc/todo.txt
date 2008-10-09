@@ -1,11 +1,5 @@
 
-=== ADDED 2005-09-xx ===
-
 o unit tests
-
-o get test account working with patched mount and remove "crypt" type support.
-	- see FIXME: ugly hack...
-	- ensure "check for existing mount works with patched mount
 
 o passwdehd needs work.
 
@@ -24,8 +18,6 @@ o regression tests:
 o Should -N go in pam_mount.conf like it is now?  Shall I put this in
 conf/pam_mount.conf?  How does hashing/not hashing effect scripts?
 
-o ensure '\0'-termination is guarenteed everytime strlen is used.
-
 o Get rid of FIXMEs.
 
 = OpenBSD =====================================================================
@@ -42,70 +34,3 @@ o Make EHD on OpenBSD and Linux as similar as possible document EHD
 on OpenBSD.
 
 o Test new openpam to ensure OpenBSD patches are integrated.
-
-= Past 1.0 (punted) ===========================================================
-
-o fork a (one, don't fork again if its already running) daemon that
-continues to try and unmount volumes after a user logs out.  pam_mount
-would pass the daemon volumes to unmount and cancel things if the user
-logs back in.  HOW WOULD ALL OF THIS BE AUTHENTICATED?
-
-o Break into multiple (root priveleged and user priv.) processes?
-	- See /* This code needs root priv. */
-	- root "exec program" process (or user + "mount" POSIX capability? CAP_SYS_ADMIN (not very fine-grained)) use shared memory (see shmget) to pass argv to root process.
-	- root "logger" process (or user + "logging" POSIX capability?)
-	- root "update /var/run/pam_mount" process (or pseudouser/group that ownes /var/run/pam_mount?)
-	- all else run with user privs.
-  - OR -
-	- reduce features
-  - OR -
-	- split into multiple pam modules, pam_fsck, etc.
-
-  => Third option preferably; AFAICS, there is already a pam_fsck.
-     However, in case of loop/LVM mounts, pam_fsck might not know the device...
-
-o Get umount -l to release loop device when appropriate and possible?
-
-o Make pam_mount.c and mount.c completely binary passwd safe.
-
-o Why does pam_mount not work with RH 9.0's gdm?  Socket issue?
-	I HAVE REPORTS THAT IT WORKS NOW.  DOES IT?
-
-o Fix GNOME so that Gconfd does not hang around after a user exits.
-This is causing pam_mount's umount to fail on Red Hat 8.0 and Debian
-unstable.  In Red Hat bugzilla.
-    => not a pam_mount problem
-
-o Deamon to unmount volume after all processes finally exit after a user logs
-out?  What if a user uses nohup?
-    => pam_mount is just not the thing to do non-interactive sessions. Period.
-
-o Get smbmount and ncpmount to support mount-like -p0 option to simplify
-pmhelper's code (Or ncpmount and mount to support PASSWD like smbmount).
-    => CHECK IT NOW, it's almost working, if not entirely.
-
-o Add the ability to create an encrypted loopback filesystem to useradd.
-This should also create a README file in, for example, /home/mike that
-explains setup.  (useradd is a part of passwd package, adduser is a part
-of adduser package).
-    => Not a pam_mount problem
-
-o Modify passwd to update /home/mike.key.  Add -p, --post-script option
-to run passwdehd?  (See passwdehd script)
-
-o From Roman Sliva <roman.sliva@vsb.cz>: pam_mount doesn't mount ncp
-filesystems of Novell servers using NDS - full context username must be
-provided to ncpmount -U option (not just short unix name).  I solve this
-by writing wrapper script for ncpmount, which gets full context username
-using ldapsearch. I think a possibility of cooperation directly with
-pam_ldap might be a great solution.
-
-	- For NDS, use username to look up full context using LDAP?
-		. email pam_ldap folks about sharing:
-			1.  /etc/ldap.conf.
-			2.  _get_user_info (gets userdn -- used by
-			    ldap_simple_bind).
-	- SENT EMAIL TO PAM_LDAP MAINT. ABOUT EXPORTING LDAP INFO. USING
-	PAM_SET_DATA.  WILL ALSO NEED TO IMPLEMNT A HACK TO ALLOW THIS
-	INFO TO BE REFERENCED IN VOLUME DEFINITIONS UNTIL NICE, NEW
-	VOLUME DEF. CODE IS IMPLEENTED.

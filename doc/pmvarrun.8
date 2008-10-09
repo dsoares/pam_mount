@@ -1,9 +1,9 @@
-.TH pmvarrun 8 "15 June 2004"
-.SH NAME
+.TH pmvarrun 8 "2008\-10\-08" "pam_mount" "pam_mount"
+.SH Name
 pmvarrun - updates /var/run/pam_mount/\fIuser\fP
-.SH SYNOPSIS
+.SH Syntax
 \fBpmvarrun\fP \fB\-u\fP \fIuser\fP [\fIoptions\fP]
-.SH DESCRIPTION
+.SH Description
 A separate program is needed so that /var/run/pam_mount/\fIuser\fP may be
 created with a pam_mount\-specific security context (otherwise
 SELinux policy will conflict with gdm, which also creates file
@@ -32,7 +32,7 @@ login phase is done as root and the logout phase as a normal user.
 Nevertheless, pmvarrun supports this, and the same permissions as in root\-root
 can be used. While the user may not be able to unlink his file from
 /var/run/pam_mount, it will be truncated to indicate the same state.
-.SH OPTIONS
+.SH Options
 .TP
 \fB\-\-help\fP, \fB\-h\fP
 Display help.
@@ -45,9 +45,9 @@ Increase volume count by \fInumber\fP.
 .TP
 \fB\-d\fP
 Turn on debugging.
-.SH FILES
+.SH Files
 \fB/var/run/pam_mount/\fP\fIuser\fP
-.SH AUTHOR
+.SH Author
 This manpage was originally written by Bastian Kleineidam
 <calvin@debian.org> for the Debian distribution of libpam\-mount but
 may be used by others.

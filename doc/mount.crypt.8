@@ -1,4 +1,4 @@
-.TH mount.crypt 8 2008-09-19
+.TH mount.crypt 8 "2008\-10\-08" "pam_mount" "pam_mount"
 .SH Name
 mount.crypt - mount a dm\-crypt encrypted volume
 .SH Syntax
@@ -10,8 +10,9 @@ Set the mount options. mount.crypt will take out its own options it recognizes
 and passes any remaining options on to the underlying mount program.
 .TP
 \fB\-n\fP
-Do not update /etc/mtab.
-.SH MOUNT OPTIONS
+Do not update /etc/mtab. This option is currently not implemented and is
+ignored.
+.SH Mount options
 .TP
 \fBdm\-wait\fP
 Wait for udev to create /dev/mapper/\fIname\fP after calling cryptsetup(8).
@@ -19,7 +20,7 @@ Wait for udev to create /dev/mapper/\fIname\fP after calling cryptsetup(8).
 \fBdm\-timeout=\fP\fIseconds\fP
 Wait at most this many seconds before giving up. The default value is 5
 seconds.
-.SH AUTHOR
+.SH Authors
 This manpage was originally written by Bastian Kleineidam <calvin@debian.org>
 for the Debian distribution of pam_mount (libpam\-mount) but may be used by
 others.
