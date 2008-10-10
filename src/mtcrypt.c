@@ -226,12 +226,6 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		return false;
 	}
 
-	if (opt->fsk_file == NULL) {
-		fprintf(stderr, "%s: No keyfile specified "
-		        "(use -o keyfile=xxx)\n", **argv);
-		return false;
-	}
-
 	if (opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "
 		        "(use -o cipher=xxx)\n", **argv);
@@ -255,16 +249,26 @@ static int mtcr_mount(struct mount_options *opt)
 	FILE *fp;
 	hxmc_t *cd, *key;
 
-	key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
-	      opt->fsk_cipher, opt->fsk_password);
-	if (key == NULL) {
-		fprintf(stderr, "Error while decrypting fskey\n");
-		return 0;
+	if (opt->fsk_file == NULL) {
+		/* LUKS derives the key material on its own */
+		key = HXmc_dup(opt->fsk_password);
+		if (key == NULL) {
+			fprintf(stderr, "HXmc_dup: %s\n", strerror(errno));
+			return 0;
+		}
+	} else {
+		key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
+		      opt->fsk_cipher, opt->fsk_password);
+		if (key == NULL) {
+			fprintf(stderr, "Error while decrypting fskey\n");
+			return 0;
+		}
 	}
 
 	ehd_load(opt->container, &cd, opt->dmcrypt_cipher,
 	         reinterpret_cast(const unsigned char *, key),
 	         HXmc_length(key), opt->readonly);
+	HXmc_free(key);
 	if (cd == NULL) {
 		fprintf(stderr, "No crypto device assigned\n");
 		return 0;
