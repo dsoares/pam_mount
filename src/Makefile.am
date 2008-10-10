@@ -7,7 +7,8 @@ moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
 bin_PROGRAMS		= pmt-fd0ssh pmt-ofl
 sbin_PROGRAMS		= pmt-ehd pmvarrun
-ssbin_PROGRAMS		= mount.crypt mount.encfs13 umount.crypt
+ssbin_PROGRAMS		= mount.crypt mount.encfs13
+noinst_PROGRAMS		= umount.crypt
 
 pam_mount_la_SOURCES	= loop.c misc.c ofl-lib.c pam_mount.c \
 			  rdconf1.c rdconf2.c mount.c spawn.c
@@ -33,7 +34,11 @@ pmvarrun_SOURCES = pmvarrun.c nlt-misc.c
 pmvarrun_LDADD   = ${libHX_LIBS}
 
 umount.crypt: mount.crypt
-	-ln -s $^ $@;
+	-${LN_S} $^ $@;
 
 install-data-hook:
 	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;
+
+install-exec-hook:
+	mkdir -p "${DESTDIR}${ssbindir}";
+	-${LN_S} -f mount.crypt "${DESTDIR}${ssbindir}/umount.crypt";

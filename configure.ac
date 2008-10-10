@@ -15,6 +15,7 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
 AM_PROG_LIBTOOL
+AC_PROG_LN_S
 
 AC_ARG_WITH([slibdir], AS_HELP_STRING([--with-slibdir=PATH],
 	[Path to the super lib directory [[/lib]]]),
