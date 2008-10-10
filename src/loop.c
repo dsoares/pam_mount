@@ -445,7 +445,6 @@ hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
 		.cipher   = EVP_get_cipherbyname(cipher_name),
 		.password = password,
 	};
-	unsigned int buf_size;
 	hxmc_t *f_ret = NULL;
 	unsigned char *buf;
 	struct stat sb;
@@ -474,7 +473,7 @@ hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
 
 	if ((i_ret = read(fd, buf, sb.st_size)) != sb.st_size) {
 		l0g("Incomplete read of %u bytes got %Zd bytes\n",
-		    buf_size, i_ret);
+		    sb.st_size, i_ret);
 		goto out2;
 	}
 

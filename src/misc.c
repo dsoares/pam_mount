@@ -86,7 +86,7 @@ int misc_log(const char *format, ...)
 int misc_warn(const char *format, ...)
 {
 	va_list args, arg2;
-	int ret;
+	int ret = 0;
 
 	assert(format != NULL);
 	if (!pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] &&
