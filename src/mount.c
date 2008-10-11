@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX.h>
+#include <grp.h>
 #include <pwd.h>
 #include "misc.h"
 #include "mount.h"
@@ -726,8 +727,11 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 		     Config.user, strerror(errno));
 	} else {
 		unsigned int uid = pe->pw_uid, gid = pe->pw_gid;
+		struct group *ge = getgrgid(pe->pw_gid);
 		HXformat_add(vinfo, "USERUID", &uid, HXTYPE_UINT);
 		HXformat_add(vinfo, "USERGID", &gid, HXTYPE_UINT);
+		if (ge != NULL)
+			HXformat_add(vinfo, "GROUP", ge->gr_name, HXTYPE_STRING);
 	}
 
 	/* FIXME: should others remain undefined if == ""? */
