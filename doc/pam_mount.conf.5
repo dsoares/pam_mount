@@ -126,8 +126,12 @@ server is the same as the username, e.g. <volume fstype="cifs" server="fsbox"
 path="%(DOMAIN_USER)" />.
 .TP
 \fB%(USERUID)\fP, \fB%(USERGID)\fP
-The numeric UID and GID of the user logging in. This is useful in conjunction
-with the uid= or gid= mount options, e.g. <volume options="uid=%(USERUID)" />.
+The numeric UID and GID of the primary group of the user logging in.
+This is obtained via getpw*(), not getuid(). It is useful in
+conjunction with the uid= or gid= mount options, e.g. <volume
+options="uid=%(USERUID)" />. Note that you \fBdo not\fP need to
+specify uid=%(USERUID) for smbfs or cifs mounts because this is
+already done automatically by pam_mount.
 .TP
 \fB%(GROUP)\fP
 The name of the group for %(USERGID).
