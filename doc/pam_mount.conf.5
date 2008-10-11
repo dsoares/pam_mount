@@ -141,10 +141,11 @@ The source volume as given by the <volume \fBpath\fP="..."> attribute.
 \fB%(MNTPT)\fP
 The target mountpoint as given by the <volume \fBmountpoint\fP="..."> attribute.
 .TP
-\fB%(CIPHER)\fP
+\fB%(FSKEYCIPHER)\fP
 .TP
-\fB%(KEYBITS)\fP
-Various options related to dm\-crypt/LUKS crypto.
+\fB%(FSKEYPATH)\fP
+These two are the values from the <volume \fBfskeycipher\fP="..." and
+\fBfskeypath\fP="..." /> attributes.
 .TP
 \fB%(OPERATION)\fP
 This is for internal\-use between pam_mount and \fBpmvarrun\fP(8) \fIonly\fP.
