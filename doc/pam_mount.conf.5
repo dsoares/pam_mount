@@ -130,22 +130,24 @@ The numeric UID and GID of the user logging in. This is useful in conjunction
 with the uid= or gid= mount options, e.g. <volume options="uid=%(USERUID)" />.
 .TP
 \fB%(FSTYPE)\fP
-The fstype as given by the <volume \fBfstype\fP="..."> attribute.
+The fstype as given by the <volume \fBfstype\fP="\fI...\fP" /> attribute.
 .TP
 \fB%(SERVER)\fP
-The source server as given by the <volume \fBserver\fP="..."> attribute.
+The source server as given by the <volume \fBserver\fP="\fI...\fP" />
+attribute.
 .TP
 \fB%(VOLUME)\fP
-The source volume as given by the <volume \fBpath\fP="..."> attribute.
+The source volume as given by the <volume \fBpath\fP="\fI...\fP" /> attribute.
 .TP
 \fB%(MNTPT)\fP
-The target mountpoint as given by the <volume \fBmountpoint\fP="..."> attribute.
+The target mountpoint as given by the <volume \fBmountpoint\fP="\fI...\fP" />
+attribute.
 .TP
 \fB%(FSKEYCIPHER)\fP
 .TP
 \fB%(FSKEYPATH)\fP
-These two are the values from the <volume \fBfskeycipher\fP="..." and
-\fBfskeypath\fP="..." /> attributes.
+These two are the values from the <volume \fBfskeycipher\fP="\fI...\fP" and
+\fBfskeypath\fP="\fI...\fP" /> attributes.
 .TP
 \fB%(OPERATION)\fP
 This is for internal\-use between pam_mount and \fBpmvarrun\fP(8) \fIonly\fP.
