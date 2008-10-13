@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <ctype.h>
 #include <errno.h>
 #include <mntent.h>
 #include <signal.h>
@@ -121,6 +122,8 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 
 		if (value != NULL)
 			*value++ = '\0';
+		while (isspace(*key))
+			++key;
 		if (strcmp(key, "cipher") == 0)
 			mo->dmcrypt_cipher = value;
 		else if (strcmp(key, "fsk_cipher") == 0)
