@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- config: fix unfortunate inversion in user_in_sgrp
+
+
 v1.0 (October 12 2008)
 ======================
 - convert_pam_mount_conf.pl: ignore unknown commands
