@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.0 (October 12 2008)
+======================
 - convert_pam_mount_conf.pl: ignore unknown commands
 - fix leftover assertion in crypto.c
 - remove legacy truecrypt 4.x support
@@ -13,6 +15,18 @@ For details, see the history as recorded in the git repository.
   (fsck can operate on normal files)
 - new crypto helper: pmt-ehd replaces scripts/mkehd
 - new crypto helper: mount.crypt is now a proper program
+- add %(GROUP) variable
+- remove convert_pam_mount.conf.pl
+
+
+v0.49 (October 07 2008)
+=======================
+- convert_pam_mount_conf.pl: ignore unknown commands
+- fix leftover assertion in crypto.c
+- remove legacy truecrypt 4.x support
+- deprecate cryptoloop (unsafe for journalled fs)
+- revert "mount.crypt: default to aes-cbc-essiv:sha256/sha512"
+- fix invalid pointer causing crash on fskey decryption
 
 
 v0.48 (September 10 2008)
