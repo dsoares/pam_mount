@@ -249,7 +249,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
  */
 static int mtcr_mount(struct mount_options *opt)
 {
-	const char *mount_args[7];
+	const char *mount_args[9];
 	struct stat sb;
 	int ret, argk = 0;
 	FILE *fp;
@@ -286,6 +286,10 @@ static int mtcr_mount(struct mount_options *opt)
 
 	mount_args[argk++] = "mount";
 	mount_args[argk++] = "-n";
+	if (opt->fstype != NULL) {
+		mount_args[argk++] = "-t";
+		mount_args[argk++] = opt->fstype;
+	}
 	mount_args[argk++] = cd;
 	mount_args[argk++] = opt->mountpoint;
 	if (opt->extra_opts != NULL) {
