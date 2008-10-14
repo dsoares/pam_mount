@@ -216,6 +216,7 @@ int main(int argc, const char **argv)
 	set_defaults(&settings);
 	parse_args(argc, argv, &settings);
 
+	Debug = false;
 	/* pam_mount.so will pick stderr up */
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
