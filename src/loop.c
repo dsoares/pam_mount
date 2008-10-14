@@ -211,6 +211,9 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 		return false;
 	}
 
+	if (Debug)
+		arglist_llog(start_args);
+
 	ret = spawn_startl(start_args, &pid, &fd_stdin, NULL);
 	if (!ret) {
 		l0g("Error setting up crypto device: %s\n",

@@ -4,7 +4,7 @@
 pmt\-ehd - create an encrypted disk image
 .SH Syntax
 .PP
-\fBpmt-ehd\fP [\fB-Fx\fP]
+\fBpmt-ehd\fP [\fB-DFx\fP]
 [\fB-c\fP \fIfscipher\fP]
 [\fB-i\fP \fIcipher\fP]
 [\fB-k\fP \fIfscipher_keybits\fP]
@@ -15,6 +15,9 @@ pmt\-ehd - create an encrypted disk image
 .PP
 Mandatory options that are absent are inquired interactively, and pmt-ehd will
 exit if stdin is not a terminal.
+.TP
+\fB-D\fP
+Turn on debugging strings.
 .TP
 \fB-F\fP
 Force operation that would otherwise ask for interactive confirmation. Multiple

@@ -513,6 +513,8 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 	struct container_ctl *cont = &pg->cont;
 	struct fskey_ctl *fsk = &pg->fskey;
 	struct HXoption options_table[] = {
+		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &Debug,
+		 .help = "Enable debugging"},
 		{.sh = 'F', .type = HXTYPE_NONE | HXOPT_INC,
 		 .ptr = &pg->force_level,
 		 .help = "Force operation (also -FF)"},
@@ -575,6 +577,7 @@ int main(int argc, const char **argv)
 {
 	struct ehd_ctl pg;
 
+	Debug = false;
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 	memset(&pg, 0, sizeof(pg));

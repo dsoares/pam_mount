@@ -5,6 +5,7 @@ For details, see the history as recorded in the git repository.
 - config: fix unfortunate inversion in user_in_sgrp
 - config: fix unintentional inversion in mntoptions deny processing
 - mount.crypt: allow specification of a hash alg
+- pmt-ehd: add -D option for debugging
 
 
 v1.0 (October 12 2008)
