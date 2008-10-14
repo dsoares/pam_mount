@@ -587,11 +587,11 @@ static hxmc_t *__pmt_get_password(FILE *fp)
 	return ret;
 }
 
-hxmc_t *pmt_get_password(void)
+hxmc_t *pmt_get_password(const char *prompt)
 {
 	hxmc_t *ret;
 
-	printf("Password: ");
+	printf("%s", (prompt != NULL) ? prompt : "Password: ");
 	fflush(stdout);
 	ret = __pmt_get_password(stdin);
 	printf("\n");

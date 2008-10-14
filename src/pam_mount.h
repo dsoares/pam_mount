@@ -139,7 +139,7 @@ extern int ehd_unload(const char *, bool);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	const char *);
 extern unsigned int cipher_digest_security(const char *);
-extern hxmc_t *pmt_get_password(void);
+extern hxmc_t *pmt_get_password(const char *);
 
 /*
  *	OFL-LIB.C

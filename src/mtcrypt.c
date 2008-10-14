@@ -238,7 +238,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
 
-	opt->fsk_password = pmt_get_password();
+	opt->fsk_password = pmt_get_password(NULL);
 	return true;
 }
 

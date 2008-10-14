@@ -553,7 +553,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 
 static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 {
-	hxmc_t *password;
+	hxmc_t *password, *password2;
 
 	if (!ehd_get_options(&argc, &argv, pg))
 		return false;
@@ -566,9 +566,17 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 		return false;
 	if (!ehd_create_container(pg))
 		return false;
-	password = pmt_get_password();
+	password  = pmt_get_password(NULL);
+	password2 = pmt_get_password("Reenter password: ");
+	if (password == NULL || password2 == NULL ||
+	    strcmp(password, password2) != 0) {
+		fprintf(stderr, "Passwords mismatch.\n");
+		return false;
+	}
+
 	if (!ehd_init_volume(pg, password != NULL ? password : ""))
 		return false;
+
 	HXmc_free(password);
 	return true;
 }
