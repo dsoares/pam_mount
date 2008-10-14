@@ -367,7 +367,7 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	if (!ehd_create_fskey(pg, password, fskey, sizeof(fskey)))
 		return false;
 
-	if (ehd_load(cont->path, &crypto_device, cont->cipher,
+	if (ehd_load(cont->path, &crypto_device, cont->cipher, "plain",
 	    fskey, sizeof(fskey), false) <= 0)
 		return false;
 

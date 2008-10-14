@@ -33,6 +33,7 @@
  * @crypto_device:	path to crypto device (/dev/mapper/X)
  * @crypto_name:	random crypto device name we chose
  * @cipher:		cipher to use with cryptsetup
+ * @hash:		hash to use with cryptsetup
  * @keysize:		and the keysize
  * @fskey:		the actual filesystem key
  * @fskey_size:		fskey size, in bytes
@@ -41,7 +42,7 @@ struct ehdmount_ctl {
 	char *lower_device;
 	hxmc_t *crypto_device;
 	char crypto_name[15];
-	const char *cipher;
+	const char *cipher, *hash;
 	const unsigned char *fskey;
 	unsigned int fskey_size;
 	bool readonly;
@@ -197,7 +198,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 			start_args[argk++] = "-c";
 			start_args[argk++] = ctl->cipher;
 			start_args[argk++] = "-h";
-			start_args[argk++] = "plain";
+			start_args[argk++] = ctl->hash;
 			start_args[argk++] = "-s";
 			start_args[argk++] = keysize;
 			start_args[argk++] = ctl->crypto_name;
@@ -234,16 +235,18 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
  * @cont_path:		path to the container
  * @crypto_device:	store crypto device here
  * @cipher:		filesystem cipher
+ * @hash:		hash function for cryptsetup (default: plain)
  * @fskey:		unencrypted fskey data (not path)
  * @fskey_size:		size of @fskey, in bytes
  * @readonly:		set up loop device as readonly
  */
 int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
-    const char *cipher, const unsigned char *fskey, unsigned int fskey_size,
-    bool readonly)
+    const char *cipher, const char *hash, const unsigned char *fskey,
+    unsigned int fskey_size, bool readonly)
 {
 	struct ehdmount_ctl ctl = {
 		.cipher     = cipher,
+		.hash       = hash ? : "plain",
 		.fskey      = fskey,
 		.fskey_size = fskey_size,
 		.readonly   = readonly,

@@ -39,7 +39,8 @@
  */
 struct mount_options {
 	const char *container, *mountpoint, *fstype;
-	const char *dmcrypt_cipher, *fsk_hash, *fsk_cipher, *fsk_file;
+	const char *dmcrypt_cipher, *dmcrypt_hash;
+	const char *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
 	unsigned int no_update, readonly;
@@ -145,7 +146,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		else if (strcmp(key, "loop") == 0)
 			/* ignored - automatically detected */;
 		else if (strcmp(key, "hash") == 0)
-			/* not handled atm */;
+			mo->dmcrypt_hash = value;
 		else {
 			if (!first)
 				HXmc_strcat(&passthru, ",");
@@ -234,6 +235,8 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		        "(use -o cipher=xxx)\n", **argv);
 		return false;
 	}
+	if (opt->dmcrypt_hash == NULL)
+		opt->dmcrypt_hash = "plain";
 
 	opt->fsk_password = pmt_get_password();
 	return true;
@@ -268,7 +271,7 @@ static int mtcr_mount(struct mount_options *opt)
 		}
 	}
 
-	ehd_load(opt->container, &cd, opt->dmcrypt_cipher,
+	ehd_load(opt->container, &cd, opt->dmcrypt_cipher, opt->dmcrypt_hash,
 	         reinterpret_cast(const unsigned char *, key),
 	         HXmc_length(key), opt->readonly);
 	HXmc_free(key);
