@@ -7,8 +7,9 @@ mount.crypt - mount a dm\-crypt encrypted volume
 .SH Options
 .TP
 \fB\-o\fP \fIoptions\fP
-Set the mount options. mount.crypt will take out its own options it recognizes
-and passes any remaining options on to the underlying mount program.
+Set further mount options. mount.crypt will take out its own options it
+recognizes and passes any remaining options on to the underlying mount
+program. See below for possible options.
 .TP
 \fB\-n\fP
 Do not update /etc/mtab. Note that this makes it impossible to unmount the
@@ -22,12 +23,31 @@ remount using `mount /mnt -o remount,rw` will \fBnot\fP make the mount
 readwrite. The crypto and loop devices will have to be disassociated first.
 .SH Mount options
 .TP
-\fBdm\-wait\fP
-Wait for udev to create /dev/mapper/\fIname\fP after calling cryptsetup(8).
+\fBcipher\fP
+The cryptsetup cipher used for the encrypted volume. This option is mandatory.
+pmt-ehd(8) defaults to creating volumes with "aes\-cbc\-essiv:sha256" as a
+cipher.
 .TP
 \fBdm\-timeout=\fP\fIseconds\fP
-Wait at most this many seconds before giving up. The default value is 5
-seconds.
+Wait at most this many seconds for udev to create /dev/mapper/\fIname\fP after
+calling cryptsetup(8). The default value is 0 seconds.
+.TP
+\fBfsk_cipher\fP
+The OpenSSL cipher used for the filesystem key. The default is "aes\-256\-cbc".
+.TP
+\fBfsk_hash\fP
+The OpenSSL hash used for producing key and IV. The default is "md5".
+.TP
+\fBfstype\fP
+The exact type of filesystem in the encrypted container. The default is to let
+the kernel autodetect.
+.TP
+\fBkeyfile\fP
+The path to the key file. This option is mandatory for "normal" crypto volumes
+and should not be used for LUKS volumes.
+.TP
+\fBro\fP
+Same as the \fB-r\fP option.
 .SH Authors
 This manpage was originally written by Bastian Kleineidam <calvin@debian.org>
 for the Debian distribution of pam_mount (libpam\-mount) but may be used by
