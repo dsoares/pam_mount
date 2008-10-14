@@ -102,7 +102,7 @@ static bool deny_ok(const struct HXbtree *denied,
 		return false;
 
 	while ((e = HXbtraverse(t)) != NULL)
-		if (!kvplist_contains(options, e->key)) {
+		if (kvplist_contains(options, e->key)) {
 			l0g("option \"%s\" denied\n",
 			    static_cast(const char *, e->key));
 			HXbtrav_free(t);
