@@ -208,11 +208,6 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 		return false;
 	}
 
-	if (vpt->type == CMD_NCPMOUNT &&
-	    !kvplist_contains(&vpt->options, "user")) {
-		l0g("NCP volume definition missing user option\n");
-		return false;
-	}
 	if (config->command[CMD_UMOUNT]->items == 0) {
 		l0g("umount command not defined\n");
 		return false;

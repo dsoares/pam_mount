@@ -8,6 +8,7 @@ For details, see the history as recorded in the git repository.
 - pmt-ehd: add -D option for debugging
 - mount.crypt: propagate -o fstype=x to mount(8)
 - pmt-ehd: double-ask for password
+- config: remove bogus user check for ncpfs
 
 
 v1.0 (October 12 2008)
