@@ -383,6 +383,17 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	return true;
 }
 
+static void ehd_final_printout(const struct ehd_ctl *pg)
+{
+	printf(
+		"-- The (important parts) of the new entry:\n"
+		"<volume fstype=\"crypt\" path=\"%s\" fskeycipher=\"%s\" "
+		"fskeypath=\"%s\" options=\"cipher=%s,fsk_hash=%s\" />\n"
+		"-- Substitute paths by absolute ones.\n\n",
+		pg->cont.path, pg->fskey.cipher,
+		pg->fskey.path, pg->cont.cipher, pg->fskey.digest);
+}
+
 /**
  * ehd_fill_options_container - complete container control block
  */
@@ -584,6 +595,7 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 	if (!ehd_init_volume(pg, password != NULL ? password : ""))
 		return false;
 
+	ehd_final_printout(pg);
 	HXmc_free(password);
 	return true;
 }

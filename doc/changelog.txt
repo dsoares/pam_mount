@@ -13,6 +13,7 @@ For details, see the history as recorded in the git repository.
 - pmt-ehd: add -h option to pick hash for key derivation
 - pmt-ehd: default to using SHA1 for hash
 - mount.crypt: do not default to any cipher/hash
+- pmt-ehd: print <volume> line after creation
 
 
 v1.0 (October 12 2008)
