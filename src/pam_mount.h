@@ -30,7 +30,7 @@
 	"/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 #define PMT_DFL_DMCRYPT_CIPHER "aes-cbc-essiv:sha256"
 #define PMT_DFL_FSK_CIPHER     "aes-256-cbc"
-#define PMT_DFL_FSK_HASH       "md5"
+#define PMT_DFL_FSK_HASH       "sha1"
 
 struct HXbtree;
 struct HXdeque;
