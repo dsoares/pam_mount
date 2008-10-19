@@ -230,6 +230,15 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		return false;
 	}
 
+	if (opt->fsk_cipher == NULL) {
+		fprintf(stderr, "%s: No openssl cipher specified "
+		        "(use -o fsk_cipher=xxx)\n", **argv);
+		return false;
+	} else if (opt->fsk_hash == NULL) {
+		fprintf(stderr, "%s: No openssl hash specified "
+		        "(use -o fsk_hash=xxx)\n", **argv);
+		return false;
+	}
 	if (opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "
 		        "(use -o cipher=xxx)\n", **argv);
@@ -470,11 +479,9 @@ int main(int argc, const char **argv)
 
 		return mtcr_umount(&opt) > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 	} else {
-		struct mount_options opt = {
-			.fsk_hash   = PMT_DFL_FSK_HASH,
-			.fsk_cipher = PMT_DFL_FSK_CIPHER,
-		};
+		struct mount_options opt;
 
+		memset(&opt, 0, sizeof(opt));
 		if (!mtcr_get_mount_options(&argc, &argv, &opt))
 			return EXIT_FAILURE;
 

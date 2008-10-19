@@ -284,6 +284,9 @@ static bool ehd_create_fskey(struct ehd_ctl *pg, const char *password,
 		return false;
 	}
 
+	printf("Using openssl cipher \"%s\" and hash \"%s\"\n",
+	       fsk->cipher, fsk->digest);
+
 	/* Make some salt */
 	RAND_bytes(salt, sizeof(salt));
 	out = HXmc_meminit(NULL, strlen("Salted__") + sizeof(salt) +
