@@ -9,6 +9,7 @@ For details, see the history as recorded in the git repository.
 - mount.crypt: propagate -o fstype=x to mount(8)
 - pmt-ehd: double-ask for password
 - config: remove bogus user check for ncpfs
+- pmt-ehd: fix segfault when using -c option
 
 
 v1.0 (October 12 2008)

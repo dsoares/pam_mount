@@ -518,7 +518,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 		{.sh = 'F', .type = HXTYPE_NONE | HXOPT_INC,
 		 .ptr = &pg->force_level,
 		 .help = "Force operation (also -FF)"},
-		{.sh = 'c', .type = HXTYPE_NONE, .ptr = &cont->cipher,
+		{.sh = 'c', .type = HXTYPE_STRING, .ptr = &cont->cipher,
 		 .help = "Cipher to be used in the filesystem (read manpage)",
 		 .htyp = "NAME"},
 		{.sh = 'f', .type = HXTYPE_STRING, .ptr = &cont->path,
