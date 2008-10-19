@@ -183,6 +183,7 @@ static void volume_free(struct vol *vol)
 	free(vol->server);
 	free(vol->volume);
 	free(vol->fs_key_cipher);
+	free(vol->fs_key_hash);
 	free(vol->fs_key_path);
 	free(vol);
 }
@@ -1267,6 +1268,10 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		free(vpt->fs_key_cipher);
 		vpt->fs_key_cipher = tmp;
 	}
+	if ((tmp = xml_getprop(node, "fskeyhash")) != NULL) {
+		free(vpt->fs_key_hash);
+		vpt->fs_key_hash = tmp;
+	}
 	if ((tmp = xml_getprop(node, "fskeypath")) != NULL) {
 		free(vpt->fs_key_path);
 		vpt->fs_key_path = tmp;
@@ -1294,7 +1299,7 @@ static const struct pmt_command default_command[] = {
 	/* Do not use LCLMOUNT to avoid calling fsck */
 	{CMD_NFSMOUNT,    "nfs",   "nfsmount",    {"mount", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_LCLMOUNT,    NULL,    "lclmount",    {"mount", "-p0", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_CRYPTMOUNT,  "crypt", "cryptmount",  {"mount.crypt", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT,  "crypt", "cryptmount",  {"mount.crypt", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-ofsk_hash=\" FSKEYHASH)%(FSKEYHASH)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTUMOUNT, "crypt", "cryptumount", {"umount.crypt", "%(MNTPT)", NULL}},
 	{CMD_UMOUNT,     NULL,    "umount",     {"umount", "%(MNTPT)", NULL}},
 	{CMD_FSCK,       NULL,    "fsck",       {"fsck", "-p", "%(FSCKTARGET)", NULL}},

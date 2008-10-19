@@ -388,10 +388,11 @@ static void ehd_final_printout(const struct ehd_ctl *pg)
 	printf(
 		"-- The (important parts) of the new entry:\n"
 		"<volume fstype=\"crypt\" path=\"%s\" fskeycipher=\"%s\" "
-		"fskeypath=\"%s\" options=\"cipher=%s,fsk_hash=%s\" />\n"
+		"fskeyhash=\"%s\" "
+		"fskeypath=\"%s\" options=\"cipher=%s\" />\n"
 		"-- Substitute paths by absolute ones.\n\n",
-		pg->cont.path, pg->fskey.cipher,
-		pg->fskey.path, pg->cont.cipher, pg->fskey.digest);
+		pg->cont.path, pg->fskey.cipher, pg->fskey.digest,
+		pg->fskey.path, pg->cont.cipher);
 }
 
 /**

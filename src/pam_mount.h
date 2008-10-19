@@ -73,7 +73,7 @@ struct vol {
 	bool created_mntpt;
 	const char *user;
 	char *fstype, *server, *volume, *mountpoint;
-	char *fs_key_cipher, *fs_key_path;
+	char *fs_key_cipher, *fs_key_hash, *fs_key_path;
 	/* May be NULL if no options */
 	struct HXclist_head options;
 	bool use_fstab;

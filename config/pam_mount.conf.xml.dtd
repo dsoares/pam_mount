@@ -76,6 +76,7 @@
 	ssh (0|1) "0"
 	options CDATA #IMPLIED
 	fskeycipher CDATA #IMPLIED
+	fskeyhash CDATA #IMPLIED
 	fskeypath CDATA #IMPLIED
 >
 <!ELEMENT msg-authpw (#PCDATA)>
