@@ -10,6 +10,7 @@ For details, see the history as recorded in the git repository.
 - pmt-ehd: double-ask for password
 - config: remove bogus user check for ncpfs
 - pmt-ehd: fix segfault when using -c option
+- pmt-ehd: add -h option to pick hash for key derivation
 
 
 v1.0 (October 12 2008)

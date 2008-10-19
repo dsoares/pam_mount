@@ -498,7 +498,7 @@ static bool ehd_fill_options_fskey(struct ehd_ctl *pg)
 		return false;
 	} else if (cipher_digest_security(fsk->digest) < 1) {
 		fprintf(stderr, "Digest \"%s\" is considered insecure.\n",
-		        fsk->cipher);
+		        fsk->digest);
 		return false;
 	}
 
@@ -523,6 +523,9 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 		 .htyp = "NAME"},
 		{.sh = 'f', .type = HXTYPE_STRING, .ptr = &cont->path,
 		 .help = "Path of the new container", .htyp = "FILE/BDEV"},
+		{.sh = 'h', .type = HXTYPE_STRING, .ptr = &fsk->digest,
+		 .help = "Digest for key generation (OpenSSL name)",
+		 .htyp = "NAME"},
 		{.sh = 'i', .type = HXTYPE_STRING, .ptr = &fsk->cipher,
 		 .help = "Filesystem key cipher (OpenSSL name)",
 		 .htyp = "NAME"},

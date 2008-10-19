@@ -6,6 +6,7 @@ pmt\-ehd - create an encrypted disk image
 .PP
 \fBpmt-ehd\fP [\fB-DFx\fP]
 [\fB-c\fP \fIfscipher\fP]
+[\fB-h\fP \fIdigest\fP]
 [\fB-i\fP \fIcipher\fP]
 [\fB-k\fP \fIfscipher_keybits\fP]
 [\fB-t\fP \fIfstype\fP]
@@ -33,6 +34,10 @@ Recommended are \fBaes-cbc-essiv:sha256\fP (this is the default) or
 Store the new disk image at \fIpath\fP. If the file already exists, pmt-ehd
 will prompt before overwriting unless -F is given. If \fIpath\fP refers to a
 symlink, pmt-ehd will act even more cautious.
+.TP
+\fB-h\fP \fIdigest\fP
+Digest used for fskey derivation from the password. This can take any value
+that OpenSSL recognizes. The default is \fBmd5\fP.
 .TP
 \fB-i\fP \fIcipher\fP
 Cipher used for the filesystem key (not the encrypted filesystem itself). This
