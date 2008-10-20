@@ -139,6 +139,8 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			mo->fsk_file = value;
 		else if (strcmp(key, "ro") == 0)
 			mo->readonly = true;
+		else if (strcmp(key, "rw") == 0)
+			mo->readonly = false;
 		else if (strcmp(key, "keysize") == 0)
 			/* automatically determined from keyfile size */;
 		else if (strcmp(key, "fsck") == 0)
