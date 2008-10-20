@@ -182,14 +182,14 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 {
 	struct stat sb;
 	struct HXoption options_table[] = {
-		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &Debug,
-		 .help = "Enable debugging"},
 		{.sh = 'n', .type = HXTYPE_NONE, .ptr = &opt->no_update,
 		 .help = "Do not update /etc/mtab"},
 		{.sh = 'o', .type = HXTYPE_STRING, .cb = mtcr_parse_suboptions,
 		 .uptr = opt, .help = "Mount options"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->readonly,
 		 .help = "Set up devices and mounts as read-only"},
+		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &Debug,
+		 .help = "Enable debugging"},
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
 	};
