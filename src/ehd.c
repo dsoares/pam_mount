@@ -79,7 +79,6 @@ static bool ehd_check(const struct ehd_ctl *pg)
 	int ret, ask = 0;
 	struct stat sb;
 	bool exists;
-	char tmp[2];
 
 	printf("Creating a new container at %s\n", cont->path);
 
@@ -140,6 +139,8 @@ static bool ehd_check(const struct ehd_ctl *pg)
 	}
 
 	if (pg->force_level < ask) {
+		hxmc_t *tmp = NULL;
+
 		if (!pg->interactive) {
 			printf("Not automatically overwriting file.\n");
 			return false;
@@ -147,9 +148,11 @@ static bool ehd_check(const struct ehd_ctl *pg)
 
 		printf("Do you really want to overwrite %s? (y/n)\n",
 		       cont->path);
-		fgets(tmp, sizeof(tmp), stdin);
+		if (HX_getl(&tmp, stdin) == NULL)
+			return false;
 		if (tolower(*tmp) != 'y')
 			return false;
+		HXmc_free(tmp);
 	}
 
 	return true;
@@ -445,6 +448,7 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 			HX_getl(&tmp, stdin);
 			HX_chomp(tmp);
 		} while (*tmp == '\0');
+		cont->path = HX_strdup(tmp);
 	}
 
 	if (stat(cont->path, &sb) < 0) {
@@ -478,6 +482,7 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 			HX_chomp(tmp);
 			s = strtoul(tmp, NULL, 0);
 		} while (*tmp == '\0' || s == 0);
+		cont->size = s;
 	}
 
 	if (strcmp(cont->fstype, "xfs") == 0 && cont->size < 16)
@@ -528,6 +533,7 @@ static bool ehd_fill_options_fskey(struct ehd_ctl *pg)
 			HX_getl(&tmp, stdin);
 			HX_chomp(tmp);
 		} while (*tmp == '\0');
+		fsk->path = HX_strdup(tmp);
 	}
 
 	if (fsk->cipher == NULL)

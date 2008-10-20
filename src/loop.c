@@ -580,8 +580,7 @@ static hxmc_t *__pmt_get_password(FILE *fp)
 		}
 	}
 
-	HX_getl(&ret, fp);
-	if (ret != NULL)
+	if (HX_getl(&ret, fp) != NULL)
 		HX_chomp(ret);
 	pmt_password_stop(0);
 	return ret;
