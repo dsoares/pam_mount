@@ -55,7 +55,8 @@ to open the encrypted filesystem, and the fs key itself is encrypted with your
 password.
 .TP
 \fB-s\fP \fIsize\fP
-The initial size of the encrypted filesystem, in megabytes.
+The initial size of the encrypted filesystem, in megabytes. This option is
+ignored when the filesystem is created on a block device.
 .TP
 \fB-t\fP \fIfstype\fP
 Filesystem to use for the encrypted filesystem. Defaults to xfs.

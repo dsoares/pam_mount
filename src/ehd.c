@@ -8,6 +8,7 @@
  *	of the License, or (at your option) any later version.
  */
 #define _GNU_SOURCE 1
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -15,6 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +28,7 @@
 #include <openssl/rand.h>
 #include <security/pam_appl.h>
 #include <pwd.h>
+#include <linux/fs.h>
 #include "misc.h"
 #include "pam_mount.h"
 #include "spawn.h"
@@ -199,16 +202,7 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 {
 	struct container_ctl *cont = &pg->cont;
 	bool ret = false;
-	struct stat sb;
 	int fd = -1;
-
-	if (stat(cont->path, &sb) < 0) {
-		if (errno != ENOENT) {
-			fprintf(stderr, "stat %s: %s\n",
-			        cont->path, strerror(errno));
-			return false;
-		}
-	}
 
 	if (cont->skip_random) {
 		printf("Truncating container\n");
@@ -219,9 +213,7 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 			        cont->path, strerror(errno));
 			return false;
 		}
-		if (S_ISBLK(sb.st_mode)) {
-			cont->blkdev = true;
-		} else {
+		if (!cont->blkdev) {
 			/*
 			 * /dev nodes should not be owned by user, even if it
 			 * is "their" voulme. Note that due to /dev being on
@@ -396,6 +388,24 @@ static void ehd_final_printout(const struct ehd_ctl *pg)
 		pg->fskey.digest, pg->fskey.path, pg->cont.cipher);
 }
 
+static size_t ehd_getsize64(const char *path)
+{
+	uint64_t s;
+	int fd;
+
+	if ((fd = open(path, O_RDONLY | O_WRONLY)) < 0) {
+		fprintf(stderr, "open %s: %s\n", path, strerror(errno));
+		return 0;
+	}
+
+	if (ioctl(fd, BLKGETSIZE64, &s) < 0) {
+		fprintf(stderr, "ioctl on %s: %s\n", path, strerror(errno));
+		return 0;
+	}
+
+	return s;
+}
+
 /**
  * ehd_fill_options_container - complete container control block
  */
@@ -405,6 +415,7 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 	struct container_ctl *cont = &pg->cont;
 	hxmc_t *tmp = HXmc_meminit(NULL, 0);
 	bool ret = false;
+	struct stat sb;
 
 	if (cont->user == NULL) {
 		cont->uid = -1;
@@ -434,6 +445,22 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 			HX_getl(&tmp, stdin);
 			HX_chomp(tmp);
 		} while (*tmp == '\0');
+	}
+
+	if (stat(cont->path, &sb) < 0) {
+		if (errno != ENOENT) {
+			fprintf(stderr, "stat %s: %s\n",
+			        cont->path, strerror(errno));
+			return false;
+		}
+	} else if (S_ISBLK(sb.st_mode)) {
+		cont->blkdev = true;
+		if (cont->size == 0) {
+			cont->size = ehd_getsize64(cont->path);
+			if (cont->size != 0)
+				printf("Size of device: %llu MB\n",
+				       cont->size >> 20);
+		}
 	}
 
 	if (cont->size == 0) {
