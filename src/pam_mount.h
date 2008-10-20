@@ -72,7 +72,7 @@ struct vol {
 	/* set, so that umount can rmdir it */
 	bool created_mntpt;
 	const char *user;
-	char *fstype, *server, *volume, *mountpoint;
+	char *fstype, *server, *volume, *mountpoint, *cipher;
 	char *fs_key_cipher, *fs_key_hash, *fs_key_path;
 	/* May be NULL if no options */
 	struct HXclist_head options;

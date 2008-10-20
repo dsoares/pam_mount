@@ -386,13 +386,14 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 static void ehd_final_printout(const struct ehd_ctl *pg)
 {
 	printf(
-		"-- The (important parts) of the new entry:\n"
-		"<volume fstype=\"crypt\" path=\"%s\" fskeycipher=\"%s\" "
-		"fskeyhash=\"%s\" "
-		"fskeypath=\"%s\" options=\"cipher=%s\" />\n"
+		"-- The (important parts) of the new entry:\n\n"
+		"<volume fstype=\"crypt\" path=\"%s\" "
+		"mountpoint=\"REPLACEME\" cipher=\"%s\" "
+		"fskeycipher=\"%s\" fskeyhash=\"%s\" "
+		"fskeypath=\"%s\" />\n\n"
 		"-- Substitute paths by absolute ones.\n\n",
-		pg->cont.path, pg->fskey.cipher, pg->fskey.digest,
-		pg->fskey.path, pg->cont.cipher);
+		pg->cont.path, pg->cont.cipher, pg->fskey.cipher,
+		pg->fskey.digest, pg->fskey.path, pg->cont.cipher);
 }
 
 /**

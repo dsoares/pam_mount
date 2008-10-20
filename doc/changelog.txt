@@ -15,6 +15,7 @@ For details, see the history as recorded in the git repository.
 - mount.crypt: do not default to any cipher/hash
 - pmt-ehd: print <volume> line after creation
 - config: introduce <volume fskeyhash=""> attribute
+- config: introduce <volume cipher=""> attribute
 
 
 v1.0 (October 12 2008)

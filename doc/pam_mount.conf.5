@@ -105,11 +105,15 @@ ssh\-specific mechanism. Enable this option for any mount involving the SSH
 binary, e.g. ccgfs or sshfs. Do \fInot\fP enable it for anything else or the
 login will most likely hang.
 .TP
+\fBcipher="\fP\fIcipher\fP\fB"\fP
+Cryptsetup cipher name for the volume. To be used with the \fBcrypt\fP fstype.
+.TP
 \fBfskeycipher="\fP\fIciphertype\fP\fB"\fP
-OpenSSL cipher name for use with the \fBcrypt\fP fstype (dm\-crypt and LUKS).
+OpenSSL cipher name for the fskey. Use with the \fBcrypt\fP fstype
+(dm\-crypt and LUKS).
 .TP
 \fBfskeyhash="\fP\fIhash\fP\fB"\fP
-OpenSSL hash name for use with the \fBcrypt\fP fstype.
+OpenSSL hash name for the fskey.
 .TP
 \fBfskeypath="\fP\fIpath\fP\fB"\fP
 Path to the filesystem key.
@@ -399,8 +403,8 @@ enabled, as well as all the ciphers that are going to be used, e.g.
 CONFIG_CRYPTO_AES, CONFIG_CRYPTO_BLOWFISH, CONFIG_CRYPTO_TWOFISH.
 .PP
 <volume path="/home/%(USER).img" mountpoint="~"
-options="cipher=aes\-cbc\-essiv:sha256" fskeycipher="aes\-256\-cbc"
-fskeypath="/home/%(USER).key" />
+cipher="aes\-cbc\-essiv:sha256" fskeycipher="aes\-256\-cbc"
+fskeyhash="sha1" fskeypath="/home/%(USER).key" />
 .SS cryptoloop volumes
 .PP
 cryptoloop is not explicitly supported by pam_mount. Citing the Linux kernel

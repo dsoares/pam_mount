@@ -75,6 +75,7 @@
 	mountpoint CDATA #REQUIRED
 	ssh (0|1) "0"
 	options CDATA #IMPLIED
+	cipher CDATA #IMPLIED
 	fskeycipher CDATA #IMPLIED
 	fskeyhash CDATA #IMPLIED
 	fskeypath CDATA #IMPLIED
