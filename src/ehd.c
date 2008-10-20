@@ -385,7 +385,7 @@ static void ehd_final_printout(const struct ehd_ctl *pg)
 		"fskeypath=\"%s\" />\n\n"
 		"-- Substitute paths by absolute ones.\n\n",
 		pg->cont.path, pg->cont.cipher, pg->fskey.cipher,
-		pg->fskey.digest, pg->fskey.path, pg->cont.cipher);
+		pg->fskey.digest, pg->fskey.path);
 }
 
 static size_t ehd_getsize64(const char *path)
