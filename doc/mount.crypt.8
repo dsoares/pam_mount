@@ -2,7 +2,7 @@
 .SH Name
 mount.crypt - mount a dm\-crypt encrypted volume
 .SH Syntax
-\fBmount.crypt\fP [\fB-nr\fP] [\fB\-o\fP \fIoptions\fP]
+\fBmount.crypt\fP [\fB-nrv\fP] [\fB\-o\fP \fIoptions\fP]
 \fIdevice\fP \fIdirectory\fP
 .SH Options
 .TP
@@ -21,6 +21,9 @@ Set up the loop device (if necessary) and crypto device in read-only mode.
 (The mount itself will necessarily also be read-only.) Note that doing a
 remount using `mount /mnt -o remount,rw` will \fBnot\fP make the mount
 readwrite. The crypto and loop devices will have to be disassociated first.
+.TP
+\fB\-v\fP
+Turn on debugging and be a bit more verbose.
 .SH Mount options
 .TP
 \fBcipher\fP

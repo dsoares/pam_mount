@@ -342,14 +342,14 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 {
 	struct stat sb;
 	struct HXoption options_table[] = {
-		{.sh = 'D', .type = HXTYPE_UINT, .ptr = &Debug,
-		 .help = "Enable debugging"},
 		{.sh = 'f', .type = HXTYPE_NONE,
 		 .help = "(Option ignored)"},
 		{.sh = 'n', .type = HXTYPE_NONE, .ptr = &opt->no_update,
 		 .help = "Do not update /etc/mtab"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->ro_fallback,
 		 .help = "(Option ignored)"},
+		{.sh = 'v', .type = HXTYPE_UINT, .ptr = &Debug,
+		 .help = "Be verbose - enable debugging"},
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
 	};
