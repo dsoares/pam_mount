@@ -41,4 +41,4 @@ install-data-hook:
 
 install-exec-hook:
 	mkdir -p "${DESTDIR}${ssbindir}";
-	-for i in umount.crypt mount.crypt_LUKS umount.crypt_LUKS; do ${LN_S} -f mount.crypt "${DESTDIR}${ssbindir}/$i"; done;
+	-for i in umount.crypt mount.crypt_LUKS umount.crypt_LUKS; do ${LN_S} -f mount.crypt "${DESTDIR}${ssbindir}/$$i"; done;
