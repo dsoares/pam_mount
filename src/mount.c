@@ -717,10 +717,9 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	format_add(vinfo, "SERVER",   vpt->server);
 	format_add(vinfo, "USER",     vpt->user);
 	format_add(vinfo, "CIPHER",   vpt->cipher);
-	format_add(vinfo, "FSKEYCIPHER", vpt->fs_key_cipher ? : "");
-	format_add(vinfo, "FSKEYHASH",
-		(vpt->fs_key_hash != NULL) ? vpt->fs_key_hash : "");
-	format_add(vinfo, "FSKEYPATH",   vpt->fs_key_path ? : "");
+	format_add(vinfo, "FSKEYCIPHER", vpt->fs_key_cipher);
+	format_add(vinfo, "FSKEYHASH",   vpt->fs_key_hash);
+	format_add(vinfo, "FSKEYPATH",   vpt->fs_key_path);
 	misc_add_ntdom(vinfo, vpt->user);
 
 	if ((pe = getpwnam(vpt->user)) == NULL) {
@@ -731,8 +730,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 		struct group *ge = getgrgid(pe->pw_gid);
 		HXformat_add(vinfo, "USERUID", &uid, HXTYPE_UINT);
 		HXformat_add(vinfo, "USERGID", &gid, HXTYPE_UINT);
-		HXformat_add(vinfo, "GROUP",
-			(ge != NULL) ? ge->gr_name : "", HXTYPE_STRING);
+		format_add(vinfo, "GROUP", (ge != NULL) ? ge->gr_name : NULL);
 	}
 
 	/* FIXME: should others remain undefined if == ""? */
