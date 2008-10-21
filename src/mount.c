@@ -286,16 +286,17 @@ static void log_pm_input(const struct config *const config,
 	hxmc_t *options;
 
 	options = kvplist_to_str(&vpt->options);
-	w4rn("information for mount:\n");
-	w4rn("----------------------\n");
-	w4rn("(defined by %s)\n", vpt->globalconf ? "globalconf" : "luserconf");
-	w4rn("user:          %s\n", znul(vpt->user));
-	w4rn("server:        %s\n", znul(vpt->server));
-	w4rn("volume:        %s\n", znul(vpt->volume));
-	w4rn("mountpoint:    %s\n", vpt->mountpoint);
-	w4rn("options:       %s\n", options);
-	w4rn("use_fstab:     %d\n", vpt->use_fstab);
-	w4rn("----------------------\n");
+	w4rn(
+		"Mount info: %s, user=%s <volume server=\"%s\" path=\"%s\" "
+		"mountpoint=\"%s\" cipher=\"%s\" fskeypath=\"%s\" "
+		"fskeycipher=\"%s\" fskeyhash=\"%s\" options=\"%s\" /> "
+		"fstab=%u\n",
+		vpt->globalconf ? "globalconf" : "luserconf",
+		znul(vpt->user), znul(vpt->server), znul(vpt->volume),
+		vpt->mountpoint, znul(vpt->cipher), znul(vpt->fs_key_path),
+		znul(vpt->fs_key_cipher), znul(vpt->fs_key_hash), options,
+		vpt->use_fstab
+	);
 	HXmc_free(options);
 }
 
