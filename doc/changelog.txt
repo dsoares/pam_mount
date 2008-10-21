@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 
 - pmt-ehd: autodetect size for block devices
+- config: add missing %(CIPHER) to CMD_CRYPTMOUNT command line
 
 
 v1.1 (October 20 2008)
