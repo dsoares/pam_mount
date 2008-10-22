@@ -172,7 +172,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	pid_t pid;
 	char keysize[16];
 	bool is_luks = false;
-	const char *start_args[13];
+	const char *start_args[11];
 	const char *const lukscheck_args[] = {
 		"cryptsetup", "isLuks", ctl->lower_device, NULL,
 	};
@@ -199,8 +199,6 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 			start_args[argk++] = ctl->cipher;
 			start_args[argk++] = "-h";
 			start_args[argk++] = ctl->hash;
-			start_args[argk++] = "-s";
-			start_args[argk++] = keysize;
 			start_args[argk++] = ctl->crypto_name;
 			start_args[argk++] = ctl->lower_device;
 			start_args[argk]   = NULL;
