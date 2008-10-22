@@ -232,14 +232,16 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		return false;
 	}
 
-	if (opt->fsk_cipher == NULL) {
-		fprintf(stderr, "%s: No openssl cipher specified "
-		        "(use -o fsk_cipher=xxx)\n", **argv);
-		return false;
-	} else if (opt->fsk_hash == NULL) {
-		fprintf(stderr, "%s: No openssl hash specified "
-		        "(use -o fsk_hash=xxx)\n", **argv);
-		return false;
+	if (opt->fsk_file != NULL) {
+		if (opt->fsk_cipher == NULL) {
+			fprintf(stderr, "%s: No openssl cipher specified "
+			        "(use -o fsk_cipher=xxx)\n", **argv);
+			return false;
+		} else if (opt->fsk_hash == NULL) {
+			fprintf(stderr, "%s: No openssl hash specified "
+			        "(use -o fsk_hash=xxx)\n", **argv);
+			return false;
+		}
 	}
 	if (opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "
