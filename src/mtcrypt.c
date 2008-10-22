@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <mntent.h>
@@ -311,6 +312,7 @@ static int mtcr_mount(struct mount_options *opt)
 	}
 	mount_args[argk] = NULL;
 
+	assert(argk < ARRAY_SIZE(mount_args));
 	arglist_llog(mount_args);
 	if ((ret = spawn_synchronous(mount_args)) != 0) {
 		fprintf(stderr, "mount failed with exit status %d\n",
@@ -451,6 +453,8 @@ static int mtcr_umount(struct umount_options *opt)
 		umount_args[argk++] = "-n";
 	umount_args[argk++] = opt->object;
 	umount_args[argk]   = NULL;
+
+	assert(argk < ARRAY_SIZE(umount_args));
 	arglist_llog(umount_args);
 	if ((ret = spawn_synchronous(umount_args)) != 0) {
 		fprintf(stderr, "umount %s failed with status %d\n",

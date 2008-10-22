@@ -7,6 +7,7 @@
  *
  *	Released in the Public Domain.
  */
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -44,6 +45,7 @@ int main(int argc, const char **argv)
 		args[i++] = mt_opts;
 	}
 	args[i++] = NULL;
+	assert(i < ARRAY_SIZE(args));
 	execvp("encfs", const_cast(char * const *, args));
 	return -1;
 }

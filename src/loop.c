@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -203,6 +204,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 			start_args[argk++] = ctl->lower_device;
 			start_args[argk]   = NULL;
 		}
+		assert(argk < ARRAY_SIZE(start_args));
 	} else {
 		l0g("cryptsetup isLuks got termined, signal %d\n",
 		    WTERMSIG(ret));
