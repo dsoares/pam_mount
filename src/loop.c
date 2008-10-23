@@ -171,7 +171,6 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 {
 	int fd_stdin, ret;
 	pid_t pid;
-	char keysize[16];
 	bool is_luks = false;
 	const char *start_args[11];
 	const char *const lukscheck_args[] = {
@@ -186,24 +185,21 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 		start_args[argk++] = "cryptsetup";
 		if (ctl->readonly)
 			start_args[argk++] = "--readonly";
+		start_args[argk++] = "-c";
+		start_args[argk++] = ctl->cipher;
 		if (is_luks) {
 			start_args[argk++] = "luksOpen";
 			start_args[argk++] = ctl->lower_device;
 			start_args[argk++] = ctl->crypto_name;
-			start_args[argk++] = NULL;
 		} else {
-			snprintf(keysize, sizeof(keysize),
-			         "%u", ctl->fskey_size * 8);
-			start_args[argk++] = "create";
 			start_args[argk++] = "--key-file=-";
-			start_args[argk++] = "-c";
-			start_args[argk++] = ctl->cipher;
 			start_args[argk++] = "-h";
 			start_args[argk++] = ctl->hash;
+			start_args[argk++] = "create";
 			start_args[argk++] = ctl->crypto_name;
 			start_args[argk++] = ctl->lower_device;
-			start_args[argk]   = NULL;
 		}
+		start_args[argk] = NULL;
 		assert(argk < ARRAY_SIZE(start_args));
 	} else {
 		l0g("cryptsetup isLuks got termined, signal %d\n",
