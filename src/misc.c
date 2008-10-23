@@ -356,20 +356,25 @@ char *relookup_user(const char *user)
  */
 void misc_add_ntdom(struct HXbtree *v, const char *user)
 {
-	const char *domain_user, *ptr;
-	char domain[32];
-	*domain = '\0';
+	char *ptr, *tmp;
 
-	if ((ptr = strchr(user, '\\')) != NULL) {
-		snprintf(domain, sizeof(domain), "%.*s",
-		         static_cast(int, ptr - user - 1), user);
-		domain_user = ptr + 1;
-	} else {
-		domain_user = user;
+	if ((ptr = strchr(user, '\\')) == NULL) {
+		format_add(v, "DOMAIN_NAME", NULL);
+		format_add(v, "DOMAIN_USER", user);
+		return;
 	}
 
-	HXformat_add(v, "DOMAIN_NAME", domain, HXTYPE_STRING | HXFORMAT_IMMED);
-	HXformat_add(v, "DOMAIN_USER", domain_user, HXTYPE_STRING);
+	if ((tmp = HX_strdup(user)) == NULL) {
+		perror("HX_strdup");
+		return;
+	}
+	ptr = strchr(user, '\\');
+	assert(ptr != NULL);
+	*ptr++ = '\0';
+
+	format_add(v, "DOMAIN_NAME", tmp);
+	format_add(v, "DOMAIN_USER", ptr);
+	free(tmp);
 }
 
 bool kvplist_contains(const struct HXclist_head *head, const char *key)
