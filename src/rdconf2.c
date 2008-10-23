@@ -118,22 +118,14 @@ static bool deny_ok(const struct HXbtree *denied,
  * @config:	current configuration
  * @vol:	volume descriptor
  *
- * Check whether the per-user volume is in accordance with wildcard and
- * option restrictions.
- *
- * FIXME: check to ensure input is legal and reject all else instead of
- * rejecting everyhing that is illegal.
+ * Check whether the per-user volume is in accordance with permissions
+ * and option restrictions.
  */
 bool luserconf_volume_record_sane(const struct config *config,
     const struct vol *vol)
 {
 	w4rn("checking sanity of luserconf volume record (%s)\n",
 	     vol->volume);
-
-	if (vol->used_wildcard) {
-		l0g("You may not use wildcards in user-defined volumes\n");
-		return false;
-	}
 
 	if (vol->type == CMD_LCLMOUNT || vol->type == CMD_CRYPTMOUNT) {
 		if (!pmt_fileop_owns(config->user, vol->volume)) {

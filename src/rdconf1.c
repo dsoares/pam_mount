@@ -149,15 +149,13 @@ static bool expand_user(const char *user, char **dest_pptr)
 /**
  * expandconfig -
  * @config:	configuration structure
- *
- * Expands all wildcards in the structure.
  */
 bool expandconfig(const struct config *config)
 {
 	const char *u = config->user;
 	struct vol *vpt;
 
-	HXlist_for_each_entry(vpt, &config->volume_list, list) {
+	HXlist_for_each_entry(vpt, &config->volume_list, list)
 		if (!expand_home(u, &vpt->mountpoint) ||
 		    !expand_user(u, &vpt->mountpoint) ||
 		    !expand_user(u, &vpt->server) ||
@@ -166,12 +164,6 @@ bool expandconfig(const struct config *config)
 		    !expand_home(u, &vpt->fs_key_path) ||
 		    !expand_user(u, &vpt->fs_key_path))
 			return false;
-
-		if (strcmp(vpt->user, "*") == 0 || *vpt->user == '@')
-			vpt->used_wildcard = true;
-
-		vpt->user = config->user;
-	}
 
 	return true;
 }
@@ -1282,8 +1274,6 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		vpt->fs_key_path = tmp;
 	}
 
-	/* expandconfig() will set this later */
-	vpt->used_wildcard = false;
 	return NULL;
 
  out:

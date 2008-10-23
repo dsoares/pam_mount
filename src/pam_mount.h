@@ -77,7 +77,6 @@ struct vol {
 	/* May be NULL if no options */
 	struct HXclist_head options;
 	bool use_fstab;
-	bool used_wildcard;
 	bool uses_ssh;
 	bool noroot;
 };
