@@ -2,10 +2,13 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.2 (October 23 2008)
+======================
 - pmt-ehd: autodetect size for block devices
 - config: add missing %(CIPHER) to CMD_CRYPTMOUNT command line
 - mount.crypt: allow -v to be set through -o verbose too
   (that way you can enable it per-<volume>)
+- mount.crypt: pass -c to cryptsetup also for LUKS
 - config: expand placeholders in the <volume options="..."> attribute
 - config: make %(GROUP) variable working
 
