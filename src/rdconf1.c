@@ -128,19 +128,14 @@ static bool expand_home(const char *user, char **path_pptr)
  * (This should probably be done by the fmt_ptrn stuff, but is not at the
  * moment due to to-XML transition period.)
  */
-static bool expand_user(const char *user, char **dest_pptr)
+static bool expand_user(const char *user, char **dest_pptr,
+    const struct HXbtree *vinfo)
 {
-	struct HXbtree *vinfo;
 	hxmc_t *tmp = NULL;
 
 	if (*dest_pptr == NULL)
 		return true;
-	if ((vinfo = HXformat_init()) == NULL)
-		return NULL;
-	HXformat_add(vinfo, "USER", user, HXTYPE_STRING);
-	misc_add_ntdom(vinfo, user);
 	HXformat_aprintf(vinfo, &tmp, *dest_pptr);
-	HXformat_free(vinfo);
 	*dest_pptr = xstrdup(tmp);
 	HXmc_free(tmp);
 	return true;
@@ -149,21 +144,51 @@ static bool expand_user(const char *user, char **dest_pptr)
 /**
  * expandconfig -
  * @config:	configuration structure
+ *
+ * This function will expand variables in attributes itself.
+ * Like, turning <volume server="w2k3" path="%(USER)"
+ * mountpoint="~" /> into path="joe" mountpoint="/home/joe".
  */
 bool expandconfig(const struct config *config)
 {
 	const char *u = config->user;
+	struct HXbtree *vinfo;
+	struct passwd *pe;
+	struct group *ge;
+	struct kvp *kvp;
 	struct vol *vpt;
 
-	HXlist_for_each_entry(vpt, &config->volume_list, list)
-		if (!expand_home(u, &vpt->mountpoint) ||
-		    !expand_user(u, &vpt->mountpoint) ||
-		    !expand_user(u, &vpt->server) ||
+	if ((vinfo = HXformat_init()) == NULL)
+		return false;
+	if ((pe = getpwnam(u)) == NULL) {
+		l0g("You do not exist? %s? %s.\n", u, strerror(errno));
+		return false;
+	}
+
+	HXformat_add(vinfo, "USER", u, HXTYPE_STRING);
+	HXformat_add(vinfo, "USERUID", static_cast(void *,
+		static_cast(long, pe->pw_uid)), HXTYPE_UINT | HXFORMAT_IMMED);
+	HXformat_add(vinfo, "USERGID", static_cast(void *,
+		static_cast(long, pe->pw_gid)), HXTYPE_UINT | HXFORMAT_IMMED);
+	ge = getgrgid(pe->pw_gid);
+	format_add(vinfo, "GROUP", (ge != NULL) ? ge->gr_name : "");
+	misc_add_ntdom(vinfo, u);
+
+	HXlist_for_each_entry(vpt, &config->volume_list, list) {
+		if (!expand_user(u, &vpt->server, vinfo) ||
 		    !expand_home(u, &vpt->volume) ||
-		    !expand_user(u, &vpt->volume) ||
+		    !expand_user(u, &vpt->volume, vinfo) ||
+		    !expand_home(u, &vpt->mountpoint) ||
+		    !expand_user(u, &vpt->mountpoint, vinfo) ||
 		    !expand_home(u, &vpt->fs_key_path) ||
-		    !expand_user(u, &vpt->fs_key_path))
+		    !expand_user(u, &vpt->fs_key_path, vinfo) ||
+		    !expand_user(u, &vpt->fs_key_cipher, vinfo))
 			return false;
+
+		HXlist_for_each_entry(kvp, &vpt->options, list)
+			if (!expand_user(u, &kvp->value, vinfo))
+				return false;
+	}
 
 	return true;
 }

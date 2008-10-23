@@ -142,31 +142,9 @@ already done automatically by pam_mount.
 .TP
 \fB%(GROUP)\fP
 The name of the group for %(USERGID).
-.TP
-\fB%(FSTYPE)\fP
-The fstype as given by the <volume \fBfstype\fP="\fI...\fP" /> attribute.
-.TP
-\fB%(SERVER)\fP
-The source server as given by the <volume \fBserver\fP="\fI...\fP" />
-attribute.
-.TP
-\fB%(VOLUME)\fP
-The source volume as given by the <volume \fBpath\fP="\fI...\fP" /> attribute.
-.TP
-\fB%(MNTPT)\fP
-The target mountpoint as given by the <volume \fBmountpoint\fP="\fI...\fP" />
-attribute.
-.TP
-\fB%(FSKEYCIPHER)\fP
-.TP
-\fB%(FSKEYPATH)\fP
-These two are the values from the <volume \fBfskeycipher\fP="\fI...\fP" and
-\fBfskeypath\fP="\fI...\fP" /> attributes.
-.TP
-\fB%(OPERATION)\fP
-This is for internal\-use between pam_mount and \fBpmvarrun\fP(8) \fIonly\fP.
-When the user logs in, it expands to \fB1\fP, on logout, it expands to
-\fB\-1\fP.
+.PP
+All other variables you might find in the source code are internal to
+pam_mount, and are likely not to be expanded when you would expect it.
 .SH pam_mount parameters
 .PP
 Besides volumes, there are other elements allowed in pam_mount.conf.xml that

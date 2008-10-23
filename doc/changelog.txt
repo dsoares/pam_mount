@@ -6,6 +6,8 @@ For details, see the history as recorded in the git repository.
 - config: add missing %(CIPHER) to CMD_CRYPTMOUNT command line
 - mount.crypt: allow -v to be set through -o verbose too
   (that way you can enable it per-<volume>)
+- config: expand placeholders in the <volume options="..."> attribute
+- config: make %(GROUP) variable working
 
 
 v1.1 (October 20 2008)

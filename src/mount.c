@@ -710,6 +710,16 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	struct passwd *pe;
 	hxmc_t *options;
 
+	/*
+	 * This expansion (the other is in expandconfig()!) expands the mount
+	 * command arguments (as defined in rdconf1.c) and should not be used
+	 * to expand the <volume> attributes themselves.
+	 *
+	 * If you added an attribute, edit expandconfig instead.
+	 * If you added a variable to the mount arg table in rdconf1.c,
+	 * edit here. In fact, the @vinfo that is created below contains only
+	 * arguments from the mount argument table.
+	 */
 	if ((vinfo = HXformat_init()) == NULL)
 		return 0;
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
@@ -721,22 +731,21 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	format_add(vinfo, "FSKEYCIPHER", vpt->fs_key_cipher);
 	format_add(vinfo, "FSKEYHASH",   vpt->fs_key_hash);
 	format_add(vinfo, "FSKEYPATH",   vpt->fs_key_path);
-	misc_add_ntdom(vinfo, vpt->user);
 
 	if ((pe = getpwnam(vpt->user)) == NULL) {
 		w4rn("getpwnam(\"%s\") failed: %s\n",
 		     Config.user, strerror(errno));
 	} else {
-		unsigned int uid = pe->pw_uid, gid = pe->pw_gid;
-		struct group *ge = getgrgid(pe->pw_gid);
-		HXformat_add(vinfo, "USERUID", &uid, HXTYPE_UINT);
-		HXformat_add(vinfo, "USERGID", &gid, HXTYPE_UINT);
-		format_add(vinfo, "GROUP", (ge != NULL) ? ge->gr_name : NULL);
+		HXformat_add(vinfo, "USERUID", static_cast(void *,
+			static_cast(long, pe->pw_uid)),
+			HXTYPE_UINT | HXFORMAT_IMMED);
+		HXformat_add(vinfo, "USERGID", static_cast(void *,
+			static_cast(long, pe->pw_gid)),
+			HXTYPE_UINT | HXFORMAT_IMMED);
 	}
 
-	/* FIXME: should others remain undefined if == ""? */
 	options = kvplist_to_str(&vpt->options);
-	format_add(vinfo, "OPTIONS", options);
+	HXformat_add(vinfo, "OPTIONS", options, HXTYPE_STRING | HXFORMAT_IMMED);
 
 	if (Debug)
 		log_pm_input(config, vpt);
