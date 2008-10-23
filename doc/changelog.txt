@@ -4,6 +4,8 @@ For details, see the history as recorded in the git repository.
 
 - pmt-ehd: autodetect size for block devices
 - config: add missing %(CIPHER) to CMD_CRYPTMOUNT command line
+- mount.crypt: allow -v to be set through -o verbose too
+  (that way you can enable it per-<volume>)
 
 
 v1.1 (October 20 2008)

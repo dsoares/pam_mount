@@ -150,6 +150,8 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			/* ignored - automatically detected */;
 		else if (strcmp(key, "hash") == 0)
 			mo->dmcrypt_hash = value;
+		else if (strcmp(key, "verbose") == 0)
+			Debug = pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = true;
 		else {
 			if (!first)
 				HXmc_strcat(&passthru, ",");
