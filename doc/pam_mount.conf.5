@@ -405,6 +405,10 @@ CONFIG_CRYPTO_AES, CONFIG_CRYPTO_BLOWFISH, CONFIG_CRYPTO_TWOFISH.
 <volume path="/home/%(USER).img" mountpoint="~"
 cipher="aes\-cbc\-essiv:sha256" fskeycipher="aes\-256\-cbc"
 fskeyhash="sha1" fskeypath="/home/%(USER).key" />
+.SS LUKS volumes
+.PP
+<volume path="/home/%(USER).img" mountpoint="~"
+cipher="aes\-cbc\-essiv:sha256" />
 .SS cryptoloop volumes
 .PP
 cryptoloop is not explicitly supported by pam_mount. Citing the Linux kernel
