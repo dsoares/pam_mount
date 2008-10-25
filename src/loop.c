@@ -185,8 +185,10 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 		start_args[argk++] = "cryptsetup";
 		if (ctl->readonly)
 			start_args[argk++] = "--readonly";
-		start_args[argk++] = "-c";
-		start_args[argk++] = ctl->cipher;
+		if (ctl->cipher != NULL) {
+			start_args[argk++] = "-c";
+			start_args[argk++] = ctl->cipher;
+		}
 		if (is_luks) {
 			start_args[argk++] = "luksOpen";
 			start_args[argk++] = ctl->lower_device;

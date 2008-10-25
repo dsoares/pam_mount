@@ -244,12 +244,11 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 			fprintf(stderr, "%s: No openssl hash specified "
 			        "(use -o fsk_hash=xxx)\n", **argv);
 			return false;
+		} else if (opt->dmcrypt_cipher == NULL) {
+			fprintf(stderr, "%s: No dmcrypt cipher specified "
+			        "(use -o cipher=xxx)\n", **argv);
+			return false;
 		}
-	}
-	if (opt->dmcrypt_cipher == NULL) {
-		fprintf(stderr, "%s: No dmcrypt cipher specified "
-		        "(use -o cipher=xxx)\n", **argv);
-		return false;
 	}
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
