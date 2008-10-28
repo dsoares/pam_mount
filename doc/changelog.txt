@@ -1,6 +1,8 @@
 
 For details, see the history as recorded in the git repository.
 
+- ofl: fix per-task fd lookup
+
 
 v1.2 (October 23 2008)
 ======================
