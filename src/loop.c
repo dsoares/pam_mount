@@ -31,8 +31,8 @@
 /**
  * @lower_device:	path to container, if it is a block device, otherwise
  * 			path to a loop device translating it into a bdev
- * @crypto_device:	path to crypto device (/dev/mapper/X)
- * @crypto_name:	random crypto device name we chose
+ * @crypto_device:	same as @crypto_name, but full path (/dev/mapper/X)
+ * @crypto_name:	crypto device name we chose
  * @cipher:		cipher to use with cryptsetup
  * @hash:		hash to use with cryptsetup
  * @keysize:		and the keysize
@@ -41,8 +41,7 @@
  */
 struct ehdmount_ctl {
 	char *lower_device;
-	hxmc_t *crypto_device;
-	char crypto_name[15];
+	hxmc_t *crypto_name, *crypto_device;
 	const char *cipher, *hash;
 	const unsigned char *fskey;
 	unsigned int fskey_size;
@@ -231,6 +230,18 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	return true;
 }
 
+static hxmc_t *ehd_crypto_name(const char *s)
+{
+	hxmc_t *ret;
+	char *p;
+
+	ret = HXmc_strinit(s);
+	for (p = ret; *p != '\0'; ++p)
+		if (!isalnum(*p))
+			*p = '_';
+	return ret;
+}
+
 /**
  * ehd_load - set up crypto device for an EHD container
  * @cont_path:		path to the container
@@ -252,7 +263,6 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 		.fskey_size = fskey_size,
 		.readonly   = readonly,
 	};
-	unsigned char name_bin[6];
 	bool cont_blkdev;
 	struct stat sb;
 	int ret;
@@ -278,13 +288,8 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 		}
 	}
 
-	RAND_bytes(name_bin, sizeof(name_bin));
-	snprintf(ctl.crypto_name, sizeof(ctl.crypto_name),
-	         "%02x%02x%02x%02x%02x%02x",
-	         name_bin[0], name_bin[1], name_bin[2], name_bin[3],
-	         name_bin[4], name_bin[5]);
+	ctl.crypto_name = ehd_crypto_name(cont_path);
 	w4rn("Using %s as dmdevice name\n", ctl.crypto_name);
-
 	ctl.crypto_device = HXmc_strinit("/dev/mapper/");
 	HXmc_strcat(&ctl.crypto_device, ctl.crypto_name);
 
@@ -299,6 +304,7 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 		*crypto_device_pptr = ctl.crypto_device;
 	else
 		HXmc_free(ctl.crypto_device);
+	HXmc_free(ctl.crypto_name);
 	return ret;
 }
 
