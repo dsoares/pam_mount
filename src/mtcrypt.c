@@ -291,7 +291,8 @@ static int mtcr_mount(struct mount_options *opt)
 	         HXmc_length(key), opt->readonly);
 	HXmc_free(key);
 	if (cd == NULL) {
-		fprintf(stderr, "No crypto device assigned\n");
+		if (Debug)
+			fprintf(stderr, "No crypto device assigned\n");
 		return 0;
 	}
 
