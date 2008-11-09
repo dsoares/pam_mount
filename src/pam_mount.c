@@ -81,15 +81,15 @@ static void parse_pam_args(int argc, const char **argv)
 	Args.auth_type  = GET_PASS;
 
 	for (i = 0; i < argc; ++i) {
-		if (strcmp("use_first_pass", argv[i]) == 0)
+		if (strcasecmp("use_first_pass", argv[i]) == 0)
 			Args.auth_type = USE_FIRST_PASS;
-		else if (strcmp("try_first_pass", argv[i]) == 0)
+		else if (strcasecmp("try_first_pass", argv[i]) == 0)
 			Args.auth_type = TRY_FIRST_PASS;
-		else if (strcmp("soft_try_pass", argv[i]) == 0)
+		else if (strcasecmp("soft_try_pass", argv[i]) == 0)
 			Args.auth_type = SOFT_TRY_PASS;
-		else if (strcmp("nullok", argv[i]) == 0)
+		else if (strcasecmp("nullok", argv[i]) == 0)
 			Args.nullok = true;
-		else if (strcmp("debug", argv[i]) == 0)
+		else if (strcasecmp("debug", argv[i]) == 0)
 			Debug = true;
 		else
 			w4rn("bad pam_mount option \"%s\"\n", argv[i]);
