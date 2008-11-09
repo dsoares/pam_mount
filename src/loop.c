@@ -164,6 +164,23 @@ static int loop_release(const char *device)
 }
 
 /**
+ * ehd_is_luks - check if @path points to a LUKS volume (cf. normal dm-crypt)
+ * @path:	path to the crypto container
+ */
+int ehd_is_luks(const char *path)
+{
+	int ret;
+	const char *const lukscheck_args[] = {
+		"cryptsetup", "isLuks", path, NULL,
+	};
+
+	ret = spawn_synchronous(lukscheck_args);
+	if (WIFEXITED(ret))
+		return WEXITSTATUS(ret) == 0;
+	return -1;
+}
+
+/**
  * ehd_load_2 - set up dm-crypt device
  */
 static bool ehd_load_2(struct ehdmount_ctl *ctl)
@@ -172,15 +189,12 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	pid_t pid;
 	bool is_luks = false;
 	const char *start_args[11];
-	const char *const lukscheck_args[] = {
-		"cryptsetup", "isLuks", ctl->lower_device, NULL,
-	};
 
-	ret = spawn_synchronous(lukscheck_args);
-	if (WIFEXITED(ret)) {
+	ret = ehd_is_luks(ctl->crypto_device);
+	if (ret >= 0) {
 		int argk = 0;
 
-		is_luks = WEXITSTATUS(ret) == 0;
+		is_luks = ret == 1;
 		start_args[argk++] = "cryptsetup";
 		if (ctl->readonly)
 			start_args[argk++] = "--readonly";
@@ -203,8 +217,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 		start_args[argk] = NULL;
 		assert(argk < ARRAY_SIZE(start_args));
 	} else {
-		l0g("cryptsetup isLuks got termined, signal %d\n",
-		    WTERMSIG(ret));
+		l0g("cryptsetup isLuks got termined\n");
 		return false;
 	}
 
