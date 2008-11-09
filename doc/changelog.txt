@@ -1,7 +1,14 @@
 
 For details, see the history as recorded in the git repository.
 
+
 - ofl: fix per-task fd lookup
+- mount.crypt: -v takes no argument
+- mount.crypt: use original container name as dmdevice name
+- mount.crypt: reduce output on wrong password
+- mount.crypt: only require -o cipher when used with non-LUKS
+  and keyfile
+- always proceed with mount even when a password is missing
 
 
 v1.2 (October 23 2008)
