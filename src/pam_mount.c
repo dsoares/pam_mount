@@ -44,8 +44,7 @@
 #endif
 
 struct pam_args {
-	enum auth_type auth_type;
-	bool nullok;
+	bool get_pw_from_pam, get_pw_interactive, propagate_pw;
 };
 
 /* Functions */
@@ -78,21 +77,27 @@ static void parse_pam_args(int argc, const char **argv)
 		assert(argv[i] != NULL);
 
 	/* first, set default values */
-	Args.auth_type  = GET_PASS;
+	Args.get_pw_from_pam    = true;
+	Args.get_pw_interactive = true;
+	Args.propagate_pw       = true;
 
 	for (i = 0; i < argc; ++i) {
-		if (strcasecmp("use_first_pass", argv[i]) == 0)
-			Args.auth_type = USE_FIRST_PASS;
-		else if (strcasecmp("try_first_pass", argv[i]) == 0)
-			Args.auth_type = TRY_FIRST_PASS;
-		else if (strcasecmp("soft_try_pass", argv[i]) == 0)
-			Args.auth_type = SOFT_TRY_PASS;
-		else if (strcasecmp("nullok", argv[i]) == 0)
-			Args.nullok = true;
+		if (strcasecmp("enable_pam_password", argv[i]) == 0)
+			Args.get_pw_from_pam = true;
+		else if (strcasecmp("disable_pam_password", argv[i]) == 0)
+			Args.get_pw_from_pam = false;
+		else if (strcasecmp("enable_interactive", argv[i]) == 0)
+			Args.get_pw_interactive = true;
+		else if (strcasecmp("disable_interactive", argv[i]) == 0)
+			Args.get_pw_interactive = false;
+		else if (strcasecmp("enable_propagate_password", argv[i]) == 0)
+			Args.propagate_pw = true;
+		else if (strcasecmp("disable_propagate_password", argv[i]) == 0)
+			Args.propagate_pw = false;
 		else if (strcasecmp("debug", argv[i]) == 0)
 			Debug = true;
 		else
-			w4rn("bad pam_mount option \"%s\"\n", argv[i]);
+			w4rn("unknown pam_mount option \"%s\"\n", argv[i]);
 	}
 }
 
@@ -258,14 +263,13 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
  *
  * Called by the PAM layer. The user's system password is added to PAM's
  * global module data. This is because pam_sm_open_session() does not allow
- *  access to the user's password. Returns the PAM error code or %PAM_SUCCESS.
+ * access to the user's password. Returns the PAM error code or %PAM_SUCCESS.
  */
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     int argc, const char **argv)
 {
 	int ret = PAM_SUCCESS;
 	char *authtok = NULL;
-	const void *tmp = NULL;
 
 	assert(pamh != NULL);
 
@@ -273,54 +277,41 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		return ret;
 	w4rn(PACKAGE_STRING ": entering auth stage\n");
 
-	if (Args.auth_type != GET_PASS) { /* get password from PAM system */
+	if (Args.get_pw_from_pam) {
 		char *ptr = NULL;
+
 		ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
 		      static_cast(void *, &ptr)));
-		if (ret != PAM_SUCCESS || ptr == NULL) {
-			if (ret == PAM_SUCCESS && ptr == NULL &&
-			    !Args.nullok)
-				ret = PAM_AUTHINFO_UNAVAIL;
-			l0g("could not get password from PAM system\n");
-			if (Args.auth_type == USE_FIRST_PASS)
-				goto out;
-		} else {
+		if (ret == PAM_SUCCESS && ptr != NULL)
 			authtok = xstrdup(ptr);
-		}
 	}
-	if (authtok == NULL) {
-		if (Args.auth_type == SOFT_TRY_PASS) {
-			ret = PAM_AUTHINFO_UNAVAIL;
-			goto out;
-		}
-		/* get password directly */
+	if (authtok == NULL && Args.get_pw_interactive) {
 		ret = read_password(pamh, Config.msg_authpw, &authtok);
-		if (ret != PAM_SUCCESS) {
-			l0g("error trying to read password\n");
-			goto out;
-		}
-		/* pam_set_item() copies to PAM-internal memory */
-		ret = pam_set_item(pamh, PAM_AUTHTOK, authtok);
-		if (ret != PAM_SUCCESS) {
-			l0g("error trying to export password\n");
-			goto out;
+		if (ret == PAM_SUCCESS && Args.propagate_pw) {
+			/*
+			 * pam_set_item() copies to PAM-internal memory.
+			 *
+			 * Using pam_set_item(PAM_AUTHTOK) here to make the
+			 * password that was just entered available to further
+			 * PAM modules.
+			 */
+			ret = pam_set_item(pamh, PAM_AUTHTOK, authtok);
+			if (ret != PAM_SUCCESS)
+				l0g("warning: failure to export password (%s)\n",
+				    pam_strerror(pamh, ret));
 		}
 	}
-	w4rn("saving authtok for session code (authtok=%p)\n", authtok);
-	ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
-	                   clean_system_authtok);
-	if (ret != PAM_SUCCESS) {
-		l0g("error trying to save authtok for session code\n");
-		goto out;
+	if (authtok != NULL) {
+		ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
+		                   clean_system_authtok);
+		if (ret == PAM_SUCCESS) {
+			if (mlock(authtok, strlen(authtok) + 1) < 0)
+				w4rn("mlock authtok: %s\n", strerror(errno));
+		} else {
+			l0g("error trying to save authtok for session code\n");
+		}
 	}
-	if (mlock(authtok, strlen(authtok) + 1) < 0)
-		w4rn("mlock authtok: %s\n", strerror(errno));
-	assert(ret != PAM_SUCCESS ||
-	       pam_get_data(pamh, "pam_mount_system_authtok", &tmp) ==
-	       PAM_SUCCESS);
-	assert(ret != PAM_SUCCESS || tmp != NULL);
- out:
-	return ret;
+	return PAM_SUCCESS;
 }
 
 /**
@@ -498,17 +489,19 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	ret = pam_get_data(pamh, "pam_mount_system_authtok",
 	      static_cast(const void **, static_cast(void *, &system_authtok)));
 	if (ret != PAM_SUCCESS) {
-		if (Args.auth_type == SOFT_TRY_PASS) {
-			ret = PAM_AUTHINFO_UNAVAIL;
-			goto out;
+		if (Args.get_pw_interactive) {
+			ret = read_password(pamh, Config.msg_sessionpw, &system_authtok);
+			if (ret != PAM_SUCCESS)
+				l0g("warning: could not obtain password "
+				    "interactively either\n");
 		}
-		l0g("error trying to retrieve authtok from auth code\n");
-		ret = read_password(pamh, Config.msg_sessionpw, &system_authtok);
-		if (ret != PAM_SUCCESS) {
-			l0g("error trying to read password\n");
-			goto out;
-		}
+		/*
+		 * Proceed without a password. Some volumes may not need one,
+		 * e.g. bind mounts and networked/unencrypted volumes.
+		 */
 	}
+	if (system_authtok == NULL)
+		system_authtok = xstrdup("");
 
 	misc_dump_id("Session open");
 
@@ -537,6 +530,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		unsetenv("KRB5CCNAME");
 	modify_pm_count(&Config, Config.user, "1");
 	envpath_restore();
+	ret = PAM_SUCCESS;
  out:
 	w4rn("done opening session (ret=%d)\n", ret);
 	return ret;

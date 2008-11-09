@@ -2,30 +2,22 @@
 This short document will explain the various pam_mount options.
 Options are listed in the 4th column of a PAM file, e.g.:
 
-	auth	optional	pam_mount.so	use_first_pass
+	auth	optional	pam_mount.so	debug
 
 
-<no argument>
-	Always ask for password.
+enable_pam_password (default)
+disable_pam_password
+	Enable or disable asking the PAM system for a previously-entered
+	password.
 
-use_first_pass
-	Always take the password from the PAM subsystem;
-	if it is not available, fail the module. The error returned
-	to the PAM core will be whatever error was encountered,
-	e.g. Out of memory, etc.
+enable_interactive (default)
+disable_interactive
+	Enable or disable asking for a password interactively.
 
-try_first_pass
-	Try taking the password from the PAM subsystem;
-	if it fails, ask for password.
+pam_mount will first try to get the password from PAM, if enabled,
+otherwise interactively, if enabled.
 
-soft_try_pass
-	Try taking the password from the PAM subsystem;
-	if it fails, do not ask and return "Authentication token
-	unavailable" instead. (Not quite the same as use_first_pass.)
-
-nullok
-	Do not fail if the authentication token was NULL (i.e. if
-	the user was not asked by another PAM auth module to provide
-	a password) and pam_mount was configured not to ask (e.g.
-	with use_first_pass), and pam_mount.so is "required" in the
-	PAM stack.
+enable_propagate_password (default)
+disable_propagate_password
+	Enable/disable propagation of the interactively-input password
+	to PAM modules following in the stack.
