@@ -43,6 +43,11 @@
 #	define CONFIGFILE "/etc/security/pam_mount.conf.xml"
 #endif
 
+struct pam_args {
+	enum auth_type auth_type;
+	bool nullok;
+};
+
 /* Functions */
 static void clean_config(pam_handle_t *, void *, int);
 static int converse(pam_handle_t *, int, const struct pam_message **,
@@ -53,8 +58,8 @@ static int read_password(pam_handle_t *, const char *, char **);
 
 /* Variables */
 static const char *envpath_saved;
-struct config Config = {};
-struct pam_args Args = {};
+struct config Config;
+struct pam_args Args;
 
 //-----------------------------------------------------------------------------
 /**

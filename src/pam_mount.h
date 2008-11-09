@@ -104,11 +104,6 @@ struct config {
 	unsigned int sig_wait;
 };
 
-struct pam_args {
-	enum auth_type auth_type;
-	bool nullok;
-};
-
 struct kvp {
 	char *key, *value;
 	struct HXlist_head list;
@@ -159,7 +154,6 @@ extern bool ofl(const char *, unsigned int);
 #endif
 extern unsigned int Debug;
 extern struct config Config;
-extern struct pam_args Args;
 
 /*
  *	SPAWN.C
