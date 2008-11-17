@@ -247,7 +247,8 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		}
 	}
 
-	if (!ehd_is_luks(opt->container) && opt->dmcrypt_cipher == NULL) {
+	if (!ehd_is_luks(opt->container, opt->blkdev) &&
+	    opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "
 		        "(use -o cipher=xxx)\n", **argv);
 		return false;

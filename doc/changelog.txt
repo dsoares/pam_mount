@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- mount.crypt: fix is_luks detection
+
+
 v1.3 (November 16 2008)
 =======================
 - ofl: fix per-task fd lookup

@@ -45,7 +45,7 @@ struct ehdmount_ctl {
 	const char *cipher, *hash;
 	const unsigned char *fskey;
 	unsigned int fskey_size;
-	bool readonly;
+	bool blkdev, readonly;
 };
 
 /**
@@ -166,18 +166,33 @@ static int loop_release(const char *device)
 /**
  * ehd_is_luks - check if @path points to a LUKS volume (cf. normal dm-crypt)
  * @path:	path to the crypto container
+ * @blkdev:	path is definitely a block device
  */
-int ehd_is_luks(const char *path)
+int ehd_is_luks(const char *path, bool blkdev)
 {
-	int ret;
-	const char *const lukscheck_args[] = {
+	const char *lukscheck_args[] = {
 		"cryptsetup", "isLuks", path, NULL,
 	};
+	char *loop_device;
+	int ret;
+
+	if (!blkdev) {
+		if ((ret = loop_setup(path, &loop_device, true)) <= 0) {
+			fprintf(stderr, "%s: could not set up loop device: %s\n",
+			        __func__, strerror(-ret));
+			return -1;
+		}
+		lukscheck_args[2] = loop_device;
+	}
 
 	ret = spawn_synchronous(lukscheck_args);
 	if (WIFEXITED(ret))
-		return WEXITSTATUS(ret) == 0;
-	return -1;
+		ret = WEXITSTATUS(ret) == 0;
+	else
+		ret = -1;
+	if (!blkdev)
+		loop_release(loop_device);
+	return ret;
 }
 
 /**
@@ -190,7 +205,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	bool is_luks = false;
 	const char *start_args[11];
 
-	ret = ehd_is_luks(ctl->crypto_device);
+	ret = ehd_is_luks(ctl->lower_device, true);
 	if (ret >= 0) {
 		int argk = 0;
 
@@ -217,7 +232,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 		start_args[argk] = NULL;
 		assert(argk < ARRAY_SIZE(start_args));
 	} else {
-		l0g("cryptsetup isLuks got termined\n");
+		l0g("cryptsetup isLuks got terminated\n");
 		return false;
 	}
 
@@ -276,7 +291,6 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 		.fskey_size = fskey_size,
 		.readonly   = readonly,
 	};
-	bool cont_blkdev;
 	struct stat sb;
 	int ret;
 
@@ -286,7 +300,7 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 	}
 
 	if (S_ISBLK(sb.st_mode)) {
-		cont_blkdev      = true;
+		ctl.blkdev       = true;
 		ctl.lower_device = const_cast(char *, cont_path);
 	} else {
 		/* need losetup since cryptsetup needs block device */
