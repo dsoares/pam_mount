@@ -143,11 +143,14 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		else if (strcmp(key, "rw") == 0)
 			mo->readonly = false;
 		else if (strcmp(key, "keysize") == 0)
-			/* automatically determined from keyfile size */;
+			/* automatically determined from keyfile size */
+			l0g("keysize mount option ignored\n");
 		else if (strcmp(key, "fsck") == 0)
-			/* not handled atm */;
+			/* not handled atm */
+			l0g("fsck mount option not supported\n");
 		else if (strcmp(key, "loop") == 0)
-			/* ignored - automatically detected */;
+			/* automatically detected anyway */
+			l0g("loop mount option ignored\n");
 		else if (strcmp(key, "hash") == 0)
 			mo->dmcrypt_hash = value;
 		else if (strcmp(key, "verbose") == 0)
