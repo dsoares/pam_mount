@@ -277,7 +277,7 @@ static int mtcr_mount(struct mount_options *opt)
 	struct stat sb;
 	int ret, argk;
 	FILE *fp;
-	hxmc_t *cd, *key;
+	hxmc_t *cd = NULL, *key;
 
 	if (opt->fsk_file == NULL) {
 		/* LUKS derives the key material on its own */
