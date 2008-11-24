@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 
 - mount.crypt: fix is_luks detection
+- build: supply "crypto_LUKS" fstype symlinks
 
 
 v1.3 (November 16 2008)

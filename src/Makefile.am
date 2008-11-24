@@ -39,6 +39,12 @@ umount.crypt: mount.crypt
 install-data-hook:
 	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;
 
+#
+#	udev/libvolume_id detects LUKS volumes as "crypto_LUKS", while
+#	blkid/libblkid detects them as "crypt_LUKS".
+#	Talking to the maintainers, crypto_LUKS is what was wanted.
+#	Providing symlinks for compat...
+#
 install-exec-hook:
 	mkdir -p "${DESTDIR}${ssbindir}";
-	-for i in umount.crypt mount.crypt_LUKS umount.crypt_LUKS; do ${LN_S} -f mount.crypt "${DESTDIR}${ssbindir}/$$i"; done;
+	-for i in umount.crypt mount.crypt_LUKS umount.crypt_LUKS mount.crypto_LUKS umount.crypto_LUKS; do ${LN_S} -f mount.crypt "${DESTDIR}${ssbindir}/$$i"; done;
