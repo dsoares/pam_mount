@@ -58,7 +58,7 @@ In addition, you must include two entries in the system's applicable
     auth     required  pam_securetty.so
     auth     required  pam_pwdb.so shadow nullok
     auth     required  pam_nologin.so
-+++ auth     optional  pam_mount.so try_first_pass
++++ auth     optional  pam_mount.so
     account  required  pam_pwdb.so
     password required  pam_cracklib.so
     password required  pam_pwdb.so shadow nullok use_authtok

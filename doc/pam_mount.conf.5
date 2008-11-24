@@ -269,11 +269,9 @@ Mount helpers for dm\-crypt and LUKS volumes.
 .SS Messages
 .TP
 \fB<msg\-authpw>\fP\fIpam_mount password:\fP\fB</msg\-authpw>\fP
-When pam_mount is not used with "\fBuse_first_pass\fP" or
-"\fBtry_first_pass\fP" keywords in the PAM configuration files (/etc/pam.d/),
-it will have to ask for a password. This is also the case if pam_mount is the
-first auth module in the block. <msg\-authpw> allows you to customize that
-prompt.
+When pam_mount cannot obtain a password through PAM, or is configured to not do
+so in the first place, and is configured to ask for a password interactively as
+a replacement, this prompt will be shown.
 .TP
 \fB<msg\-sessionpw>\fP\fIreenter...:\fP\fB</msg\-sessionpw>\fP
 In case the 'session' PAM block does not have the password (e.g. on su
