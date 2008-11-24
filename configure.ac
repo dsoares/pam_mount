@@ -7,7 +7,7 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [1.3])
+AC_INIT([pam_mount], [1.4])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_INSTALL
 AM_INIT_AUTOMAKE
@@ -37,7 +37,7 @@ regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
 	-Wformat=2 -pipe"
-AC_SUBST(regular_CFLAGS)
+AC_SUBST([regular_CFLAGS])
 
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
@@ -51,9 +51,9 @@ PKG_CHECK_MODULES([libssl], [libssl >= 0.9.8],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBSSL], [1],
 	[OpenSSL libssl available])])
 
-AC_CHECK_HEADER(security/pam_modules.h, [have_pamheader="yes"])
+AC_CHECK_HEADER([security/pam_modules.h], [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
-AC_CHECK_HEADER(pam/pam_modules.h, [have_pamheader="yes"])
+AC_CHECK_HEADER([pam/pam_modules.h], [have_pamheader="yes"])
 if test x"$have_pamheader" != x"yes"; then
 	AC_MSG_ERROR([You are missing PAM headers])
 fi
@@ -72,6 +72,6 @@ case "$host" in
 	PAM_MODDIR="/usr/lib"
 	;;
 esac
-AC_SUBST(PAM_MODDIR)
+AC_SUBST([PAM_MODDIR])
 
 AC_OUTPUT([Makefile config/Makefile doc/Makefile src/Makefile])

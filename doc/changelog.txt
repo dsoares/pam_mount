@@ -2,7 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.4 (November 24 2008)
+=======================
 - mount.crypt: fix is_luks detection
+- mount.crypt: add warnings for unneeded/unsupported options
 - build: supply "crypto_LUKS" fstype symlinks
 
 

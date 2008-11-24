@@ -8,7 +8,7 @@ License:	LGPL
 URL:		http://pam-mount.sf.net/
 
 Source:		http://downloads.sf.net/pam-mount/%name-%version.tar.lzma
-BuildRequires:	libtool lzma pam-devel pkg-config
+BuildRequires:	libtool lzip pam-devel pkg-config
 BuildRequires:	openssl-devel >= 0.9.8, libxml2-devel >= 2.6
 BuildRequires:	libHX-devel >= 1.25
 %if "%_vendor" == "suse"
