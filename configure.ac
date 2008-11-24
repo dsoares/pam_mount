@@ -28,7 +28,7 @@ AC_SUBST(ssbindir)
 AC_ARG_WITH([selinux], AS_HELP_STRING([--with-selinux],
 	[Install selinux files]),
 	[with_selinux=true], [with_selinux=false])
-AM_CONDITIONAL(SELINUX, $with_selinux)
+AM_CONDITIONAL([SELINUX], [test "x$with_selinux" = "xtrue"])
 
 m4_sinclude([m4/gcc4_visibility.m4])
 
