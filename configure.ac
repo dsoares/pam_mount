@@ -30,7 +30,7 @@ AC_ARG_WITH([selinux], AS_HELP_STRING([--with-selinux],
 	[with_selinux=true], [with_selinux=false])
 AM_CONDITIONAL([SELINUX], [test "x$with_selinux" = "xtrue"])
 
-m4_sinclude([m4/gcc4_visibility.m4])
+m4_include([m4/gcc4_visibility.m4])
 
 regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-D_FILE_OFFSET_BITS=64 \
@@ -71,4 +71,5 @@ case "$host" in
 esac
 AC_SUBST([PAM_MODDIR])
 
-AC_OUTPUT([Makefile config/Makefile doc/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile config/Makefile doc/Makefile src/Makefile])
+AC_OUTPUT
