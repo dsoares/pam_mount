@@ -51,7 +51,7 @@ mtcrypt_symlinks = \
 	mount.crypt_LUKS${EXEEXT} umount.crypt_LUKS${EXEEXT}
 
 install-exec-hook:
-	mkdir -p "${DESTDIR}${ssbindir}";
+	${MKDIR_P} ${DESTDIR}${ssbindir};
 	-for i in ${mtcrypt_symlinks}; do \
 		${LN_S} -f mount.crypt${EXEEXT} "${DESTDIR}${ssbindir}/$$i"; \
 	done;

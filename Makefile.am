@@ -5,7 +5,7 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 SUBDIRS = config doc src
 
 install-data-hook:
-	mkdir -p ${DESTDIR}${localstatedir}/run/pam_mount;
+	${MKDIR_P} ${DESTDIR}${localstatedir}/run/pam_mount;
 
 TMPDIR ?= /tmp
 tmpdir := $(shell mktemp -d ${TMPDIR}/pam_mount.src.XXXXXX)
