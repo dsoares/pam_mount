@@ -66,10 +66,10 @@ case "$host" in
 	PAM_MODDIR='${libdir}/security';
 	;;
     (*-*-darwin*)
-	PAM_MODDIR="/usr/lib/pam"
+	PAM_MODDIR='${libdir}/pam';
 	;;
     (*)
-	PAM_MODDIR="/usr/lib"
+	PAM_MODDIR='${libdir}';
 	;;
 esac
 AC_SUBST([PAM_MODDIR])
