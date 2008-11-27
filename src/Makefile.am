@@ -8,7 +8,7 @@ module_LTLIBRARIES	= pam_mount.la
 bin_PROGRAMS		= pmt-fd0ssh pmt-ofl
 sbin_PROGRAMS		= pmt-ehd pmvarrun
 ssbin_PROGRAMS		= mount.crypt mount.encfs13
-noinst_PROGRAMS		= umount.crypt
+noinst_SCRIPTS 		= umount.crypt
 
 pam_mount_la_SOURCES	= loop.c misc.c ofl-lib.c pam_mount.c \
 			  rdconf1.c rdconf2.c mount.c spawn.c
@@ -33,7 +33,7 @@ pmt_ofl_LDADD		= ${libHX_LIBS}
 pmvarrun_SOURCES = pmvarrun.c nlt-misc.c
 pmvarrun_LDADD   = ${libHX_LIBS}
 
-umount.crypt: mount.crypt
+umount.crypt${EXEEXT}: mount.crypt${EXEEXT}
 	-${LN_S} $^ $@;
 
 install-data-hook:
@@ -45,6 +45,13 @@ install-data-hook:
 #	Talking to the maintainers, crypto_LUKS is what was wanted.
 #	Providing symlinks for compat...
 #
+mtcrypt_symlinks = \
+	umount.crypt${EXEEXT} \
+	mount.crypto_LUKS${EXEEXT} umount.crypto_LUKS${EXEEXT} \
+	mount.crypt_LUKS${EXEEXT} umount.crypt_LUKS${EXEEXT}
+
 install-exec-hook:
 	mkdir -p "${DESTDIR}${ssbindir}";
-	-for i in umount.crypt mount.crypt_LUKS umount.crypt_LUKS mount.crypto_LUKS umount.crypto_LUKS; do ${LN_S} -f mount.crypt "${DESTDIR}${ssbindir}/$$i"; done;
+	-for i in ${mtcrypt_symlinks}; do \
+		${LN_S} -f mount.crypt${EXEEXT} "${DESTDIR}${ssbindir}/$$i"; \
+	done;
