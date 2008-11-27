@@ -13,17 +13,17 @@ noinst_SCRIPTS 		= umount.crypt
 pam_mount_la_SOURCES	= loop.c misc.c ofl-lib.c pam_mount.c \
 			  rdconf1.c rdconf2.c mount.c spawn.c
 pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
-			  ${libssl_LIBS} ${libxml_LIBS}
+			  ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
 mount_crypt_SOURCES	= mtcrypt.c nlt-loop.c nlt-misc.c nlt-spawn.c
-mount_crypt_LDADD	= ${libHX_LIBS} ${libcrypto_LIBS} ${libssl_LIBS}
+mount_crypt_LDADD	= ${libHX_LIBS} ${libcrypto_LIBS}
 
 mount_encfs13_SOURCES	= mtencfs13.c
 mount_encfs13_LDADD	= ${libHX_LIBS}
 
 pmt_ehd_SOURCES		= ehd.c nlt-loop.c nlt-misc.c nlt-spawn.c
-pmt_ehd_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS} ${libssl_LIBS}
+pmt_ehd_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
 
 pmt_fd0ssh_SOURCES	= fd0ssh.c
 
