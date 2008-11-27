@@ -37,6 +37,7 @@
  * @loop_device:	loop device association, if any
  * @crypto_device:	crypto device
  * @blkdev:		true if @container is a block device
+ * @fsck:		true if fsck should be performed
  */
 struct mount_options {
 	const char *container, *mountpoint, *fstype;
@@ -47,6 +48,7 @@ struct mount_options {
 	unsigned int no_update, readonly;
 	int dm_timeout;
 	bool blkdev;
+	bool fsck;
 };
 
 /**
@@ -146,8 +148,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			/* automatically determined from keyfile size */
 			l0g("keysize mount option ignored\n");
 		else if (strcmp(key, "fsck") == 0)
-			/* not handled atm */
-			l0g("fsck mount option not supported\n");
+			mo->fsck = true;
 		else if (strcmp(key, "loop") == 0)
 			/* automatically detected anyway */
 			l0g("loop mount option ignored\n");
@@ -272,8 +273,9 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 static int mtcr_mount(struct mount_options *opt)
 {
 	const char *mount_args[9];
+	const char *fsck_args[4];
 	struct stat sb;
-	int ret, argk = 0;
+	int ret, argk;
 	FILE *fp;
 	hxmc_t *cd, *key;
 
@@ -307,6 +309,31 @@ static int mtcr_mount(struct mount_options *opt)
 	while (stat(cd, &sb) < 0 && errno == ENOENT && opt->dm_timeout-- > 0)
 		usleep(333333);
 
+	if (opt->fsck) {
+		argk = 0;
+		fsck_args[argk++] = "fsck";
+		fsck_args[argk++] = "-p";
+		fsck_args[argk++] = cd;
+		fsck_args[argk] = NULL;
+		assert(argk < ARRAY_SIZE(fsck_args));
+
+		arglist_llog(fsck_args);
+		ret = spawn_synchronous(fsck_args);
+
+		/*
+		 * Return codes higher than 1 indicate that manual intervention
+		 * is required, therefore abort the mount/login.
+		 */
+		if (WIFEXITED(ret) && WEXITSTATUS(ret) > 1) {
+			fprintf(stderr, "Automatic fsck failed, manual "
+			        "intervention required, exit status %d\n",
+			        WEXITSTATUS(ret));
+			ehd_unload(cd, opt->blkdev);
+			return false;
+		}
+	}
+
+	argk = 0;
 	mount_args[argk++] = "mount";
 	mount_args[argk++] = "-n";
 	if (opt->fstype != NULL) {

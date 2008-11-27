@@ -37,6 +37,9 @@ cipher.
 Wait at most this many seconds for udev to create /dev/mapper/\fIname\fP after
 calling cryptsetup(8). The default value is 0 seconds.
 .TP
+\fBfsck\fP
+Run fsck on the container before mounting it.
+.TP
 \fBfsk_cipher\fP
 The OpenSSL cipher used for the filesystem key. The default is "aes\-256\-cbc".
 .TP
