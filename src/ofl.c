@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libHX.h>
+#include <libHX/defs.h>
+#include <libHX/option.h>
 #include "pam_mount.h"
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
 static unsigned int parse_signal(const char *str)
 {

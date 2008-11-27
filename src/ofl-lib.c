@@ -17,9 +17,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <libHX.h>
+#include <libHX/defs.h>
+#include <libHX/misc.h>
+#include <libHX/string.h>
 #include "pam_mount.h"
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
 int (*ofl_printf)(const char *, ...) = printf;
 
