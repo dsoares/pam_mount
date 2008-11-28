@@ -9,6 +9,7 @@
 #
 AC_INIT([pam_mount], [1.4])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_INSTALL
 AM_INIT_AUTOMAKE([-Wall])
 AC_PROG_CC
@@ -30,7 +31,7 @@ AC_ARG_WITH([selinux], AS_HELP_STRING([--with-selinux],
 	[with_selinux=true], [with_selinux=false])
 AM_CONDITIONAL([SELINUX], [test "x$with_selinux" = "xtrue"])
 
-m4_include([m4/gcc4_visibility.m4])
+CHECK_GCC_FVISIBILITY
 
 regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-D_FILE_OFFSET_BITS=64 \
