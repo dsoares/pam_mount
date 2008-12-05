@@ -33,11 +33,15 @@ pmt_ofl_LDADD		= ${libHX_LIBS}
 pmvarrun_SOURCES = pmvarrun.c nlt-misc.c
 pmvarrun_LDADD   = ${libHX_LIBS}
 
+EXTRA_DIST = misc.h mount.h pam_mount.h readconfig.h spawn.h
+
 umount.crypt${EXEEXT}: mount.crypt${EXEEXT}
 	-${LN_S} $^ $@;
 
+if !KEEP_LA
 install-data-hook:
 	rm -f $(DESTDIR)$(moduledir)/pam_mount.la;
+endif
 
 #
 #	udev/libvolume_id detects LUKS volumes as "crypto_LUKS", while
@@ -55,3 +59,9 @@ install-exec-hook:
 	-for i in ${mtcrypt_symlinks}; do \
 		${LN_S} -f mount.crypt${EXEEXT} "${DESTDIR}${ssbindir}/$$i"; \
 	done;
+
+uninstall-hook:
+	-for i in ${mtcrypt_symlinks}; do \
+		rm "${DESTDIR}${ssbindir}/$$i"; \
+	done;
+

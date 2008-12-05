@@ -29,6 +29,10 @@ AC_SUBST(ssbindir)
 AC_ARG_WITH([selinux], AS_HELP_STRING([--with-selinux],
 	[Install selinux files]),
 	[with_selinux=true], [with_selinux=false])
+AC_ARG_ENABLE([la], AS_HELP_STRING([--enable-la],
+	[Install .la file (used for distcheck)]),
+	[keep_la=true], [keep_la=false])
+AM_CONDITIONAL([KEEP_LA], [test "x$keep_la" = "xtrue"])
 AM_CONDITIONAL([SELINUX], [test "x$with_selinux" = "xtrue"])
 
 CHECK_GCC_FVISIBILITY

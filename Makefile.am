@@ -19,3 +19,8 @@ tarball:
 	pushd ${tmpdir}/${PACKAGE_NAME}-${PACKAGE_VERSION} && ./autogen.sh && popd;
 	tar --use=${packer} -C ${tmpdir} -cf ${PACKAGE_NAME}-${PACKAGE_VERSION}${packext} --owner=root --group=root ${PACKAGE_NAME}-${PACKAGE_VERSION}/;
 	rm -Rf ${tmpdir};
+
+DISTCHECK_CONFIGURE_FLAGS = \
+	--with-ssbindir='$${abs_builddir}/ssbin' \
+	--with-slibdir='$${abs_builddir}/slib' \
+	--enable-la
