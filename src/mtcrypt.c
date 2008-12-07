@@ -295,9 +295,15 @@ static int mtcr_mount(struct mount_options *opt)
 		}
 	}
 
-	ehd_load(opt->container, &cd, opt->dmcrypt_cipher, opt->dmcrypt_hash,
-	         reinterpret_cast(const unsigned char *, key),
-	         HXmc_length(key), opt->readonly);
+	ret = ehd_load(opt->container, &cd, opt->dmcrypt_cipher,
+	      opt->dmcrypt_hash, reinterpret_cast(const unsigned char *, key),
+	      HXmc_length(key), opt->readonly);
+	if (ret < 0) {
+		fprintf(stderr, "ehd_load: %s\n", strerror(errno));
+		return 0;
+	} else if (ret == 0) {
+		return 0;
+	}
 	HXmc_free(key);
 	if (cd == NULL) {
 		if (Debug)
