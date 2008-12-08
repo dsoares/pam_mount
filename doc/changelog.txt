@@ -2,6 +2,11 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.5 (December 07 2008)
+=======================
+- mount.crypt: support fsck mount option
+
+
 v1.4 (November 24 2008)
 =======================
 - mount.crypt: fix is_luks detection
