@@ -8,6 +8,8 @@
 #	(at your option) any later version.
 #
 AC_INIT([pam_mount], [1.5])
+AC_PREREQ([2.59])
+LT_PREREQ([2.2.6])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_INSTALL
@@ -41,7 +43,7 @@ regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-D_FILE_OFFSET_BITS=64 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
-	-Wformat=2 -pipe"
+	-Wformat=2 -fPIE -pipe"
 AC_SUBST([regular_CFLAGS])
 
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],

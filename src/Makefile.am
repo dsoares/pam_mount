@@ -12,25 +12,26 @@ noinst_SCRIPTS 		= umount.crypt
 
 pam_mount_la_SOURCES	= loop.c misc.c ofl-lib.c pam_mount.c \
 			  rdconf1.c rdconf2.c mount.c spawn.c
+pam_mount_la_CFLAGS	= ${AM_CFLAGS}
 pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
 			  ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
-mount_crypt_SOURCES	= mtcrypt.c nlt-loop.c nlt-misc.c nlt-spawn.c
+mount_crypt_SOURCES	= mtcrypt.c loop.c misc.c spawn.c
 mount_crypt_LDADD	= ${libHX_LIBS} ${libcrypto_LIBS}
 
 mount_encfs13_SOURCES	= mtencfs13.c
 mount_encfs13_LDADD	= ${libHX_LIBS}
 
-pmt_ehd_SOURCES		= ehd.c nlt-loop.c nlt-misc.c nlt-spawn.c
+pmt_ehd_SOURCES		= ehd.c loop.c misc.c spawn.c
 pmt_ehd_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
 
 pmt_fd0ssh_SOURCES	= fd0ssh.c
 
-pmt_ofl_SOURCES		= ofl.c nlt-ofl-lib.c
+pmt_ofl_SOURCES		= ofl.c ofl-lib.c
 pmt_ofl_LDADD		= ${libHX_LIBS}
 
-pmvarrun_SOURCES = pmvarrun.c nlt-misc.c
+pmvarrun_SOURCES = pmvarrun.c misc.c
 pmvarrun_LDADD   = ${libHX_LIBS}
 
 EXTRA_DIST = misc.h mount.h pam_mount.h readconfig.h spawn.h
