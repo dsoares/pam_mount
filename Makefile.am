@@ -20,7 +20,12 @@ tarball:
 	tar --use=${packer} -C ${tmpdir} -cf ${PACKAGE_NAME}-${PACKAGE_VERSION}${packext} --owner=root --group=root ${PACKAGE_NAME}-${PACKAGE_VERSION}/;
 	rm -Rf ${tmpdir};
 
+dist-hook:
+	tar --use=${packer} -cf ${PACKAGE_NAME}-${PACKAGE_VERSION}${packext} --owner=root --group=root ${distdir}
+
 DISTCHECK_CONFIGURE_FLAGS = \
 	--with-ssbindir='$${abs_builddir}/ssbin' \
 	--with-slibdir='$${abs_builddir}/slib' \
 	--enable-la
+
+DISTCLEANFILES = ${PACKAGE_NAME}-${PACKAGE_VERSION}${packext}

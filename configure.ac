@@ -11,7 +11,7 @@ AC_INIT([pam_mount], [1.5])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_INSTALL
-AM_INIT_AUTOMAKE([-Wall])
+AM_INIT_AUTOMAKE([-Wall dist-bzip2 no-dist-gzip])
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
