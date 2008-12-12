@@ -1,10 +1,10 @@
-<!ELEMENT pam-mount
-	(debug?,mkmountpoint?,luserconf?,mntoptions*,
-	path?,fsck?,cifsmount?,
+<!ELEMENT pam_mount
+	(volume*,debug?,luserconf?,mntoptions*,
+	path?,logout?,mkmountpoint?,fsck?,cifsmount?,
 	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
 	fuseumount?,fd0ssh?,umount?,
 	lclmount?,cryptmount?,nfsmount?,pmvarrun?,
-	volume*,msg-authpw?,msg-sessionpw?)>
+	msg-authpw?,msg-sessionpw?)>
 <!ELEMENT debug EMPTY>
 <!ATTLIST debug
 	enable CDATA #IMPLIED>
@@ -41,7 +41,7 @@
 <!ELEMENT cryptmount (#PCDATA)>
 <!ELEMENT nfsmount (#PCDATA)>
 <!ELEMENT pmvarrun (#PCDATA)>
-<!ELEMENT volume (and|or|xor|not|user|uid|gid|pgrp|sgrp)>
+<!ELEMENT volume ((and|or|xor|not|user|uid|gid|pgrp|sgrp)?)>
 <!ELEMENT and ((and|or|xor|not|user|uid|gid|pgrp|sgrp)*)>
 <!ELEMENT or ((and|or|xor|not|user|uid|gid|pgrp|sgrp)*)>
 <!ELEMENT xor ((and|or|xor|not|user|uid|gid|pgrp|sgrp),(and|or|xor|not|user|uid|gid|pgrp|sgrp))>
@@ -73,7 +73,7 @@
 	server CDATA #IMPLIED
 	path CDATA #REQUIRED
 	mountpoint CDATA #REQUIRED
-	ssh (0|1) "0"
+	ssh (0|1|yes|no|true|false) "no"
 	options CDATA #IMPLIED
 	cipher CDATA #IMPLIED
 	fskeycipher CDATA #IMPLIED
@@ -82,3 +82,10 @@
 >
 <!ELEMENT msg-authpw (#PCDATA)>
 <!ELEMENT msg-sessionpw (#PCDATA)>
+<!ELEMENT logout EMPTY>
+<!ATTLIST logout
+	wait CDATA "0"
+	hup (0|1|yes|no|true|false) "no"
+	term (0|1|yes|no|true|false) "no"
+	kill (0|1|yes|no|true|false) "no"
+>
