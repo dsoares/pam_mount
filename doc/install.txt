@@ -28,3 +28,16 @@ Suggested packages for runtime:
 	* sshfs -- SFTP-over-SSH
 	* ccgfs -- ccgfs-over-SSH (full operation support; mknod, acl, xattrs)
 	* cifs-mount -- for CIFS and SMB shares
+
+	configuration validation:
+	* xmllint (libxml2)
+
+DTD installation usage:
+
+	Configure pam_mount with:
+		--with-dtd
+
+	To validate (assuming the installation prefix was /usr):
+		xmllint --nonet --noout --loaddtd --valid
+		--path /usr/share/xml/pam_mount/dtd/pam_mount.conf.xml.dtd
+		/etc/security/pam_mount.conf.xml

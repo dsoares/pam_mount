@@ -27,6 +27,9 @@ AC_ARG_WITH([ssbindir], AS_HELP_STRING([--with-ssbindir=PATH],
 	[Path to the super sbin directory [[/sbin]]]),
 	[ssbindir="$withval"], [ssbindir="/sbin"])
 AC_SUBST(ssbindir)
+AC_ARG_WITH([dtd], AS_HELP_STRING([--with-dtd],
+	[Install XML DTD file]),
+	[with_dtd=true], [with_dtd=false])
 AC_ARG_WITH([selinux], AS_HELP_STRING([--with-selinux],
 	[Install selinux files]),
 	[with_selinux=true], [with_selinux=false])
@@ -35,6 +38,7 @@ AC_ARG_ENABLE([la], AS_HELP_STRING([--enable-la],
 	[keep_la=true], [keep_la=false])
 AM_CONDITIONAL([KEEP_LA], [test "x$keep_la" = "xtrue"])
 AM_CONDITIONAL([SELINUX], [test "x$with_selinux" = "xtrue"])
+AM_CONDITIONAL([WITH_DTD], [test "x$with_dtd" = "xtrue"])
 
 CHECK_GCC_FVISIBILITY
 
