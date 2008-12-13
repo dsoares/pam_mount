@@ -25,10 +25,13 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
-#include <linux/loop.h>
 #include "pam_mount.h"
 #include "misc.h"
 #include "spawn.h"
+#include <config.h>
+#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
+#	include <linux/loop.h>
+#endif
 
 /**
  * @lower_device:	path to container, if it is a block device, otherwise
@@ -60,8 +63,8 @@ struct ehdmount_ctl {
  * does not seem to be a loop device at all.
  */
 const char *loop_file_name(const char *filename, struct loop_info64 *i)
-{
 #ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
+{
 	int fd;
 	if ((fd = open(filename, O_RDONLY)) < 0)
 		return filename;
@@ -72,10 +75,12 @@ const char *loop_file_name(const char *filename, struct loop_info64 *i)
 	}
 	close(fd);
 	return signed_cast(char *, i->lo_file_name);
-#else
-	return NULL;
-#endif
 }
+#else
+{
+	return filename;
+}
+#endif
 
 static const unsigned int LINUX_MAX_MINOR = 1 << 20;
 
@@ -88,6 +93,7 @@ static const unsigned int LINUX_MAX_MINOR = 1 << 20;
  * Returns -errno on error, or positive on success.
  */
 static int loop_setup(const char *filename, char **result, bool ro)
+#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
 {
 	struct loop_info64 info;
 	const char *dev_prefix;
@@ -148,12 +154,18 @@ static int loop_setup(const char *filename, char **result, bool ro)
 	close(filefd);
 	return ret;
 }
+#else
+{
+	return -ENOSYS;
+}
+#endif
 
 /**
  * loop_release - release a loop device
  * @device:	loop node
  */
 static int loop_release(const char *device)
+#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
 {
 	int loopfd, ret = 1;
 
@@ -164,6 +176,11 @@ static int loop_release(const char *device)
 	close(loopfd);
 	return ret;
 }
+#else
+{
+	return -ENOSYS;
+}
+#endif
 
 /**
  * ehd_is_luks - check if @path points to a LUKS volume (cf. normal dm-crypt)

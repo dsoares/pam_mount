@@ -48,6 +48,7 @@ AC_SUBST([regular_CFLAGS])
 
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
+AC_CHECK_FUNCS([getmntent])
 
 PKG_CHECK_MODULES([libHX], [libHX >= 1.25])
 PKG_CHECK_MODULES([libxml], [libxml-2.0])

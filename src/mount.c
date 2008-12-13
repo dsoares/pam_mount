@@ -117,7 +117,7 @@ static void run_ofl(const struct config *const config, struct HXbtree *vinfo)
  */
 static int already_mounted(const struct config *const config,
     const struct vol *vpt, struct HXbtree *vinfo)
-#if defined(__linux__)
+#if defined(HAVE_GETMNTENT)
 {
 	hxmc_t *dev;
 	char real_mpt[PATH_MAX+1];
@@ -154,10 +154,10 @@ static int already_mounted(const struct config *const config,
 		const char *fstype = mtab_record->mnt_type;
 		const char *fspt   = mtab_record->mnt_dir;
 		int (*xcmp)(const char *, const char *);
+#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
 		struct loop_info64 loopdev;
 		struct stat statbuf;
 
-#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
 		if (stat(fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
 		    major(statbuf.st_rdev) == LOOP_MAJOR)
 			/*
@@ -200,6 +200,7 @@ static int already_mounted(const struct config *const config,
 		return -1;
 	}
 
+	getmntinfo
 	//getmntinfo() or getfsstat()
 	while (...) {
 		struct statfs *sb;
