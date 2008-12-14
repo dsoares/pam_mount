@@ -13,7 +13,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
@@ -22,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX.h>
 #include <grp.h>
@@ -737,10 +737,10 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 		w4rn("getpwnam(\"%s\") failed: %s\n",
 		     Config.user, strerror(errno));
 	} else {
-		HXformat_add(vinfo, "USERUID", static_cast(void *,
+		HXformat_add(vinfo, "USERUID", reinterpret_cast(void *,
 			static_cast(long, pe->pw_uid)),
 			HXTYPE_UINT | HXFORMAT_IMMED);
-		HXformat_add(vinfo, "USERGID", static_cast(void *,
+		HXformat_add(vinfo, "USERGID", reinterpret_cast(void *,
 			static_cast(long, pe->pw_gid)),
 			HXTYPE_UINT | HXFORMAT_IMMED);
 	}
@@ -776,8 +776,10 @@ static int fstype_nodev(const char *name) {
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char *bp = buf;
 		HX_chomp(buf);
-		while (isalpha(*bp)) ++bp;
-		while (isspace(*bp)) ++bp;
+		while (!HX_isspace(*bp))
+			++bp;
+		while (HX_isspace(*bp))
+			++bp;
 		if (strcasecmp(bp, name) == 0) {
 			fclose(fp);
 			return strncasecmp(buf, "nodev", 5) == 0;

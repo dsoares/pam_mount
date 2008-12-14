@@ -3,11 +3,11 @@
  *	written by Jan Engelhardt, 2008
  *	Released in the Public Domain.
  */
-#include <ctype.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/option.h>
 #include "pam_mount.h"
@@ -23,7 +23,7 @@ static unsigned int parse_signal(const char *str)
 	unsigned int ret;
 	char *end;
 
-	if (isdigit(*str)) {
+	if (HX_isdigit(*str)) {
 		ret = strtoul(str, &end, 10);
 		if (*end == '\0')
 			return ret;

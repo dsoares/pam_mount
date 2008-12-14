@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -20,6 +19,7 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/string.h>
 #include <openssl/rand.h>
@@ -284,7 +284,7 @@ static hxmc_t *ehd_crypto_name(const char *s)
 
 	ret = HXmc_strinit(s);
 	for (p = ret; *p != '\0'; ++p)
-		if (!isalnum(*p))
+		if (!HX_isalnum(*p))
 			*p = '_';
 	return ret;
 }
@@ -320,7 +320,7 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 
 	if (S_ISBLK(sb.st_mode)) {
 		ctl.blkdev       = true;
-		ctl.lower_device = const_cast(char *, cont_path);
+		ctl.lower_device = const_cast1(char *, cont_path);
 	} else {
 		/* need losetup since cryptsetup needs block device */
 		w4rn("Setting up loop device for file %s\n", cont_path);
@@ -416,17 +416,17 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 		const char *p = line;
 		HX_chomp(line);
 
-		while (isspace(*p))
+		while (HX_isspace(*p))
 			++p;
 		if (strncmp(p, "device:", strlen("device:")) != 0)
 			continue;
-		while (!isspace(*p))
+		while (!HX_isspace(*p))
 			++p;
 		/*
 		 * Relying on the fact that dmcrypt does not
 		 * allow spaces or newlines in filenames.
 		 */
-		while (isspace(*p))
+		while (HX_isspace(*p))
 			++p;
 		lower_device = p;
 		break;
@@ -480,10 +480,10 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	out = HXmc_meminit(NULL, info->keysize + info->cipher->block_size);
 	EVP_CIPHER_CTX_init(&ctx);
 	EVP_DecryptInit_ex(&ctx, info->cipher, NULL, key, iv);
-	EVP_DecryptUpdate(&ctx, reinterpret_cast(unsigned char *,
+	EVP_DecryptUpdate(&ctx, signed_cast(unsigned char *,
 		&out[out_len]), &out_len, info->data, info->keysize);
 	out_cumul_len += out_len;
-	EVP_DecryptFinal_ex(&ctx, reinterpret_cast(unsigned char *,
+	EVP_DecryptFinal_ex(&ctx, signed_cast(unsigned char *,
 		&out[out_len]), &out_len);
 	out_cumul_len += out_len;
 	HXmc_memcat(&out, out, out_cumul_len);

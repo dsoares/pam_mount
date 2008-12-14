@@ -50,7 +50,7 @@ AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 AC_CHECK_FUNCS([getmntent])
 
-PKG_CHECK_MODULES([libHX], [libHX >= 1.25])
+PKG_CHECK_MODULES([libHX], [libHX >= 2.0])
 PKG_CHECK_MODULES([libxml], [libxml-2.0])
 PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],

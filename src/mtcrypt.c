@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <mntent.h>
 #include <signal.h>
@@ -20,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/option.h>
 #include <libHX/string.h>
@@ -126,7 +126,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 
 		if (value != NULL)
 			*value++ = '\0';
-		while (isspace(*key))
+		while (HX_isspace(*key))
 			++key;
 		if (strcmp(key, "cipher") == 0)
 			mo->dmcrypt_cipher = value;
@@ -281,7 +281,8 @@ static int mtcr_mount(struct mount_options *opt)
 
 	if (opt->fsk_file == NULL) {
 		/* LUKS derives the key material on its own */
-		key = HXmc_dup(opt->fsk_password);
+		key = HXmc_meminit(opt->fsk_password,
+		      HXmc_length(opt->fsk_password));
 		if (key == NULL) {
 			fprintf(stderr, "HXmc_dup: %s\n", strerror(errno));
 			return 0;
@@ -368,8 +369,8 @@ static int mtcr_mount(struct mount_options *opt)
 	} else {
 		struct mntent newmnt;
 
-		newmnt.mnt_fsname = const_cast(char *, opt->container);
-		newmnt.mnt_dir    = const_cast(char *, opt->mountpoint);
+		newmnt.mnt_fsname = const_cast1(char *, opt->container);
+		newmnt.mnt_dir    = const_cast1(char *, opt->mountpoint);
 		newmnt.mnt_type   = "crypt";
 		newmnt.mnt_freq   = newmnt.mnt_passno = 0;
 		if (opt->extra_opts == NULL)

@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- use new libHX 1.29
+
+
 v1.5 (December 07 2008)
 =======================
 - mount.crypt: support fsck mount option

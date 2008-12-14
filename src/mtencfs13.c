@@ -46,6 +46,6 @@ int main(int argc, const char **argv)
 	}
 	args[i++] = NULL;
 	assert(i < ARRAY_SIZE(args));
-	execvp("encfs", const_cast(char * const *, args));
+	execvp("encfs", const_cast2(char * const *, args));
 	return -1;
 }

@@ -6,7 +6,6 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include <ctype.h>
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
@@ -21,6 +20,7 @@
 #	include <mntent.h>
 #endif
 #include <libHX/arbtree.h>
+#include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
 #include <libHX/option.h>
@@ -166,9 +166,9 @@ bool expandconfig(const struct config *config)
 	}
 
 	HXformat_add(vinfo, "USER", u, HXTYPE_STRING);
-	HXformat_add(vinfo, "USERUID", static_cast(void *,
+	HXformat_add(vinfo, "USERUID", reinterpret_cast(void *,
 		static_cast(long, pe->pw_uid)), HXTYPE_UINT | HXFORMAT_IMMED);
-	HXformat_add(vinfo, "USERGID", static_cast(void *,
+	HXformat_add(vinfo, "USERGID", reinterpret_cast(void *,
 		static_cast(long, pe->pw_gid)), HXTYPE_UINT | HXFORMAT_IMMED);
 	ge = getgrgid(pe->pw_gid);
 	format_add(vinfo, "GROUP", (ge != NULL) ? ge->gr_name : "");
@@ -490,12 +490,12 @@ static inline char *get_next_argument(char **sptr)
 
 	if (*i == '\0')
 		return NULL;
-	while (isspace(*i))
+	while (HX_isspace(*i))
 		++i;
 
 	while (*i != '\0') {
 		if (quot == '\0') {
-			if (isspace(*i)) {
+			if (HX_isspace(*i)) {
 				++i;
 				break;
 			}
@@ -558,14 +558,14 @@ static inline bool parse_bool_f(char *s)
 static bool user_in_sgrp(const char *user, const char *grp, bool icase)
 {
 	struct group *gent;
-	const char **wp;
+	const char *const *wp;
 
 	if ((gent = getgrnam(grp)) == NULL) {
 		w4rn("getgrnam(\"%s\") failed: %s\n", grp, strerror(errno));
 		return false;
 	}
 
-	wp = const_cast(const char **, gent->gr_mem);
+	wp = const_cast2(const char *const *, gent->gr_mem);
 	while (wp != NULL && *wp != NULL) {
 		if (strcmp(*wp, user) == 0 ||
 		    (icase && strcasecmp(*wp, user)) == 0)
@@ -1029,8 +1029,9 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 		ret = rc_volume_cond_pgrp(pwd, parent);
 		if (ret < 0 || ret > 0)
 			return ret;
+		const char *nnn = signed_cast(const char *, node->content);
 		return user_in_sgrp(pwd->pw_name,
-		       signed_cast(const char *, node->content),
+		       (void*)nnn,
 		       parse_bool_f(xml_getprop(parent, "icase")));
 	}
 

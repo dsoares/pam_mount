@@ -130,7 +130,7 @@ static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
 		if (fd_stderr != NULL)
 			dup2(pipes[2][1], STDERR_FILENO);
 		spawn_close_pipes(pipes);
-		execvp(*argv, const_cast(char * const *, argv));
+		execvp(*argv, const_cast2(char * const *, argv));
 		l0g("execvp: %s: %s\n", *argv, strerror(errno));
 		_exit(-1);
 	}
@@ -165,7 +165,7 @@ bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
 	const struct HXdeque_node *n;
 	bool ret;
 
-	ret = __spawn_start(const_cast(const char * const *, argv),
+	ret = __spawn_start(const_cast2(const char * const *, argv),
 	      pid, fd_stdin, fd_stdout, fd_stderr, setup, user);
 	free(argv);
 	for (n = argq->first; n != NULL; n = n->next)

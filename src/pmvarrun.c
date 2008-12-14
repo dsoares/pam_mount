@@ -119,7 +119,7 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 {
 	int c;
 
-	while ((c = getopt(argc, reinterpret_cast(char * const *, argv),
+	while ((c = getopt(argc, const_cast2(char * const *, argv),
 	    "hdo:u:")) >= 0) {
 		switch (c) {
 		case 'h':

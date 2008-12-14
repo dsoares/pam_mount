@@ -10,13 +10,13 @@
  */
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/misc.h>
 #include <libHX/string.h>
@@ -121,9 +121,9 @@ static bool ofl_pmap(const char *mnt, const char *map_file,
 		HX_chomp(line);
 		p = line;
 		for (i = 0; i < 5; ++i) {
-			while (!isspace(*p))
+			while (!HX_isspace(*p))
 				++p;
-			while (isspace(*p))
+			while (HX_isspace(*p))
 				++p;
 		}
 		if (*p == '\0')

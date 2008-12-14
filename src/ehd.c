@@ -12,7 +12,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -21,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/option.h>
 #include <libHX/string.h>
@@ -150,7 +150,7 @@ static bool ehd_check(const struct ehd_ctl *pg)
 		       cont->path);
 		if (HX_getl(&tmp, stdin) == NULL)
 			return false;
-		if (tolower(*tmp) != 'y')
+		if (HX_tolower(*tmp) != 'y')
 			return false;
 		HXmc_free(tmp);
 	}
@@ -298,10 +298,10 @@ static bool ehd_create_fskey(struct ehd_ctl *pg, const char *password,
 	/* And hex salad */
 	EVP_CIPHER_CTX_init(&ctx);
 	EVP_EncryptInit_ex(&ctx, cipher, NULL, key, iv);
-	EVP_EncryptUpdate(&ctx, reinterpret_cast(unsigned char *,
+	EVP_EncryptUpdate(&ctx, signed_cast(unsigned char *,
 	                  &out[out_cumul_len]), &out_len, fskey, fskey_size);
 	out_cumul_len += out_len;
-	EVP_EncryptFinal_ex(&ctx, reinterpret_cast(unsigned char *,
+	EVP_EncryptFinal_ex(&ctx, signed_cast(unsigned char *,
 	                    &out[out_cumul_len]), &out_len);
 	out_cumul_len += out_len;
 	EVP_CIPHER_CTX_cleanup(&ctx);
