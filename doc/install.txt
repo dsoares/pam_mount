@@ -16,7 +16,7 @@ Additional required packages for building from (Git) snapshot:
 
 Optional packages for building:
 
-	* openssl 0.9.6 or up
+	* openssl 0.9.8 or up
 
 Suggested packages for runtime:
 
