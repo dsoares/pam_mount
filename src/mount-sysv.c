@@ -77,7 +77,7 @@ int pmt_already_mounted(const struct config *const config,
 			 * device instead of the real device will be listed --
 			 * resolve it.
 			 */
-			fsname = loop_file_name(fsname, &loopdev);
+			fsname = pmt_loop_file_name(fsname, &loopdev);
 #endif
 
 		xcmp = (strcmp(fstype, "smbfs") == 0 ||

@@ -10,7 +10,7 @@ sbin_PROGRAMS		= pmt-ehd pmvarrun
 ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_SCRIPTS 		= umount.crypt
 
-pam_mount_la_SOURCES	= loop.c misc.c ofl-lib.c pam_mount.c \
+pam_mount_la_SOURCES	= loop.c loop-linux.c misc.c ofl-lib.c pam_mount.c \
 			  rdconf1.c rdconf2.c mount.c mount-bsd.c \
 			  mount-sysv.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
@@ -18,13 +18,13 @@ pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
 			  ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
-mount_crypt_SOURCES	= mtcrypt.c loop.c misc.c spawn.c
+mount_crypt_SOURCES	= mtcrypt.c loop.c loop-linux.c misc.c spawn.c
 mount_crypt_LDADD	= ${libHX_LIBS} ${libcrypto_LIBS}
 
 mount_encfs13_SOURCES	= mtencfs13.c
 mount_encfs13_LDADD	= ${libHX_LIBS}
 
-pmt_ehd_SOURCES		= ehd.c loop.c misc.c spawn.c
+pmt_ehd_SOURCES		= ehd.c loop.c loop-linux.c misc.c spawn.c
 pmt_ehd_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
 
 pmt_fd0ssh_SOURCES	= fd0ssh.c

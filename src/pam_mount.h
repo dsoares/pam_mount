@@ -129,7 +129,6 @@ static inline const char *znul(const char *s)
 /*
  *	LOOP.C
  */
-extern const char *loop_file_name(const char *, struct loop_info64 *);
 extern int ehd_is_luks(const char *, bool);
 extern int ehd_load(const char *, hxmc_t **, const char *, const char *,
 	const unsigned char *, unsigned int, bool);
@@ -138,6 +137,10 @@ extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	const char *);
 extern unsigned int cipher_digest_security(const char *);
 extern hxmc_t *pmt_get_password(const char *);
+
+extern const char *pmt_loop_file_name(const char *, struct loop_info64 *);
+extern int pmt_loop_setup(const char *, char **, bool);
+extern int pmt_loop_release(const char *);
 
 /*
  *	MOUNT.C

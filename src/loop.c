@@ -6,7 +6,6 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -22,16 +21,11 @@
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/string.h>
-#include <openssl/rand.h>
 #include <openssl/evp.h>
-#include <openssl/ssl.h>
 #include "pam_mount.h"
 #include "misc.h"
 #include "spawn.h"
-#include <config.h>
-#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
-#	include <linux/loop.h>
-#endif
+#include "config.h"
 
 /**
  * @lower_device:	path to container, if it is a block device, otherwise
@@ -54,7 +48,7 @@ struct ehdmount_ctl {
 };
 
 /**
- * loop_file_name -
+ * pmt_loop_file_name -
  * @filename:	block device to query
  * @i:		pointer to result storage
  *
@@ -62,121 +56,42 @@ struct ehdmount_ctl {
  * Returns the underlying file of the loop device, or @filename if @filename
  * does not seem to be a loop device at all.
  */
-const char *loop_file_name(const char *filename, struct loop_info64 *i)
 #ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-{
-	int fd;
-	if ((fd = open(filename, O_RDONLY)) < 0)
-		return filename;
-
-	if (ioctl(fd, LOOP_GET_STATUS64, i) != 0) {
-		close(fd);
-		return filename;
-	}
-	close(fd);
-	return signed_cast(char *, i->lo_file_name);
-}
+	/* elsewhere */
 #else
+const char *pmt_loop_file_name(const char *filename, struct loop_info64 *i)
 {
 	return filename;
 }
 #endif
 
-static const unsigned int LINUX_MAX_MINOR = 1 << 20;
-
 /**
- * loop_setup - associate file to a loop device
+ * pmt_loop_setup - associate file to a loop device
  * @filename:	file to associate
  * @result:	result buffer for path to loop device
  * @ro:		readonly
  *
  * Returns -errno on error, or positive on success.
  */
-static int loop_setup(const char *filename, char **result, bool ro)
 #if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
-{
-	struct loop_info64 info;
-	const char *dev_prefix;
-	unsigned int i = 0;
-	struct stat sb;
-	int filefd, loopfd, ret = -ENXIO;
-	char dev[64];
-
-	*result = NULL;
-
-	if (stat("/dev/loop0", &sb) == 0)
-		dev_prefix = "/dev/loop";
-	else if (stat("/dev/loop/0", &sb) == 0)
-		dev_prefix = "/dev/loop/";
-	else
-		return -ENXIO;
-
-	if ((filefd = open(filename, O_RDWR)) < 0)
-		return -errno;
-
-	for (i = 0; i < LINUX_MAX_MINOR; ++i) {
-		snprintf(dev, sizeof(dev), "%s%u", dev_prefix, i);
-		loopfd = open(dev, (ro ? O_RDONLY : O_RDWR) | O_EXCL);
-		if (loopfd < 0) {
-			if (errno == ENOENT)
-				/* Assume we already went past the last device */
-				break;
-			if (errno == EPERM || errno == EACCES)
-				/*
-				 * Note error and try other devices
-				 * before bailing out later.
-				 */
-				ret = -errno;
-			continue;
-		}
-		if (ioctl(loopfd, LOOP_GET_STATUS64, &info) >= 0 ||
-		    errno != ENXIO) {
-			close(loopfd);
-			continue;
-		}
-		memset(&info, 0, sizeof(info));
-		strncpy(signed_cast(char *, info.lo_file_name),
-		        filename, LO_NAME_SIZE);
-		if (ioctl(loopfd, LOOP_SET_FD, filefd) < 0) {
-			close(loopfd);
-			continue;
-		}
-		ioctl(loopfd, LOOP_SET_STATUS64, &info);
-		close(loopfd);
-		*result = xstrdup(dev);
-		if (*result == NULL)
-			ret = -ENOMEM;
-		else
-			ret = 1;
-		break;
-	}
-
-	close(filefd);
-	return ret;
-}
+	/* elsewhere */
 #else
+int pmt_loop_setup(const char *filename, char **result, bool ro)
 {
+	fprintf(stderr, "%s: no pam_mount support for loop devices "
+	        "on this platform\n", __func__);
 	return -ENOSYS;
 }
 #endif
 
 /**
- * loop_release - release a loop device
+ * pmt_loop_release - release a loop device
  * @device:	loop node
  */
-static int loop_release(const char *device)
 #if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
-{
-	int loopfd, ret = 1;
-
-	if ((loopfd = open(device, O_RDONLY)) < 0)
-		return -errno;
-	if (ioctl(loopfd, LOOP_CLR_FD) < 0)
-		ret = -errno;
-	close(loopfd);
-	return ret;
-}
+	/* elsewhere */
 #else
+int pmt_loop_release(const char *device)
 {
 	return -ENOSYS;
 }
@@ -196,7 +111,7 @@ int ehd_is_luks(const char *path, bool blkdev)
 	int ret;
 
 	if (!blkdev) {
-		if ((ret = loop_setup(path, &loop_device, true)) <= 0) {
+		if ((ret = pmt_loop_setup(path, &loop_device, true)) <= 0) {
 			fprintf(stderr, "%s: could not set up loop device: %s\n",
 			        __func__, strerror(-ret));
 			return -1;
@@ -210,7 +125,7 @@ int ehd_is_luks(const char *path, bool blkdev)
 	else
 		ret = -1;
 	if (!blkdev)
-		loop_release(loop_device);
+		pmt_loop_release(loop_device);
 	return ret;
 }
 
@@ -324,7 +239,7 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 	} else {
 		/* need losetup since cryptsetup needs block device */
 		w4rn("Setting up loop device for file %s\n", cont_path);
-		ret = loop_setup(cont_path, &ctl.lower_device, readonly);
+		ret = pmt_loop_setup(cont_path, &ctl.lower_device, readonly);
 		if (ret <= 0) {
 			l0g("Error setting up loopback device for %s: %s\n",
 			    cont_path, strerror(-ret));
@@ -343,7 +258,7 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 	if (!ret)
 		crypto_device_pptr = NULL;
 	if (ctl.lower_device != cont_path) {
-		loop_release(ctl.lower_device);
+		pmt_loop_release(ctl.lower_device);
 		free(ctl.lower_device);
 	}
 	if (crypto_device_pptr != NULL)
@@ -435,7 +350,7 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 	if (!ehd_unload_crypto(crypto_device))
 		goto out;
 	if (!only_crypto) {
-		int ret = loop_release(lower_device);
+		int ret = pmt_loop_release(lower_device);
 		/*
 		 * Success, not-assigned (ENXIO) or not-a-loop-device (ENOTTY)
 		 * shall pass.
