@@ -9,6 +9,8 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
+#define PAM_SM_ACCOUNT 1
+#define PAM_SM_AUTH 1
 #define PAM_SM_SESSION 1
 #define PAM_SM_PASSWORD 1
 
