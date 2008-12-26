@@ -49,9 +49,10 @@ regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-Wformat=2 -pipe"
 AC_SUBST([regular_CFLAGS])
 
+AC_CHECK_HEADERS([linux/major.h])
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
-AC_CHECK_FUNCS([getmntent])
+AC_CHECK_FUNCS([getmntent getmntinfo])
 
 PKG_CHECK_MODULES([libHX], [libHX >= 2.0])
 PKG_CHECK_MODULES([libxml], [libxml-2.0])

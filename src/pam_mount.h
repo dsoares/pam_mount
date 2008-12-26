@@ -140,6 +140,13 @@ extern unsigned int cipher_digest_security(const char *);
 extern hxmc_t *pmt_get_password(const char *);
 
 /*
+ *	MOUNT.C
+ */
+extern int pmt_already_mounted(const struct config *,
+	const struct vol *, struct HXbtree *);
+extern hxmc_t *pmt_vol_to_dev(const struct vol *);
+
+/*
  *	OFL-LIB.C
  */
 extern int (*ofl_printf)(const char *, ...);

@@ -11,7 +11,8 @@ ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_SCRIPTS 		= umount.crypt
 
 pam_mount_la_SOURCES	= loop.c misc.c ofl-lib.c pam_mount.c \
-			  rdconf1.c rdconf2.c mount.c spawn.c
+			  rdconf1.c rdconf2.c mount.c mount-bsd.c \
+			  mount-sysv.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
 pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
 			  ${libxml_LIBS}

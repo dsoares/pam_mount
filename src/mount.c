@@ -45,12 +45,10 @@
 #endif
 
 /* Functions */
-static int already_mounted(const struct config * const, const struct vol *, struct HXbtree *);
 static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
 static int pipewrite(int, const void *, size_t);
 static void run_ofl(const struct config * const, struct HXbtree *);
-static hxmc_t *vol_to_dev(const struct vol *);
 
 //-----------------------------------------------------------------------------
 /**
@@ -115,127 +113,13 @@ static void run_ofl(const struct config *const config, struct HXbtree *vinfo)
  * Checks if @config->volume[@vol] is already mounted, and returns 1 if this
  * the case, 0 if not and -1 on error.
  */
-static int already_mounted(const struct config *const config,
-    const struct vol *vpt, struct HXbtree *vinfo)
 #if defined(HAVE_GETMNTENT)
-{
-	hxmc_t *dev;
-	char real_mpt[PATH_MAX+1];
-	struct mntent *mtab_record;
-	bool mounted = false;
-	FILE *mtab;
-
-	if ((dev = vol_to_dev(vpt)) == NULL) {
-		l0g("pmt::vol_to_dev: %s\n", strerror(errno));
-		return -1;
-	}
-
-	if ((mtab = setmntent("/etc/mtab", "r")) == NULL) {
-		l0g("could not open /etc/mtab\n");
-		HXmc_free(dev);
-		return -1;
-	}
-	if (realpath(vpt->mountpoint, real_mpt) == NULL) {
-		w4rn("can't get realpath of volume %s: %s\n",
-		     vpt->mountpoint, strerror(errno));
-		strncpy(real_mpt, vpt->mountpoint, sizeof_z(real_mpt));
-		real_mpt[sizeof_z(real_mpt)] = '\0';
-	} else {
-		real_mpt[sizeof_z(real_mpt)] = '\0';
-		l0g("realpath of volume \"%s\" is \"%s\"\n",
-		    vpt->mountpoint, real_mpt);
-	}
-
-	w4rn("checking to see if %s is already mounted at %s\n",
-	     dev, vpt->mountpoint);
-
-	while ((mtab_record = getmntent(mtab)) != NULL) {
-		const char *fsname = mtab_record->mnt_fsname;
-		const char *fstype = mtab_record->mnt_type;
-		const char *fspt   = mtab_record->mnt_dir;
-		int (*xcmp)(const char *, const char *);
-#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-		struct loop_info64 loopdev;
-		struct stat statbuf;
-
-		if (stat(fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
-		    major(statbuf.st_rdev) == LOOP_MAJOR)
-			/*
-			 * If /etc/mtab is a link to /proc/mounts then the loop
-			 * device instead of the real device will be listed --
-			 * resolve it.
-			 */
-			fsname = loop_file_name(fsname, &loopdev);
-#endif
-
-		xcmp = (strcmp(fstype, "smbfs") == 0 ||
-		        strcmp(fstype, "cifs") == 0 ||
-		        strcmp(fstype, "ncpfs") == 0) ? strcasecmp : strcmp;
-
-		if (xcmp(fsname, dev) == 0 &&
-		    (strcmp(fspt, vpt->mountpoint) == 0 ||
-		    strcmp(fspt, real_mpt) == 0)) {
-			mounted = true;
-			break;
-		}
-	}
-
-	endmntent(mtab);
-	HXmc_free(dev);
-	return mounted;
-}
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-{
-	hxmc_t *dev;
-	struct HXdeque *argv;
-	char mte[BUFSIZ + 1];
-	int i, cstdout = -1, mounted = 0;
-	struct vol *vpt;
-	pid_t pid;
-	FILE *fp;
-
-	vpt = &config->volume[vol];
-	if ((dev = vol_to_dev(vpt)) == NULL) {
-		l0g("pmt::vol_to_dev: %s\n", strerror(errno));
-		return -1;
-	}
-
-	getmntinfo
-	//getmntinfo() or getfsstat()
-	while (...) {
-		struct statfs *sb;
-		/* FIXME: Test it. */
-		int (*xcmp)(const char *, const char *);
-
-		/* 
-		 * Use case-insensitive for SMB, etc. FIXME: Is it called
-		 * "smbfs" under BSD too?
-		 */
-		xcmp = (sb->f_fstypename != NULL &&
-		       (strcmp(sb->f_fstypename, "smbfs") == 0 ||
-		       strcmp(sb->f_fstypename, "cifs") == 0 ||
-		       strcmp(sb->f_fstypename, "ncpfs") == 0)) ?
-		       strcasecmp : strcmp;
-
-		/*
-		 * FIXME: Does BSD also turn "symlink mountpoints" into "real
-		 * mountpoints"?
-		 */
-		if (xcmp(sb->f_mntfromname, dev) == 0 &&
-		    strcmp(sb->f_mntonname, vpt->mountpoint) == 0) {
-			mounted = 1;
-			break;
-		}
-	}
-
-	fclose(fp); /* automatically closes @cstdout */
-	if (waitpid(pid, NULL, 0) != 0)
-		l0g("error waiting for child: %s\n", strerror(errno));
-	spawn_restore_sigchld();
-	HXmc_free(dev);
-	return mounted;
-}
+	/* elsewhere */
+#elif defined(HAVE_GETMNTINFO)
+	/* elsewhere */
 #else
+int pmt_already_mounted(const struct config *const config,
+    const struct vol *vpt, struct HXbtree *vinfo)
 {
 	l0g("check for previous mount not implemented on arch.\n");
 	return -1;
@@ -248,7 +132,7 @@ static int already_mounted(const struct config *const config,
  *
  * Turn a volume into the mountspec as accepted by the specific mount program.
  */
-static hxmc_t *vol_to_dev(const struct vol *vol)
+hxmc_t *pmt_vol_to_dev(const struct vol *vol)
 {
 	hxmc_t *ret;
 
@@ -615,7 +499,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 	assert(vinfo != NULL);
 	assert(password != NULL);
 
-	ret = already_mounted(config, vpt, vinfo);
+	ret = pmt_already_mounted(config, vpt, vinfo);
 	if (ret == -1) {
 		l0g("could not determine if %s is already mounted, "
 		    "failing\n", vpt->volume);
