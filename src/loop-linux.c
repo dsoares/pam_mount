@@ -71,7 +71,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 	const char *dev_prefix;
 	unsigned int i = 0;
 	struct stat sb;
-	int filefd, loopfd, ret = -ENXIO;
+	int filefd, loopfd, ret = 0;
 	char dev[64];
 
 	*result = NULL;
@@ -81,7 +81,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 	else if (stat("/dev/loop/0", &sb) == 0)
 		dev_prefix = "/dev/loop/";
 	else
-		return -ENXIO;
+		return ret;
 
 	if ((filefd = open(filename, O_RDWR)) < 0)
 		return -errno;

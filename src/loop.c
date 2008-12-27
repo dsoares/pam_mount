@@ -71,7 +71,8 @@ const char *pmt_loop_file_name(const char *filename, struct loop_info64 *i)
  * @result:	result buffer for path to loop device
  * @ro:		readonly
  *
- * Returns -errno on error, or positive on success.
+ * Returns -errno on error, or positive on success,
+ * zero when no devices were available.
  */
 #if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
 	/* elsewhere */
@@ -111,7 +112,10 @@ int ehd_is_luks(const char *path, bool blkdev)
 	int ret;
 
 	if (!blkdev) {
-		if ((ret = pmt_loop_setup(path, &loop_device, true)) <= 0) {
+		ret = pmt_loop_setup(path, &loop_device, true);
+		if (ret == 0) {
+			fprintf(stderr, "No free loop device\n");
+		} else if (ret < 0) {
 			fprintf(stderr, "%s: could not set up loop device: %s\n",
 			        __func__, strerror(-ret));
 			return -1;
@@ -240,7 +244,9 @@ int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
 		/* need losetup since cryptsetup needs block device */
 		w4rn("Setting up loop device for file %s\n", cont_path);
 		ret = pmt_loop_setup(cont_path, &ctl.lower_device, readonly);
-		if (ret <= 0) {
+		if (ret == 0) {
+			l0g("Error: no free loop devices\n");
+		} else if (ret < 0) {
 			l0g("Error setting up loopback device for %s: %s\n",
 			    cont_path, strerror(-ret));
 			return false;
