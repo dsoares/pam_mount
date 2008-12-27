@@ -74,7 +74,8 @@ const char *pmt_loop_file_name(const char *filename, struct loop_info64 *i)
  * Returns -errno on error, or positive on success,
  * zero when no devices were available.
  */
-#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
+#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME) || \
+    defined(HAVE_DEV_VNDVAR_H)
 	/* elsewhere */
 #else
 int pmt_loop_setup(const char *filename, char **result, bool ro)
@@ -89,7 +90,8 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
  * pmt_loop_release - release a loop device
  * @device:	loop node
  */
-#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME)
+#if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME) || \
+    defined(HAVE_DEV_VNDVAR_H)
 	/* elsewhere */
 #else
 int pmt_loop_release(const char *device)
