@@ -37,6 +37,7 @@ size_t pmt_block_getsize64(const char *path)
 		return 0;
 	}
 
+	close(fd);
 	return s;
 }
 #endif /* HAVE_LINUX_FS_H */
