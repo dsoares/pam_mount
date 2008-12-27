@@ -24,7 +24,6 @@ Recommends:	cryptsetup
 BuildRequires:	kernel-headers
 Requires:	cryptsetup-luks samba-client xfsprogs
 %endif
-Requires(post):	perl(XML::Writer)
 BuildRoot:	%_tmppath/%name-%version-build
 Prefix:		%_prefix
 
