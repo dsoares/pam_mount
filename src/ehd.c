@@ -28,7 +28,6 @@
 #include <openssl/rand.h>
 #include <security/pam_appl.h>
 #include <pwd.h>
-#include <linux/fs.h>
 #include "misc.h"
 #include "pam_mount.h"
 #include "spawn.h"
@@ -391,23 +390,16 @@ static void ehd_final_printout(const struct ehd_ctl *pg)
 		pg->fskey.digest, pg->fskey.path);
 }
 
-static size_t ehd_getsize64(const char *path)
+#ifdef HAVE_LINUX_FS_H
+	/* elsewhere */
+#else
+size_t pmt_block_getsize64(const char *path)
 {
-	uint64_t s;
-	int fd;
-
-	if ((fd = open(path, O_RDONLY | O_WRONLY)) < 0) {
-		fprintf(stderr, "open %s: %s\n", path, strerror(errno));
-		return 0;
-	}
-
-	if (ioctl(fd, BLKGETSIZE64, &s) < 0) {
-		fprintf(stderr, "ioctl on %s: %s\n", path, strerror(errno));
-		return 0;
-	}
-
-	return s;
+	fprintf(stderr, "%s: pam_mount does not know how to retrieve the "
+	        "size of a block device on this platform.\n", __func__);
+	return 0;
 }
+#endif
 
 /**
  * ehd_fill_options_container - complete container control block
@@ -460,7 +452,7 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 	} else if (S_ISBLK(sb.st_mode)) {
 		cont->blkdev = true;
 		if (cont->size == 0) {
-			cont->size = ehd_getsize64(cont->path);
+			cont->size = pmt_block_getsize64(cont->path);
 			if (cont->size != 0)
 				printf("Size of device: %llu MB\n",
 				       cont->size >> 20);
