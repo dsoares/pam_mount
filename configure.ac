@@ -68,10 +68,10 @@ if test x"$have_pamheader" != x"yes"; then
 fi
 
 case "$host" in
-    (*-*-linux*)
+    (*-*-linux*|*-*-openbsd*)
 	PAM_MODDIR='${slibdir}/security'
 	;;
-    (*-*-solaris*)
+    (*-*-solaris*|*-*-netbsd*)
 	PAM_MODDIR='${libdir}/security';
 	;;
     (*-*-darwin*)
