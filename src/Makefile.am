@@ -8,6 +8,7 @@ module_LTLIBRARIES	= pam_mount.la
 bin_PROGRAMS		= pmt-fd0ssh pmt-ofl
 sbin_PROGRAMS		= pmt-ehd pmvarrun
 ssbin_PROGRAMS		= mount.crypt mount.encfs13
+noinst_PROGRAMS		= autoloop
 noinst_SCRIPTS 		= umount.crypt
 
 loop_sources		= loop.c loop-linux.c
@@ -19,6 +20,9 @@ pam_mount_la_CFLAGS	= ${AM_CFLAGS}
 pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
 			  ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
+
+autoloop_SOURCES	= autoloop.c ${loop_sources} misc.c spawn.c
+autoloop_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
 
 mount_crypt_SOURCES	= mtcrypt.c ${loop_sources} misc.c spawn.c
 mount_crypt_LDADD	= ${libHX_LIBS} ${libcrypto_LIBS}
