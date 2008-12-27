@@ -2,7 +2,14 @@
 For details, see the history as recorded in the git repository.
 
 
-- use new libHX 1.29
+v1.6 (December 27 2008)
+=======================
+- update to libHX 2.0
+- block-linux: close a leaking fd
+- config: optionally install DTD and instructions for verification
+- config: resynchronize DTD with XML
+- build: autotools fixes, make `make dist` work
+- pam_mount.so now builds on BSD
 
 
 v1.5 (December 07 2008)
