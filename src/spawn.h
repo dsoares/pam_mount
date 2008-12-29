@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+struct HXdeque;
+
 /*
  *	SPAWN.C
  */

@@ -18,6 +18,7 @@
 #include <libHX/defs.h>
 #include <libHX/deque.h>
 #include <libHX/misc.h>
+#include <libHX/string.h>
 #include "misc.h"
 #include "pam_mount.h"
 #include "spawn.h"
