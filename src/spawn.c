@@ -21,7 +21,6 @@
 #include <libHX/string.h>
 #include "misc.h"
 #include "pam_mount.h"
-#include "spawn.h"
 
 /* Variables */
 static struct sigaction saved_handler = {.sa_handler = SIG_DFL};

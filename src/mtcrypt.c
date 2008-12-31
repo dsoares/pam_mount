@@ -26,7 +26,6 @@
 #include <openssl/evp.h>
 #include "misc.h"
 #include "pam_mount.h"
-#include "spawn.h"
 
 /**
  * @container:		path to the volume (like (bdev) /dev/sda2 or

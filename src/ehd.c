@@ -30,7 +30,6 @@
 #include <pwd.h>
 #include "misc.h"
 #include "pam_mount.h"
-#include "spawn.h"
 
 /**
  * @size:		container size in bytes

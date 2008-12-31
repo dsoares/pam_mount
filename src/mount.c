@@ -30,7 +30,6 @@
 #include "mount.h"
 #include "pam_mount.h"
 #include "readconfig.h"
-#include "spawn.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #	include <fstab.h>
 #elif defined(__linux__)

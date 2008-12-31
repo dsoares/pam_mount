@@ -24,7 +24,6 @@
 #include <openssl/evp.h>
 #include "pam_mount.h"
 #include "misc.h"
-#include "spawn.h"
 #include "config.h"
 
 /**
