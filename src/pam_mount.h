@@ -42,9 +42,6 @@
 	misc_warn(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 
-#define __STRINGIFY_EXPAND(s) #s
-#define __STRINGIFY(s)        __STRINGIFY_EXPAND(s)
-
 struct HXbtree;
 struct HXdeque;
 struct loop_info64;
