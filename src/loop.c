@@ -190,7 +190,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	close(fd_stdin);
 	waitpid(pid, &ret, 0);
 	if (!WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
-		w4rn("cryptsetup exited with non-zero status %d\n",
+		w4rn("cryptsetup terminated or exited with non-zero status %d\n",
 		     WEXITSTATUS(ret));
 		return false;
 	}

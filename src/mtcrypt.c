@@ -331,9 +331,9 @@ static int mtcr_mount(struct mount_options *opt)
 		 * Return codes higher than 1 indicate that manual intervention
 		 * is required, therefore abort the mount/login.
 		 */
-		if (WIFEXITED(ret) && WEXITSTATUS(ret) > 1) {
+		if (!WIFEXITED(ret) || WEXITSTATUS(ret) > 1) {
 			fprintf(stderr, "Automatic fsck failed, manual "
-			        "intervention required, exit status %d\n",
+			        "intervention required, term/exit status %d\n",
 			        WEXITSTATUS(ret));
 			ehd_unload(cd, opt->blkdev);
 			return false;
@@ -358,7 +358,7 @@ static int mtcr_mount(struct mount_options *opt)
 	assert(argk < ARRAY_SIZE(mount_args));
 	arglist_llog(mount_args);
 	if ((ret = spawn_synchronous(mount_args)) != 0) {
-		fprintf(stderr, "mount failed with exit status %d\n",
+		fprintf(stderr, "mount failed with term/exit status %d\n",
 		        WEXITSTATUS(ret));
 		ehd_unload(cd, opt->blkdev);
 	} else if (opt->no_update) {
@@ -500,7 +500,7 @@ static int mtcr_umount(struct umount_options *opt)
 	assert(argk < ARRAY_SIZE(umount_args));
 	arglist_llog(umount_args);
 	if ((ret = spawn_synchronous(umount_args)) != 0) {
-		fprintf(stderr, "umount %s failed with status %d\n",
+		fprintf(stderr, "umount %s failed with term/exit status %d\n",
 		        opt->object, WEXITSTATUS(ret));
 		return 0;
 	}

@@ -404,7 +404,7 @@ static int modify_pm_count(struct config *config, char *user,
 		goto out;
 	}
 	spawn_restore_sigchld();
-	if (WEXITSTATUS(child_exit)) {
+	if (!WIFEXITED(child_exit) || WEXITSTATUS(child_exit) != 0) {
 		l0g("pmvarrun failed\n");
 		fnval = -1;
 		goto out;

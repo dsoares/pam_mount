@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- spawns: correctly interpret return codes when signalled
+
+
 v1.6 (December 27 2008)
 =======================
 - update to libHX 2.0
