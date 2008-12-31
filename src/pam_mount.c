@@ -29,7 +29,6 @@
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 #ifndef PAM_EXTERN

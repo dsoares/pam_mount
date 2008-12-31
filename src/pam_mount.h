@@ -1,11 +1,13 @@
 #ifndef PMT_PAM_MOUNT_H
 #define PMT_PAM_MOUNT_H 1
 
+#include <sys/types.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <libHX/clist.h>
 #include <libHX/list.h>
 #include <libHX/option.h>
+#include <libHX/string.h>
 #include "config.h"
 
 #ifdef HAVE_VISIBILITY_HIDDEN
@@ -31,6 +33,17 @@
 #define PMT_DFL_DMCRYPT_CIPHER "aes-cbc-essiv:sha256"
 #define PMT_DFL_FSK_CIPHER     "aes-256-cbc"
 #define PMT_DFL_FSK_HASH       "sha1"
+
+/* Note that you will also need to change PMPREFIX in pmvarrun.c then! */
+#define l0g(fmt, ...) \
+	misc_log(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
+	__LINE__, ## __VA_ARGS__)
+#define w4rn(fmt, ...) \
+	misc_warn(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
+	__LINE__, ## __VA_ARGS__)
+
+#define __STRINGIFY_EXPAND(s) #s
+#define __STRINGIFY(s)        __STRINGIFY_EXPAND(s)
 
 struct HXbtree;
 struct HXdeque;
@@ -62,6 +75,18 @@ enum command_type {
 	CMD_FD0SSH,
 	_CMD_MAX,
 	CMD_NONE,
+};
+
+enum {
+	/* src */
+	PMTLOG_ERR = 0,
+	PMTLOG_DBG,
+	PMTLOG_SRCMAX,
+
+	/* dst */
+	PMTLOG_SYSLOG = 0,
+	PMTLOG_STDERR,
+	PMTLOG_DSTMAX,
 };
 
 struct vol {
@@ -145,6 +170,35 @@ extern size_t pmt_block_getsize64(const char *);
 extern const char *pmt_loop_file_name(const char *, struct loop_info64 *);
 extern int pmt_loop_setup(const char *, char **, bool);
 extern int pmt_loop_release(const char *);
+
+/*
+ *	MISC.C
+ */
+extern const char *pmtlog_prefix;
+extern bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
+
+extern void arglist_add(struct HXdeque *, const char *,
+	const struct HXbtree *);
+extern struct HXdeque *arglist_build(const struct HXdeque *,
+	const struct HXbtree *);
+extern void arglist_log(const struct HXdeque *);
+extern void arglist_llog(const char *const *);
+extern bool kvplist_contains(const struct HXclist_head *, const char *);
+extern char *kvplist_get(const struct HXclist_head *, const char *);
+extern void kvplist_genocide(struct HXclist_head *);
+extern hxmc_t *kvplist_to_str(const struct HXclist_head *);
+extern void misc_add_ntdom(struct HXbtree *, const char *);
+extern void misc_dump_id(const char *);
+extern int misc_log(const char *, ...);
+extern int misc_warn(const char *, ...);
+extern int pmt_fileop_exists(const char *);
+extern int pmt_fileop_owns(const char *, const char *);
+extern char *relookup_user(const char *);
+extern void set_myuid(const char *);
+extern long str_to_long(const char *);
+extern void *xmalloc(size_t);
+extern void *xrealloc(void *, size_t);
+extern char *xstrdup(const char *);
 
 /*
  *	MOUNT.C

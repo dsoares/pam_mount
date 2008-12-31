@@ -19,7 +19,6 @@
 #include <libHX/deque.h>
 #include <libHX/misc.h>
 #include <libHX/string.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 /* Variables */

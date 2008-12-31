@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <libHX/defs.h>
 #include "pam_mount.h"
-#include "misc.h"
 #include <dev/vndvar.h>
 
 /* They sure do not have a lot... */

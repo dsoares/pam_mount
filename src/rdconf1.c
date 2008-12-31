@@ -26,7 +26,6 @@
 #include <libHX/option.h>
 #include <libHX/string.h>
 #include <libHX/libxml_helper.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 /* Definitions */

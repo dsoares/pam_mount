@@ -26,7 +26,6 @@
 #include <libHX.h>
 #include <grp.h>
 #include <pwd.h>
-#include "misc.h"
 #include "pam_mount.h"
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #	include <fstab.h>

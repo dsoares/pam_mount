@@ -19,7 +19,6 @@
 #include <libHX/defs.h>
 #include <libHX/deque.h>
 #include <pwd.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 /**

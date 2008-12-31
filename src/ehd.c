@@ -28,7 +28,6 @@
 #include <openssl/rand.h>
 #include <security/pam_appl.h>
 #include <pwd.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 /**

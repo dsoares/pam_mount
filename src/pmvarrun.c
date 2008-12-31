@@ -31,7 +31,6 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <libHX/defs.h>
 #include <libHX/string.h>
 #include <pwd.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 /* Definitions */

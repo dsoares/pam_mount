@@ -13,7 +13,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <libHX/string.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 int pmt_already_mounted(const struct config *config,

@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <libHX/defs.h>
 #include "pam_mount.h"
-#include "misc.h"
 
 #ifdef HAVE_LINUX_FS_H
 #include <linux/fs.h>

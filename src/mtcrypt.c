@@ -24,7 +24,6 @@
 #include <libHX/option.h>
 #include <libHX/string.h>
 #include <openssl/evp.h>
-#include "misc.h"
 #include "pam_mount.h"
 
 /**

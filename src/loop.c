@@ -23,7 +23,6 @@
 #include <libHX/string.h>
 #include <openssl/evp.h>
 #include "pam_mount.h"
-#include "misc.h"
 #include "config.h"
 
 /**

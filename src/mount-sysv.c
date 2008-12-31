@@ -16,7 +16,6 @@
 #include <string.h>
 #include <libHX/arbtree.h>
 #include <libHX/string.h>
-#include "misc.h"
 #include "pam_mount.h"
 #include <mntent.h>
 #ifdef HAVE_LINUX_MAJOR_H

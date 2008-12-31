@@ -26,9 +26,7 @@
 #include <libHX/option.h>
 #include <libHX/string.h>
 #include <pwd.h>
-#include "misc.h"
 #include "pam_mount.h"
-#include "misc.h"
 
 const char *pmtlog_prefix;
 bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
