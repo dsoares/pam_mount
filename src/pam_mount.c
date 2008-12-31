@@ -32,7 +32,6 @@
 #include "misc.h"
 #include "mount.h"
 #include "pam_mount.h"
-#include "readconfig.h"
 
 #ifndef PAM_EXTERN
 #	define PAM_EXTERN

@@ -28,7 +28,6 @@
 #include <libHX/libxml_helper.h>
 #include "misc.h"
 #include "pam_mount.h"
-#include "readconfig.h"
 
 /* Definitions */
 enum {

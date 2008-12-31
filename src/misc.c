@@ -28,8 +28,6 @@
 #include <pwd.h>
 #include "misc.h"
 #include "pam_mount.h"
-#include "readconfig.h"
-#include "pam_mount.h"
 #include "misc.h"
 
 const char *pmtlog_prefix;

@@ -167,6 +167,20 @@ extern unsigned int Debug;
 extern struct config Config;
 
 /*
+ *	RDCONF1.C
+ */
+extern bool expandconfig(const struct config *);
+extern void initconfig(struct config *);
+extern bool readconfig(const char *, bool, struct config *);
+extern void freeconfig(struct config *);
+
+/*
+ *	RDCONF2.C
+ */
+extern bool luserconf_volume_record_sane(const struct config *, const struct vol *);
+extern bool volume_record_sane(const struct config *, const struct vol *);
+
+/*
  *	SPAWN.C
  */
 extern bool spawn_startl(const char *const *, pid_t *, int *, int *);

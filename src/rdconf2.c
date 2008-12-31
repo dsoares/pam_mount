@@ -21,7 +21,6 @@
 #include <pwd.h>
 #include "misc.h"
 #include "pam_mount.h"
-#include "readconfig.h"
 
 /**
  * allow_ok - check for disallowed options
