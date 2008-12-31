@@ -109,6 +109,9 @@ struct kvp {
 	struct HXlist_head list;
 };
 
+typedef int (mount_op_fn_t)(const struct config *, struct vol *,
+	struct HXbtree *, const char *);
+
 /*
  *
  */
@@ -146,6 +149,10 @@ extern int pmt_loop_release(const char *);
 /*
  *	MOUNT.C
  */
+extern mount_op_fn_t do_mount, do_unmount;
+extern int mount_op(mount_op_fn_t *, const struct config *, struct vol *,
+	const char *);
+extern void umount_final(struct config *);
 extern int pmt_already_mounted(const struct config *,
 	const struct vol *, struct HXbtree *);
 extern hxmc_t *pmt_vol_to_dev(const struct vol *);

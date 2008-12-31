@@ -30,7 +30,6 @@
 #include <libHX/defs.h>
 #include <libHX.h>
 #include "misc.h"
-#include "mount.h"
 #include "pam_mount.h"
 
 #ifndef PAM_EXTERN
