@@ -268,60 +268,6 @@ struct HXdeque *arglist_build(const struct HXdeque *cmd,
 }
 
 /**
- * set_myuid -
- * @user:	switch to specified user
- *
- * set_myuid() is called in the child process as a result of the 
- * spawn_start() fork, before exec() will take place.
- *
- * If @users is %NULL, the UID is changed to root. (In most cases, we are
- * already root, though.)
- *
- * If @user is not %NULL, the UID of the current process is changed to that of
- * @user. Also, as a bonus for FUSE daemons, we set the HOME and USER
- * environment variables. setsid() is called so that FUSE daemons (e.g. sshfs)
- * get a new session identifier and do not get killed by the login program
- * after PAM authentication is successful.
- *
- * chdir("/") is called so that fusermount does not get stuck in a
- * non-readable directory (by means of doing `su - unprivilegeduser`)
- */
-void set_myuid(const char *user)
-{
-	setsid();
-	if (chdir("/") < 0)
-		;
-	if (user == NULL) {
-		misc_dump_id("set_myuid<pre>");
-		if (setuid(0) < 0) {
-			l0g("error setting uid to 0\n");
-			return;
-		}
-	} else {
-		/* Set UID and GID to the user's one */
-		const struct passwd *real_user;
-		w4rn("setting uid to user %s\n", user);
-		if ((real_user = getpwnam(user)) == NULL) {
-			l0g("could not get passwd entry for user %s\n", user);
-			return;
-		}
-		if (setgid(real_user->pw_gid) == -1) {
-			l0g("could not set gid to %ld\n",
-			    static_cast(long, real_user->pw_gid));
-			return;
-		}
-		if (setuid(real_user->pw_uid) == -1) {
-			l0g("could not set uid to %ld\n",
-			    static_cast(long, real_user->pw_uid));
-			return;
-		}
-		setenv("HOME", real_user->pw_dir, 1);
-		setenv("USER", real_user->pw_name, 1);
-	}
-	misc_dump_id("set_myuid<post>");
-}
-
-/**
  * relookup_user -
  * @user:	The user to retrieve
  *

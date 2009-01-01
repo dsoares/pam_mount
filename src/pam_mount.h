@@ -191,7 +191,6 @@ extern int misc_warn(const char *, ...);
 extern int pmt_fileop_exists(const char *);
 extern int pmt_fileop_owns(const char *, const char *);
 extern char *relookup_user(const char *);
-extern void set_myuid(const char *);
 extern long str_to_long(const char *);
 extern void *xmalloc(size_t);
 extern void *xrealloc(void *, size_t);
@@ -241,11 +240,12 @@ extern bool volume_record_sane(const struct config *, const struct vol *);
 /*
  *	SPAWN.C
  */
+extern void spawn_restore_sigchld(void);
+extern void spawn_set_sigchld(void);
 extern bool spawn_startl(const char *const *, pid_t *, int *, int *);
 extern bool spawn_start(struct HXdeque *, pid_t *, int *, int *, int *,
 	void (*)(const char *), const char *);
-extern void spawn_restore_sigchld(void);
-extern void spawn_set_sigchld(void);
 extern int spawn_synchronous(const char *const *);
+extern void set_myuid(const char *);
 
 #endif /* PMT_PAM_MOUNT_H */
