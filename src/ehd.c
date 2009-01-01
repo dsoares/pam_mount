@@ -342,11 +342,11 @@ static bool ehd_mkfs(const struct ehd_ctl *pg, const hxmc_t *crypto_device)
 		        fsprog, WEXITSTATUS(ret));
 			system("/bin/bash");
 		HXmc_free(fsprog);
-		return ret;
+		return false;
 	}
 
 	HXmc_free(fsprog);
-	return 0;
+	return true;
 }
 
 /**

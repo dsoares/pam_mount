@@ -4,6 +4,7 @@ For details, see the history as recorded in the git repository.
 
 Fixes:
 - spawns: correctly interpret return codes when signalled
+- pmt-ehd: fix a wrong return value in the error path
 
 
 v1.6 (December 27 2008)
