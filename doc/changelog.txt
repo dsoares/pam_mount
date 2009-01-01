@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.7 (January 01 2009)
+======================
 Fixes:
 - spawns: correctly interpret return codes when signalled
 - pmt-ehd: fix a wrong return value in the error path
