@@ -188,7 +188,7 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	close(fd_stdin);
 	waitpid(pid, &ret, 0);
 	if (!WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
-		w4rn("cryptsetup exited with non-zero status %d\n",
+		w4rn("cryptsetup terminated or exited with non-zero status %d\n",
 		     WEXITSTATUS(ret));
 		return false;
 	}
@@ -369,6 +369,10 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
  out:
 	spawn_restore_sigchld();
 	waitpid(pid, NULL, 0);
+	if (fp != NULL)
+		fclose(fp);
+	else
+		close(fd_stdout);
 	return f_ret;
 }
 

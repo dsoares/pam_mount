@@ -65,6 +65,7 @@ static void log_output(int fd, const char *cmsg)
 
 	if ((fp = fdopen(fd, "r")) == NULL) {
 		w4rn("error opening file: %s\n", strerror(errno));
+		close(fd);
 		return;
 	}
 
@@ -341,7 +342,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 		goto out;
 	} else {
 		/* pass on through the result from the umount process */
-		ret = !WEXITSTATUS(child_exit);
+		ret = WIFEXITED(child_exit) && WEXITSTATUS(child_exit) == 0;
 	}
  out:
 	spawn_restore_sigchld();
@@ -436,7 +437,8 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	 * pass on through the result -- okay if 0 (no errors) or 1 (errors
 	 * corrected)
 	 */
-	return WEXITSTATUS(child_exit) == 0 || WEXITSTATUS(child_exit) == 1;
+	return WIFEXITED(child_exit) &&
+	       (WEXITSTATUS(child_exit) == 0 || WEXITSTATUS(child_exit) == 1);
 #else
 	l0g("checking filesystem not implemented on arch.\n");
 	return 1;
@@ -570,7 +572,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		spawn_synchronous((const char *const []){"df", "-Ta", NULL});
 
 	/* pass on through the result from the umount process */
-	return !WEXITSTATUS(child_exit);
+	return WIFEXITED(child_exit) && WEXITSTATUS(child_exit) == 0;
 }
 
 /**

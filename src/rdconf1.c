@@ -160,7 +160,7 @@ bool expandconfig(const struct config *config)
 		return false;
 	if ((pe = getpwnam(u)) == NULL) {
 		l0g("You do not exist? %s? %s.\n", u, strerror(errno));
-		return false;
+		goto rfalse;
 	}
 
 	HXformat_add(vinfo, "USER", u, HXTYPE_STRING);
@@ -181,14 +181,18 @@ bool expandconfig(const struct config *config)
 		    !expand_home(u, &vpt->fs_key_path) ||
 		    !expand_user(u, &vpt->fs_key_path, vinfo) ||
 		    !expand_user(u, &vpt->fs_key_cipher, vinfo))
-			return false;
+			goto rfalse;
 
 		HXlist_for_each_entry(kvp, &vpt->options, list)
 			if (!expand_user(u, &kvp->value, vinfo))
-				return false;
+				goto rfalse;
 	}
 
+	HXformat_free(vinfo);
 	return true;
+ rfalse:
+	HXformat_free(vinfo);
+	return false;
 }
 
 static void volume_free(struct vol *vol)
