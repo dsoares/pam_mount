@@ -11,6 +11,7 @@ Fixes:
 
 Changes:
 - signals: block SIGPIPE during the entire pam_mount run time
+- signals: use refcounted SIGCHLD
 
 
 v1.6 (December 27 2008)
