@@ -43,7 +43,6 @@
 /* Functions */
 static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
-static int pipewrite(int, const void *, size_t);
 static void run_ofl(const struct config * const, struct HXbtree *);
 
 //-----------------------------------------------------------------------------
@@ -353,36 +352,6 @@ int do_unmount(const struct config *config, struct vol *vpt,
 	return ret;
 }
 
-/* INPUT: fd, a valid file descriptor; buf, a buffer of size count
- * SIDE EFFECTS: buf is written to fd
- * OUTPUT: number of bytes written or 0 on error
- * NOTE: SIGPIPE is ignored during this operation to avoid "broken pipe"
- */
-static int pipewrite(int fd, const void *buf, size_t count)
-{
-	struct sigaction ignoresact = {.sa_handler = SIG_IGN}, oldsact;
-	int fnval;
-
-	assert(fd >= 0);
-	assert(buf != NULL);
-	assert(count >= 0);
-
-	/* avoid bomb on command exiting before data written */
-	sigemptyset(&ignoresact.sa_mask);
-	if (sigaction(SIGPIPE, &ignoresact, &oldsact) < 0) {
-		fnval = -1;
-		goto out;
-	}
-	fnval = write(fd, buf, count);
-	/* restore old handler */
-	if (sigaction(SIGPIPE, &oldsact, NULL) < 0) {
-		fnval = -1;
-		goto out;
-	}
- out:
-	return fnval;
-}
-
 static int check_filesystem(const struct config *config, const struct vol *vpt,
     struct HXbtree *vinfo)
 {
@@ -553,7 +522,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		return 0;
 
 	if (vpt->type != CMD_NFSMOUNT)
-		if (pipewrite(cstdin, password, strlen(password)) !=
+		if (write(cstdin, password, strlen(password)) !=
 		    strlen(password))
 			/* FIXME: clean: returns value of exit below */
 			l0g("error sending password to mount\n");

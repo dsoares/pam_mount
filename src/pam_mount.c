@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -207,6 +208,32 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass)
 	return retval;
 }
 
+static void pmt_sigpipe_setup(bool block_it)
+{
+	static pthread_mutex_t sp_lock = PTHREAD_MUTEX_INITIALIZER;
+	static int sp_blocked = 0;
+	static bool sp_previous;
+	sigset_t set, oldset;
+
+	pthread_mutex_lock(&sp_lock);
+	if (block_it) {
+		if (++sp_blocked == 1) {
+			sigemptyset(&set);
+			sigaddset(&set, SIGPIPE);
+			sigprocmask(SIG_BLOCK, &set, &oldset);
+			sp_previous = sigismember(&oldset, SIGPIPE);
+		}
+	} else {
+		if (--sp_blocked == 0 && sp_previous) {
+			sigemptyset(&set);
+			sigaddset(&set, SIGPIPE);
+			sigprocmask(SIG_UNBLOCK, &set, NULL);
+		}
+	}
+
+	pthread_mutex_unlock(&sp_lock);
+}
+
 static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 {
 	const char *pam_user;
@@ -249,7 +276,14 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 
 	snprintf(buf, sizeof(buf), "%u", Debug);
 	setenv("_PMT_DEBUG_LEVEL", buf, true);
+
+	pmt_sigpipe_setup(true);
 	return -1;
+}
+
+static void common_exit(void)
+{
+	pmt_sigpipe_setup(false);
 }
 
 /**
@@ -309,6 +343,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 			l0g("error trying to save authtok for session code\n");
 		}
 	}
+	common_exit();
 	return PAM_SUCCESS;
 }
 
@@ -354,19 +389,10 @@ static int modify_pm_count(struct config *config, char *user,
 	int child_exit, cstdout = -1, fnval = -1;
 	struct HXdeque *argv;
 	pid_t pid;
-	struct sigaction sact, oldsact;
 
 	assert(user != NULL);
 	assert(operation != NULL);
 
-	/* avoid bomb on command exiting before count read */
-	memset(&sact, 0, sizeof(sact));
-	sact.sa_handler = SIG_DFL;
-	sigemptyset(&sact.sa_mask);
-	if (sigaction(SIGPIPE, &sact, &oldsact) < 0) {
-		fnval = -1;
-		goto nosigactout;
-	}
 	if ((vinfo = HXformat_init()) == NULL) {
 		fnval = -1;
 		goto out;
@@ -411,10 +437,8 @@ static int modify_pm_count(struct config *config, char *user,
 		fclose(fp);
 	else
 		close(cstdout);
-	sigaction(SIGPIPE, &oldsact, NULL);
 	if (vinfo != NULL)
 		HXformat_free(vinfo);
- nosigactout:
 	return fnval;
 }
 
@@ -537,6 +561,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	ret = PAM_SUCCESS;
  out:
 	w4rn("done opening session (ret=%d)\n", ret);
+	common_exit();
 	return ret;
 }
 

@@ -9,6 +9,9 @@ Fixes:
 - src: resolve memory leaks from HXformat use
 - mount.crypt: continue on umount errors
 
+Changes:
+- signals: block SIGPIPE during the entire pam_mount run time
+
 
 v1.6 (December 27 2008)
 =======================
