@@ -8,6 +8,7 @@ Fixes:
 - src: close some leaking fds
 - src: resolve memory leaks from HXformat use
 - mount.crypt: continue on umount errors
+- rdconf: silence debug messages if debug turned off
 
 Changes:
 - signals: block SIGPIPE during the entire pam_mount run time
