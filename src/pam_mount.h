@@ -44,6 +44,7 @@
 
 struct HXbtree;
 struct HXdeque;
+struct HXproc;
 struct loop_info64;
 
 enum auth_type {
@@ -240,11 +241,8 @@ extern bool volume_record_sane(const struct config *, const struct vol *);
 /*
  *	SPAWN.C
  */
-extern void spawn_restore_sigchld(void);
-extern void spawn_set_sigchld(void);
-extern bool spawn_startl(const char *const *, pid_t *, int *, int *);
-extern bool spawn_start(struct HXdeque *, pid_t *, int *, int *, int *,
-	void (*)(const char *), const char *);
-extern void set_myuid(const char *);
+extern const struct HXproc_ops pmt_spawn_ops, pmt_dropprivs_ops;
+
+extern int pmt_spawn_dq(struct HXdeque *, struct HXproc *);
 
 #endif /* PMT_PAM_MOUNT_H */

@@ -19,6 +19,7 @@
 #include <libHX/defs.h>
 #include <libHX/deque.h>
 #include <libHX/misc.h>
+#include <libHX/proc.h>
 #include <libHX/string.h>
 #include <pwd.h>
 #include "pam_mount.h"
@@ -34,7 +35,7 @@ static struct sigaction pmt_sigchld_old;
  * against GDM which does not reap childs as we wanted in its SIGCHLD handler,
  * so we install our own handler. Returns the value from sigaction().
  */
-void spawn_set_sigchld(void)
+static void spawn_set_sigchld(void *data)
 {
 	static struct sigaction nh = {
 		.sa_handler = SIG_DFL,
@@ -52,7 +53,7 @@ void spawn_set_sigchld(void)
  * Restore the SIGCHLD handler that was saved during spawn_set_sigchld().
  * Returns the value from sigaction().
  */
-void spawn_restore_sigchld(void)
+static void spawn_restore_sigchld(void *data)
 {
 	pthread_mutex_lock(&pmt_sigchld_lock);
 	if (--pmt_sigchld_cleared == 0)
@@ -60,147 +61,13 @@ void spawn_restore_sigchld(void)
 	pthread_mutex_unlock(&pmt_sigchld_lock);
 }
 
-/**
- * spawn_build_pipes -
- * @fd_request:	user array to tell us which pipe sets to create
- * @p:		result array
- *
- * Create some pipes.
- * Explicitly initialize the @p array with -1 so that we can call close()
- * on all of them without any side effects.
- */
-static inline int spawn_build_pipes(const int **fd_request, int (*p)[2])
-{
-	unsigned int x, y;
-	for (x = 0; x < 3; ++x)
-		for (y = 0; y < 2; ++y)
-			p[x][y] = -1;
-
-	if (fd_request[0] != NULL && pipe(p[0]) < 0)
-		return -errno;
-	if (fd_request[1] != NULL && pipe(p[1]) < 0)
-		return -errno;
-	if (fd_request[2] != NULL && pipe(p[2]) < 0)
-		return -errno;
-	return 1;
-}
-
-/**
- * spawn_close_pipes -
- * @p:	pipe fds to close
- *
- * In @p, there might be some fds that are -1 (due to the p[x][y] = -1 in
- * spawn_build_pipes()). That is ok, as closing -1 does not do anything.
- */
-static void spawn_close_pipes(int (*p)[2])
-{
-	if (p[0][0] >= 0)
-		close(p[0][0]);
-	if (p[0][1] >= 0)
-		close(p[0][1]);
-	if (p[1][0] >= 0)
-		close(p[1][0]);
-	if (p[1][1] >= 0)
-		close(p[1][1]);
-	if (p[2][0] >= 0)
-		close(p[2][0]);
-	if (p[2][1] >= 0)
-		close(p[2][1]);
-}
-
-/**
- * spawn_start -
- * @argv:	program and arguments
- * @pid:	resulting PID
- * @fd_stdin:	if non-%NULL, assign stdin
- * @fd_stdout:	if non-%NULL, assign stdout
- * @fd_stderr:	if non-%NULL, assign stderr
- * @setup:	child process setup function
- * @user:	username (used for FUSE)
- *
- * Sets up pipes and runs the specified program.
- *
- * Side effects: Saves the old %SIGCHLD handler before and overrides it with
- * %SIG_DFL. This is needed because otherwise GDM's signal handler would
- * trigger with pam_mount's child processes.
- *
- * On success, returns true and the handler is NOT reset. Every [successful]
- * call to spawn_start() must be followed by spawn_restore_sigchld(). This is
- * usually done after waitpid(), when we are sure there are no more
- * processes that were created by pam_mount that could potentially confuse GDM.
- *
- * On failure, this function returns false and the original %SIGCHLD handler
- * will be restored.
- */
-static bool __spawn_start(const char *const *argv, pid_t *pid, int *fd_stdin,
-    int *fd_stdout, int *fd_stderr, void (*setup)(const char *),
-    const char *user)
-{
-	const int *fd_rq[] = {fd_stdin, fd_stdout, fd_stderr};
-	int pipes[3][2], ret, saved_errno;
-
-	if ((ret = spawn_build_pipes(fd_rq, pipes)) < 0) {
-		saved_errno = -ret;
-		l0g("pipe(): %s\n", strerror(-ret));
-		errno = ret;
-		return false;
-	}
-
-	spawn_set_sigchld();
-	if ((*pid = fork()) < 0) {
-		saved_errno = errno;
-		l0g("fork(): %s\n", strerror(errno));
-		spawn_restore_sigchld();
-		spawn_close_pipes(pipes);
-		errno = saved_errno;
-		return false;
-	} else if (*pid == 0) {
-		if (setup != NULL)
-			(*setup)(user);
-		if (fd_stdin != NULL)
-			dup2(pipes[0][0], STDIN_FILENO);
-		if (fd_stdout != NULL)
-			dup2(pipes[1][1], STDOUT_FILENO);
-		if (fd_stderr != NULL)
-			dup2(pipes[2][1], STDERR_FILENO);
-		spawn_close_pipes(pipes);
-		execvp(*argv, const_cast2(char * const *, argv));
-		l0g("execvp: %s: %s\n", *argv, strerror(errno));
-		_exit(-1);
-	}
-	
-	if (fd_stdin != NULL) {
-		*fd_stdin = pipes[0][1];
-		close(pipes[0][0]);
-	}
-	if (fd_stdout != NULL) {
-		*fd_stdout = pipes[1][0];
-		close(pipes[1][1]);
-	}
-	if (fd_stderr != NULL) {
-		*fd_stderr = pipes[2][0];
-		close(pipes[2][1]);
-	}
-
-	return true;
-}
-
-bool spawn_startl(const char *const *argv, pid_t *pid, int *fd_stdin,
-    int *fd_stdout)
-{
-	return __spawn_start(argv, pid, fd_stdin, fd_stdout, NULL, NULL, NULL);
-}
-
-bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
-    int *fd_stdout, int *fd_stderr, void (*setup)(const char *),
-    const char *user)
+int pmt_spawn_dq(struct HXdeque *argq, struct HXproc *proc)
 {
 	char **argv = reinterpret_cast(char **, HXdeque_to_vec(argq, NULL));
 	const struct HXdeque_node *n;
 	bool ret;
 
-	ret = __spawn_start(const_cast2(const char * const *, argv),
-	      pid, fd_stdin, fd_stdout, fd_stderr, setup, user);
+	ret = HXproc_run_async(const_cast2(const char * const *, argv), proc);
 	free(argv);
 	for (n = argq->first; n != NULL; n = n->next)
 		HXmc_free(n->ptr);
@@ -227,8 +94,10 @@ bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
  * chdir("/") is called so that fusermount does not get stuck in a
  * non-readable directory (by means of doing `su - unprivilegeduser`)
  */
-void set_myuid(const char *user)
+static void set_myuid(void *data)
 {
+	const char *user = data;
+
 	setsid();
 	if (chdir("/") < 0)
 		;
@@ -261,3 +130,15 @@ void set_myuid(const char *user)
 	}
 	misc_dump_id("set_myuid<post>");
 }
+
+const struct HXproc_ops pmt_dropprivs_ops = {
+	.p_prefork  = spawn_set_sigchld,
+	.p_postfork = set_myuid,
+	.p_complete = spawn_restore_sigchld,
+};
+
+const struct HXproc_ops pmt_spawn_ops = {
+	.p_prefork  = spawn_set_sigchld,
+	/* no postfork */
+	.p_complete = spawn_restore_sigchld,
+};

@@ -29,6 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libHX/defs.h>
+#include <libHX/proc.h>
 #include <libHX.h>
 #include "pam_mount.h"
 
@@ -386,60 +387,45 @@ static int modify_pm_count(struct config *config, char *user,
 {
 	FILE *fp = NULL;
 	struct HXbtree *vinfo;
-	int child_exit, cstdout = -1, fnval = -1;
 	struct HXdeque *argv;
-	pid_t pid;
+	struct HXproc proc;
+	int ret = -1, use_count;
 
 	assert(user != NULL);
 	assert(operation != NULL);
 
-	if ((vinfo = HXformat_init()) == NULL) {
-		fnval = -1;
+	if ((vinfo = HXformat_init()) == NULL)
 		goto out;
-	}
 	format_add(vinfo, "USER", user);
 	format_add(vinfo, "OPERATION", operation);
 	misc_add_ntdom(vinfo, user);
 
 	argv = arglist_build(config->command[CMD_PMVARRUN], vinfo);
-	if (!spawn_start(argv, &pid, NULL, &cstdout, NULL, set_myuid, NULL)) {
-		l0g("error executing pmvarrun\n");
-		fnval = -1;
+	memset(&proc, 0, sizeof(proc));
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDOUT;
+	proc.p_ops   = &pmt_dropprivs_ops;
+	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0) {
+		l0g("error executing pmvarrun: %s\n", strerror(-ret));
 		goto out;
 	}
-	if ((fp = fdopen(cstdout, "r")) == NULL) {
-		spawn_restore_sigchld();
-		w4rn("error opening file: %s\n", strerror(errno));
-		fnval = -1;
-		goto out;
-	}
-	if (fscanf(fp, "%d", &fnval) != 1) {
-		spawn_restore_sigchld();
+	ret = -1;
+	if ((fp = fdopen(proc.p_stdout, "r")) == NULL)
+		goto out2;
+	if (fscanf(fp, "%d", &use_count) != 1)
 		w4rn("error reading login count from pmvarrun\n");
-		fnval = -1;
-		goto out;
-	}
-	if (waitpid(pid, &child_exit, 0) < 0) {
-		spawn_restore_sigchld();
-		l0g("error waiting for child: %s\n", strerror(errno));
-		fnval = -1;
-		goto out;
-	}
-	spawn_restore_sigchld();
-	if (!WIFEXITED(child_exit) || WEXITSTATUS(child_exit) != 0) {
-		l0g("pmvarrun failed\n");
-		fnval = -1;
-		goto out;
-	}
-	w4rn("pmvarrun says login count is %d\n", fnval);
- out:
+	else
+		w4rn("pmvarrun says login count is %d\n", use_count);
+ out2:
 	if (fp != NULL)
 		fclose(fp);
 	else
-		close(cstdout);
+		close(proc.p_stdout);
+	if (HXproc_wait(&proc) < 0 && proc.p_exited && proc.p_status == 0)
+		ret = use_count;
+ out:
 	if (vinfo != NULL)
 		HXformat_free(vinfo);
-	return fnval;
+	return ret;
 }
 
 /**

@@ -293,9 +293,8 @@ int do_unmount(const struct config *config, struct vol *vpt,
     struct HXbtree *vinfo, const char *const password)
 {
 	struct HXdeque *argv;
-	int child_exit, ret = 1, cstderr = -1;
-	pid_t pid = -1;
-	int type;
+	struct HXproc proc;
+	int ret, type;
 
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
@@ -329,23 +328,21 @@ int do_unmount(const struct config *config, struct vol *vpt,
 		l0g("{smb,ncp}umount not defined in pam_count.conf.xml\n");
 
 	argv = arglist_build(config->command[type], vinfo);
-	if (!spawn_start(argv, &pid, NULL, NULL, &cstderr, set_myuid, NULL)) {
+	memset(&proc, 0, sizeof(proc));
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDERR;
+	proc.p_ops   = &pmt_dropprivs_ops;
+	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0) {
 		ret = 0;
 		goto out;
 	}
 
-	log_output(cstderr, "umount errors:\n");
+	log_output(proc.p_stderr, "umount errors:\n");
 	w4rn("waiting for umount\n");
-	if (waitpid(pid, &child_exit, 0) < 0) {
-		l0g("error waiting for child: %s\n", strerror(errno));
-		ret = 0;
-		goto out;
-	} else {
+	if ((ret = HXproc_wait(&proc)) >= 0)
 		/* pass on through the result from the umount process */
-		ret = WIFEXITED(child_exit) && WEXITSTATUS(child_exit) == 0;
-	}
+		ret = proc.p_exited && proc.p_status == 0;
+
  out:
-	spawn_restore_sigchld();
 	if (config->mkmntpoint && config->rmdir_mntpt && vpt->created_mntpt)
 		if (rmdir(vpt->mountpoint) < 0)
 			/* non-fatal, but warn */
@@ -362,10 +359,10 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
  * FN VAL: if error 0 else 1, errors are logged
  */
 #if defined (__linux__)
-	pid_t pid;
-	int child_exit, cstdout = -1, cstderr = -1;
 	const char *fsck_target;
 	struct HXdeque *argv;
+	struct HXproc proc;
+	int ret;
 
 	assert(vinfo != NULL);
 
@@ -393,22 +390,23 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
 	format_add(vinfo, "FSCKTARGET", fsck_target);
 
 	argv = arglist_build(config->command[CMD_FSCK], vinfo);
-	if (!spawn_start(argv, &pid, NULL, &cstdout, &cstderr, NULL, NULL))
+	memset(&proc, 0, sizeof(proc));
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDOUT | HXPROC_STDERR;
+	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0)
 		return 0;
 
 	/* stdout and stderr must be logged for fsck */
-	log_output(cstdout, NULL);
-	log_output(cstderr, NULL);
+	log_output(proc.p_stdout, NULL);
+	log_output(proc.p_stderr, NULL);
 	w4rn("waiting for filesystem check\n");
-	if (waitpid(pid, &child_exit, 0) < 0)
-		l0g("error waiting for child: %s\n", strerror(errno));
-	spawn_restore_sigchld();
+	if ((ret = HXproc_wait(&proc)) < 0)
+		l0g("error waiting for child: %s\n", strerror(-ret));
+
 	/*
 	 * pass on through the result -- okay if 0 (no errors) or 1 (errors
 	 * corrected)
 	 */
-	return WIFEXITED(child_exit) &&
-	       (WEXITSTATUS(child_exit) == 0 || WEXITSTATUS(child_exit) == 1);
+	return proc.p_exited && (proc.p_status == 0 || proc.p_status == 1);
 #else
 	l0g("checking filesystem not implemented on arch.\n");
 	return 1;
@@ -459,9 +457,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 {
 	const struct HXdeque_node *n;
 	struct HXdeque *argv;
-	int child_exit = 0, cstdin = -1, cstderr = -1;
+	struct HXproc proc;
 	const char *mount_user;
-	pid_t pid = -1;
 	int ret;
 
 	assert(vinfo != NULL);
@@ -518,32 +515,33 @@ int do_mount(const struct config *config, struct vol *vpt,
 	mount_set_fsck(config, vpt, vinfo);
 	arglist_log(argv);
 	mount_user = vpt->noroot ? vpt->user : NULL;
-	if (!spawn_start(argv, &pid, &cstdin, NULL, &cstderr,
-	    set_myuid, mount_user))
+	memset(&proc, 0, sizeof(proc));
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDIN | HXPROC_STDERR;
+	proc.p_ops   = &pmt_dropprivs_ops;
+	proc.p_data  = const_cast1(char *, mount_user);
+	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0)
 		return 0;
 
 	if (vpt->type != CMD_NFSMOUNT)
-		if (write(cstdin, password, strlen(password)) !=
+		if (write(proc.p_stdin, password, strlen(password)) !=
 		    strlen(password))
 			/* FIXME: clean: returns value of exit below */
 			l0g("error sending password to mount\n");
-	close(cstdin);
+	close(proc.p_stdin);
 
-	log_output(cstderr, "mount errors:\n");
+	log_output(proc.p_stderr, "mount errors:\n");
 	w4rn("waiting for mount\n");
-	if (waitpid(pid, &child_exit, 0) < 0) {
-		spawn_restore_sigchld();
-		l0g("error waiting for child: %s\n", strerror(errno));
+	if ((ret = HXproc_wait(&proc)) < 0) {
+		l0g("error waiting for child: %s\n", strerror(-ret));
 		return 0;
 	}
 
-	spawn_restore_sigchld();
 	if (Debug)
 		HXproc_run_sync((const char *const []){"df", "-Ta", NULL},
 		                HXPROC_VERBOSE);
 
 	/* pass on through the result from the umount process */
-	return WIFEXITED(child_exit) && WEXITSTATUS(child_exit) == 0;
+	return proc.p_exited && proc.p_status == 0;
 }
 
 /**

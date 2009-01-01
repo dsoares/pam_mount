@@ -143,10 +143,10 @@ int ehd_is_luks(const char *path, bool blkdev)
  */
 static bool ehd_load_2(struct ehdmount_ctl *ctl)
 {
-	int fd_stdin, ret;
-	pid_t pid;
+	int ret;
 	bool is_luks = false;
 	const char *start_args[11];
+	struct HXproc proc;
 
 	ret = ehd_is_luks(ctl->lower_device, true);
 	if (ret >= 0) {
@@ -182,19 +182,17 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 	if (Debug)
 		arglist_llog(start_args);
 
-	ret = spawn_startl(start_args, &pid, &fd_stdin, NULL);
-	if (!ret) {
-		l0g("Error setting up crypto device: %s\n",
-		    strerror(errno));
+	memset(&proc, 0, sizeof(proc));
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDIN;
+	if ((ret = HXproc_run_async(start_args, &proc)) <= 0) {
+		l0g("Error setting up crypto device: %s\n", strerror(-ret));
 		return false;
 	}
 
-	write(fd_stdin, ctl->fskey, ctl->fskey_size);
-	close(fd_stdin);
-	waitpid(pid, &ret, 0);
-	if (!WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
-		w4rn("cryptsetup terminated or exited with non-zero status %d\n",
-		     WEXITSTATUS(ret));
+	write(proc.p_stdin, ctl->fskey, ctl->fskey_size);
+	close(proc.p_stdin);
+	if ((ret = HXproc_wait(&proc)) != 0) {
+		w4rn("cryptsetup exited with non-zero status %d\n", ret);
 		return false;
 	}
 
@@ -321,17 +319,17 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 	const char *lower_device = NULL;
 	hxmc_t *line = NULL;
 	bool f_ret = false;
-	int fd_stdout;
-	pid_t pid;
-	FILE *fp;
+	FILE *fp = NULL;
+	struct HXproc proc = {.p_flags = HXPROC_VERBOSE | HXPROC_STDOUT};
+	int ret;
 
-	if (!spawn_startl(args, &pid, NULL, &fd_stdout)) {
+	if ((ret = HXproc_run_async(args, &proc)) <= 0) {
 		l0g("%s: could not run %s: %s\n",
-		    __func__, *args, strerror(errno));
-		return -errno;
+		    __func__, *args, strerror(-ret));
+		return ret;
 	}
 
-	fp = fdopen(fd_stdout, "r");
+	fp = fdopen(proc.p_stdout, "r");
 	if (fp == NULL)
 		goto out;
 
@@ -358,7 +356,7 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 	if (!ehd_unload_crypto(crypto_device))
 		goto out;
 	if (!only_crypto) {
-		int ret = pmt_loop_release(lower_device);
+		ret = pmt_loop_release(lower_device);
 		/*
 		 * Success, not-assigned (ENXIO) or not-a-loop-device (ENOTTY)
 		 * shall pass.
@@ -369,12 +367,11 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 
 	f_ret = true;
  out:
-	spawn_restore_sigchld();
-	waitpid(pid, NULL, 0);
 	if (fp != NULL)
 		fclose(fp);
 	else
-		close(fd_stdout);
+		close(proc.p_stdout);
+	HXproc_wait(&proc);
 	return f_ret;
 }
 

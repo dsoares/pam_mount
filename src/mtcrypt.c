@@ -70,23 +70,25 @@ static hxmc_t *readlinkf(const char *file)
 {
 	static const unsigned int bufsize = 256;
 	const char *const args[] = {"readlink", "-fn", file, NULL};
+	struct HXproc proc;
 	ssize_t readret;
-	int fd_stdout;
 	char *buf;
-	pid_t pid;
+	int ret;
 
 	if ((buf = malloc(bufsize)) == NULL) {
 		fprintf(stderr, "malloc: %s\n", strerror(errno));
 		return NULL;
 	}
 	arglist_llog(args);
-	if (!spawn_startl(args, &pid, NULL, &fd_stdout)) {
-		fprintf(stderr, "spawn_startl readlink: %s\n", strerror(errno));
+	memset(&proc, 0, sizeof(proc));
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDOUT;
+	if ((ret = HXproc_run_async(args, &proc)) <= 0) {
+		fprintf(stderr, "spawn_startl readlink: %s\n", strerror(-ret));
 		free(buf);
 		return NULL;
 	}
 
-	readret = read(fd_stdout, buf, bufsize);
+	readret = read(proc.p_stdout, buf, bufsize);
 	if (readret < 0) {
 		fprintf(stderr, "read: %s\n", strerror(errno));
 		goto out;
@@ -96,14 +98,14 @@ static hxmc_t *readlinkf(const char *file)
 	}
 
 	buf[readret] = '\0';
-	close(fd_stdout);
-	waitpid(pid, NULL, 0);
+	close(proc.p_stdout);
+	HXproc_wait(&proc);
 	return buf;
 
  out:
 	free(buf);
-	close(fd_stdout);
-	waitpid(pid, NULL, 0);
+	close(proc.p_stdout);
+	HXproc_wait(&proc);
 	return NULL;
 }
 
