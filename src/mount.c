@@ -69,6 +69,7 @@ static void log_output(int fd, const char *cmsg)
 
 	if ((fp = fdopen(fd, "r")) == NULL) {
 		w4rn("error opening file: %s\n", strerror(errno));
+		close(fd);
 		return;
 	}
 
