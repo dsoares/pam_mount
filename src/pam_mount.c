@@ -416,6 +416,8 @@ static int modify_pm_count(struct config *config, char *user,
 	else
 		close(cstdout);
 	sigaction(SIGPIPE, &oldsact, NULL);
+	if (vinfo != NULL)
+		HXformat_free(vinfo);
  nosigactout:
 	return fnval;
 }
