@@ -499,11 +499,9 @@ static int mtcr_umount(struct umount_options *opt)
 
 	assert(argk < ARRAY_SIZE(umount_args));
 	arglist_llog(umount_args);
-	if ((ret = spawn_synchronous(umount_args)) != 0) {
+	if ((ret = spawn_synchronous(umount_args)) != 0)
 		fprintf(stderr, "umount %s failed with term/exit status %d\n",
 		        opt->object, WEXITSTATUS(ret));
-		return 0;
-	}
 
 	ret = ehd_unload(final_fsname, opt->blkdev);
 	free(final_fsname);

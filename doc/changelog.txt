@@ -7,6 +7,7 @@ Fixes:
 - pmt-ehd: fix a wrong return value in the error path
 - src: close some leaking fds
 - src: resolve memory leaks from HXformat use
+- mount.crypt: continue on umount errors
 
 
 v1.6 (December 27 2008)
