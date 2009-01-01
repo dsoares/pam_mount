@@ -353,7 +353,7 @@ static void envpath_restore(void)
 static int modify_pm_count(struct config *config, char *user,
     char *operation)
 {
-	FILE *fp;
+	FILE *fp = NULL;
 	struct HXbtree *vinfo;
 	int child_exit, cstdout = -1, fnval = -1;
 	struct HXdeque *argv;
@@ -411,6 +411,10 @@ static int modify_pm_count(struct config *config, char *user,
 	}
 	w4rn("pmvarrun says login count is %d\n", fnval);
  out:
+	if (fp != NULL)
+		fclose(fp);
+	else
+		close(cstdout);
 	sigaction(SIGPIPE, &oldsact, NULL);
  nosigactout:
 	return fnval;

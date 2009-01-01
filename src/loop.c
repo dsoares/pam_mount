@@ -371,6 +371,10 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
  out:
 	spawn_restore_sigchld();
 	waitpid(pid, NULL, 0);
+	if (fp != NULL)
+		fclose(fp);
+	else
+		close(fd_stdout);
 	return f_ret;
 }
 
