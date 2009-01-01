@@ -22,6 +22,7 @@
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/option.h>
+#include <libHX/proc.h>
 #include <libHX/string.h>
 #include <openssl/evp.h>
 #include "pam_mount.h"
@@ -323,16 +324,17 @@ static int mtcr_mount(struct mount_options *opt)
 		assert(argk < ARRAY_SIZE(fsck_args));
 
 		arglist_llog(fsck_args);
-		ret = spawn_synchronous(fsck_args);
+		ret = HXproc_run_sync(fsck_args, HXPROC_VERBOSE);
 
 		/*
 		 * Return codes higher than 1 indicate that manual intervention
 		 * is required, therefore abort the mount/login.
+		 * Lower than 0: internal error (e.g. fork).
 		 */
-		if (!WIFEXITED(ret) || WEXITSTATUS(ret) > 1) {
+		if (ret != 0 && ret != 1) {
 			fprintf(stderr, "Automatic fsck failed, manual "
-			        "intervention required, term/exit status %d\n",
-			        WEXITSTATUS(ret));
+			        "intervention required, run_sync status %d\n",
+			        ret);
 			ehd_unload(cd, opt->blkdev);
 			return false;
 		}
@@ -355,9 +357,8 @@ static int mtcr_mount(struct mount_options *opt)
 
 	assert(argk < ARRAY_SIZE(mount_args));
 	arglist_llog(mount_args);
-	if ((ret = spawn_synchronous(mount_args)) != 0) {
-		fprintf(stderr, "mount failed with term/exit status %d\n",
-		        WEXITSTATUS(ret));
+	if ((ret = HXproc_run_sync(mount_args, HXPROC_VERBOSE)) != 0) {
+		fprintf(stderr, "mount failed with run_sync status %d\n", ret);
 		ehd_unload(cd, opt->blkdev);
 	} else if (opt->no_update) {
 		/* awesome logic */;
@@ -497,9 +498,9 @@ static int mtcr_umount(struct umount_options *opt)
 
 	assert(argk < ARRAY_SIZE(umount_args));
 	arglist_llog(umount_args);
-	if ((ret = spawn_synchronous(umount_args)) != 0)
-		fprintf(stderr, "umount %s failed with term/exit status %d\n",
-		        opt->object, WEXITSTATUS(ret));
+	if ((ret = HXproc_run_sync(umount_args, HXPROC_VERBOSE)) != 0)
+		fprintf(stderr, "umount %s failed with run_sync status %d\n",
+		        opt->object, ret);
 
 	ret = ehd_unload(final_fsname, opt->blkdev);
 	free(final_fsname);
@@ -524,7 +525,7 @@ int main(int argc, const char **argv)
 		if (!mtcr_get_umount_options(&argc, &argv, &opt))
 			return EXIT_FAILURE;
 
-		return mtcr_umount(&opt) > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+		return mtcr_umount(&opt) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 	} else {
 		struct mount_options opt;
 

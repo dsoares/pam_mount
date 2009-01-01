@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/proc.h>
 #include <libHX/string.h>
 #include <openssl/evp.h>
 #include "pam_mount.h"
@@ -123,11 +124,15 @@ int ehd_is_luks(const char *path, bool blkdev)
 		lukscheck_args[2] = loop_device;
 	}
 
-	ret = spawn_synchronous(lukscheck_args);
-	if (WIFEXITED(ret))
-		ret = WEXITSTATUS(ret) == 0;
-	else
+	if ((ret = HXproc_run_sync(lukscheck_args, HXPROC_VERBOSE)) < 0)
+		fprintf(stderr, "run_sync: %s\n", strerror(-ret));
+	else if (ret > 0xFFFF)
+		/* terminated */
 		ret = -1;
+	else
+		/* exited, and we need success or fail */
+		ret = ret == 0;
+
 	if (!blkdev)
 		pmt_loop_release(loop_device);
 	return ret;
@@ -287,15 +292,12 @@ static bool ehd_unload_crypto(const char *crypto_device)
 	};
 	int ret;
 
-	ret = spawn_synchronous(args);
-	if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0)
+	if ((ret = HXproc_run_sync(args, HXPROC_VERBOSE)) == 0)
 		return true;
 
 	l0g("Could not unload dm-crypt device \"%s\" (%s), "
-	    "cryptsetup %s with status %d\n",
-	    crypto_name, crypto_device,
-	    WIFEXITED(ret) ? "exited" : "terminated",
-	    WIFEXITED(ret) ? WEXITSTATUS(ret) : WTERMSIG(ret));
+	    "cryptsetup %s with run_sync status %d\n",
+	    crypto_name, crypto_device, ret);
 	return false;
 }
 

@@ -23,6 +23,7 @@
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/option.h>
+#include <libHX/proc.h>
 #include <libHX/string.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -334,17 +335,12 @@ static bool ehd_mkfs(const struct ehd_ctl *pg, const hxmc_t *crypto_device)
 	int ret;
 
 	fprintf(stderr, "-- Calling %s\n", fsprog);
-	ret = spawn_synchronous(argv);
-	if (!WIFEXITED(ret) || WEXITSTATUS(ret) != 0) {
-		fprintf(stderr, "%s failed with status %d\n",
-		        fsprog, WEXITSTATUS(ret));
-			system("/bin/bash");
-		HXmc_free(fsprog);
-		return false;
-	}
+	if ((ret = HXproc_run_sync(argv, HXPROC_VERBOSE)) < 0 || ret != 0)
+		fprintf(stderr, "%s failed with run_sync status %d\n",
+		        fsprog, ret);
 
 	HXmc_free(fsprog);
-	return true;
+	return ret == 0;
 }
 
 /**

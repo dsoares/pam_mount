@@ -209,21 +209,6 @@ bool spawn_start(struct HXdeque *argq, pid_t *pid, int *fd_stdin,
 }
 
 /**
- * spawn_synchronous - like system(), but uses argz array
- */
-int spawn_synchronous(const char *const *argv)
-{
-	pid_t pid;
-	int ret;
-
-	if (!__spawn_start(argv, &pid, NULL, NULL, NULL, NULL, NULL))
-		return -errno;
-	waitpid(pid, &ret, 0);
-	spawn_restore_sigchld();
-	return ret;
-}
-
-/**
  * set_myuid -
  * @user:	switch to specified user
  *

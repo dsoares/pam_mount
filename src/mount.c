@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/proc.h>
 #include <libHX.h>
 #include <grp.h>
 #include <pwd.h>
@@ -538,7 +539,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 
 	spawn_restore_sigchld();
 	if (Debug)
-		spawn_synchronous((const char *const []){"df", "-Ta", NULL});
+		HXproc_run_sync((const char *const []){"df", "-Ta", NULL},
+		                HXPROC_VERBOSE);
 
 	/* pass on through the result from the umount process */
 	return WIFEXITED(child_exit) && WEXITSTATUS(child_exit) == 0;

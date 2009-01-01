@@ -12,6 +12,7 @@ Fixes:
 Changes:
 - signals: block SIGPIPE during the entire pam_mount run time
 - signals: use refcounted SIGCHLD
+- src: use libHX 2.2's proc interface
 
 
 v1.6 (December 27 2008)
