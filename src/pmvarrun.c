@@ -85,6 +85,17 @@ static bool valid_username(const char *n)
 {
 	if (*n == '\0')
 		return false;
+
+	/*
+	 * Note to future editors: Some systems disallow leading digits for
+	 * usernames. Possibly because it is concerned about badly-written
+	 * programs detecting numeric UIDs by merely doing
+	 * strtoul(s, &e, 0) && s != e, which falls victim to usernames
+	 * with leading digits.
+	 * So pam_mount, in its original form at least (distros can patch
+	 * their copy up as they see fit), should at best reject
+	 * leading digits too.
+	 */
 	if (!((*n >= 'A' && *n <= 'Z') || (*n >= 'a' && *n <= 'z') ||
 	    *n == '_'))
 		return false;

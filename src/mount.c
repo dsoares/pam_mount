@@ -505,6 +505,12 @@ int do_mount(const struct config *config, struct vol *vpt,
 	for (n = config->command[vpt->type]->first; n != NULL; n = n->next)
 		arglist_add(argv, n->ptr, vinfo);
 
+	/*
+	 * Note to future editors: Do not do a second-time substitution of the
+	 * arguments. Variables specified within <volume>s are already expanded
+	 * in expandconfig(), but see the comment in mount_op().
+	 */
+
 	if (vpt->type == CMD_LCLMOUNT &&
 	    !check_filesystem(config, vpt, vinfo))
 		l0g("error checking filesystem but will continue\n");
