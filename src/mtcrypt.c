@@ -527,7 +527,7 @@ int main(int argc, const char **argv)
 		if (!mtcr_get_umount_options(&argc, &argv, &opt))
 			return EXIT_FAILURE;
 
-		return mtcr_umount(&opt) == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+		return mtcr_umount(&opt) > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 	} else {
 		struct mount_options opt;
 
