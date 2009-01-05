@@ -96,6 +96,10 @@ static bool valid_username(const char *n)
 	 * their copy up as they see fit), should at best reject
 	 * leading digits too.
 	 */
+	/*
+	 * Cannot use isalpha/isdigit here since that may include
+	 * more characters.
+	 */
 	if (!((*n >= 'A' && *n <= 'Z') || (*n >= 'a' && *n <= 'z') ||
 	    *n == '_'))
 		return false;
