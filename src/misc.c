@@ -9,25 +9,22 @@
  *	of the License, or (at your option) any later version.
  */
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
-#include <limits.h>
-#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
-#include <libHX/arbtree.h>
 #include <libHX/clist.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
-#include <libHX/list.h>
-#include <libHX/option.h>
 #include <libHX/string.h>
 #include <pwd.h>
 #include "pam_mount.h"
 
+struct HXbtree;
 
 /**
  * misc_dump_id - print user IDs
