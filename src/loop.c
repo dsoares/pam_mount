@@ -189,7 +189,9 @@ static bool ehd_load_2(struct ehdmount_ctl *ctl)
 		return false;
 	}
 
-	write(proc.p_stdin, ctl->fskey, ctl->fskey_size);
+	/* Ignore return value, we can't do much in case it fails */
+	if (write(proc.p_stdin, ctl->fskey, ctl->fskey_size) < 0)
+		w4rn("%s: password send erro: %s\n", __func__, strerror(errno));
 	close(proc.p_stdin);
 	if ((ret = HXproc_wait(&proc)) != 0) {
 		w4rn("cryptsetup exited with non-zero status %d\n", ret);
