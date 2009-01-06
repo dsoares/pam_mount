@@ -633,7 +633,7 @@ static int fstype_nodev(const char *name) {
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		char *bp = buf;
 		HX_chomp(buf);
-		while (!HX_isspace(*bp))
+		while (!HX_isspace(*bp) && *bp != '\0')
 			++bp;
 		while (HX_isspace(*bp))
 			++bp;

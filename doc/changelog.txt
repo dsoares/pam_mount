@@ -5,6 +5,7 @@ For details, see the history as recorded in the git repository.
 - doc: add manpage aliases crypt{,o}_LUKS
 - mount.crypt: fix return code regression
 - logging: <debug> should not turn off errors
+- src: traverse non-whitespace properly, check for '\0'
 
 
 v1.7 (January 01 2009)

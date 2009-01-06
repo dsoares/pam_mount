@@ -341,7 +341,7 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 			++p;
 		if (strncmp(p, "device:", strlen("device:")) != 0)
 			continue;
-		while (!HX_isspace(*p))
+		while (!HX_isspace(*p) && *p != '\0')
 			++p;
 		/*
 		 * Relying on the fact that dmcrypt does not
