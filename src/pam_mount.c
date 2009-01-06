@@ -243,7 +243,7 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 
 	pmtlog_prefix = "pam_mount";
 	pmtlog_path[PMTLOG_ERR][PMTLOG_SYSLOG] = true;
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = Debug;
+	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 
@@ -271,7 +271,6 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 		return PAM_SERVICE_ERR;
 
 	/* reinitialize after @Debug may have changed */
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = Debug;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;
 

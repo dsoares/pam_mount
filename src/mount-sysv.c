@@ -53,8 +53,8 @@ int pmt_already_mounted(const struct config *const config,
 		real_mpt[sizeof_z(real_mpt)] = '\0';
 	} else {
 		real_mpt[sizeof_z(real_mpt)] = '\0';
-		l0g("realpath of volume \"%s\" is \"%s\"\n",
-		    vpt->mountpoint, real_mpt);
+		w4rn("realpath of volume \"%s\" is \"%s\"\n",
+		     vpt->mountpoint, real_mpt);
 	}
 
 	w4rn("checking to see if %s is already mounted at %s\n",

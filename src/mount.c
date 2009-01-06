@@ -75,7 +75,7 @@ static void log_output(int fd, const char *cmsg)
 			w4rn("%s", cmsg);
 
 		do {
-			w4rn("%s", buf);
+			l0g("%s", buf);
 		} while (fgets(buf, sizeof(buf), fp) != NULL);
 	}
 	fclose(fp);

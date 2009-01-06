@@ -632,7 +632,6 @@ static const char *rc_debug(xmlNode *node, struct config *config,
 	if ((s = xml_getprop(node, "enable")) != NULL)
 		Debug = config->debug = strtoul(s, NULL, 0);
 
-		pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] =
 		pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] =
 		pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] =
 			Debug;
