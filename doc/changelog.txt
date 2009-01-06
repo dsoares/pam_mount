@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- doc: add manpage aliases crypt{,o}_LUKS
+
+
 v1.7 (January 01 2009)
 ======================
 Fixes:
