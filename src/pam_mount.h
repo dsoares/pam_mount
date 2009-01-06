@@ -160,7 +160,7 @@ extern int ehd_load(const char *, hxmc_t **, const char *, const char *,
 	const unsigned char *, unsigned int, bool);
 extern int ehd_unload(const char *, bool);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
-	const char *);
+	hxmc_t *);
 extern unsigned int cipher_digest_security(const char *);
 extern hxmc_t *pmt_get_password(const char *);
 

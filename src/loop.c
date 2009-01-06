@@ -376,7 +376,8 @@ int ehd_unload(const char *crypto_device, bool only_crypto)
 }
 
 struct decrypt_info {
-	const char *keyfile, *password;
+	const char *keyfile;
+	hxmc_t *password;
 	const EVP_CIPHER *cipher;
 	const EVP_MD *digest;
 
@@ -396,7 +397,8 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 
 	if (EVP_BytesToKey(info->cipher, info->digest, info->salt,
 	    signed_cast(const unsigned char *, info->password),
-	    strlen(info->password), 1, key, iv) <= 0) {
+	    (info->password == NULL) ? 0 : HXmc_length(info->password),
+	    1, key, iv) <= 0) {
 		l0g("EVP_BytesToKey failed\n");
 		return false;
 	}
@@ -417,7 +419,7 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 }
 
 hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
-    const char *cipher_name, const char *password)
+    const char *cipher_name, hxmc_t *password)
 {
 	struct decrypt_info info = {
 		.keyfile  = keyfile,
