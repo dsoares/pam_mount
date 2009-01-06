@@ -7,23 +7,37 @@
  *	of the License, or (at your option) any later version.
  */
 #include "config.h"
-#ifdef HAVE_GETMNTINFO
-#include <sys/statvfs.h>
+#ifdef HAVE_GETMNTINFO /* entire file */
+
+#ifdef HAVE_SYS_MOUNT_H
+#	include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#	include <sys/statvfs.h>
+#endif
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
 #include <libHX/string.h>
 #include "pam_mount.h"
 
+#if defined(__FreeBSD__)
+#	define local_statfs statfs
+#	define LOCAL_NOWAIT MNT_NOWAIT
+#elif defined(__NetBSD__)
+#	define local_statfs statvfs
+#	define LOCAL_NOWAIT ST_NOWAIT
+#endif
+
 int pmt_already_mounted(const struct config *config,
     const struct vol *vpt, struct HXbtree *vinfo)
 {
 	hxmc_t *dev;
 	bool mounted = false;
-	struct statvfs *mntbuf;
+	struct local_statfs *mntbuf;
 	int num_mounts, i;
 
-	if ((num_mounts = getmntinfo(&mntbuf, ST_NOWAIT)) <= 0) {
+	if ((num_mounts = getmntinfo(&mntbuf, LOCAL_NOWAIT)) <= 0) {
 		l0g("getmntinfo: %s\n", strerror(errno));
 		return -1;
 	}
@@ -34,7 +48,7 @@ int pmt_already_mounted(const struct config *config,
 	}
 
 	for (i = 0; i < num_mounts; ++i) {
-		const struct statvfs *mnt = &mntbuf[i];
+		const struct local_statfs *mnt = &mntbuf[i];
 		int (*xcmp)(const char *, const char *);
 
 		xcmp = (mnt->f_fstypename != NULL &&
@@ -57,4 +71,5 @@ int pmt_already_mounted(const struct config *config,
 	HXmc_free(dev);
 	return mounted;
 }
+
 #endif /* HAVE_GETMNTINFO */

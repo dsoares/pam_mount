@@ -6,6 +6,9 @@ For details, see the history as recorded in the git repository.
 - mount.crypt: fix return code regression
 - logging: <debug> should not turn off errors
 
+Additions:
+- ports: pam_mount.so compiles on FreeBSD (7.1)
+
 
 v1.7 (January 01 2009)
 ======================
