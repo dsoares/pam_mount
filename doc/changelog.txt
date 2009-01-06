@@ -6,6 +6,7 @@ For details, see the history as recorded in the git repository.
 - mount.crypt: fix return code regression
 - logging: <debug> should not turn off errors
 - src: traverse non-whitespace properly, check for '\0'
+- pam_mount: fix segfault in case of an undefined converse function (e.g. cron)
 
 
 v1.7 (January 01 2009)
