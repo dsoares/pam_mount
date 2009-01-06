@@ -122,6 +122,31 @@ static bool valid_username(const char *n)
 }
 
 /**
+ * str_to_long -
+ * @n:	string to analyze
+ *
+ * Calls @strtol on @n using base 10 and makes sure there were no invalid
+ * characters in @n. Returns the value, or %LONG_MAX in case of an
+ * over-/underflow.
+ * NOTE: This function is only referenced from pmvarrun.c.
+ */
+long str_to_long(const char *n)
+{
+	long val;
+	char *endptr = NULL;
+	if (n == NULL) {
+		l0g("count string is NULL\n");
+		return LONG_MAX;
+	}
+	val = strtol(n, &endptr, 10);
+	if (*endptr != '\0') {
+		l0g("count string is not valid\n");
+		return LONG_MAX;
+	}
+	return val;
+}
+
+/**
  * parse_args -
  * @argc:	number of elements in @argv
  * @argv:	NULL-terminated argument vector

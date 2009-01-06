@@ -6,19 +6,13 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
-#include <libHX/misc.h>
 #include <libHX/proc.h>
 #include <libHX/string.h>
 #include <pwd.h>
