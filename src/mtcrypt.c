@@ -504,7 +504,9 @@ static int mtcr_umount(struct umount_options *opt)
 		fprintf(stderr, "umount %s failed with run_sync status %d\n",
 		        opt->object, ret);
 
-	ret = ehd_unload(final_fsname, opt->blkdev);
+	if (final_fsname != NULL)
+		ret = ehd_unload(final_fsname, opt->blkdev);
+
 	free(final_fsname);
 	free(final_dir);
 	return ret;
