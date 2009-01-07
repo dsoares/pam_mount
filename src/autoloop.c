@@ -39,7 +39,10 @@ static int al_setup(const char **argv)
 
 static int al_usetup(const char *loop_dev)
 {
-	pmt_loop_release(loop_dev);
+	int ret;
+
+	if ((ret = pmt_loop_release(loop_dev)) < 0)
+		fprintf(stderr, "warning: loop_release: %s\n", strerror(-ret));
 	return EXIT_SUCCESS;
 }
 

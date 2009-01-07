@@ -5,6 +5,10 @@ For details, see the history as recorded in the git repository.
 - doc: add manpage aliases crypt{,o}_LUKS
 - mount.crypt: fix return code regression
 - logging: <debug> should not turn off errors
+- src: traverse non-whitespace properly, check for '\0'
+- pam_mount: fix segfault in case of an undefined converse function (e.g. cron)
+- mount.crypt: fix segfault when password is NULL
+- umount.crypt: fix segfault when path is not mounted
 
 Additions:
 - ports: pam_mount.so compiles on FreeBSD (7.1)

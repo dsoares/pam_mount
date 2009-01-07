@@ -1,5 +1,6 @@
 /*
- *	Copyright © Jan Engelhardt, 2008
+ *	NetBSD loop device support
+ *	Copyright © Jan Engelhardt, 2008- 2009
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -20,22 +21,22 @@
 #include "pam_mount.h"
 #include <dev/vndvar.h>
 
-/* They sure do not have a lot... */
-static const unsigned BSD_VND_MINORS = 4;
+/*
+ * They sure do not have a lot... (4 by default),
+ * but scan some more just in case.
+ */
+static const unsigned BSD_VND_MINORS = 16;
 
 int pmt_loop_setup(const char *filename, char **result, bool ro)
 {
 	struct vnd_ioctl info;
 	unsigned int i;
-	int filefd, loopfd, ret = 0;
+	int loopfd, ret = 0;
 	char dev[64];
-
-	if ((filefd = open(filename, O_RDWR)) < 0)
-		return -errno;
 
 	for (i = 0; i < BSD_VND_MINORS; ++i) {
 		snprintf(dev, sizeof(dev), "/dev/rvnd%ud", i);
-		loopfd = open(dev, (ro ? O_RDONLY : O_RDWR) | O_EXCL);
+		loopfd = open(dev, O_RDWR | O_EXCL);
 		if (loopfd < 0) {
 			if (errno == ENOENT)
 				break;
@@ -60,7 +61,6 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 		break;
 	}
 
-	close(filefd);
 	return ret;
 }
 
@@ -69,7 +69,7 @@ int pmt_loop_release(const char *device)
 	int loopfd, ret = 1;
 	struct vnd_ioctl info;
 
-	if ((loopfd = open(device, O_RDONLY)) < 0)
+	if ((loopfd = open(device, O_RDWR)) < 0)
 		return -errno;
 	memset(&info, 0, sizeof(info));
 	info.vnd_flags |= VNDIOF_FORCE;
