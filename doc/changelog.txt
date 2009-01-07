@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.8 (January 07 2009)
+======================
 - doc: add manpage aliases crypt{,o}_LUKS
 - mount.crypt: fix return code regression
 - logging: <debug> should not turn off errors

@@ -1,13 +1,13 @@
 #
 #	Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
-#	Copyright © Jan Engelhardt, 2005 - 2008
+#	Copyright © Jan Engelhardt, 2005 - 2009
 #
 #	This file is part of pam_mount; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [1.7])
+AC_INIT([pam_mount], [1.8])
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
