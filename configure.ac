@@ -49,7 +49,7 @@ regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
 	-Wformat=2 -pipe"
 AC_SUBST([regular_CFLAGS])
 
-AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/vndvar.h])
+AC_CHECK_HEADERS([linux/fs.h linux/major.h sys/mdioctl.h dev/vndvar.h])
 AC_CHECK_HEADERS([sys/mount.h sys/statvfs.h])
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
