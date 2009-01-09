@@ -421,7 +421,7 @@ static int modify_pm_count(struct config *config, char *user,
 		fclose(fp);
 	else
 		close(proc.p_stdout);
-	if (HXproc_wait(&proc) < 0 && proc.p_exited && proc.p_status == 0)
+	if (HXproc_wait(&proc) >= 0 && proc.p_exited && proc.p_status == 0)
 		ret = use_count;
  out:
 	if (vinfo != NULL)

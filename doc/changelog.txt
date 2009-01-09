@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+- fixed: umount was called on anything but the last session
+
+
 v1.8 (January 07 2009)
 ======================
 - doc: add manpage aliases crypt{,o}_LUKS
