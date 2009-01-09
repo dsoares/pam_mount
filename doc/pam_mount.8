@@ -107,7 +107,7 @@ the hint!):
 auth [success=2 default=ignore] pam_unix2.so
 auth [success=1 default=ignore] pam_ldap.so use_first_pass
 auth requisite pam_deny.so
-auth optional pam_mount.so use_first_pass
+auth optional pam_mount.so
 .fi
 .PP
 It may seem odd, but the first three lines will make it so that at least one of
