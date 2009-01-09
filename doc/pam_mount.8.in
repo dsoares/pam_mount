@@ -1,4 +1,4 @@
-.TH pam_mount 8 "2008\-10\-08" "pam_mount" "pam_mount"
+.TH pam_mount 8 "@PACKAGE_RELDATE@" "@PACKAGE@ @PACKAGE_VERSION@" "@PACKAGE@ @PACKAGE_VERSION@"
 .SH Name
 .PP
 pam_mount - A PAM module that can mount volumes for a user session
@@ -107,7 +107,7 @@ the hint!):
 auth [success=2 default=ignore] pam_unix2.so
 auth [success=1 default=ignore] pam_ldap.so use_first_pass
 auth requisite pam_deny.so
-auth optional pam_mount.so use_first_pass
+auth optional pam_mount.so
 .fi
 .PP
 It may seem odd, but the first three lines will make it so that at least one of

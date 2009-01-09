@@ -27,26 +27,6 @@
 #include "config.h"
 
 /**
- * @lower_device:	path to container, if it is a block device, otherwise
- * 			path to a loop device translating it into a bdev
- * @crypto_device:	same as @crypto_name, but full path (/dev/mapper/X)
- * @crypto_name:	crypto device name we chose
- * @cipher:		cipher to use with cryptsetup
- * @hash:		hash to use with cryptsetup
- * @keysize:		and the keysize
- * @fskey:		the actual filesystem key
- * @fskey_size:		fskey size, in bytes
- */
-struct ehdmount_ctl {
-	char *lower_device;
-	hxmc_t *crypto_name, *crypto_device;
-	const char *cipher, *hash;
-	const unsigned char *fskey;
-	unsigned int fskey_size;
-	bool blkdev, readonly;
-};
-
-/**
  * pmt_loop_file_name -
  * @filename:	block device to query
  * @i:		pointer to result storage
@@ -100,117 +80,17 @@ int pmt_loop_release(const char *device)
 #endif
 
 /**
- * ehd_is_luks - check if @path points to a LUKS volume (cf. normal dm-crypt)
- * @path:	path to the crypto container
- * @blkdev:	path is definitely a block device
+ * ehd_mtfree - free data associated with an EHD mount info block
  */
-int ehd_is_luks(const char *path, bool blkdev)
+void ehd_mtfree(struct ehd_mount *mt)
 {
-	const char *lukscheck_args[] = {
-		"cryptsetup", "isLuks", path, NULL,
-	};
-	char *loop_device;
-	int ret;
-
-	if (!blkdev) {
-		ret = pmt_loop_setup(path, &loop_device, true);
-		if (ret == 0) {
-			fprintf(stderr, "No free loop device\n");
-		} else if (ret < 0) {
-			fprintf(stderr, "%s: could not set up loop device: %s\n",
-			        __func__, strerror(-ret));
-			return -1;
-		}
-		lukscheck_args[2] = loop_device;
+	free(mt->container);
+	HXmc_free(mt->crypto_device);
+	HXmc_free(mt->crypto_name);
+	if (mt->loop_device != NULL) {
+		pmt_loop_release(mt->lower_device);
+		free(mt->loop_device);
 	}
-
-	if ((ret = HXproc_run_sync(lukscheck_args, HXPROC_VERBOSE)) < 0)
-		fprintf(stderr, "run_sync: %s\n", strerror(-ret));
-	else if (ret > 0xFFFF)
-		/* terminated */
-		ret = -1;
-	else
-		/* exited, and we need success or fail */
-		ret = ret == 0;
-
-	if (!blkdev)
-		pmt_loop_release(loop_device);
-	return ret;
-}
-
-/**
- * ehd_load_2 - set up dm-crypt device
- */
-static bool ehd_load_2(struct ehdmount_ctl *ctl)
-{
-	int ret;
-	bool is_luks = false;
-	const char *start_args[11];
-	struct HXproc proc;
-
-	ret = ehd_is_luks(ctl->lower_device, true);
-	if (ret >= 0) {
-		int argk = 0;
-
-		is_luks = ret == 1;
-		start_args[argk++] = "cryptsetup";
-		if (ctl->readonly)
-			start_args[argk++] = "--readonly";
-		if (ctl->cipher != NULL) {
-			start_args[argk++] = "-c";
-			start_args[argk++] = ctl->cipher;
-		}
-		if (is_luks) {
-			start_args[argk++] = "luksOpen";
-			start_args[argk++] = ctl->lower_device;
-			start_args[argk++] = ctl->crypto_name;
-		} else {
-			start_args[argk++] = "--key-file=-";
-			start_args[argk++] = "-h";
-			start_args[argk++] = ctl->hash;
-			start_args[argk++] = "create";
-			start_args[argk++] = ctl->crypto_name;
-			start_args[argk++] = ctl->lower_device;
-		}
-		start_args[argk] = NULL;
-		assert(argk < ARRAY_SIZE(start_args));
-	} else {
-		l0g("cryptsetup isLuks got terminated\n");
-		return false;
-	}
-
-	if (Debug)
-		arglist_llog(start_args);
-
-	memset(&proc, 0, sizeof(proc));
-	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDIN;
-	if ((ret = HXproc_run_async(start_args, &proc)) <= 0) {
-		l0g("Error setting up crypto device: %s\n", strerror(-ret));
-		return false;
-	}
-
-	/* Ignore return value, we can't do much in case it fails */
-	if (write(proc.p_stdin, ctl->fskey, ctl->fskey_size) < 0)
-		w4rn("%s: password send erro: %s\n", __func__, strerror(errno));
-	close(proc.p_stdin);
-	if ((ret = HXproc_wait(&proc)) != 0) {
-		w4rn("cryptsetup exited with non-zero status %d\n", ret);
-		return false;
-	}
-
-	return true;
-}
-
-static hxmc_t *ehd_crypto_name(const char *s)
-{
-	hxmc_t *ret;
-	char *p;
-
-	ret = HXmc_strinit(s);
-	for (p = ret; *p != '\0'; ++p)
-		if (!HX_isalnum(*p))
-			*p = '_';
-	return ret;
 }
 
 /**
@@ -223,86 +103,61 @@ static hxmc_t *ehd_crypto_name(const char *s)
  * @fskey_size:		size of @fskey, in bytes
  * @readonly:		set up loop device as readonly
  */
-int ehd_load(const char *cont_path, hxmc_t **crypto_device_pptr,
-    const char *cipher, const char *hash, const unsigned char *fskey,
-    unsigned int fskey_size, bool readonly)
+int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 {
-	struct ehdmount_ctl ctl = {
-		.cipher     = cipher,
-		.hash       = hash ? : "plain",
-		.fskey      = fskey,
-		.fskey_size = fskey_size,
-		.readonly   = readonly,
-	};
 	struct stat sb;
-	int ret;
+	int saved_errno, ret;
 
-	if (stat(cont_path, &sb) < 0) {
-		l0g("Could not stat %s: %s\n", cont_path, strerror(errno));
+	memset(mt, 0, sizeof(*mt));
+	if (stat(req->container, &sb) < 0) {
+		l0g("Could not stat %s: %s\n", req->container, strerror(errno));
 		return -errno;
 	}
 
+	if ((mt->container = HX_strdup(req->container)) == NULL)
+		goto out_err;
 	if (S_ISBLK(sb.st_mode)) {
-		ctl.blkdev       = true;
-		ctl.lower_device = const_cast1(char *, cont_path);
+		mt->loop_device  = NULL;
+		mt->lower_device = req->container;
 	} else {
 		/* need losetup since cryptsetup needs block device */
-		w4rn("Setting up loop device for file %s\n", cont_path);
-		ret = pmt_loop_setup(cont_path, &ctl.lower_device, readonly);
+		w4rn("Setting up loop device for file %s\n", req->container);
+		ret = pmt_loop_setup(req->container, &mt->loop_device,
+		      req->readonly);
 		if (ret == 0) {
 			l0g("Error: no free loop devices\n");
+			goto out_ser;
 		} else if (ret < 0) {
 			l0g("Error setting up loopback device for %s: %s\n",
-			    cont_path, strerror(-ret));
-			return false;
+			    req->container, strerror(-ret));
+			goto out_ser;
 		} else {
-			w4rn("Using %s\n", ctl.lower_device);
+			w4rn("Using %s\n", mt->loop_device);
+			mt->lower_device = mt->loop_device;
 		}
 	}
 
-	ctl.crypto_name = ehd_crypto_name(cont_path);
-	w4rn("Using %s as dmdevice name\n", ctl.crypto_name);
-	ctl.crypto_device = HXmc_strinit("/dev/mapper/");
-	HXmc_strcat(&ctl.crypto_device, ctl.crypto_name);
+#if defined(__linux__)
+	ret = ehd_dmcrypt_ops.load(req, mt);
+#elif defined(HAVE_DEV_CGDVAR_H)
+	ret = ehd_cgd_ops.load(req, mt);
+#endif
+	if (ret <= 0)
+		goto out_ser;
 
-	ret = ehd_load_2(&ctl);
-	if (!ret)
-		crypto_device_pptr = NULL;
-	if (ctl.lower_device != cont_path) {
-		pmt_loop_release(ctl.lower_device);
-		free(ctl.lower_device);
-	}
-	if (crypto_device_pptr != NULL)
-		*crypto_device_pptr = ctl.crypto_device;
-	else
-		HXmc_free(ctl.crypto_device);
-	HXmc_free(ctl.crypto_name);
+	return ret;
+
+ out_err:
+	ret = -errno;
+ out_ser:
+	saved_errno = errno;
+	ehd_mtfree(mt);
+	errno = saved_errno;
 	return ret;
 }
 
 /**
- * ehd_unload_crypto - deactivate crypto device
- * @crypto_device:	full path to the crypto device (/dev/mapper/X)
- */
-static bool ehd_unload_crypto(const char *crypto_device)
-{
-	const char *crypto_name = HX_basename(crypto_device);
-	const char *const args[] = {
-		"cryptsetup", "remove", crypto_name, NULL,
-	};
-	int ret;
-
-	if ((ret = HXproc_run_sync(args, HXPROC_VERBOSE)) == 0)
-		return true;
-
-	l0g("Could not unload dm-crypt device \"%s\" (%s), "
-	    "cryptsetup %s with run_sync status %d\n",
-	    crypto_name, crypto_device, ret);
-	return false;
-}
-
-/**
- * ehd_unload -
+ * ehd_unload - unload EHD image
  * @crypto_device:	dm-crypt device (/dev/mapper/X)
  * @only_crypto:	do not unload any lower device
  *
@@ -313,68 +168,21 @@ static bool ehd_unload_crypto(const char *crypto_device)
  * not look as easy as the loop one, and does not look shared (i.e. available
  * as a system library) either.
  */
-int ehd_unload(const char *crypto_device, bool only_crypto)
+int ehd_unload(const struct ehd_mount *mt)
 {
-	const char *const args[] = {
-		"cryptsetup", "status", HX_basename(crypto_device), NULL,
-	};
-	const char *lower_device = NULL;
-	hxmc_t *line = NULL;
-	bool f_ret = false;
-	FILE *fp = NULL;
-	struct HXproc proc = {.p_flags = HXPROC_VERBOSE | HXPROC_STDOUT};
 	int ret;
 
-	if ((ret = HXproc_run_async(args, &proc)) <= 0) {
-		l0g("%s: could not run %s: %s\n",
-		    __func__, *args, strerror(-ret));
-		return ret;
-	}
+#if defined(__linux__)
+	ret = ehd_dmcrypt_ops.unload(mt);
+#elif defined(HAVE_DEV_CGDVAR_H)
+	ret = ehd_cgd_ops.unload(mt);
+#endif
 
-	fp = fdopen(proc.p_stdout, "r");
-	if (fp == NULL)
-		goto out;
+	/* Try to free loop device even if cryptsetup remove failed */
+	if (mt->loop_device != NULL)
+		ret = pmt_loop_release(mt->loop_device);
 
-	while (HX_getl(&line, fp) != NULL) {
-		const char *p = line;
-		HX_chomp(line);
-
-		while (HX_isspace(*p))
-			++p;
-		if (strncmp(p, "device:", strlen("device:")) != 0)
-			continue;
-		while (!HX_isspace(*p) && *p != '\0')
-			++p;
-		/*
-		 * Relying on the fact that dmcrypt does not
-		 * allow spaces or newlines in filenames.
-		 */
-		while (HX_isspace(*p))
-			++p;
-		lower_device = p;
-		break;
-	}
-
-	if (!ehd_unload_crypto(crypto_device))
-		goto out;
-	if (!only_crypto) {
-		ret = pmt_loop_release(lower_device);
-		/*
-		 * Success, not-assigned (ENXIO) or not-a-loop-device (ENOTTY)
-		 * shall pass.
-		 */
-		if (ret <= 0 && ret != -ENXIO && ret != -ENOTTY)
-			goto out;
-	}
-
-	f_ret = true;
- out:
-	if (fp != NULL)
-		fclose(fp);
-	else
-		close(proc.p_stdout);
-	HXproc_wait(&proc);
-	return f_ret;
+	return ret;
 }
 
 struct decrypt_info {
@@ -554,12 +362,15 @@ static hxmc_t *__pmt_get_password(FILE *fp)
 				sigaction(SIGINT, &sa, NULL);
 				ti.c_lflag &= ~ECHO;
 				tcsetattr(fileno(fp), TCSANOW, &ti);
+				tcflush(fileno(fp), TCIFLUSH);
 			}
 		}
 	}
 
-	if (HX_getl(&ret, fp) != NULL)
+	if (HX_getl(&ret, fp) != NULL) {
 		HX_chomp(ret);
+		HXmc_setlen(&ret, strlen(ret));
+	}
 	pmt_password_stop(0);
 	return ret;
 }

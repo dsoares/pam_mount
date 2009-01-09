@@ -1,13 +1,14 @@
 #
 #	Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
-#	Copyright © Jan Engelhardt, 2005 - 2008
+#	Copyright © Jan Engelhardt, 2005 - 2009
 #
 #	This file is part of pam_mount; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [1.7])
+AC_INIT([pam_mount], [1.15])
+PACKAGE_RELDATE="2009-01-23"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -42,15 +43,14 @@ AM_CONDITIONAL([WITH_DTD], [test "x$with_dtd" = "xtrue"])
 
 CHECK_GCC_FVISIBILITY
 
-regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
-	-D_FILE_OFFSET_BITS=64 \
+regular_CFLAGS="-D_FILE_OFFSET_BITS=64 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
 	-Wformat=2 -pipe"
 AC_SUBST([regular_CFLAGS])
 
-AC_CHECK_HEADERS([linux/fs.h linux/major.h sys/mdioctl.h dev/vndvar.h])
-AC_CHECK_HEADERS([sys/mount.h sys/statvfs.h])
+AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/cgdvar.h dev/vndvar.h])
+AC_CHECK_HEADERS([sys/mdioctl.h sys/mount.h sys/statvfs.h])
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 AC_CHECK_FUNCS([getmntent getmntinfo])
@@ -84,5 +84,6 @@ case "$host" in
 esac
 AC_SUBST([PAM_MODDIR])
 
+AC_SUBST([PACKAGE_RELDATE])
 AC_CONFIG_FILES([Makefile config/Makefile doc/Makefile src/Makefile])
 AC_OUTPUT

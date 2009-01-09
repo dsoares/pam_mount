@@ -2,6 +2,48 @@
 For details, see the history as recorded in the git repository.
 
 
+Features:
+- ports: NetBSD crypto device (CGD) support
+
+Fixes:
+- nucrypt2: resolve compiler warnings
+- nucrypt2: avoid NULL deref in pmt_cmtab_add
+- mount.crypt: avoid random deref in bogus printf
+- mount.crypt: only use mount -i on __linux__
+- mount.crypt: avoid umount attemps when not mounted
+
+
+v1.15 (January 23 2009)
+=======================
+Features:
+- mount.crypt: use /etc/cmtab file to keep crypto mount info
+
+Fixes:
+- mount.crypt/pmt-ehd: flush tty input queue before prompting for password
+
+
+v1.10 (January 22 2009)
+=======================
+Fixes:
+- crypto: add missing return statements during loop+crypto setup
+- pmt-ehd: fix return statements
+- ehd: do not feed password's '\0' into openSSL
+
+
+v1.9 (January 13 2009)
+======================
+Fixes:
+- umount was called on anything but the last session
+- ofl: fix per-task fd lookup (again)
+- luserconf: re-enforce three-wall option checks
+
+Changes:
+- doc: remove old use_first_pass from doc
+- doc: add version string and reldate to manpages
+
+
+v1.8 (January 07 2009)
+======================
 - doc: add manpage aliases crypt{,o}_LUKS
 - mount.crypt: fix return code regression
 - logging: <debug> should not turn off errors

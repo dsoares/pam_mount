@@ -12,7 +12,6 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
-#include <mntent.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -252,12 +251,14 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		}
 	}
 
-	if (!ehd_is_luks(opt->container, opt->blkdev) &&
+#ifdef __linux__
+	if (!dmc_is_luks(opt->container, opt->blkdev) &&
 	    opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "
 		        "(use -o cipher=xxx)\n", **argv);
 		return false;
 	}
+#endif
 
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
@@ -277,8 +278,14 @@ static int mtcr_mount(struct mount_options *opt)
 	const char *fsck_args[4];
 	struct stat sb;
 	int ret, argk;
-	FILE *fp;
-	hxmc_t *cd = NULL, *key;
+	hxmc_t *key;
+	struct ehd_mount mount_info;
+	struct ehd_mtreq mount_request = {
+		.container = opt->container,
+		.fs_cipher = opt->dmcrypt_cipher,
+		.fs_hash   = opt->dmcrypt_hash,
+		.readonly  = opt->readonly,
+	};
 
 	if (opt->fsk_file == NULL) {
 		/* LUKS derives the key material on its own */
@@ -297,31 +304,34 @@ static int mtcr_mount(struct mount_options *opt)
 		}
 	}
 
-	ret = ehd_load(opt->container, &cd, opt->dmcrypt_cipher,
-	      opt->dmcrypt_hash, reinterpret_cast(const unsigned char *, key),
-	      HXmc_length(key), opt->readonly);
-	if (ret < 0) {
+	mount_request.key_data = key;
+	mount_request.key_size = HXmc_length(key);
+
+	if ((ret = ehd_load(&mount_request, &mount_info)) < 0) {
 		fprintf(stderr, "ehd_load: %s\n", strerror(errno));
 		return 0;
 	} else if (ret == 0) {
 		return 0;
 	}
 	HXmc_free(key);
-	if (cd == NULL) {
+	if (mount_info.crypto_device == NULL) {
 		if (Debug)
 			fprintf(stderr, "No crypto device assigned\n");
+		ehd_unload(&mount_info);
+		ehd_mtfree(&mount_info);
 		return 0;
 	}
 
 	opt->dm_timeout *= 3;
-	while (stat(cd, &sb) < 0 && errno == ENOENT && opt->dm_timeout-- > 0)
+	while (stat(mount_info.crypto_device, &sb) < 0 && errno == ENOENT &&
+	    opt->dm_timeout-- > 0)
 		usleep(333333);
 
 	if (opt->fsck) {
 		argk = 0;
 		fsck_args[argk++] = "fsck";
 		fsck_args[argk++] = "-p";
-		fsck_args[argk++] = cd;
+		fsck_args[argk++] = mount_info.crypto_device;
 		fsck_args[argk] = NULL;
 		assert(argk < ARRAY_SIZE(fsck_args));
 
@@ -337,53 +347,48 @@ static int mtcr_mount(struct mount_options *opt)
 			fprintf(stderr, "Automatic fsck failed, manual "
 			        "intervention required, run_sync status %d\n",
 			        ret);
-			ehd_unload(cd, opt->blkdev);
+			ehd_unload(&mount_info);
+			ehd_mtfree(&mount_info);
 			return false;
 		}
 	}
 
 	argk = 0;
 	mount_args[argk++] = "mount";
+#ifdef __linux__
 	mount_args[argk++] = "-n";
+#endif
 	if (opt->fstype != NULL) {
 		mount_args[argk++] = "-t";
 		mount_args[argk++] = opt->fstype;
 	}
-	mount_args[argk++] = cd;
-	mount_args[argk++] = opt->mountpoint;
 	if (opt->extra_opts != NULL) {
 		mount_args[argk++] = "-o";
 		mount_args[argk++] = opt->extra_opts;
 	}
+	mount_args[argk++] = mount_info.crypto_device;
+	mount_args[argk++] = opt->mountpoint;
 	mount_args[argk] = NULL;
 
 	assert(argk < ARRAY_SIZE(mount_args));
 	arglist_llog(mount_args);
 	if ((ret = HXproc_run_sync(mount_args, HXPROC_VERBOSE)) != 0) {
 		fprintf(stderr, "mount failed with run_sync status %d\n", ret);
-		ehd_unload(cd, opt->blkdev);
+		ehd_unload(&mount_info);
+	} else if ((ret = pmt_cmtab_add(opt->mountpoint,
+	    mount_info.container, mount_info.loop_device,
+	    mount_info.crypto_device)) <= 0) {
+		fprintf(stderr, "pmt_cmtab_add: %s\n", strerror(errno));
+		/* ignore error on cmtab - let user have his crypto */
+		ret = 0;
 	} else if (opt->no_update) {
 		/* awesome logic */;
-	} else if ((fp = fopen(mtab_file, "a")) == NULL) {
-		fprintf(stderr, "Could not open %s: %s\n",
-		        mtab_file, strerror(errno));
 	} else {
-		struct mntent newmnt;
-
-		newmnt.mnt_fsname = const_cast1(char *, opt->container);
-		newmnt.mnt_dir    = const_cast1(char *, opt->mountpoint);
-		newmnt.mnt_type   = "crypt";
-		newmnt.mnt_freq   = newmnt.mnt_passno = 0;
-		if (opt->extra_opts == NULL)
-			newmnt.mnt_opts = "defaults";
-		else
-			newmnt.mnt_opts = opt->extra_opts;
-		if (addmntent(fp, &newmnt) != 0)
-			fprintf(stderr, "Could not add mount entry to %s\n",
-			        mtab_file);
-		fclose(fp);
+		pmt_smtab_add(mount_info.container, opt->mountpoint,
+			"crypt", "defaults");
 	}
 
+	ehd_mtfree(&mount_info);
 	return ret == 0;
 }
 
@@ -441,75 +446,47 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 static int mtcr_umount(struct umount_options *opt)
 {
 	const char *umount_args[5];
-	char *final_dir = NULL, *final_fsname = NULL;
-	const struct mntent *mnt;
-	FILE *fp;
-	int ret, argk = 0;
+	int final_ret, ret, argk = 0;
+	struct ehd_mount mount_info;
+	char *mountpoint = NULL;
 
-	if (opt->is_cont) {
-		/*
-		 * Need to find the directory for it, so that we can then
-		 * look for the directory in kmtab and find the crypto device.
-		 */
-
-		fp = setmntent(mtab_file, "r");
-		if (fp == NULL) {
-			fprintf(stderr, "Cannot inspect mtab %s: %s\n",
-			        mtab_file, strerror(errno));
-			return -ENXIO;
-		}
-
-		while ((mnt = getmntent(fp)) != NULL)
-			if (strcmp(mnt->mnt_fsname, opt->object) == 0) {
-				free(final_dir);
-				if ((final_dir = xstrdup(mnt->mnt_dir)) == NULL)
-					abort();
-			}
-
-		endmntent(fp);
-		if (final_dir != NULL)
-			opt->object = final_dir;
-	}
-
-	fp = setmntent(kmtab_file, "r");
-	if (fp == NULL) {
-		fprintf(stderr, "Cannot inspect kmtab %s: %s\n",
-		        kmtab_file, strerror(errno));
-		return -ENXIO;
-	}
-
-	while ((mnt = getmntent(fp)) != NULL)
-		if (strcmp(mnt->mnt_dir, opt->object) == 0) {
-			free(final_fsname);
-			if ((final_fsname = xstrdup(mnt->mnt_fsname)) == NULL)
-				abort();
-		}
-
-	endmntent(fp);
-	if (final_fsname == NULL) {
-		fprintf(stderr, "%s not found in kmtab %s\n",
-		        opt->object, kmtab_file);
+	ret = pmt_cmtab_get(opt->object, opt->is_cont ? CMTABF_CONTAINER :
+	      CMTABF_MOUNTPOINT, &mountpoint, &mount_info.container,
+	      &mount_info.loop_device, &mount_info.crypto_device);
+	if (ret < 0) {
+		fprintf(stderr, "pmt_cmtab_get: %s\n", strerror(-ret));
+	} else if (ret == 0) {
+		fprintf(stderr, "%s is not mounted (according to cmtab)\n",
+		        opt->object);
+		return 1;
 	}
 
 	umount_args[argk++] = "umount";
+#ifdef __linux__
 	umount_args[argk++] = "-i";
 	if (opt->no_update)
 		umount_args[argk++] = "-n";
-	umount_args[argk++] = opt->object;
+#endif
+	umount_args[argk++] = mountpoint;
 	umount_args[argk]   = NULL;
 
 	assert(argk < ARRAY_SIZE(umount_args));
 	arglist_llog(umount_args);
-	if ((ret = HXproc_run_sync(umount_args, HXPROC_VERBOSE)) != 0)
+	if ((final_ret = HXproc_run_sync(umount_args, HXPROC_VERBOSE)) != 0) {
 		fprintf(stderr, "umount %s failed with run_sync status %d\n",
 		        opt->object, ret);
+		final_ret = 0;
+		ehd_unload(&mount_info);
+	} else if ((ret = ehd_unload(&mount_info)) <= 0) {
+		final_ret = ret;
+	} else {
+		if (!opt->no_update)
+			pmt_smtab_remove(mountpoint, SMTABF_MOUNTPOINT);
+		pmt_cmtab_remove(mountpoint, CMTABF_MOUNTPOINT);
+		final_ret = 1;
+	}
 
-	if (final_fsname != NULL)
-		ret = ehd_unload(final_fsname, opt->blkdev);
-
-	free(final_fsname);
-	free(final_dir);
-	return ret;
+	return final_ret;
 }
 
 int main(int argc, const char **argv)
