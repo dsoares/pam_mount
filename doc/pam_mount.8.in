@@ -1,4 +1,4 @@
-.TH pam_mount 8 "2008\-10\-08" "pam_mount" "pam_mount"
+.TH pam_mount 8 "@PACKAGE_RELDATE@" "@PACKAGE@ @PACKAGE_VERSION@" "@PACKAGE@ @PACKAGE_VERSION@"
 .SH Name
 .PP
 pam_mount - A PAM module that can mount volumes for a user session

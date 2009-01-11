@@ -8,6 +8,7 @@
 #	(at your option) any later version.
 #
 AC_INIT([pam_mount], [1.8])
+PACKAGE_RELDATE="2009-01-07"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -83,5 +84,6 @@ case "$host" in
 esac
 AC_SUBST([PAM_MODDIR])
 
+AC_SUBST([PACKAGE_RELDATE])
 AC_CONFIG_FILES([Makefile config/Makefile doc/Makefile src/Makefile])
 AC_OUTPUT
