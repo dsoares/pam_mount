@@ -2,8 +2,16 @@
 For details, see the history as recorded in the git repository.
 
 
-- fixed: umount was called on anything but the last session
+v1.9 (January 13 2009)
+======================
+Fixes:
+- umount was called on anything but the last session
+- ofl: fix per-task fd lookup (again)
 - luserconf: re-enforce three-wall option checks
+
+Changes:
+- doc: remove old use_first_pass from doc
+- doc: add version string and reldate to manpages
 
 
 v1.8 (January 07 2009)
