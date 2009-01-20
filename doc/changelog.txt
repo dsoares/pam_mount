@@ -3,7 +3,8 @@ For details, see the history as recorded in the git repository.
 
 
 Fixes:
-- ehd: add missing return statements during loop+crypto setup
+- crypto: add missing return statements during loop+crypto setup
+- pmt-ehd: fix return statements
 
 
 v1.9 (January 13 2009)

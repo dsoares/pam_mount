@@ -365,10 +365,10 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	f_ret = ehd_mkfs(pg, crypto_device);
 	ret   = ehd_unload(crypto_device, cont->blkdev);
 	if (f_ret)
-		f_ret = ret >= 0;
+		f_ret = ret > 0;
 
 	HXmc_free(crypto_device);
-	return true;
+	return f_ret;
 }
 
 static void ehd_final_printout(const struct ehd_ctl *pg)
@@ -613,12 +613,14 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 		return false;
 	}
 
-	if (!ehd_init_volume(pg, password != NULL ? password : ""))
+	if (!ehd_init_volume(pg, password != NULL ? password : "")) {
+		HXmc_free(password);
 		return false;
-
-	ehd_final_printout(pg);
-	HXmc_free(password);
-	return true;
+	} else {
+		ehd_final_printout(pg);
+		HXmc_free(password);
+		return true;
+	}
 }
 
 int main(int argc, const char **argv)
