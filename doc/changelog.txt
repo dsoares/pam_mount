@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- ehd: add missing return statements during loop+crypto setup
+
+
 v1.9 (January 13 2009)
 ======================
 Fixes:
