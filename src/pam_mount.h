@@ -198,6 +198,33 @@ extern void *xrealloc(void *, size_t);
 extern char *xstrdup(const char *);
 
 /*
+ *	MTAB.C
+ */
+/* Enum constants must match order of /etc/mtab and /etc/cmtab, respectively. */
+enum smtab_field {
+	SMTABF_CONTAINER = 0,
+	SMTABF_MOUNTPOINT,
+	__SMTABF_MAX,
+};
+
+enum cmtab_field {
+	CMTABF_MOUNTPOINT = 0,
+	CMTABF_CONTAINER,
+	CMTABF_LOOP_DEV,
+	CMTABF_CRYPTO_DEV,
+	__CMTABF_MAX,
+};
+
+extern int pmt_smtab_add(const char *, const char *,
+	const char *, const char *);
+extern int pmt_smtab_remove(const char *, enum smtab_field);
+extern int pmt_cmtab_add(const char *, const char *,
+	const char *, const char *);
+extern int pmt_cmtab_get(const char *, enum cmtab_field,
+	char **, char **, char **, char **);
+extern int pmt_cmtab_remove(const char *, enum cmtab_field);
+
+/*
  *	MOUNT.C
  */
 extern mount_op_fn_t do_mount, do_unmount;
