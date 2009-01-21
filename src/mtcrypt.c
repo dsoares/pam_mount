@@ -344,7 +344,9 @@ static int mtcr_mount(struct mount_options *opt)
 
 	argk = 0;
 	mount_args[argk++] = "mount";
+#ifdef __linux__
 	mount_args[argk++] = "-n";
+#endif
 	if (opt->fstype != NULL) {
 		mount_args[argk++] = "-t";
 		mount_args[argk++] = opt->fstype;
@@ -493,8 +495,10 @@ static int mtcr_umount(struct umount_options *opt)
 
 	umount_args[argk++] = "umount";
 	umount_args[argk++] = "-i";
+#ifdef __linux__
 	if (opt->no_update)
 		umount_args[argk++] = "-n";
+#endif
 	umount_args[argk++] = opt->object;
 	umount_args[argk]   = NULL;
 
