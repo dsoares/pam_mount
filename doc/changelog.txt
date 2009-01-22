@@ -5,6 +5,7 @@ For details, see the history as recorded in the git repository.
 Fixes:
 - crypto: add missing return statements during loop+crypto setup
 - pmt-ehd: fix return statements
+- ehd: do not feed password's '\0' into openSSL
 
 
 v1.9 (January 13 2009)

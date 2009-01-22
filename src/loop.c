@@ -560,8 +560,10 @@ static hxmc_t *__pmt_get_password(FILE *fp)
 		}
 	}
 
-	if (HX_getl(&ret, fp) != NULL)
+	if (HX_getl(&ret, fp) != NULL) {
 		HX_chomp(ret);
+		HXmc_setlen(&ret, strlen(ret));
+	}
 	pmt_password_stop(0);
 	return ret;
 }
