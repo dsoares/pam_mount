@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.10 (January 22 2009)
+=======================
 Fixes:
 - crypto: add missing return statements during loop+crypto setup
 - pmt-ehd: fix return statements
