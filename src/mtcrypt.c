@@ -452,8 +452,12 @@ static int mtcr_umount(struct umount_options *opt)
 	ret = pmt_cmtab_get(opt->object, opt->is_cont ? CMTABF_CONTAINER :
 	      CMTABF_MOUNTPOINT, &mountpoint, &mount_info.container,
 	      &mount_info.loop_device, &mount_info.crypto_device);
-	if (ret <= 0) {
+	if (ret < 0) {
 		fprintf(stderr, "pmt_cmtab_get: %s\n", strerror(-ret));
+	} else if (ret == 0) {
+		fprintf(stderr, "%s is not mounted (according to cmtab)\n",
+		        opt->object);
+		return 1;
 	}
 
 	umount_args[argk++] = "umount";
