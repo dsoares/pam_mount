@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- mount.crypt/pmt-ehd: flush tty input queue before prompting for password
+
+
 v1.10 (January 22 2009)
 =======================
 Fixes:
