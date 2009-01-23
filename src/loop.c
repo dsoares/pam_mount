@@ -487,6 +487,7 @@ static hxmc_t *__pmt_get_password(FILE *fp)
 				sigaction(SIGINT, &sa, NULL);
 				ti.c_lflag &= ~ECHO;
 				tcsetattr(fileno(fp), TCSANOW, &ti);
+				tcflush(fileno(fp), TCIFLUSH);
 			}
 		}
 	}
