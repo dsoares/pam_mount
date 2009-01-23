@@ -2,6 +2,11 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.15 (January 23 2009)
+=======================
+Features:
+- mount.crypt: use /etc/cmtab file to keep crypto mount info
+
 Fixes:
 - mount.crypt/pmt-ehd: flush tty input queue before prompting for password
 
