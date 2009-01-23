@@ -6,6 +6,7 @@ Fixes:
 - nucrypt2: resolve compiler warnings
 - nucrypt2: avoid NULL deref in pmt_cmtab_add
 - mount.crypt: avoid random deref in bogus printf
+- mount.crypt: only use mount -i on __linux__
 
 
 v1.15 (January 23 2009)

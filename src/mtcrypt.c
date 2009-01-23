@@ -457,8 +457,8 @@ static int mtcr_umount(struct umount_options *opt)
 	}
 
 	umount_args[argk++] = "umount";
-	umount_args[argk++] = "-i";
 #ifdef __linux__
+	umount_args[argk++] = "-i";
 	if (opt->no_update)
 		umount_args[argk++] = "-n";
 #endif
