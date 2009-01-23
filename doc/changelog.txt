@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- nucrypt2: resolve compiler warnings
+
+
 v1.15 (January 23 2009)
 =======================
 Features:

@@ -319,15 +319,22 @@ static int pmt_mtab_remove(const char *file, const char *spec,
 
 	if (ret == 1) {
 		char buf[1024];
-		ssize_t rdret;
+		ssize_t rdret, wrret;
 
 		while ((rdret = pread(fileno(fp), buf, sizeof(buf), pos_src)) > 0) {
-			pwrite(fileno(fp), buf, rdret, pos_dst);
+			wrret = pwrite(fileno(fp), buf, rdret, pos_dst);
+			if (wrret != rdret) {
+				w4rn("%s: pwrite: %s\n", __func__, strerror(errno));
+				if (wrret > 0)
+					pos_dst += wrret;
+				break;
+			}
 			pos_src += rdret;
 			pos_dst += rdret;
 		}
 
-		ftruncate(fileno(fp), pos_dst);
+		if (ftruncate(fileno(fp), pos_dst) < 0)
+			w4rn("%s: ftruncate: %s\n", __func__, strerror(errno));
 	}
 
  out:
