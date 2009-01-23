@@ -193,7 +193,7 @@ static inline const char *znul(const char *s)
 
 extern int ehd_is_luks(const char *, bool);
 extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
-extern int ehd_unload(struct ehd_mount *);
+extern int ehd_unload(const struct ehd_mount *);
 extern void ehd_mtfree(struct ehd_mount *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	hxmc_t *);

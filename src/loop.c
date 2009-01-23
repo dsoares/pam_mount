@@ -284,7 +284,7 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
  * not look as easy as the loop one, and does not look shared (i.e. available
  * as a system library) either.
  */
-int ehd_unload(struct ehd_mount *mt)
+int ehd_unload(const struct ehd_mount *mt)
 {
 	const char *args[] = {
 		"cryptsetup", "remove", NULL, NULL,
