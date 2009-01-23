@@ -3,6 +3,25 @@ For details, see the history as recorded in the git repository.
 
 
 Fixes:
+- nucrypt2: resolve compiler warnings
+- nucrypt2: avoid NULL deref in pmt_cmtab_add
+- mount.crypt: avoid random deref in bogus printf
+- mount.crypt: only use mount -i on __linux__
+- mount.crypt: avoid umount attemps when not mounted
+
+
+v1.15 (January 23 2009)
+=======================
+Features:
+- mount.crypt: use /etc/cmtab file to keep crypto mount info
+
+Fixes:
+- mount.crypt/pmt-ehd: flush tty input queue before prompting for password
+
+
+v1.10 (January 22 2009)
+=======================
+Fixes:
 - crypto: add missing return statements during loop+crypto setup
 - pmt-ehd: fix return statements
 - ehd: do not feed password's '\0' into openSSL

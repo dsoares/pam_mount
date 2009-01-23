@@ -252,12 +252,14 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		}
 	}
 
-	if (!ehd_is_luks(opt->container, opt->blkdev) &&
+#ifdef __linux__
+	if (!dmc_is_luks(opt->container, opt->blkdev) &&
 	    opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "
 		        "(use -o cipher=xxx)\n", **argv);
 		return false;
 	}
+#endif
 
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
@@ -452,13 +454,17 @@ static int mtcr_umount(struct umount_options *opt)
 	ret = pmt_cmtab_get(opt->object, opt->is_cont ? CMTABF_CONTAINER :
 	      CMTABF_MOUNTPOINT, &mountpoint, &mount_info.container,
 	      &mount_info.loop_device, &mount_info.crypto_device);
-	if (ret <= 0) {
+	if (ret < 0) {
 		fprintf(stderr, "pmt_cmtab_get: %s\n", strerror(-ret));
+	} else if (ret == 0) {
+		fprintf(stderr, "%s is not mounted (according to cmtab)\n",
+		        opt->object);
+		return 1;
 	}
 
 	umount_args[argk++] = "umount";
-	umount_args[argk++] = "-i";
 #ifdef __linux__
+	umount_args[argk++] = "-i";
 	if (opt->no_update)
 		umount_args[argk++] = "-n";
 #endif
