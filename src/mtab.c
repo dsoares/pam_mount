@@ -166,11 +166,19 @@ int pmt_smtab_add(const char *device, const char *mountpoint,
 int pmt_cmtab_add(const char *mountpoint, const char *container,
     const char *loop_device, const char *crypto_device)
 {
+	hxmc_t *line;
 	int ret;
+
+	if (container == NULL)
+		return -EINVAL;
+	if (loop_device == NULL)
+		loop_device = "-";
+	if (crypto_device == NULL)
+		crypto_device = "-";
+
 	/* Preallocate just the normal size */
-	hxmc_t *line = HXmc_meminit(NULL, strlen(mountpoint) +
-		strlen(container) + strlen(loop_device) +
-		strlen(crypto_device) + 5);
+	line = HXmc_meminit(NULL, strlen(mountpoint) + strlen(container) +
+	       strlen(loop_device) + strlen(crypto_device) + 5);
 	if (line == NULL)
 		return -errno;
 
@@ -256,11 +264,11 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
 			free(*container);
 			*container = HX_strdup(field[1]);
 		}
-		if (loop_device != NULL) {
+		if (loop_device != NULL && strcmp(field[2], "-") != 0) {
 			free(*loop_device);
 			*loop_device = HX_strdup(field[2]);
 		}
-		if (crypto_device != NULL) {
+		if (crypto_device != NULL && strcmp(field[3], "-") != 0) {
 			free(*crypto_device);
 			*crypto_device = HX_strdup(field[3]);
 		}
