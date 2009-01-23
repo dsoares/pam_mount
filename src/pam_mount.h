@@ -132,6 +132,41 @@ struct kvp {
 	struct HXlist_head list;
 };
 
+/**
+ * struct ehd_request - mapping and mount request for EHD
+ * @mountpoint:	where to mount EHD
+ * @fs_cipher:	cipher used for filesystem (cryptsetup name)
+ * @fs_hash:	hash used for filesystem (cryptsetup name)
+ * @container:	path to disk image
+ * @key_data:	key material
+ * @key_size:	size of key data
+ * @readonly:	create readonly mount?
+ */
+struct ehd_mtreq {
+	const char *mountpoint;
+	const char *fs_cipher, *fs_hash, *container;
+	const void *key_data;
+	unsigned int key_size;
+	bool readonly;
+};
+
+/**
+ * struct ehd_mount - EHD mount info
+ * @container:		path to disk image
+ * @lower_device:	link to either @container if a block device,
+ * 			otherwise points to @loop_device.
+ * @loop_device:	loop device that was created, if any
+ * @crypto_name:	crypto device that was created (basename only)
+ * @crypto_device:	full path to the crypto device
+ */
+struct ehd_mount {
+	char *container;
+	const char *lower_device;
+	char *loop_device;
+	hxmc_t *crypto_name;
+	hxmc_t *crypto_device;
+};
+
 typedef int (mount_op_fn_t)(const struct config *, struct vol *,
 	struct HXbtree *, const char *);
 
@@ -155,10 +190,11 @@ static inline const char *znul(const char *s)
 /*
  *	LOOP.C
  */
+
 extern int ehd_is_luks(const char *, bool);
-extern int ehd_load(const char *, hxmc_t **, const char *, const char *,
-	const unsigned char *, unsigned int, bool);
-extern int ehd_unload(const char *, bool);
+extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
+extern int ehd_unload(struct ehd_mount *);
+extern void ehd_mtfree(struct ehd_mount *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	hxmc_t *);
 extern unsigned int cipher_digest_security(const char *);
@@ -196,6 +232,33 @@ extern long str_to_long(const char *);
 extern void *xmalloc(size_t);
 extern void *xrealloc(void *, size_t);
 extern char *xstrdup(const char *);
+
+/*
+ *	MTAB.C
+ */
+/* Enum constants must match order of /etc/mtab and /etc/cmtab, respectively. */
+enum smtab_field {
+	SMTABF_CONTAINER = 0,
+	SMTABF_MOUNTPOINT,
+	__SMTABF_MAX,
+};
+
+enum cmtab_field {
+	CMTABF_MOUNTPOINT = 0,
+	CMTABF_CONTAINER,
+	CMTABF_LOOP_DEV,
+	CMTABF_CRYPTO_DEV,
+	__CMTABF_MAX,
+};
+
+extern int pmt_smtab_add(const char *, const char *,
+	const char *, const char *);
+extern int pmt_smtab_remove(const char *, enum smtab_field);
+extern int pmt_cmtab_add(const char *, const char *,
+	const char *, const char *);
+extern int pmt_cmtab_get(const char *, enum cmtab_field,
+	char **, char **, char **, char **);
+extern int pmt_cmtab_remove(const char *, enum cmtab_field);
 
 /*
  *	MOUNT.C

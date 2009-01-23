@@ -148,6 +148,7 @@ bool luserconf_volume_record_sane(const struct config *config,
 			misc_log("Luser volume for %s is missing options that "
 			         "are required by global <mntoptions>\n",
 			         vol->mountpoint);
+			return false;
 		}
 		if (config->options_allow->items != 0 &&
 		    !allow_ok(config->options_allow, &vol->options)) {
@@ -161,6 +162,7 @@ bool luserconf_volume_record_sane(const struct config *config,
 			misc_log("Luser volume for %s has options that are "
 			         "denied by global <mntoptions>\n",
 			         vol->mountpoint);
+			return false;
 		}
 	}
 

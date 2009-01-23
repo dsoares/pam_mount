@@ -1,13 +1,14 @@
 #
 #	Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
-#	Copyright © Jan Engelhardt, 2005 - 2008
+#	Copyright © Jan Engelhardt, 2005 - 2009
 #
 #	This file is part of pam_mount; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [1.7])
+AC_INIT([pam_mount], [1.9])
+PACKAGE_RELDATE="2009-01-13"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -42,8 +43,7 @@ AM_CONDITIONAL([WITH_DTD], [test "x$with_dtd" = "xtrue"])
 
 CHECK_GCC_FVISIBILITY
 
-regular_CFLAGS="-D_LARGEFILE_SOURCE=1 -D_LARGEFILE64_SOURCE=1 \
-	-D_FILE_OFFSET_BITS=64 \
+regular_CFLAGS="-D_FILE_OFFSET_BITS=64 \
 	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
 	-Wformat=2 -pipe"
@@ -83,5 +83,6 @@ case "$host" in
 esac
 AC_SUBST([PAM_MODDIR])
 
+AC_SUBST([PACKAGE_RELDATE])
 AC_CONFIG_FILES([Makefile config/Makefile doc/Makefile src/Makefile])
 AC_OUTPUT

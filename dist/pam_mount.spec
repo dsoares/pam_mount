@@ -1,6 +1,6 @@
 
 Name:		pam_mount
-Version:	1.7
+Version:	1.9
 Release:	0
 Group:		System/Libraries
 Summary:	A PAM module that can mount volumes for a user session
@@ -37,10 +37,6 @@ normal mount utility supports, with extra code to make sure certain
 volumes are set up properly because often they need more than just a
 mount call, such as encrypted volumes. This includes SMB/CIFS, FUSE,
 dm-crypt and LUKS.
-
-%if "%_vendor" != "redhat"
-%debug_package
-%endif
 
 %prep
 %setup

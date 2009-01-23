@@ -180,7 +180,7 @@ static bool ofl_taskfd(const char *mnt, const char *path,
 	while ((de = HXdir_read(dir)) != NULL) {
 		if (*de == '.')
 			continue;
-		snprintf(tmp, sizeof(tmp), "%s/%s/fd", path, de);
+		snprintf(tmp, sizeof(tmp), "%s/%s", path, de);
 		if (lstat(tmp, &data->sb) < 0 || !S_ISLNK(data->sb.st_mode))
 			continue;
 		ret = ofl_one(mnt, tmp, data);
@@ -207,7 +207,7 @@ static void ofl_task(const char *mnt, const char *path,
 	while ((de = HXdir_read(dir)) != NULL) {
 		if (*de == '.')
 			continue;
-		snprintf(tmp, sizeof(tmp), "%s/%s", path, de);
+		snprintf(tmp, sizeof(tmp), "%s/%s/fd", path, de);
 		if (lstat(tmp, &data->sb) < 0 || !S_ISDIR(data->sb.st_mode))
 			continue;
 		ofl_taskfd(mnt, tmp, data);

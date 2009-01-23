@@ -350,25 +350,34 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
 	unsigned char fskey[EVP_MAX_KEY_LENGTH];
-	hxmc_t *crypto_device;
+	struct ehd_mount mount_info;
+	struct ehd_mtreq mount_request = {
+		.container = cont->path,
+		.fs_cipher = cont->cipher,
+		/*
+		 * "plain" because pmt-ehd generates mathematically perfect
+		 * fskeys itself and further hashing would only reduce the
+		 * strength for the fskeys we generate.
+		 */
+		.fs_hash   = "plain",
+		.key_data  = fskey,
+		.key_size  = sizeof(fskey),
+		.readonly  = false,
+	};
 	bool f_ret = false;
 	int ret;
 
 	RAND_bytes(fskey, sizeof(fskey));
 	if (!ehd_create_fskey(pg, password, fskey, sizeof(fskey)))
 		return false;
-
-	if (ehd_load(cont->path, &crypto_device, cont->cipher, "plain",
-	    fskey, sizeof(fskey), false) <= 0)
+	if (ehd_load(&mount_request, &mount_info) <= 0)
 		return false;
-
-	f_ret = ehd_mkfs(pg, crypto_device);
-	ret   = ehd_unload(crypto_device, cont->blkdev);
+	f_ret = ehd_mkfs(pg, mount_info.crypto_device);
+	ret   = ehd_unload(&mount_info);
 	if (f_ret)
-		f_ret = ret >= 0;
+		f_ret = ret > 0;
 
-	HXmc_free(crypto_device);
-	return true;
+	return f_ret;
 }
 
 static void ehd_final_printout(const struct ehd_ctl *pg)
@@ -613,12 +622,14 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 		return false;
 	}
 
-	if (!ehd_init_volume(pg, password != NULL ? password : ""))
+	if (!ehd_init_volume(pg, password != NULL ? password : "")) {
+		HXmc_free(password);
 		return false;
-
-	ehd_final_printout(pg);
-	HXmc_free(password);
-	return true;
+	} else {
+		ehd_final_printout(pg);
+		HXmc_free(password);
+		return true;
+	}
 }
 
 int main(int argc, const char **argv)
