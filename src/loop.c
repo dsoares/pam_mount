@@ -298,9 +298,9 @@ int ehd_unload(struct ehd_mount *mt)
 	if (args[2] != NULL) {
 		ret = HXproc_run_sync(args, HXPROC_VERBOSE);
 		if (ret != 0)
-			l0g("Could not unload dm-crypt device \"%s\" (%s), "
-			    "cryptsetup %s with run_sync status %d\n",
-			    mt->crypto_name, mt->crypto_device, ret);
+			l0g("Could not unload dm-crypt device \"%s\", "
+			    "cryptsetup returned HXproc status %d\n",
+			    mt->crypto_device, ret);
 	}
 
 	/* Try to free loop device even if cryptsetup remove failed */
