@@ -193,8 +193,9 @@ static inline const char *znul(const char *s)
 }
 
 /*
- *	CRYPTO-DMCRYPT.C
+ *	CRYPTO-*.C
  */
+extern const struct ehd_crypto_ops ehd_cgd_ops;
 extern const struct ehd_crypto_ops ehd_dmcrypt_ops;
 
 extern int dmc_is_luks(const char *, bool);

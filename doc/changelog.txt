@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Features:
+- ports: NetBSD crypto device (CGD) support
+
+
 v1.16 (January 24 2009)
 =======================
 Fixes:
@@ -50,6 +54,9 @@ v1.8 (January 07 2009)
 - pam_mount: fix segfault in case of an undefined converse function (e.g. cron)
 - mount.crypt: fix segfault when password is NULL
 - umount.crypt: fix segfault when path is not mounted
+
+Additions:
+- ports: pam_mount.so compiles on FreeBSD (7.1)
 
 
 v1.7 (January 01 2009)

@@ -54,7 +54,7 @@ const char *pmt_loop_file_name(const char *filename, struct loop_info64 *i)
  * zero when no devices were available.
  */
 #if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME) || \
-    defined(HAVE_DEV_VNDVAR_H)
+    defined(HAVE_SYS_MDIOCTL_H) || defined(HAVE_DEV_VNDVAR_H)
 	/* elsewhere */
 #else
 int pmt_loop_setup(const char *filename, char **result, bool ro)
@@ -70,7 +70,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
  * @device:	loop node
  */
 #if defined(HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME) || \
-    defined(HAVE_DEV_VNDVAR_H)
+    defined(HAVE_SYS_MDIOCTL_H) || defined(HAVE_DEV_VNDVAR_H)
 	/* elsewhere */
 #else
 int pmt_loop_release(const char *device)
@@ -137,8 +137,10 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 		}
 	}
 
-#ifdef __linux__
+#if defined(__linux__)
 	ret = ehd_dmcrypt_ops.load(req, mt);
+#elif defined(HAVE_DEV_CGDVAR_H)
+	ret = ehd_cgd_ops.load(req, mt);
 #endif
 	if (ret <= 0)
 		goto out_ser;
@@ -170,8 +172,10 @@ int ehd_unload(const struct ehd_mount *mt)
 {
 	int ret;
 
-#ifdef __linux__
+#if defined(__linux__)
 	ret = ehd_dmcrypt_ops.unload(mt);
+#elif defined(HAVE_DEV_CGDVAR_H)
+	ret = ehd_cgd_ops.unload(mt);
 #endif
 
 	/* Try to free loop device even if cryptsetup remove failed */
