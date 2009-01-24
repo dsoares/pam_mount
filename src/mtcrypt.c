@@ -12,7 +12,6 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
-#include <mntent.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>

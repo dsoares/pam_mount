@@ -35,7 +35,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 	char dev[64];
 
 	for (i = 0; i < BSD_VND_MINORS; ++i) {
-		snprintf(dev, sizeof(dev), "/dev/rvnd%ud", i);
+		snprintf(dev, sizeof(dev), "/dev/vnd%ud", i);
 		loopfd = open(dev, O_RDWR | O_EXCL);
 		if (loopfd < 0) {
 			if (errno == ENOENT)

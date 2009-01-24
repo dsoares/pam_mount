@@ -49,7 +49,7 @@ regular_CFLAGS="-D_FILE_OFFSET_BITS=64 \
 	-Wformat=2 -pipe"
 AC_SUBST([regular_CFLAGS])
 
-AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/vndvar.h])
+AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/cgdvar.h dev/vndvar.h])
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 AC_CHECK_FUNCS([getmntent getmntinfo])

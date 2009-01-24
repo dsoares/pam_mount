@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+Features:
+- ports: NetBSD crypto device (CGD) support
+
 Fixes:
 - nucrypt2: resolve compiler warnings
 - nucrypt2: avoid NULL deref in pmt_cmtab_add

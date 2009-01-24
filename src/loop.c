@@ -137,8 +137,10 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 		}
 	}
 
-#ifdef __linux__
+#if defined(__linux__)
 	ret = ehd_dmcrypt_ops.load(req, mt);
+#elif defined(HAVE_DEV_CGDVAR_H)
+	ret = ehd_cgd_ops.load(req, mt);
 #endif
 	if (ret <= 0)
 		goto out_ser;
@@ -170,8 +172,10 @@ int ehd_unload(const struct ehd_mount *mt)
 {
 	int ret;
 
-#ifdef __linux__
+#if defined(__linux__)
 	ret = ehd_dmcrypt_ops.unload(mt);
+#elif defined(HAVE_DEV_CGDVAR_H)
+	ret = ehd_cgd_ops.unload(mt);
 #endif
 
 	/* Try to free loop device even if cryptsetup remove failed */
