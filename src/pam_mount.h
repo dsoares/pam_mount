@@ -167,6 +167,11 @@ struct ehd_mount {
 	hxmc_t *crypto_device;
 };
 
+struct ehd_crypto_ops {
+	int (*load)(const struct ehd_mtreq *, struct ehd_mount *);
+	int (*unload)(const struct ehd_mount *);
+};
+
 typedef int (mount_op_fn_t)(const struct config *, struct vol *,
 	struct HXbtree *, const char *);
 
@@ -188,12 +193,17 @@ static inline const char *znul(const char *s)
 }
 
 /*
+ *	CRYPTO-DMCRYPT.C
+ */
+extern const struct ehd_crypto_ops ehd_dmcrypt_ops;
+
+extern int dmc_is_luks(const char *, bool);
+
+/*
  *	LOOP.C
  */
-
-extern int ehd_is_luks(const char *, bool);
 extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
-extern int ehd_unload(struct ehd_mount *);
+extern int ehd_unload(const struct ehd_mount *);
 extern void ehd_mtfree(struct ehd_mount *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	hxmc_t *);
