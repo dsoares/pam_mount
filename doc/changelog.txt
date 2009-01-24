@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 
 Features:
+- ports: FreeBSD loop device (MD) support
+- ports: NetBSD loop device (VND) support
 - ports: NetBSD crypto device (CGD) support
 
 
