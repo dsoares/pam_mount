@@ -362,12 +362,12 @@ static int mtcr_mount(struct mount_options *opt)
 		mount_args[argk++] = "-t";
 		mount_args[argk++] = opt->fstype;
 	}
-	mount_args[argk++] = mount_info.crypto_device;
-	mount_args[argk++] = opt->mountpoint;
 	if (opt->extra_opts != NULL) {
 		mount_args[argk++] = "-o";
 		mount_args[argk++] = opt->extra_opts;
 	}
+	mount_args[argk++] = mount_info.crypto_device;
+	mount_args[argk++] = opt->mountpoint;
 	mount_args[argk] = NULL;
 
 	assert(argk < ARRAY_SIZE(mount_args));
