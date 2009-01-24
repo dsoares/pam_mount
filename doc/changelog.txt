@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.16 (January 24 2009)
+=======================
 Fixes:
 - nucrypt2: resolve compiler warnings
 - nucrypt2: avoid NULL deref in pmt_cmtab_add
