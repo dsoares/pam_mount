@@ -375,6 +375,7 @@ static int mtcr_mount(struct mount_options *opt)
 	if ((ret = HXproc_run_sync(mount_args, HXPROC_VERBOSE)) != 0) {
 		fprintf(stderr, "mount failed with run_sync status %d\n", ret);
 		ehd_unload(&mount_info);
+		ret = 0;
 	} else if ((ret = pmt_cmtab_add(opt->mountpoint,
 	    mount_info.container, mount_info.loop_device,
 	    mount_info.crypto_device)) <= 0) {
@@ -389,7 +390,7 @@ static int mtcr_mount(struct mount_options *opt)
 	}
 
 	ehd_mtfree(&mount_info);
-	return ret == 0;
+	return ret;
 }
 
 static bool mtcr_get_umount_options(int *argc, const char ***argv,
@@ -456,6 +457,7 @@ static int mtcr_umount(struct umount_options *opt)
 	      &mount_info.loop_device, &mount_info.crypto_device);
 	if (ret < 0) {
 		fprintf(stderr, "pmt_cmtab_get: %s\n", strerror(-ret));
+		return 0;
 	} else if (ret == 0) {
 		fprintf(stderr, "%s is not mounted (according to cmtab)\n",
 		        opt->object);

@@ -2,6 +2,9 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- mount.crypt: correct exit status on mount
+
 Features:
 - ports: FreeBSD loop device (MD) support
 - ports: NetBSD loop device (VND) support
