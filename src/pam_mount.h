@@ -193,6 +193,17 @@ static inline const char *znul(const char *s)
 }
 
 /*
+ *	CRYPTO.C
+ */
+extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
+extern int ehd_unload(const struct ehd_mount *);
+extern void ehd_mtfree(struct ehd_mount *);
+extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
+	hxmc_t *);
+extern unsigned int cipher_digest_security(const char *);
+extern hxmc_t *pmt_get_password(const char *);
+
+/*
  *	CRYPTO-*.C
  */
 extern const struct ehd_crypto_ops ehd_cgd_ops;
@@ -203,24 +214,22 @@ extern int dmc_is_luks(const char *, bool);
 /*
  *	LOOP.C
  */
-extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
-extern int ehd_unload(const struct ehd_mount *);
-extern void ehd_mtfree(struct ehd_mount *);
-extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
-	hxmc_t *);
-extern unsigned int cipher_digest_security(const char *);
-extern hxmc_t *pmt_get_password(const char *);
-
 extern size_t pmt_block_getsize64(const char *);
 extern int pmt_loop_setup(const char *, char **, bool);
 extern int pmt_loop_release(const char *);
 
 /*
- *	MISC.C
+ *	LOG.C
  */
 extern const char *pmtlog_prefix;
 extern bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
 
+extern int misc_log(const char *, ...);
+extern int misc_warn(const char *, ...);
+
+/*
+ *	MISC.C
+ */
 extern void arglist_add(struct HXdeque *, const char *,
 	const struct HXbtree *);
 extern struct HXdeque *arglist_build(const struct HXdeque *,
@@ -233,8 +242,6 @@ extern void kvplist_genocide(struct HXclist_head *);
 extern hxmc_t *kvplist_to_str(const struct HXclist_head *);
 extern void misc_add_ntdom(struct HXbtree *, const char *);
 extern void misc_dump_id(const char *);
-extern int misc_log(const char *, ...);
-extern int misc_warn(const char *, ...);
 extern int pmt_fileop_exists(const char *);
 extern int pmt_fileop_owns(const char *, const char *);
 extern char *relookup_user(const char *);
