@@ -36,14 +36,15 @@
 #include <libHX/string.h>
 #include "pam_mount.h"
 
+typedef int (*scompare_t)(const char *, const char *);
+
 /* crypto mtab */
 static const char pmt_cmtab_file[] = "/etc/cmtab";
+
 #if defined(__linux__)
 static const char pmt_smtab_file[] = "/etc/mtab";
-/*
- * It does not make sense to add path names for OSes that only
- * have a read-only smtab (system mtab). Hence only __linux__.
- */
+#elif defined(__sun__)
+static const char pmt_smtab_file[] = "/etc/mnttab";
 #else
 static const char pmt_smtab_file[] = "";
 #endif
@@ -377,4 +378,55 @@ int pmt_cmtab_remove(const char *spec, enum cmtab_field type)
 	if (type >= __CMTABF_MAX)
 		return -EINVAL;
 	return pmt_mtab_remove(pmt_cmtab_file, spec, type);
+}
+
+static int pmt_mtab_mounted(const char *file, const char *const *spec,
+    const scompare_t *compare)
+{
+	hxmc_t *line = NULL;
+	int ret = 0;
+	FILE *fp;
+
+	if ((fp = fopen(file, "r")) == NULL)
+		return -errno;
+
+	fcntl(fileno(fp), F_SETLKW, &(struct flock){.l_type = F_RDLCK,
+		.l_whence = SEEK_SET, .l_start = 0, .l_len = 0});
+
+	while (HX_getl(&line, fp) != NULL) {
+		char *field[4];
+
+		cmtab_parse_line(line, field);
+		if ((spec[0] == NULL || (*compare[0])(spec[0], field[0]) == 0) &&
+		    (spec[1] == NULL || (*compare[1])(spec[1], field[1]) == 0)) {
+			ret = true;
+			break;
+			/* No need to continue looping here. */
+		}
+	}
+
+	HXmc_free(line);
+	fclose(fp);
+	return ret;
+}
+
+int pmt_smtab_mounted(const char *container, const char *mountpoint,
+    scompare_t cont_compare)
+{
+	/* Note alternate order */
+	const char *const p_spec[] = {container, mountpoint};
+	scompare_t p_compare[2] = {cont_compare, strcmp};
+
+	if (*pmt_smtab_file == '\0')
+		return false;
+
+	return pmt_mtab_mounted(pmt_smtab_file, p_spec, p_compare);
+}
+
+int pmt_cmtab_mounted(const char *container, const char *mountpoint)
+{
+	const char *const p_spec[] = {mountpoint, container};
+	static const scompare_t p_compare[2] = {strcmp, strcmp};
+
+	return pmt_mtab_mounted(pmt_cmtab_file, p_spec, p_compare);
 }

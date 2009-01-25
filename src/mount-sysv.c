@@ -8,76 +8,37 @@
  */
 #include "config.h"
 #ifdef HAVE_GETMNTENT
-#include <sys/stat.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <libHX/arbtree.h>
-#include <libHX/string.h>
 #include "pam_mount.h"
-#include <mntent.h>
-#ifdef HAVE_LINUX_MAJOR_H
-#	include <linux/major.h>
-#else
-#	define LOOP_MAJOR 7
-#endif
-#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-#	include <linux/loop.h>
-#endif
 
 int pmt_already_mounted(const struct config *const config,
     const struct vol *vpt, struct HXbtree *vinfo)
 {
+	int (*xcmp)(const char *, const char *);
 	hxmc_t *dev;
-	struct mntent *mtab_record;
-	bool mounted = false;
-	FILE *mtab;
+	int cret, sret;
 
 	if ((dev = pmt_vol_to_dev(vpt)) == NULL) {
 		l0g("pmt::vol_to_dev: %s\n", strerror(errno));
 		return -1;
 	}
 
-	if ((mtab = setmntent("/etc/mtab", "r")) == NULL) {
-		l0g("could not open /etc/mtab\n");
-		HXmc_free(dev);
-		return -1;
-	}
+	xcmp = (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
+	       vpt->type == CMD_NCPMOUNT) ? strcasecmp : strcmp;
 
-	while ((mtab_record = getmntent(mtab)) != NULL) {
-		const char *fsname = mtab_record->mnt_fsname;
-		const char *fstype = mtab_record->mnt_type;
-		const char *fspt   = mtab_record->mnt_dir;
-		int (*xcmp)(const char *, const char *);
-#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-		struct loop_info64 loopdev;
-		struct stat statbuf;
-
-		if (stat(fsname, &statbuf) == 0 && S_ISBLK(statbuf.st_mode) &&
-		    major(statbuf.st_rdev) == LOOP_MAJOR)
-			/*
-			 * If /etc/mtab is a link to /proc/mounts then the loop
-			 * device instead of the real device will be listed --
-			 * resolve it.
-			 */
-			fsname = pmt_loop_file_name(fsname, &loopdev);
-#endif
-
-		xcmp = (strcmp(fstype, "smbfs") == 0 ||
-		        strcmp(fstype, "cifs") == 0 ||
-		        strcmp(fstype, "ncpfs") == 0) ? strcasecmp : strcmp;
-
-		if (xcmp(fsname, dev) == 0 &&
-		    strcmp(fspt, vpt->mountpoint) == 0) {
-			mounted = true;
-			break;
-		}
-	}
-
-	endmntent(mtab);
-	HXmc_free(dev);
-	return mounted;
+	cret = pmt_cmtab_mounted(dev, vpt->mountpoint);
+	sret = pmt_smtab_mounted(dev, vpt->mountpoint, xcmp);
+	if (cret > 0 || sret > 0)
+		return true;
+	if (cret == 0 && sret == 0)
+		return false;
+	if (sret < 0)
+		return sret;
+	if (cret < 0)
+		return cret;
+	return false;
 }
 #endif /* HAVE_GETMNTENT */
