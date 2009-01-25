@@ -21,6 +21,8 @@ FreeBSD:
 NetBSD:
 - loop is working
 - cgd crypto device setup is working
+  but does not produce anything usable - only first 131072 bytes
+  are readable - what gives
 - newfs -I /dev/rcgd0d failed. Disklabel crap? I want to use bare devices.
 - mount.crypt probably does not call mount(8) right yet.
 - pmt-ehd does not know newfs(8).
