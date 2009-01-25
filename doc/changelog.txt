@@ -2,10 +2,13 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.17 (January 26 2009)
+=======================
 Fixes:
 - mount.crypt: resolve valgrind warnings (incapability to umount)
 - mount.crypt: correct exit status on mount
 - mtab: do not fail if file not found
+- pam_mount: look into cmtab when checking for already-mounted volumes
 
 Features:
 - ports: FreeBSD loop device (MD) support
