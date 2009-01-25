@@ -11,12 +11,12 @@ ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_PROGRAMS		= autoloop
 noinst_SCRIPTS 		= umount.crypt
 
-loop_sources		= crypto-cgd.c crypto-dmc.c crypto.c loop.c \
-			  loop-linux.c loop-mdvn.c loop-vnd.c mtab.c
-mount_sources		= mount.c mount-bsd.c mount-sysv.c
+crypto_sources		= crypto.c crypto-cgd.c crypto-dmc.c ${loop_sources}
+loop_sources		= loop.c loop-linux.c loop-mdvn.c loop-vnd.c
 
-pam_mount_la_SOURCES	= ${loop_sources} log.c misc.c ofl-lib.c pam_mount.c \
-			  rdconf1.c rdconf2.c ${mount_sources} spawn.c
+pam_mount_la_SOURCES	= log.c misc.c ofl-lib.c mount.c mount-bsd.c \
+			  mount-sysv.c mtab.c pam_mount.c \
+			  rdconf1.c rdconf2.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
 pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
 			  ${libxml_LIBS}
@@ -25,13 +25,14 @@ pam_mount_la_LDFLAGS	= -module -avoid-version
 autoloop_SOURCES	= autoloop.c ${loop_sources} log.c misc.c spawn.c
 autoloop_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
 
-mount_crypt_SOURCES	= mtcrypt.c ${loop_sources} log.c misc.c spawn.c
+mount_crypt_SOURCES	= mtcrypt.c log.c misc.c mtab.c spawn.c \
+			  ${crypto_sources}
 mount_crypt_LDADD	= ${libHX_LIBS} ${libcrypto_LIBS}
 
 mount_encfs13_SOURCES	= mtencfs13.c
 mount_encfs13_LDADD	= ${libHX_LIBS}
 
-pmt_ehd_SOURCES		= ehd.c ${loop_sources} log.c misc.c spawn.c
+pmt_ehd_SOURCES		= ehd.c log.c misc.c spawn.c ${crypto_sources}
 pmt_ehd_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
 
 pmt_fd0ssh_SOURCES	= fd0ssh.c
