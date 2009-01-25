@@ -229,6 +229,9 @@ static void cmtab_parse_line(char *line, char **field)
  * @container:		container file or block device
  * @loop_device:	loop device (if any)
  * @crypto_device:	crypto device (full path)
+ *
+ * Returns true/1 if an entry has been found, false/0 if not,
+ * negative indicates errno.
  */
 int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
     char **container, char **loop_device, char **crypto_device)
@@ -245,7 +248,7 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
 	if (crypto_device != NULL) *crypto_device = NULL;
 
 	if ((fp = fopen(pmt_cmtab_file, "r")) == NULL)
-		return -errno;
+		return (errno == ENOENT) ? false : -errno;
 
 	fcntl(fileno(fp), F_SETLKW, &(struct flock){.l_type = F_RDLCK,
 		.l_whence = SEEK_SET, .l_start = 0, .l_len = 0});
@@ -290,6 +293,9 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
  * @file:	file to inspect and modify
  * @spec:	string to match on
  * @field_idx:	field to match on
+ *
+ * Returns true/1 if entry was removed, false/0 if none was removed,
+ * negative indicates errno.
  */
 static int pmt_mtab_remove(const char *file, const char *spec,
     unsigned int field_idx)
@@ -300,7 +306,7 @@ static int pmt_mtab_remove(const char *file, const char *spec,
 	int ret;
 
 	if ((fp = fopen(file, "r+")) == NULL)
-		return -errno;
+		return (errno == ENOENT) ? false : -errno;
 
 	ret = fcntl(fileno(fp), F_SETLKW, &(struct flock){.l_type = F_WRLCK,
 	      	.l_whence = SEEK_SET, .l_start = 0, .l_len = 0});
@@ -388,7 +394,7 @@ static int pmt_mtab_mounted(const char *file, const char *const *spec,
 	FILE *fp;
 
 	if ((fp = fopen(file, "r")) == NULL)
-		return -errno;
+		return (errno == ENOENT) ? false : -errno;
 
 	fcntl(fileno(fp), F_SETLKW, &(struct flock){.l_type = F_RDLCK,
 		.l_whence = SEEK_SET, .l_start = 0, .l_len = 0});
@@ -423,6 +429,12 @@ int pmt_smtab_mounted(const char *container, const char *mountpoint,
 	return pmt_mtab_mounted(pmt_smtab_file, p_spec, p_compare);
 }
 
+/**
+ * pam_*mtab_mounted - return if object is mounted
+ *
+ * Returns false/0 for not mounted, true/1 for mounted,
+ * or negative numbers for errors.
+ */
 int pmt_cmtab_mounted(const char *container, const char *mountpoint)
 {
 	const char *const p_spec[] = {mountpoint, container};
