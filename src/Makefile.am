@@ -11,7 +11,7 @@ ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_PROGRAMS		= autoloop
 noinst_SCRIPTS 		= umount.crypt
 
-loop_sources		= crypto-cgd.c crypto-dmc.c loop.c \
+loop_sources		= crypto-cgd.c crypto-dmc.c crypto.c loop.c \
 			  loop-linux.c loop-mdvn.c loop-vnd.c mtab.c
 mount_sources		= mount.c mount-bsd.c mount-sysv.c
 
