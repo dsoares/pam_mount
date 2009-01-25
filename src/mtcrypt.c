@@ -450,6 +450,7 @@ static int mtcr_umount(struct umount_options *opt)
 	struct ehd_mount mount_info;
 	char *mountpoint = NULL;
 
+	memset(&mount_info, 0, sizeof(mount_info));
 	ret = pmt_cmtab_get(opt->object, opt->is_cont ? CMTABF_CONTAINER :
 	      CMTABF_MOUNTPOINT, &mountpoint, &mount_info.container,
 	      &mount_info.loop_device, &mount_info.crypto_device);

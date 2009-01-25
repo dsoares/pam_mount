@@ -222,7 +222,7 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	EVP_DecryptFinal_ex(&ctx, signed_cast(unsigned char *,
 		&out[out_len]), &out_len);
 	out_cumul_len += out_len;
-	HXmc_memcat(&out, out, out_cumul_len);
+	HXmc_setlen(&out, out_cumul_len);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
 	return out;
