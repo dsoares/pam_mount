@@ -69,7 +69,7 @@ int pmt_already_mounted(const struct config *config,
 	}
 
 	HXmc_free(dev);
-	return mounted;
+	return mounted || pmt_cmtab_mounted(dev, vpt->mountpoint);
 }
 
 #endif /* HAVE_GETMNTINFO */
