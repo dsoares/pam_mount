@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2007 - 2008
+ *	Copyright © Jan Engelhardt, 2007 - 2009
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -31,7 +31,6 @@ int pmt_already_mounted(const struct config *const config,
     const struct vol *vpt, struct HXbtree *vinfo)
 {
 	hxmc_t *dev;
-	char real_mpt[PATH_MAX+1];
 	struct mntent *mtab_record;
 	bool mounted = false;
 	FILE *mtab;
@@ -46,19 +45,6 @@ int pmt_already_mounted(const struct config *const config,
 		HXmc_free(dev);
 		return -1;
 	}
-	if (realpath(vpt->mountpoint, real_mpt) == NULL) {
-		w4rn("can't get realpath of volume %s: %s\n",
-		     vpt->mountpoint, strerror(errno));
-		strncpy(real_mpt, vpt->mountpoint, sizeof_z(real_mpt));
-		real_mpt[sizeof_z(real_mpt)] = '\0';
-	} else {
-		real_mpt[sizeof_z(real_mpt)] = '\0';
-		w4rn("realpath of volume \"%s\" is \"%s\"\n",
-		     vpt->mountpoint, real_mpt);
-	}
-
-	w4rn("checking to see if %s is already mounted at %s\n",
-	     dev, vpt->mountpoint);
 
 	while ((mtab_record = getmntent(mtab)) != NULL) {
 		const char *fsname = mtab_record->mnt_fsname;
@@ -84,8 +70,7 @@ int pmt_already_mounted(const struct config *const config,
 		        strcmp(fstype, "ncpfs") == 0) ? strcasecmp : strcmp;
 
 		if (xcmp(fsname, dev) == 0 &&
-		    (strcmp(fspt, vpt->mountpoint) == 0 ||
-		    strcmp(fspt, real_mpt) == 0)) {
+		    strcmp(fspt, vpt->mountpoint) == 0) {
 			mounted = true;
 			break;
 		}

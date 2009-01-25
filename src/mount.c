@@ -1,6 +1,6 @@
 /*
  *	Copyright © Elvis Pfützenreuter, 2000
- *	Copyright © Jan Engelhardt, 2006 - 2008
+ *	Copyright © Jan Engelhardt, 2006 - 2009
  *	Copyright © Bastian Kleineidam, 2005
  *
  *	This file is part of pam_mount; you can redistribute it and/or
@@ -567,6 +567,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	struct HXbtree *vinfo;
 	struct passwd *pe;
 	hxmc_t *options;
+	char real_mpt[PATH_MAX+1];
 
 	/*
 	 * This expansion (the other is in expandconfig()!) expands the mount
@@ -580,6 +581,16 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	 */
 	if ((vinfo = HXformat_init()) == NULL)
 		return 0;
+
+	if (realpath(vpt->mountpoint, real_mpt) == NULL) {
+		w4rn("Could not get realpath of %s: %s\n",
+		     vpt->mountpoint, strerror(errno));
+	} else {
+		real_mpt[sizeof(real_mpt)-1] = '\0';
+		free(vpt->mountpoint);
+		vpt->mountpoint = xstrdup(real_mpt);
+	}
+
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
 	format_add(vinfo, "FSTYPE",   vpt->fstype);
 	format_add(vinfo, "VOLUME",   vpt->volume);
