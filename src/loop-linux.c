@@ -50,20 +50,6 @@ size_t pmt_block_getsize64(const char *path)
  */
 static const unsigned int LINUX_MAX_MINOR = 1 << 20;
 
-const char *pmt_loop_file_name(const char *filename, struct loop_info64 *i)
-{
-	int fd;
-	if ((fd = open(filename, O_RDONLY)) < 0)
-		return filename;
-
-	if (ioctl(fd, LOOP_GET_STATUS64, i) != 0) {
-		close(fd);
-		return filename;
-	}
-	close(fd);
-	return signed_cast(char *, i->lo_file_name);
-}
-
 int pmt_loop_setup(const char *filename, char **result, bool ro)
 {
 	struct loop_info64 info;

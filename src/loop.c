@@ -27,24 +27,6 @@
 #include "config.h"
 
 /**
- * pmt_loop_file_name -
- * @filename:	block device to query
- * @i:		pointer to result storage
- *
- * Run the LOOP_GET_STATUS64 ioctl on @filename and store the result in @i.
- * Returns the underlying file of the loop device, or @filename if @filename
- * does not seem to be a loop device at all.
- */
-#ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
-	/* elsewhere */
-#else
-const char *pmt_loop_file_name(const char *filename, struct loop_info64 *i)
-{
-	return filename;
-}
-#endif
-
-/**
  * pmt_loop_setup - associate file to a loop device
  * @filename:	file to associate
  * @result:	result buffer for path to loop device
