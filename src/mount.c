@@ -465,11 +465,11 @@ int do_mount(const struct config *config, struct vol *vpt,
 	assert(password != NULL);
 
 	ret = pmt_already_mounted(config, vpt, vinfo);
-	if (ret == -1) {
+	if (ret < 0) {
 		l0g("could not determine if %s is already mounted, "
 		    "failing\n", vpt->volume);
 		return 0;
-	} else if (ret == 1) {
+	} else if (ret > 0) {
 		w4rn("%s already seems to be mounted at %s, "
 		     "skipping\n", vpt->volume, vpt->mountpoint);
 		return 1;
