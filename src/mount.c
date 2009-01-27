@@ -169,12 +169,14 @@ static void log_pm_input(const struct config *const config,
 
 	options = kvplist_to_str(&vpt->options);
 	w4rn(
-		"Mount info: %s, user=%s <volume server=\"%s\" path=\"%s\" "
+		"Mount info: %s, user=%s <volume fstype=\"%s\" "
+		"server=\"%s\" path=\"%s\" "
 		"mountpoint=\"%s\" cipher=\"%s\" fskeypath=\"%s\" "
 		"fskeycipher=\"%s\" fskeyhash=\"%s\" options=\"%s\" /> "
 		"fstab=%u\n",
 		vpt->globalconf ? "globalconf" : "luserconf",
-		znul(vpt->user), znul(vpt->server), znul(vpt->volume),
+		znul(vpt->user), znul(vpt->fstype),
+		znul(vpt->server), znul(vpt->volume),
 		vpt->mountpoint, znul(vpt->cipher), znul(vpt->fs_key_path),
 		znul(vpt->fs_key_cipher), znul(vpt->fs_key_hash), options,
 		vpt->use_fstab
