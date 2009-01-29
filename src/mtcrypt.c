@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2008
+ *	Copyright © Jan Engelhardt, 2008 - 2009
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -128,13 +128,22 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			*value++ = '\0';
 		while (HX_isspace(*key))
 			++key;
-		if (strcmp(key, "cipher") == 0)
+		if (strcmp(key, "cipher") == 0) {
 			mo->dmcrypt_cipher = value;
-		else if (strcmp(key, "fsk_cipher") == 0)
+			if (cipher_digest_security(value) < 1)
+				fprintf(stderr, "Cipher \"%s\" is considered "
+				        "insecure.\n", value);
+		} else if (strcmp(key, "fsk_cipher") == 0) {
 			mo->fsk_cipher = value;
-		else if (strcmp(key, "fsk_hash") == 0)
+			if (cipher_digest_security(value) < 1)
+				fprintf(stderr, "Cipher \"%s\" is considered "
+				        "insecure.\n", value);
+		} else if (strcmp(key, "fsk_hash") == 0) {
 			mo->fsk_hash = value;
-		else if (strcmp(key, "dm-timeout") == 0)
+			if (cipher_digest_security(value) < 1)
+				fprintf(stderr, "Hash \"%s\" is considered "
+				        "insecure.\n", value);
+		} else if (strcmp(key, "dm-timeout") == 0)
 			mo->dm_timeout = strtoul(value, NULL, 0);
 		else if (strcmp(key, "fstype") == 0)
 			mo->fstype = value;
@@ -152,9 +161,12 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		else if (strcmp(key, "loop") == 0)
 			/* automatically detected anyway */
 			l0g("loop mount option ignored\n");
-		else if (strcmp(key, "hash") == 0)
+		else if (strcmp(key, "hash") == 0) {
 			mo->dmcrypt_hash = value;
-		else if (strcmp(key, "verbose") == 0)
+			if (cipher_digest_security(value) < 1)
+				fprintf(stderr, "Hash \"%s\" is considered "
+				        "insecure.\n", value);
+		} else if (strcmp(key, "verbose") == 0)
 			Debug = pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = true;
 		else {
 			if (!first)

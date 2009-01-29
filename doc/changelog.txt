@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- mount.crypt: warn on insecure ciphers/hashes
+
+
 v1.17 (January 26 2009)
 =======================
 Fixes:
