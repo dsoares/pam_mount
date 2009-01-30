@@ -338,8 +338,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 		goto out;
 	}
 
-	log_output(proc.p_stderr, "umount errors:\n");
-	w4rn("waiting for umount\n");
+	log_output(proc.p_stderr, "umount messages:\n");
 	if ((ret = HXproc_wait(&proc)) >= 0)
 		/* pass on through the result from the umount process */
 		ret = proc.p_exited && proc.p_status == 0;
@@ -537,8 +536,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 			l0g("error sending password to mount\n");
 	close(proc.p_stdin);
 
-	log_output(proc.p_stderr, "mount errors:\n");
-	w4rn("waiting for mount\n");
+	log_output(proc.p_stderr, "mount messages:\n");
 	if ((ret = HXproc_wait(&proc)) < 0) {
 		l0g("error waiting for child: %s\n", strerror(-ret));
 		return 0;
