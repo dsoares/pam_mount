@@ -570,7 +570,7 @@ static bool user_in_sgrp(const char *user, const char *grp, bool icase)
 	wp = const_cast2(const char *const *, gent->gr_mem);
 	while (wp != NULL && *wp != NULL) {
 		if (strcmp(*wp, user) == 0 ||
-		    (icase && strcasecmp(*wp, user)) == 0)
+		    (icase && strcasecmp(*wp, user) == 0))
 			return true;
 		++wp;
 	}
