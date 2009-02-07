@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.18 (February 07 2009)
+========================
 Fixes:
 - mount.crypt: warn on insecure ciphers/hashes
 - pam_mount: fix case-insensitive sgrp matching for <volume>

@@ -1,6 +1,6 @@
 
 Name:		pam_mount
-Version:	1.17
+Version:	1.18
 Release:	0
 Group:		System/Libraries
 Summary:	A PAM module that can mount volumes for a user session
@@ -22,7 +22,6 @@ Recommends:	cryptsetup
 %endif
 %if "%_vendor" == "redhat"
 BuildRequires:	kernel-headers
-Requires:	cryptsetup-luks samba-client xfsprogs
 %endif
 BuildRoot:	%_tmppath/%name-%version-build
 Prefix:		%_prefix
