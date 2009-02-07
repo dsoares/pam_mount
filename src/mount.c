@@ -21,25 +21,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/arbtree.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/deque.h>
 #include <libHX/proc.h>
-#include <libHX.h>
 #include <grp.h>
 #include <pwd.h>
 #include "pam_mount.h"
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
-#	include <fstab.h>
-#elif defined(__linux__)
-#	include <mntent.h>
-#	include <sys/ioctl.h>
-#	include <fcntl.h>
-#	include <linux/loop.h>
-#	include <linux/major.h>
-#endif
-#ifndef S_IXUGO
-#	define S_IXUGO (S_IXUSR | S_IXGRP | S_IXOTH)
-#endif
 
 /* Functions */
 static int fstype_nodev(const char *);
