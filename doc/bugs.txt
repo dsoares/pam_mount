@@ -53,6 +53,16 @@ Unverified programs:
 	* GDM on Ubuntu
 
 
+[ sudo ]
+
+
+sudo has an internal bug (def_prompt is NULL) that leads to a crash
+when a PAM module tries to invoke the conversation function.
+
+Seen with at least 1.6.9p17.
+Reference: http://bugs.debian.org/492333
+
+
 [ truecrypt ]
 
 

@@ -6,6 +6,7 @@ Fixes:
 - mount.crypt: warn on insecure ciphers/hashes
 - pam_mount: fix case-insensitive sgrp matching for <volume>
 - pam_mount: additional safety check for NULL 'converse' structs
+- doc: add sudo to the Known Bugs list
 
 
 v1.17 (January 26 2009)
