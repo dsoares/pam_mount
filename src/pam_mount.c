@@ -164,7 +164,7 @@ static int converse(pam_handle_t *pamh, int nargs,
 
 	if (retval != PAM_SUCCESS) {
 		l0g("pam_get_item: %s\n", pam_strerror(pamh, retval));
-	} else if (conv->conv == NULL) {
+	} else if (conv == NULL || conv->conv == NULL) {
 		w4rn("No converse function available\n");
 	} else {
 		retval = conv->conv(nargs, message, resp, conv->appdata_ptr);
