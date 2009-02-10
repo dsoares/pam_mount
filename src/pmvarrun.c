@@ -261,7 +261,7 @@ int main(int argc, const char **argv)
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 	pmtlog_prefix = "pmvarrun";
 
-	if (strlen(settings.user) == 0)
+	if (settings.user == NULL)
 		usage(EXIT_FAILURE, NULL);
 
 	ret = modify_pm_count(settings.user, settings.operation);

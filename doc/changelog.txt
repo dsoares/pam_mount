@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- pmvarrun: do not segfault when no username is specified (corner-case)
+
+
 v1.18 (February 07 2009)
 ========================
 Fixes:
