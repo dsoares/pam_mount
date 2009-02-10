@@ -74,8 +74,16 @@ static void usage(const int exitcode, const char *error)
  */
 static void set_defaults(struct settings *settings)
 {
+	const char *s;
+
 	settings->user      = NULL;
 	settings->operation = 1;
+
+	if ((s = getenv("_PMT_DEBUG_LEVEL")) != NULL) {
+		Debug = strtoul(s, NULL, 0);
+		pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = Debug;
+		pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	}
 }
 
 /*
@@ -252,14 +260,14 @@ int main(int argc, const char **argv)
 	struct settings settings;
 	int ret;
 
-	set_defaults(&settings);
-	parse_args(argc, argv, &settings);
-
 	Debug = false;
 	/* pam_mount.so will pick stderr up */
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 	pmtlog_prefix = "pmvarrun";
+
+	set_defaults(&settings);
+	parse_args(argc, argv, &settings);
 
 	if (settings.user == NULL)
 		usage(EXIT_FAILURE, NULL);
