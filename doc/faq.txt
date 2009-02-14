@@ -149,24 +149,31 @@ A.  As of version 3.3, sshd has a feature called privilege separation
 
 =======================================================================
 
-Q.  Why are my volumes not being unmounted by pam_mount?  I use Debian.
+Q.  Why are my volumes not being unmounted by pam_mount?
 
-A.  Ensure that CLOSE_SESSIONS is set to yes in /etc/login.defs,
-    otherwise your volume will not be unmounted upon logging out. I
-    believe this default behavior is a bug and have filed it as Debian
-    bug #163635. The maintainer is Karl Ramm <kcr@debian.org>.
-    (Note December 2005: Current maintainer of pam_mount for Debian is
-    Bastian Kleineidam <calvin@debian.org>)
+A.  Some stupid programs keep files open that make it impossible to
+    umount. There is a <logout> directive in the configuration file
+    to kill programs when needed.
 
 =======================================================================
 
 Q.  What is with the auth requirement for pam_mount?  Should not this be
     a session module only?
 
-A.  Debian's (and some others) PAM distribution does not allow session
-    modules to retrieve a user's password from the PAM subsystem. This
-    is why pam_mount must be used as an auth module (in addition to a
-    session module) on all systems.
+A.  PAM discards the password after all modules from the "auth" stage
+    have run, giving no possibility to retrieve it for "session" stage
+    modules. In case pam_mount does not have the password by the time
+    the session stage is executed, it will try to prompt for it.
+
+=======================================================================
+
+Q.  I want to use a FUSE share as my home directory but GNOME/KDE do
+    not seem to like this (error messages, lockups). Why?
+
+A.  Big desktop environments as the aforementioned make use of locking,
+    symbolic links, and potentially local sockets (UNIX sockets).
+    If the filesystem and/or the remote server do not support these,
+    error messages or lockups may ensue.
 
 =======================================================================
 
