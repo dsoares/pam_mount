@@ -199,7 +199,6 @@ static int read_password(pam_handle_t *pamh, const char *prompt, char **pass)
 	assert(pamh != NULL);
 	assert(pass != NULL);
 
-	w4rn("enter read_password\n");
 	*pass = NULL;
 	msg.msg_style = PAM_PROMPT_ECHO_OFF;
 	msg.msg       = (prompt == NULL) ? "Password: " : prompt;
@@ -476,17 +475,16 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		}
 	}
 
-	w4rn("back from global readconfig\n");
 	if (Config.luserconf == NULL || strlen(Config.luserconf) == 0)
-		w4rn("per-user configurations not allowed by pam_mount.conf.xml\n");
-	else if (pmt_fileop_exists(Config.luserconf) &&
-	    pmt_fileop_owns(Config.user, Config.luserconf)) {
-		w4rn("going to readconfig user\n");
+		;
+	else if (!pmt_fileop_exists(Config.luserconf))
+		;
+	else if (pmt_fileop_owns(Config.user, Config.luserconf)) {
+		w4rn("going to readconfig %s\n", Config.luserconf);
 		if (!readconfig(Config.luserconf, false, &Config)) {
 			ret = PAM_SERVICE_ERR;
 			goto out;
 		}
-		w4rn("back from user readconfig\n");
 	} else
 		w4rn("%s does not exist or is not owned by user\n",
 		     Config.luserconf);
@@ -533,7 +531,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		if (!vol->globalconf &&
 		    !luserconf_volume_record_sane(&Config, vol))
 			continue;
-		w4rn("about to perform mount operations\n");
 
 		if (!mount_op(do_mount, &Config, vol, system_authtok)) {
 			l0g("mount of %s failed\n", znul(vol->volume));

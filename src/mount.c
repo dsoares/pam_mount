@@ -481,10 +481,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 		    "pam_mount.conf.xml\n");
 		return 0;
 	}
-	w4rn("checking for encrypted filesystem key configuration\n");
 
 	password = (password != NULL) ? password : "";
-	w4rn("about to start building mount command\n");
 	if ((argv = HXdeque_init()) == NULL)
 		misc_log("malloc: %s\n", strerror(errno));
 	if (vpt->uses_ssh)

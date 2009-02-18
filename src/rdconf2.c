@@ -179,7 +179,6 @@ bool luserconf_volume_record_sane(const struct config *config,
  */
 bool volume_record_sane(const struct config *config, const struct vol *vpt)
 {
-	w4rn("checking sanity of volume record (%s)\n", vpt->volume);
 	if (vpt->type >= _CMD_MAX) {
 		l0g("Illegal volume type %u (max is %u)\n",
 		    vpt->type, _CMD_MAX - 1);
