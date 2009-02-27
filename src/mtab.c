@@ -317,7 +317,8 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
 			return 1;
 
 		pmt_cmtab_remove(*mountpoint, CMTABF_MOUNTPOINT);
-		free(*crypto_device);
+		free(*mountpoint);
+		free(*container);
 		free(*loop_device);
 		free(*crypto_device);
 	} while (true);

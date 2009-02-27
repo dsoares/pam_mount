@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- pam_mount: fix a double free that can happen when stale entries are in cmtab
+
+
 v1.19 (February 27 2009)
 ========================
 Fixes:
