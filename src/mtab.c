@@ -43,10 +43,13 @@ static const char pmt_cmtab_file[] = "/etc/cmtab";
 
 #if defined(__linux__)
 static const char pmt_smtab_file[] = "/etc/mtab";
+static const char pmt_kmtab_file[] = "/proc/mounts";
 #elif defined(__sun__)
-static const char pmt_smtab_file[] = "/etc/mnttab";
+static const char pmt_smtab_file[] = "";
+static const char pmt_kmtab_file[] = "/etc/mnttab";
 #else
 static const char pmt_smtab_file[] = "";
+static const char pmt_kmtab_file[] = "";
 #endif
 
 /**
@@ -222,7 +225,7 @@ static void cmtab_parse_line(char *line, char **field)
 }
 
 /**
- * cmtab_get - get one mtab entry
+ * __pmt_cmtab_get - get one mtab entry
  * @spec:		specificator to match on (must be %CMTABF_*)
  * @type:		type of the specificator
  * @mountpoint:		mountpoint
@@ -233,8 +236,9 @@ static void cmtab_parse_line(char *line, char **field)
  * Returns true/1 if an entry has been found, false/0 if not,
  * negative indicates errno.
  */
-int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
-    char **container, char **loop_device, char **crypto_device)
+static int pmt_cmtab_get1(const char *spec, enum cmtab_field type,
+    char **mountpoint, char **container, char **loop_device,
+    char **crypto_device)
 {
 	hxmc_t *line = NULL;
 	FILE *fp;
@@ -286,6 +290,39 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
 	HXmc_free(line);
 	fclose(fp);
 	return ret;
+}
+
+/**
+ * pmt_cmtab_get - cmtab_get plus check for stale entries
+ *
+ * @mountpoint, @container, @loop_device and @crypto_device must not be %NULL.
+ * Stale entries in cmtab -- this can happen if the devices are unmounted
+ * without umount.crypt, or, for example, a sudden reboot -- will be removed.
+ */
+int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
+    char **container, char **loop_device, char **crypto_device)
+{
+	int ret;
+
+	do {
+		ret = pmt_cmtab_get1(spec, type, mountpoint, container,
+		      loop_device, crypto_device);
+		if (ret <= 0)
+			/* error or done */
+			return ret;
+
+		/* Guard against stale entries - verify that it is mounted. */
+		if (*crypto_device != NULL &&
+		    pmt_smtab_mounted(*crypto_device, *mountpoint, strcmp) > 0)
+			return 1;
+
+		pmt_cmtab_remove(*mountpoint, CMTABF_MOUNTPOINT);
+		free(*crypto_device);
+		free(*loop_device);
+		free(*crypto_device);
+	} while (true);
+
+	return -EINVAL;
 }
 
 /**
@@ -387,7 +424,7 @@ int pmt_cmtab_remove(const char *spec, enum cmtab_field type)
 }
 
 static int pmt_mtab_mounted(const char *file, const char *const *spec,
-    const scompare_t *compare)
+    const scompare_t *compare, bool cmtab_verify)
 {
 	hxmc_t *line = NULL;
 	int ret = 0;
@@ -404,7 +441,9 @@ static int pmt_mtab_mounted(const char *file, const char *const *spec,
 
 		cmtab_parse_line(line, field);
 		if ((spec[0] == NULL || (*compare[0])(spec[0], field[0]) == 0) &&
-		    (spec[1] == NULL || (*compare[1])(spec[1], field[1]) == 0)) {
+		    (spec[1] == NULL || (*compare[1])(spec[1], field[1]) == 0) &&
+		    (!cmtab_verify || pmt_smtab_mounted(field[CMTABF_CRYPTO_DEV],
+		    spec[CMTABF_MOUNTPOINT], strcmp) > 0)) {
 			ret = true;
 			break;
 			/* No need to continue looping here. */
@@ -422,11 +461,19 @@ int pmt_smtab_mounted(const char *container, const char *mountpoint,
 	/* Note alternate order */
 	const char *const p_spec[] = {container, mountpoint};
 	scompare_t p_compare[2] = {cont_compare, strcmp};
+	int ret;
 
 	if (*pmt_smtab_file == '\0')
 		return false;
 
-	return pmt_mtab_mounted(pmt_smtab_file, p_spec, p_compare);
+	/* Ignore errors on read. Just return false then. */
+	ret = pmt_mtab_mounted(pmt_smtab_file, p_spec, p_compare, false);
+	if (ret > 0)
+		return ret;
+	if (*pmt_kmtab_file == '\0')
+		return false;
+	ret = pmt_mtab_mounted(pmt_kmtab_file, p_spec, p_compare, false);
+	return (ret >= 0) ? ret : false;
 }
 
 /**
@@ -440,5 +487,5 @@ int pmt_cmtab_mounted(const char *container, const char *mountpoint)
 	const char *const p_spec[] = {mountpoint, container};
 	static const scompare_t p_compare[2] = {strcmp, strcmp};
 
-	return pmt_mtab_mounted(pmt_cmtab_file, p_spec, p_compare);
+	return pmt_mtab_mounted(pmt_cmtab_file, p_spec, p_compare, true);
 }
