@@ -116,6 +116,7 @@ struct config {
 	char *user;
 	unsigned int debug;
 	bool mkmntpoint, rmdir_mntpt;
+	bool seen_mntoptions_require, seen_mntoptions_allow;
 	hxmc_t *luserconf;
 	struct HXdeque *command[_CMD_MAX];
 	struct HXbtree *options_require, *options_allow, *options_deny;

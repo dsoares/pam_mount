@@ -77,7 +77,6 @@ static int rc_volume_cond_ext(const struct passwd *, xmlNode *);
 /* Variables */
 static const struct callbackmap cf_tags[];
 static const struct pmt_command default_command[];
-static bool onetime_options_allow, onetime_options_require;
 
 //-----------------------------------------------------------------------------
 /**
@@ -698,10 +697,10 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 		return "Tried to set <mntoptions allow=...> from user config";
 
 	if ((options = xml_getprop(node, "allow")) != NULL) {
-		if (!onetime_options_allow) {
+		if (!config->seen_mntoptions_allow) {
 			HXbtree_free(config->options_allow);
 			config->options_allow = HXbtree_init(OPT_TREE_FLAGS);
-			onetime_options_allow = true;
+			config->seen_mntoptions_allow = true;
 		}
 		ret = str_to_optlist(config->options_allow, options);
 		free(options);
@@ -717,10 +716,15 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 	}
 
 	if ((options = xml_getprop(node, "require")) != NULL) {
-		if (!onetime_options_require) {
+		/*
+		 * On the first sight of "require" in the config file, the
+		 * built-in default shall be overridden, but multiple
+		 * "require"s shall be cumulative.
+		 */
+		if (!config->seen_mntoptions_require) {
 			HXbtree_free(config->options_require);
 			config->options_require = HXbtree_init(OPT_TREE_FLAGS);
-			onetime_options_require = true;
+			config->seen_mntoptions_require = true;
 		}
 		ret = str_to_optlist(config->options_require, options);
 		free(options);
