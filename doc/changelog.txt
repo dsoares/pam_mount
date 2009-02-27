@@ -6,6 +6,7 @@ Fixes:
 - pmvarrun: do not segfault when no username is specified (corner-case)
 - pmvarrun: recognize internal _PMT_DEBUG_LEVEL env var
 - mtab: automatically ignore and remove stale entries from cmtab
+- pam_mount: fix unexpected termination after pam_mount ran
 
 
 v1.18 (February 07 2009)

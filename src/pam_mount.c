@@ -229,6 +229,7 @@ static void pmt_sigpipe_setup(bool block_it)
 		if (--sp_blocked == 0 && sp_previous) {
 			sigemptyset(&set);
 			sigaddset(&set, SIGPIPE);
+			sigtimedwait(&set, NULL, &(struct timespec){0, 0});
 			sigprocmask(SIG_UNBLOCK, &set, NULL);
 		}
 	}
