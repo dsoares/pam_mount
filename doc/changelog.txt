@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.20 (March 01 2009)
+=====================
 Fixes:
 - pam_mount: fix a double free that can happen when stale entries are in cmtab
 - pam_mount: first-time overriding of mntoptions failed to work
