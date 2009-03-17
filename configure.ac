@@ -7,13 +7,13 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [1.20])
-PACKAGE_RELDATE="2009-03-01"
+AC_INIT([pam_mount], [1.21])
+PACKAGE_RELDATE="2009-03-17"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_INSTALL
-AM_INIT_AUTOMAKE([-Wall dist-bzip2 no-dist-gzip])
+AM_INIT_AUTOMAKE([-Wall dist-bzip2 no-dist-gzip foreign subdir-objects])
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC

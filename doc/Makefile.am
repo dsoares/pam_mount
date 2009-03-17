@@ -17,5 +17,5 @@ pam_mount.8: pam_mount.8.in
 pam_mount.conf.5: pam_mount.conf.5.in
 	${am__verbose_GEN}${replcmd} ${srcdir}/pam_mount.conf.5.in >pam_mount.conf.5;
 
-pam_mount.txt: pam_mount.8
+pam_mount.txt: pam_mount.8 ${top_builddir}/config.status
 	${am__verbose_GEN}man -l pam_mount.8 | perl -pe 's/.\cH//g' >pam_mount.txt;

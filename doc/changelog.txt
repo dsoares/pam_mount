@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.21 (March 17 2009)
+=====================
 Fixes:
 - mount.crypt: must pass -s option to cryptsetup
   (otherwise its odd default of truncating the key kicks in)
