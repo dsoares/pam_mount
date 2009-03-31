@@ -303,18 +303,25 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
     char **container, char **loop_device, char **crypto_device)
 {
 	int ret;
+	char *crypto_device1 = NULL;
+
+	if (crypto_device == NULL)
+		crypto_device = &crypto_device1;
 
 	do {
 		ret = pmt_cmtab_get1(spec, type, mountpoint, container,
 		      loop_device, crypto_device);
 		if (ret <= 0)
 			/* error or done */
-			return ret;
+			break;
 
 		/* Guard against stale entries - verify that it is mounted. */
 		if (*crypto_device != NULL &&
-		    pmt_smtab_mounted(*crypto_device, *mountpoint, strcmp) > 0)
-			return 1;
+		    pmt_smtab_mounted(*crypto_device,
+		    *mountpoint, strcmp) > 0) {
+			ret = 1;
+			break;
+		}
 
 		pmt_cmtab_remove(*mountpoint, CMTABF_MOUNTPOINT);
 		free(*mountpoint);
@@ -323,7 +330,10 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
 		free(*crypto_device);
 	} while (true);
 
-	return -EINVAL;
+	if (crypto_device1 != NULL)
+		free(crypto_device1);
+
+	return ret;
 }
 
 /**

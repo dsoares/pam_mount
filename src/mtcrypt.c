@@ -27,6 +27,7 @@
 #include "pam_mount.h"
 
 /**
+ * @object:		volume or mountpoint; used by remount
  * @container:		path to the volume (like (bdev) /dev/sda2 or
  * 			(file) /home/user.!@#)
  * @mountpoint:		where to put this
@@ -34,19 +35,23 @@
  * @no_update:		do not update mtab
  * @loop_device:	loop device association, if any
  * @crypto_device:	crypto device
+ * @is_cont:		looks like a container; used by remount
  * @blkdev:		true if @container is a block device
  * @fsck:		true if fsck should be performed
+ * @remount:		issue a remount
  */
 struct mount_options {
-	const char *container, *mountpoint, *fstype;
+	const char *object, *container, *mountpoint, *fstype;
 	const char *dmcrypt_cipher, *dmcrypt_hash;
 	const char *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
 	unsigned int no_update, readonly;
 	int dm_timeout;
+	bool is_cont;
 	bool blkdev;
 	bool fsck;
+	bool remount;
 };
 
 /**
@@ -176,7 +181,9 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		}
 
 		/* Options added to passthrough, but also inspected by us. */
-		if (strcmp(key, "ro") == 0)
+		if (strcmp(key, "remount") == 0)
+			mo->remount = true;
+		else if (strcmp(key, "ro") == 0)
 			mo->readonly = true;
 		else if (strcmp(key, "rw") == 0)
 			mo->readonly = false;
@@ -216,6 +223,33 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		return false;
 
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+
+	if (opt->remount) {
+		if (*argc < 2 || *(*argv)[1] == '\0') {
+			fprintf(stderr, "%s: You need to specify the container "
+			        "or its mountpoint\n", **argv);
+			return false;
+		}
+
+		opt->object = readlinkf((*argv)[1]);
+		if (stat(opt->object, &sb) < 0) {
+			/* If it does not exist, it cannot be the container. */
+			opt->is_cont = false;
+			if (errno != ENOENT) {
+				fprintf(stderr, "stat %s: %s\n", opt->object,
+				        strerror(errno));
+				return false;
+			}
+		} else {
+			/* If it is a directory, it cannot be the container either. */
+			if (!S_ISDIR(sb.st_mode))
+				opt->is_cont = true;
+			if (S_ISBLK(sb.st_mode))
+				opt->blkdev = true;
+		}
+
+		return true;
+	}
 
 	if (*argc < 2 || *(*argv)[1] == '\0') {
 		fprintf(stderr, "%s: You need to specify the device to mount\n",
@@ -454,6 +488,44 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 }
 
 /**
+ * mtcr_remount - remount the actual FS
+ */
+static int mtcr_remount(struct mount_options *opt)
+{
+	const char *rmt_args[6];
+	int ret, argk = 0;
+	char *mntpt;
+
+	ret = pmt_cmtab_get(opt->object, opt->is_cont ?
+	      CMTABF_CONTAINER : CMTABF_MOUNTPOINT, &mntpt, NULL, NULL, NULL);
+	if (ret == 0) {
+		fprintf(stderr, "Nothing found that could be remounted.\n");
+		return 1;
+	} else if (ret < 0) {
+		fprintf(stderr, "pmt_cmtab_get: %s\n", strerror(-ret));
+		return ret;
+	}
+
+	rmt_args[argk++] = "mount";
+#ifdef __linux__
+	rmt_args[argk++] = "-i";
+#endif
+	rmt_args[argk++] = "-o";
+	rmt_args[argk++] = opt->extra_opts;
+	rmt_args[argk++] = mntpt;
+	rmt_args[argk]   = NULL;
+	assert(argk < ARRAY_SIZE(rmt_args));
+
+	ret = HXproc_run_sync(rmt_args, HXPROC_VERBOSE);
+	if (ret != 0)
+		fprintf(stderr, "remount %s failed with run_sync status %d\n",
+		        opt->object, ret);
+
+	free(mntpt);
+	return ret;
+}
+
+/**
  * mtcr_umount - unloads the EHD from mountpoint
  *
  * Returns positive non-zero for success.
@@ -531,7 +603,12 @@ int main(int argc, const char **argv)
 		if (!mtcr_get_mount_options(&argc, &argv, &opt))
 			return EXIT_FAILURE;
 
-		return mtcr_mount(&opt) > 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+		if (opt.remount)
+			return (mtcr_remount(&opt) > 0) ?
+			       EXIT_SUCCESS : EXIT_FAILURE;
+		else
+			return (mtcr_mount(&opt) > 0) ?
+			       EXIT_SUCCESS : EXIT_FAILURE;
 	}
 
 	return EXIT_FAILURE;

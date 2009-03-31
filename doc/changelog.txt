@@ -4,6 +4,7 @@ For details, see the history as recorded in the git repository.
 
 Changes:
 - mount.crypt: pass -o ro/rw down to mount program
+- mount.crypt: support for -o remount
 
 
 v1.21 (March 17 2009)
