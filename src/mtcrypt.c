@@ -149,10 +149,6 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			mo->fstype = value;
 		else if (strcmp(key, "keyfile") == 0)
 			mo->fsk_file = value;
-		else if (strcmp(key, "ro") == 0)
-			mo->readonly = true;
-		else if (strcmp(key, "rw") == 0)
-			mo->readonly = false;
 		else if (strcmp(key, "keysize") == 0)
 			/* automatically determined from keyfile size */
 			l0g("keysize mount option ignored\n");
@@ -178,6 +174,12 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 				HXmc_strcat(&passthru, value);
 			}
 		}
+
+		/* Options added to passthrough, but also inspected by us. */
+		if (strcmp(key, "ro") == 0)
+			mo->readonly = true;
+		else if (strcmp(key, "rw") == 0)
+			mo->readonly = false;
 	}
 
 	if (*passthru != '\0') {
