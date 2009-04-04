@@ -5,6 +5,7 @@ For details, see the history as recorded in the git repository.
 Changes:
 - mount.crypt: pass -o ro/rw down to mount program
 - mount.crypt: support for -o remount
+- mount.crypt: support overriding keysize
 
 
 v1.21 (March 17 2009)
