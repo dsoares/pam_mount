@@ -54,6 +54,16 @@ the kernel autodetect.
 The path to the key file. This option is mandatory for "normal" crypto volumes
 and should not be used for LUKS volumes.
 .TP
+\fBremount\fP
+Causes the filesystem to be remounted with new options. Note that mount.crypt
+cannot switch the underlying loop device (if applies) or the crypto device
+between read-only and read-write once it is created; only the actual filesystem
+mount can be changed, with limits. If the loop device is read-only, the crypto
+device will be read-only, and changing the mount to read-write is impossible.
+Similarly, going from rw to ro will only mark the mount read-only, but not the
+crypto or loop device, thus making it impossible to set the filesystem the
+crypto container is located on to read-only.
+.TP
 \fBro\fP
 Same as the \fB-r\fP option.
 .TP
