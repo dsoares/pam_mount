@@ -446,7 +446,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	struct vol *vol;
 	int ret;
 	unsigned int krb5_set;
-	char *system_authtok;
+	char *system_authtok = NULL;
 	const void *tmp;
 	int getval;
 
