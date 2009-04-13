@@ -451,7 +451,8 @@ static int mtcr_mount(struct mount_options *opt)
 		/* awesome logic */;
 	} else {
 		pmt_smtab_add(mount_info.container, opt->mountpoint,
-			"crypt", "defaults");
+			"crypt", (opt->extra_opts != NULL) ?
+			opt->extra_opts : "defaults");
 	}
 
 	ehd_mtfree(&mount_info);

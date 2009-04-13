@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- mount.crypt: write options, not "defaults" to /etc/mtab
+
+
 v1.22 (April 05 2009)
 =====================
 Changes:
