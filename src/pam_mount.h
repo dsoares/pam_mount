@@ -141,13 +141,14 @@ struct kvp {
  * @container:	path to disk image
  * @key_data:	key material
  * @key_size:	size of key data
+ * @trunc_keysize:	extra cryptsetup instruction for truncation
  * @readonly:	create readonly mount?
  */
 struct ehd_mtreq {
 	const char *mountpoint;
 	const char *fs_cipher, *fs_hash, *container;
 	const void *key_data;
-	unsigned int key_size;
+	unsigned int key_size, trunc_keysize;
 	bool readonly;
 };
 

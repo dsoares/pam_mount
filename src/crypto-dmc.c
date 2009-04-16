@@ -102,6 +102,8 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 			start_args[argk++] = req->fs_hash;
 			start_args[argk++] = "-s";
 			snprintf(key_size, sizeof(key_size), "%u",
+			         (req->trunc_keysize != 0) ?
+			         req->trunc_keysize :
 			         req->key_size * CHAR_BIT);
 			start_args[argk++] = key_size;
 			start_args[argk++] = "create";

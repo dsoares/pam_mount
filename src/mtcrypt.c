@@ -35,7 +35,7 @@
  * @no_update:		do not update mtab
  * @loop_device:	loop device association, if any
  * @crypto_device:	crypto device
- * @dmcrypt_keysize:	override automatically determined keysize
+ * @trunc_keysize:	override cryptsetup keysize
  * 			(needed for ASCII keys, see SF#2727353)
  * @is_cont:		looks like a container; used by remount
  * @blkdev:		true if @container is a block device
@@ -48,7 +48,7 @@ struct mount_options {
 	const char *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
-	unsigned int no_update, readonly, dmcrypt_keysize;
+	unsigned int no_update, readonly, trunc_keysize;
 	int dm_timeout;
 	bool is_cont;
 	bool blkdev;
@@ -157,7 +157,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		else if (strcmp(key, "keyfile") == 0)
 			mo->fsk_file = value;
 		else if (strcmp(key, "keysize") == 0)
-			mo->dmcrypt_keysize = strtoul(value, NULL, 0);
+			mo->trunc_keysize = strtoul(value, NULL, 0);
 		else if (strcmp(key, "fsck") == 0)
 			mo->fsck = true;
 		else if (strcmp(key, "loop") == 0)
@@ -314,10 +314,10 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 
 	if (opt->dmcrypt_hash != NULL &&
 	    strcmp(opt->dmcrypt_hash, "plain") == 0 &&
-	    opt->dmcrypt_keysize != 0) {
+	    opt->trunc_keysize != 0) {
 		fprintf(stderr, "%s: keysize option ignored in plain mode "
 		        "(automatically derived from filesize)\n", **argv);
-		opt->dmcrypt_keysize = 0;
+		opt->trunc_keysize = 0;
 	}
 
 	opt->fsk_password = pmt_get_password(NULL);
@@ -363,14 +363,7 @@ static int mtcr_mount(struct mount_options *opt)
 
 	mount_request.key_data = key;
 	mount_request.key_size = HXmc_length(key);
-
-	/*
-	 * SF#2727353: When cryptsetup is instructed to hash the key, the size
-	 * changes. Furthermore, cropping the rehashed key may also be part of
-	 * the fun... e.g. `cryptsetup -h sha512 -s 448 -c blowfish`.
-	 */
-	if (opt->dmcrypt_keysize != 0)
-		mount_request.key_size = opt->dmcrypt_keysize;
+	mount_request.trunc_keysize = opt->trunc_keysize;
 
 	if ((ret = ehd_load(&mount_request, &mount_info)) < 0) {
 		fprintf(stderr, "ehd_load: %s\n", strerror(errno));
