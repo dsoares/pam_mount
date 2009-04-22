@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.24 (April 23 2009)
+=====================
 Fixes:
 - src: fix one uninitialized value
 - mount.crypt: write options, not "defaults" to /etc/mtab
