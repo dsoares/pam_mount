@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- fix splitting of "NTDOMAIN\username" strings
+
+
 v1.24 (April 23 2009)
 =====================
 Fixes:

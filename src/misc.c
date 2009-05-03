@@ -223,7 +223,7 @@ void misc_add_ntdom(struct HXbtree *v, const char *user)
 		perror("HX_strdup");
 		return;
 	}
-	ptr = strchr(user, '\\');
+	ptr = strchr(tmp, '\\');
 	assert(ptr != NULL);
 	*ptr++ = '\0';
 
