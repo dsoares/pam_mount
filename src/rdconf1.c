@@ -182,8 +182,16 @@ bool expandconfig(const struct config *config)
 		    !expand_user(u, &vpt->fs_key_cipher, vinfo))
 			goto rfalse;
 
+		/*
+		 * Substitution on the key seems odd indeed, and was not
+		 * originally intended. But it should be done, since the
+		 * option separator is notalways ",", e.g. with AUFS.
+		 * Least Surprise says: do the expansion on the key
+		 * nevertheless.
+		 */
 		HXlist_for_each_entry(kvp, &vpt->options, list)
-			if (!expand_user(u, &kvp->value, vinfo))
+			if (!expand_user(u, &kvp->key, vinfo) ||
+			    !expand_user(u, &kvp->value, vinfo))
 				goto rfalse;
 	}
 

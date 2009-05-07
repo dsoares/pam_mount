@@ -4,6 +4,8 @@ For details, see the history as recorded in the git repository.
 
 Fixes:
 - fix splitting of "NTDOMAIN\username" strings
+- config: broaden variable expansion to resolve a case where it
+  did not do expected expansion with AUFS
 
 
 v1.24 (April 23 2009)
