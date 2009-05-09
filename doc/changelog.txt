@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.25 (May 09 2009)
+===================
 Fixes:
 - fix splitting of "NTDOMAIN\username" strings
 - config: broaden variable expansion to resolve a case where it
