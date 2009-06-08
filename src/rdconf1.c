@@ -1349,6 +1349,7 @@ static const struct pmt_command default_command[] = {
 static const struct callbackmap cf_tags[] = {
 	{"cifsmount",       rc_command,             CMD_CIFSMOUNT},
 	{"cryptmount",      rc_command,             CMD_CRYPTMOUNT},
+	{"cryptumount",     rc_command,             CMD_CRYPTUMOUNT},
 	{"debug",           rc_debug,               CMD_NONE},
 	{"fd0ssh",          rc_command,             CMD_FD0SSH},
 	{"fsck",            rc_command,             CMD_FSCK},

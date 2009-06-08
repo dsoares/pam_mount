@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- config: do parse <cryptumount> elements from .xml
+
+
 v1.25 (May 09 2009)
 ===================
 Fixes:
