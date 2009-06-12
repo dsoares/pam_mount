@@ -8,6 +8,7 @@ Fixes:
 - config: map "nfs4" fstype to NFSMOUNT
 - pam_mount: PAM function return code audit
 - config: warn about ignored "server" attribute in <volume>
+- config: print error message on config file syntax error
 
 
 v1.25 (May 09 2009)

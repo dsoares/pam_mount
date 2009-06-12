@@ -375,8 +375,10 @@ bool readconfig(const char *file, bool global_conf, struct config *config)
 	xmlDoc *doc;
 	xmlNode *ptr;
 
-	if ((doc = xmlParseFile(file)) == NULL)
+	if ((doc = xmlParseFile(file)) == NULL) {
+		l0g("libxml detected a syntax error in %s\n", file);
 		return false;
+	}
 	ptr = xmlDocGetRootElement(doc);
 	if (ptr == NULL || xml_strcmp(ptr->name, "pam_mount") != 0) {
 		xmlFreeDoc(doc);
