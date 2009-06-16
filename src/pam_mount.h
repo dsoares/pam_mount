@@ -292,6 +292,8 @@ extern void umount_final(struct config *);
 extern int pmt_already_mounted(const struct config *,
 	const struct vol *, struct HXbtree *);
 extern hxmc_t *pmt_vol_to_dev(const struct vol *);
+extern bool fstype_icase(const char *);
+extern bool fstype2_icase(enum command_type);
 
 /*
  *	OFL-LIB.C

@@ -673,3 +673,31 @@ void umount_final(struct config *config)
 			    vol->volume);
 	}
 }
+
+/**
+ * fstype_icase - return whether the volume name is case-insensitive
+ * @fstype:	filesystem type (cifs, etc.)
+ *
+ * For some filesystems, notably those which do not distinguish between case
+ * sensitivity, the volume ("share") name is usually also case-insensitive.
+ */
+bool fstype_icase(const char *fstype)
+{
+	if (fstype == NULL)
+		return false;
+	return strcasecmp(fstype, "cifs") == 0 ||
+	       strcasecmp(fstype, "smbfs") == 0 ||
+	       strcasecmp(fstype, "ncpfs") == 0;
+}
+
+bool fstype2_icase(enum command_type fstype)
+{
+	switch (fstype) {
+	case CMD_CIFSMOUNT:
+	case CMD_SMBMOUNT:
+	case CMD_NCPMOUNT:
+		return true;
+	default:
+		return false;
+	}
+}

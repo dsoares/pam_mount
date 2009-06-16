@@ -26,8 +26,7 @@ int pmt_already_mounted(const struct config *const config,
 		return -1;
 	}
 
-	xcmp = (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
-	       vpt->type == CMD_NCPMOUNT) ? strcasecmp : strcmp;
+	xcmp = fstype2_icase(vpt->type) ? strcasecmp : strcmp;
 
 	cret = pmt_cmtab_mounted(dev, vpt->mountpoint);
 	sret = pmt_smtab_mounted(dev, vpt->mountpoint, xcmp);

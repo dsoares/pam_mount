@@ -51,10 +51,7 @@ int pmt_already_mounted(const struct config *config,
 		const struct local_statfs *mnt = &mntbuf[i];
 		int (*xcmp)(const char *, const char *);
 
-		xcmp = (mnt->f_fstypename != NULL &&
-		       (strcmp(mnt->f_fstypename, "smbfs") == 0 ||
-		       strcmp(mnt->f_fstypename, "cifs") == 0 ||
-		       strcmp(mnt->f_fstypename, "ncpfs") == 0)) ?
+		xcmp = fstype_icase(mnt->f_fstypename) ?
 		       strcasecmp : strcmp;
 
 		/*
