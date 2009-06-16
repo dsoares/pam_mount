@@ -516,11 +516,10 @@ int do_mount(const struct config *config, struct vol *vpt,
 	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0)
 		return 0;
 
-	if (vpt->type != CMD_NFSMOUNT)
-		if (write(proc.p_stdin, password, strlen(password)) !=
-		    strlen(password))
-			/* FIXME: clean: returns value of exit below */
-			l0g("error sending password to mount\n");
+	if (write(proc.p_stdin, password, strlen(password)) !=
+	    strlen(password))
+		/* FIXME: clean: returns value of exit below */
+		l0g("error sending password to mount\n");
 	close(proc.p_stdin);
 
 	log_output(proc.p_stderr, "mount messages:\n");
