@@ -64,7 +64,7 @@ struct callbackmap {
 
 struct pmt_command {
 	enum command_type type;
-	const char *fs, *command_name, *def[9];
+	const char *fs, *def[9];
 	/*
 	 * You will need to enlarge @def whenever the compiler
 	 * (rightfully) complains.
@@ -1328,21 +1328,21 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 
 //-----------------------------------------------------------------------------
 static const struct pmt_command default_command[] = {
-	{CMD_SMBMOUNT,   "smbfs", "smbmount",   {"smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_SMBUMOUNT,  "smbfs", "smbumount",  {"smbumount", "%(MNTPT)", NULL}},
-	{CMD_CIFSMOUNT,   "cifs",  "cifsmount",   {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_NCPMOUNT,   "ncpfs", "ncpmount",   {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_NCPUMOUNT,  "ncpfs", "ncpumount",  {"ncpumount", "%(MNTPT)", NULL}},
-	{CMD_FUSEMOUNT,   "fuse",  "fusemount",   {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", NULL}},
-	{CMD_FUSEUMOUNT, "fuse",  "fuseumount", {"fusermount", "-u", "%(MNTPT)", NULL}},
+	{CMD_SMBMOUNT,   "smbfs", {"smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_SMBUMOUNT,  "smbfs", {"smbumount", "%(MNTPT)", NULL}},
+	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_NCPMOUNT,   "ncpfs", {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_NCPUMOUNT,  "ncpfs", {"ncpumount", "%(MNTPT)", NULL}},
+	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", NULL}},
+	{CMD_FUSEUMOUNT, "fuse",  {"fusermount", "-u", "%(MNTPT)", NULL}},
 	/* Do not use LCLMOUNT to avoid calling fsck */
-	{CMD_NFSMOUNT,    "nfs",   "nfsmount",    {"mount", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_LCLMOUNT,    NULL,    "lclmount",    {"mount", "-p0", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_CRYPTMOUNT,  "crypt", "cryptmount",  {"mount.crypt", "%(ifnempty=\"-ocipher=\" CIPHER)%(CIPHER)", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-ofsk_hash=\" FSKEYHASH)%(FSKEYHASH)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(ifnempty=\"-o\" OPTIONS)%(OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_CRYPTUMOUNT, "crypt", "cryptumount", {"umount.crypt", "%(MNTPT)", NULL}},
-	{CMD_UMOUNT,     NULL,    "umount",     {"umount", "%(MNTPT)", NULL}},
-	{CMD_FSCK,       NULL,    "fsck",       {"fsck", "-p", "%(FSCKTARGET)", NULL}},
-	{CMD_PMVARRUN,   NULL,    "pmvarrun",   {"pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
+	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_LCLMOUNT,    NULL,    {"mount", "-p0", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT,  "crypt", {"mount.crypt", "%(ifnempty=\"-ocipher=\" CIPHER)%(CIPHER)", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-ofsk_hash=\" FSKEYHASH)%(FSKEYHASH)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(ifnempty=\"-o\" OPTIONS)%(OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTUMOUNT, "crypt", {"umount.crypt", "%(MNTPT)", NULL}},
+	{CMD_UMOUNT,     NULL,     {"umount", "%(MNTPT)", NULL}},
+	{CMD_FSCK,       NULL,     {"fsck", "-p", "%(FSCKTARGET)", NULL}},
+	{CMD_PMVARRUN,   NULL,     {"pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
 	{-1},
 };
 
