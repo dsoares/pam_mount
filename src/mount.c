@@ -112,6 +112,19 @@ int pmt_already_mounted(const struct config *const config,
 }
 #endif
 
+static bool fstype_networked(enum command_type fstype)
+{
+	switch (fstype) {
+	case CMD_NFSMOUNT:
+	case CMD_CIFSMOUNT:
+	case CMD_SMBMOUNT:
+	case CMD_NCPMOUNT:
+		return true;
+	default:
+		return false;
+	}
+}
+
 /**
  * vol_to_dev -
  * @vol:	volume to analyze
@@ -144,6 +157,14 @@ hxmc_t *pmt_vol_to_dev(const struct vol *vol)
 		break;
 
 	default:
+		if (!fstype_networked(vol->type) && vol->server != NULL)
+			/*
+			 * Possible causes: we do not know about the fs yet.
+			 * (Was once the case with NFS4, for example.)
+			 */
+			l0g("The \"server\" attribute is ignored for this "
+			    "filesystem (%s).\n", vol->fstype);
+
 		ret = HXmc_strinit(vol->volume);
 		break;
 	}

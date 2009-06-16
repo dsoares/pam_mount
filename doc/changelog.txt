@@ -7,6 +7,7 @@ Fixes:
 - mount: pass fstype to NFS mount program
 - config: map "nfs4" fstype to NFSMOUNT
 - pam_mount: PAM function return code audit
+- config: warn about ignored "server" attribute in <volume>
 
 
 v1.25 (May 09 2009)
