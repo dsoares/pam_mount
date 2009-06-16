@@ -261,6 +261,8 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 		/*
 		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
 		 * su to other users.
+		 * Also, if we could not get the user's info, an earlier auth
+		 * module (like pam_unix2) likely blocked login already.
 		 */
 		return PAM_SUCCESS;
 	}
@@ -346,6 +348,10 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
 		}
 	}
 	common_exit();
+	/*
+	 * pam_mount is not really meant to be an auth module. So we should not
+	 * hinder the login process.
+	 */
 	return PAM_SUCCESS;
 }
 
@@ -543,6 +549,19 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		unsetenv("KRB5CCNAME");
 	modify_pm_count(&Config, Config.user, "1");
 	envpath_restore();
+	if (getuid() == 0)
+		/* Make sure root can always log in. */
+		/* NB: I don't even wanna think of SELINUX's ambiguous UIDs... */
+		ret = PAM_SUCCESS;
+
+	/*
+	 * If mounting something failed, e.g. ret = %PAM_SERVICE_ERR, we have
+	 * to unravel everything and umount all volumes. But *only* if
+	 * pam_mount was configured as a "required" module. How can this info
+	 * be obtained?
+	 * For now, always assume "optional", so that the volumes are
+	 * definitely unmounted when the user logs out again.
+	 */
 	ret = PAM_SUCCESS;
  out:
 	w4rn("done opening session (ret=%d)\n", ret);
@@ -601,10 +620,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	ret = pam_get_user(pamh, &pam_user, NULL);
 	if (ret != PAM_SUCCESS) {
 		l0g("could not get user\n");
-		/*
-		 * do NOT return %PAM_SERVICE_ERR or root will not be able to
-		 * su to other users.
-		 */
 		goto out;
 	}
 	/*
