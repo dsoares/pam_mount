@@ -349,6 +349,13 @@ void initconfig(struct config *config)
 	for (i = 0; default_command[i].type != -1; ++i) {
 		struct HXdeque *cmd = config->command[default_command[i].type];
 
+		if (cmd->items > 0)
+			/*
+			 * Already initialized by an earlier entry
+			 * with same type.
+			 */
+			continue;
+
 		for (j = 0; default_command[i].def[j] != NULL; ++j)
 			HXdeque_push(cmd, xstrdup(default_command[i].def[j]));
 	}
