@@ -67,11 +67,11 @@ fstype attribute implies \fBfstype="auto"\fP. Note that mounting with \fBauto\fP
 may fail if the filesystem kernel module is not loaded yet, since \fBmount\fP(8)
 will check /proc/partitions.
 .IP ""
-The fstypes \fBcifs\fP, \fBencfs13\fP, \fBsmbfs\fP, \fBncpfs\fP, and \fBfuse\fP
-are overriden by pam_mount and we call the respective helpers
-directly without going thorugh \fBmount\fP(8), to have access to more options
-of the helper programs. See this manpage's section "Examples" below for more
-details.
+The fstypes \fBcifs\fP, \fBencfs13\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP,
+\fBnfs\fP and \fBnfs\fP are overriden by pam_mount and we run the respective
+helper programs directly instead of invoking \fBmount\fP(8) with the basic
+default set of arguments which are often insufficient for networked
+filesystems. See this manpage's section "Examples" below for more details.
 .TP
 \fBnoroot="1"\fP
 Call the mount program without root privileges. It defaults to yes for the

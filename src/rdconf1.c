@@ -1344,6 +1344,7 @@ static const struct pmt_command default_command[] = {
 	{CMD_FUSEUMOUNT, "fuse",  {"fusermount", "-u", "%(MNTPT)", NULL}},
 	/* Do not use LCLMOUNT to avoid calling fsck */
 	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "-t", "%(FSTYPE)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_NFSMOUNT,    "nfs4"},
 	{CMD_LCLMOUNT,    NULL,    {"mount", "-p0", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTMOUNT,  "crypt", {"mount.crypt", "%(ifnempty=\"-ocipher=\" CIPHER)%(CIPHER)", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-ofsk_hash=\" FSKEYHASH)%(FSKEYHASH)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(ifnempty=\"-o\" OPTIONS)%(OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTUMOUNT, "crypt", {"umount.crypt", "%(MNTPT)", NULL}},
