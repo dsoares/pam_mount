@@ -1,6 +1,6 @@
 
 Name:		pam_mount
-Version:	1.25
+Version:	1.26
 Release:	0
 Group:		System/Libraries
 Summary:	A PAM module that can mount volumes for a user session
