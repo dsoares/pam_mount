@@ -59,14 +59,17 @@ static void log_output(int fd, const char *cmsg)
 	}
 
 	setvbuf(fp, NULL, _IOLBF, 0);
-	if (fgets(buf, sizeof(buf), fp) != NULL) {
-		if (cmsg != NULL)
-			w4rn("%s", cmsg);
+	do {
+		if (fgets(buf, sizeof(buf), fp) == NULL)
+			break;
+		HX_chomp(buf);
+		if (*buf != '\0' && cmsg != NULL) {
+			l0g("%s", cmsg);
+			cmsg = NULL;
+		}
 
-		do {
-			l0g("%s", buf);
-		} while (fgets(buf, sizeof(buf), fp) != NULL);
-	}
+		l0g("%s\n", buf);
+	} while (true);
 	fclose(fp);
 }
 
@@ -544,7 +547,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		l0g("error sending password to mount\n");
 	close(proc.p_stdin);
 
-	log_output(proc.p_stderr, "mount messages:\n");
+	log_output(proc.p_stderr, "Errors from underlying mount program:\n");
 	if ((ret = HXproc_wait(&proc)) < 0) {
 		l0g("error waiting for child: %s\n", strerror(-ret));
 		return 0;
