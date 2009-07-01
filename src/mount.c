@@ -341,7 +341,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 
 	argv = arglist_build(config->command[type], vinfo);
 	memset(&proc, 0, sizeof(proc));
-	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDERR;
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_NULL_STDOUT | HXPROC_STDERR;
 	proc.p_ops   = &pmt_dropprivs_ops;
 	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0) {
 		ret = 0;
@@ -531,7 +531,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 	arglist_log(argv);
 	mount_user = vpt->noroot ? vpt->user : NULL;
 	memset(&proc, 0, sizeof(proc));
-	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDIN | HXPROC_STDERR;
+	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDIN |
+	               HXPROC_NULL_STDOUT | HXPROC_STDERR;
 	proc.p_ops   = &pmt_dropprivs_ops;
 	proc.p_data  = const_cast1(char *, mount_user);
 	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0)
