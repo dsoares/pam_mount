@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.27 (July 01 2009)
+====================
 Changes:
 - mounting: stdout from mount programs is now discarded
 
