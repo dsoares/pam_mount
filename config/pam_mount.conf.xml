@@ -6,13 +6,17 @@
 
 <pam_mount>
 
+		<!-- debug should come before everything else,
+		since this file is still processed in a single pass
+		from top-to-bottom -->
+
+<debug enable="0" />
 
 		<!-- Volume definitions -->
 
 
 		<!-- pam_mount parameters: General tunables -->
 
-<debug enable="0" />
 <!--
 <luserconf name=".pam_mount.conf.xml" />
 -->
