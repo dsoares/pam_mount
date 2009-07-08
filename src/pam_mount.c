@@ -464,6 +464,12 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	w4rn(PACKAGE_STRING ": entering session stage\n");
 
 	/*
+	 * Environment variables set with setenv() only last while PAM is
+	 * active, i.e. disappear when the shell is started. On the other hand,
+	 * variabled fed to pam_putenv() are only visible once the shell
+	 * started.
+	 */
+	/*
 	 * Get the Kerberos CCNAME so we can make it available to the
 	 * mount command later on.
 	 */
