@@ -563,9 +563,8 @@ static int mtcr_umount(struct umount_options *opt)
 
 	umount_args[argk++] = "umount";
 #ifdef __linux__
-	umount_args[argk++] = "-i";
-	if (opt->no_update)
-		umount_args[argk++] = "-n";
+	/* Always pass in -n, as we manually edit /etc/mtab */
+	umount_args[argk++] = "-ni";
 #endif
 	umount_args[argk++] = mountpoint;
 	umount_args[argk]   = NULL;
