@@ -959,8 +959,7 @@ static int rc_volume_cond_uid(const struct passwd *pwd, xmlNode *node)
 			continue;
 		ret = __rc_volume_cond_id(signed_cast(const char *,
 		      node->content), pwd->pw_uid);
-		if (ret < 0)
-			return ret;
+		return ret;
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "uid");
@@ -981,8 +980,7 @@ static int rc_volume_cond_gid(const struct passwd *pwd, xmlNode *node)
 			continue;
 		ret = __rc_volume_cond_id(signed_cast(const char *,
 		      node->content), pwd->pw_gid);
-		if (ret < 0)
-			return ret;
+		return ret;
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "gid");
