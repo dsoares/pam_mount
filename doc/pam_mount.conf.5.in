@@ -155,7 +155,9 @@ control pam_mount's own behavior.
 Enables verbose output during login to stderr and syslog. Some programs do not
 cope with output sent on stderr, see doc/bugs.txt for a list. \fB0\fP disables
 debugging, \fB1\fP enables pam_mount tracing, and \fB2\fP additionally enables
-tracing in mount.crypt. The default is \fB0\fP.
+tracing in mount.crypt. The default is \fB0\fP. As the config file is parsed
+linearly, the <debug> directive takes effect once it is seen - it it thus
+advised to put it near the start of the file, before any <volume> definitions.
 .TP
 \fB<logout wait="\fP\fImicroseconds\fP\fB" hup="\fP\fIyes/no\fP\fB" term="\fP\fIyes/no\fP\fB" kill="\fP\fIyes/no\fP\fB" />\fP
 Programs exist that do not terminate when the session is closed. (This applies
