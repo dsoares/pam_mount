@@ -6,6 +6,7 @@ Fixes:
 - pam_mount: avoid crash in sudo by not calling setenv() with NULL
 - umount.crypt: do not remove entry from /etc/mtab twice
 - doc: mount.crypt has no defaults for fsk_cipher and fsk_hash
+- doc: pmt-ehd defaults to using SHA1 hash
 Changes:
 - config: move <debug> to top
 
