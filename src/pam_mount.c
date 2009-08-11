@@ -436,6 +436,60 @@ static int modify_pm_count(struct config *config, char *user,
 }
 
 /**
+ * grab_authtok - get the password from PAM
+ */
+static char *grab_authtok(pam_handle_t *pamh)
+{
+	char *system_authtok = NULL;
+	int ret;
+
+	ret = pam_get_data(pamh, "pam_mount_system_authtok",
+	      static_cast(const void **, static_cast(void *, &system_authtok)));
+	if (ret != PAM_SUCCESS) {
+		if (Args.get_pw_interactive) {
+			ret = read_password(pamh, Config.msg_sessionpw,
+			      &system_authtok);
+			if (ret != PAM_SUCCESS)
+				l0g("warning: could not obtain password "
+				    "interactively either\n");
+		}
+		/*
+		 * Proceed without a password. Some volumes may not need one,
+		 * e.g. bind mounts and networked/unencrypted volumes.
+		 */
+	}
+	if (system_authtok == NULL)
+		system_authtok = xstrdup("");
+	return system_authtok;
+}
+
+static int process_volumes(struct config *config, const char *authtok)
+{
+	int ret = PAM_SUCCESS;
+	struct vol *vol;
+
+	HXlist_for_each_entry(vol, &config->volume_list, list) {
+		/*
+		 * luserconf_volume_record_sane() is called here so that a user
+		 * can nest loopback images. otherwise ownership tests will
+		 * fail if parent loopback image not yet mounted.
+		 * volume_record_sane() is here to be consistent.
+		 */
+		if (!volume_record_sane(config, vol))
+			continue;
+		if (!vol->globalconf &&
+		    !luserconf_volume_record_sane(config, vol))
+			continue;
+
+		if (!mount_op(do_mount, config, vol, authtok)) {
+			l0g("mount of %s failed\n", znul(vol->volume));
+			ret = PAM_SERVICE_ERR;
+		}
+	}
+	return ret;
+}
+
+/**
  * pam_sm_open_session -
  * @pamh:	PAM handle
  * @flags:	PAM flags
@@ -449,7 +503,6 @@ static int modify_pm_count(struct config *config, char *user,
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
     int argc, const char **argv)
 {
-	struct vol *vol;
 	int ret;
 	const char *krb5;
 	char *system_authtok = NULL;
@@ -512,44 +565,11 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		goto out;
 	}
 
-	ret = pam_get_data(pamh, "pam_mount_system_authtok",
-	      static_cast(const void **, static_cast(void *, &system_authtok)));
-	if (ret != PAM_SUCCESS) {
-		if (Args.get_pw_interactive) {
-			ret = read_password(pamh, Config.msg_sessionpw, &system_authtok);
-			if (ret != PAM_SUCCESS)
-				l0g("warning: could not obtain password "
-				    "interactively either\n");
-		}
-		/*
-		 * Proceed without a password. Some volumes may not need one,
-		 * e.g. bind mounts and networked/unencrypted volumes.
-		 */
-	}
-	if (system_authtok == NULL)
-		system_authtok = xstrdup("");
-
+	system_authtok = grab_authtok(pamh);
 	misc_dump_id("Session open");
 
 	envpath_init(Config.path);
-	HXlist_for_each_entry(vol, &Config.volume_list, list) {
-		/*
-		 * luserconf_volume_record_sane() is called here so that a user
-		 * can nest loopback images. otherwise ownership tests will
-		 * fail if parent loopback image not yet mounted. 
-		 * volume_record_sane() is here to be consistent.
-		 */
-		if (!volume_record_sane(&Config, vol))
-			continue;
-		if (!vol->globalconf &&
-		    !luserconf_volume_record_sane(&Config, vol))
-			continue;
-
-		if (!mount_op(do_mount, &Config, vol, system_authtok)) {
-			l0g("mount of %s failed\n", znul(vol->volume));
-			ret = PAM_SERVICE_ERR;
-		}
-	}
+	ret = process_volumes(&Config, system_authtok);
 	memset(system_authtok, 0, strlen(system_authtok));
 	free(system_authtok);
 	modify_pm_count(&Config, Config.user, "1");
