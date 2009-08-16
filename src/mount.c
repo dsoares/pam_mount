@@ -49,7 +49,7 @@ static void run_ofl(const struct config * const, struct HXbtree *);
  */
 static void log_output(int fd, const char *cmsg)
 {
-	char buf[BUFSIZ + 1];
+	hxmc_t *buf = NULL;
 	FILE *fp;
 
 	if ((fp = fdopen(fd, "r")) == NULL) {
@@ -60,7 +60,7 @@ static void log_output(int fd, const char *cmsg)
 
 	setvbuf(fp, NULL, _IOLBF, 0);
 	do {
-		if (fgets(buf, sizeof(buf), fp) == NULL)
+		if (HX_getl(&buf, fp) == NULL)
 			break;
 		HX_chomp(buf);
 		if (*buf != '\0' && cmsg != NULL) {
@@ -71,6 +71,7 @@ static void log_output(int fd, const char *cmsg)
 		l0g("%s\n", buf);
 	} while (true);
 	fclose(fp);
+	HXmc_free(buf);
 }
 
 /**
