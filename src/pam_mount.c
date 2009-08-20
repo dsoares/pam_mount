@@ -393,7 +393,7 @@ static int modify_pm_count(struct config *config, char *user,
     char *operation)
 {
 	FILE *fp = NULL;
-	struct HXbtree *vinfo;
+	struct HXformat_map *vinfo;
 	struct HXdeque *argv;
 	struct HXproc proc;
 	int ret = -1, use_count;

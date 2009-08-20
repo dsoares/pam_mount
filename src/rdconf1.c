@@ -126,7 +126,7 @@ static bool expand_home(const char *user, char **path_pptr)
  * moment due to to-XML transition period.)
  */
 static bool expand_user(const char *user, char **dest_pptr,
-    const struct HXbtree *vinfo)
+    const struct HXformat_map *vinfo)
 {
 	hxmc_t *tmp = NULL;
 
@@ -149,7 +149,7 @@ static bool expand_user(const char *user, char **dest_pptr,
 bool expandconfig(const struct config *config)
 {
 	const char *u = config->user;
-	struct HXbtree *vinfo;
+	struct HXformat_map *vinfo;
 	struct passwd *pe;
 	struct group *ge;
 	struct kvp *kvp;

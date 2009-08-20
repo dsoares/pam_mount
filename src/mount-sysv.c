@@ -15,7 +15,7 @@
 #include "pam_mount.h"
 
 int pmt_already_mounted(const struct config *const config,
-    const struct vol *vpt, struct HXbtree *vinfo)
+    const struct vol *vpt, struct HXformat_map *vinfo)
 {
 	int (*xcmp)(const char *, const char *);
 	hxmc_t *dev;

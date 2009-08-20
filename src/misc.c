@@ -140,7 +140,7 @@ void arglist_llog(const char *const *argv)
  * Expands @arg according to @vinfo and adds it to the @argq list.
  */
 void arglist_add(struct HXdeque *argq, const char *arg,
-    const struct HXbtree *vinfo)
+    const struct HXformat_map *vinfo)
 {
 	char *filled;
 
@@ -165,7 +165,7 @@ void arglist_add(struct HXdeque *argq, const char *arg,
  * and returns the result, suitable for spawn_qstart().
  */
 struct HXdeque *arglist_build(const struct HXdeque *cmd,
-    const struct HXbtree *vinfo)
+    const struct HXformat_map *vinfo)
 {
 	const struct HXdeque_node *n;
 	struct HXdeque *aq;
@@ -209,7 +209,7 @@ char *relookup_user(const char *user)
  * part of @v, and hence, will not go out of scope as long as %(DOMAIN_*) is
  * in @v.
  */
-void misc_add_ntdom(struct HXbtree *v, const char *user)
+void misc_add_ntdom(struct HXformat_map *v, const char *user)
 {
 	char *ptr, *tmp;
 

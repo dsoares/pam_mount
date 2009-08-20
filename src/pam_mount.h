@@ -44,6 +44,7 @@
 
 struct HXbtree;
 struct HXdeque;
+struct HXformatmap;
 struct HXproc;
 struct loop_info64;
 
@@ -175,12 +176,12 @@ struct ehd_crypto_ops {
 };
 
 typedef int (mount_op_fn_t)(const struct config *, struct vol *,
-	struct HXbtree *, const char *);
+	struct HXformat_map *, const char *);
 
 /*
  *
  */
-static inline void format_add(struct HXbtree *table, const char *key,
+static inline void format_add(struct HXformat_map *table, const char *key,
     const char *value)
 {
 	if (value == NULL)
@@ -233,16 +234,16 @@ extern int misc_warn(const char *, ...);
  *	MISC.C
  */
 extern void arglist_add(struct HXdeque *, const char *,
-	const struct HXbtree *);
+	const struct HXformat_map *);
 extern struct HXdeque *arglist_build(const struct HXdeque *,
-	const struct HXbtree *);
+	const struct HXformat_map *);
 extern void arglist_log(const struct HXdeque *);
 extern void arglist_llog(const char *const *);
 extern bool kvplist_contains(const struct HXclist_head *, const char *);
 extern char *kvplist_get(const struct HXclist_head *, const char *);
 extern void kvplist_genocide(struct HXclist_head *);
 extern hxmc_t *kvplist_to_str(const struct HXclist_head *);
-extern void misc_add_ntdom(struct HXbtree *, const char *);
+extern void misc_add_ntdom(struct HXformat_map *, const char *);
 extern void misc_dump_id(const char *);
 extern int pmt_fileop_exists(const char *);
 extern int pmt_fileop_owns(const char *, const char *);
@@ -290,7 +291,7 @@ extern int mount_op(mount_op_fn_t *, const struct config *, struct vol *,
 	const char *);
 extern void umount_final(struct config *);
 extern int pmt_already_mounted(const struct config *,
-	const struct vol *, struct HXbtree *);
+	const struct vol *, struct HXformat_map *);
 extern hxmc_t *pmt_vol_to_dev(const struct vol *);
 extern bool fstype_icase(const char *);
 extern bool fstype2_icase(enum command_type);
