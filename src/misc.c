@@ -17,9 +17,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <libHX/clist.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
+#include <libHX/list.h>
 #include <libHX/string.h>
 #include <pwd.h>
 #include "pam_mount.h"

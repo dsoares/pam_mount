@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <libHX/clist.h>
 #include <libHX/list.h>
 #include <libHX/option.h>
 #include <libHX/string.h>
