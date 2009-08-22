@@ -58,7 +58,7 @@ static bool required_ok(const struct HXmap *required,
     const struct HXclist_head *options)
 {
 	const struct HXmap_node *e;
-	void *t;
+	struct HXmap_trav *t;
 
 	if ((t = HXmap_travinit(required, 0)) == NULL)
 		return false;
@@ -86,7 +86,7 @@ static bool deny_ok(const struct HXmap *denied,
     const struct HXclist_head *options)
 {
 	const struct HXmap_node *e;
-	void *t;
+	struct HXmap_trav *t;
 
 	if (denied->items == 0) {
 		w4rn("no denied options\n");
