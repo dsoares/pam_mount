@@ -359,9 +359,9 @@ void initconfig(struct config *config)
 			HXdeque_push(cmd, xstrdup(default_command[i].def[j]));
 	}
 
-	config->options_allow   = HXhashmap_init(OPT_MAP_FLAGS);
-	config->options_require = HXhashmap_init(OPT_MAP_FLAGS);
-	config->options_deny    = HXhashmap_init(OPT_MAP_FLAGS);
+	config->options_allow   = HXmap_init(HXMAPT_DEFAULT, OPT_MAP_FLAGS);
+	config->options_require = HXmap_init(HXMAPT_DEFAULT, OPT_MAP_FLAGS);
+	config->options_deny    = HXmap_init(HXMAPT_DEFAULT, OPT_MAP_FLAGS);
 	str_to_optlist(config->options_allow, options_allow);
 	str_to_optlist(config->options_require, options_require);
 	HXclist_init(&config->volume_list);
@@ -715,7 +715,8 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 	if ((options = xml_getprop(node, "allow")) != NULL) {
 		if (!config->seen_mntoptions_allow) {
 			HXmap_free(config->options_allow);
-			config->options_allow = HXhashmap_init(OPT_MAP_FLAGS);
+			config->options_allow =
+				HXmap_init(HXMAPT_DEFAULT, OPT_MAP_FLAGS);
 			config->seen_mntoptions_allow = true;
 		}
 		ret = str_to_optlist(config->options_allow, options);
@@ -739,7 +740,8 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 		 */
 		if (!config->seen_mntoptions_require) {
 			HXmap_free(config->options_require);
-			config->options_require = HXhashmap_init(OPT_MAP_FLAGS);
+			config->options_require =
+				HXmap_init(HXMAPT_DEFAULT, OPT_MAP_FLAGS);
 			config->seen_mntoptions_require = true;
 		}
 		ret = str_to_optlist(config->options_require, options);
