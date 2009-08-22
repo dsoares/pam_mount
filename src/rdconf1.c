@@ -19,10 +19,10 @@
 #elif defined(__linux__)
 #	include <mntent.h>
 #endif
-#include <libHX/arbtree.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
+#include <libHX/map.h>
 #include <libHX/option.h>
 #include <libHX/string.h>
 #include <libHX/libxml_helper.h>
@@ -52,8 +52,7 @@ enum {
 };
 
 enum {
-	OPT_TREE_FLAGS =
-		HXBT_MAP | HXBT_CKEY | HXBT_SCMP | HXBT_CID,
+	OPT_MAP_FLAGS = HXMAP_SCKEY,
 };
 
 struct callbackmap {
@@ -249,9 +248,9 @@ void freeconfig(struct config *config)
 	HXlist_for_each_entry_safe(vol, next, &config->volume_list, list)
 		volume_free(vol);
 
-	HXbtree_free(config->options_allow);
-	HXbtree_free(config->options_require);
-	HXbtree_free(config->options_deny);
+	HXmap_free(config->options_allow);
+	HXmap_free(config->options_require);
+	HXmap_free(config->options_deny);
 	free(config->user);
 	free(config->msg_authpw);
 	free(config->msg_sessionpw);
@@ -306,7 +305,7 @@ static bool str_to_optkv(struct HXclist_head *optlist, char *str)
 	return false;
 }
 
-static bool str_to_optlist(struct HXbtree *optlist, char *str)
+static bool str_to_optlist(struct HXmap *optlist, char *str)
 {
 	char *value, *ptr;
 
@@ -317,9 +316,9 @@ static bool str_to_optlist(struct HXbtree *optlist, char *str)
 		value = strchr(ptr, '=');
 		if (value != NULL) {
 			*value++ = '\0';
-			HXbtree_add(optlist, ptr, value);
+			HXmap_add(optlist, ptr, value);
 		} else {
-			HXbtree_add(optlist, ptr, NULL);
+			HXmap_add(optlist, ptr, NULL);
 		}
 	}
 
@@ -360,9 +359,9 @@ void initconfig(struct config *config)
 			HXdeque_push(cmd, xstrdup(default_command[i].def[j]));
 	}
 
-	config->options_allow   = HXbtree_init(OPT_TREE_FLAGS);
-	config->options_require = HXbtree_init(OPT_TREE_FLAGS);
-	config->options_deny    = HXbtree_init(OPT_TREE_FLAGS);
+	config->options_allow   = HXhashmap_init(OPT_MAP_FLAGS);
+	config->options_require = HXhashmap_init(OPT_MAP_FLAGS);
+	config->options_deny    = HXhashmap_init(OPT_MAP_FLAGS);
 	str_to_optlist(config->options_allow, options_allow);
 	str_to_optlist(config->options_require, options_require);
 	HXclist_init(&config->volume_list);
@@ -715,8 +714,8 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 
 	if ((options = xml_getprop(node, "allow")) != NULL) {
 		if (!config->seen_mntoptions_allow) {
-			HXbtree_free(config->options_allow);
-			config->options_allow = HXbtree_init(OPT_TREE_FLAGS);
+			HXmap_free(config->options_allow);
+			config->options_allow = HXhashmap_init(OPT_MAP_FLAGS);
 			config->seen_mntoptions_allow = true;
 		}
 		ret = str_to_optlist(config->options_allow, options);
@@ -739,8 +738,8 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 		 * "require"s shall be cumulative.
 		 */
 		if (!config->seen_mntoptions_require) {
-			HXbtree_free(config->options_require);
-			config->options_require = HXbtree_init(OPT_TREE_FLAGS);
+			HXmap_free(config->options_require);
+			config->options_require = HXhashmap_init(OPT_MAP_FLAGS);
 			config->seen_mntoptions_require = true;
 		}
 		ret = str_to_optlist(config->options_require, options);

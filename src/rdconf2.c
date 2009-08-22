@@ -14,10 +14,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libHX/arbtree.h>
 #include <libHX/clist.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
+#include <libHX/map.h>
 #include <pwd.h>
 #include "pam_mount.h"
 
@@ -29,16 +29,16 @@
  * Check if there are any options in @options that are not in @allowed.
  * If so, return false.
  */
-static bool allow_ok(const struct HXbtree *allowed,
+static bool allow_ok(const struct HXmap *allowed,
     const struct HXclist_head *options)
 {
 	const struct kvp *kvp;
 
-	if (HXbtree_find(allowed, "*") != NULL || options->items == 0)
+	if (HXmap_find(allowed, "*") != NULL || options->items == 0)
 		return true;
 
 	HXlist_for_each_entry(kvp, options, list)
-		if (HXbtree_find(allowed, kvp->key) == NULL) {
+		if (HXmap_find(allowed, kvp->key) == NULL) {
 			l0g("option \"%s\" not allowed\n", kvp->key);
 			return false;
 		}
@@ -54,24 +54,24 @@ static bool allow_ok(const struct HXbtree *allowed,
  * Checks @options whether it contains all options in @required.
  * If so, returns true.
  */
-static bool required_ok(const struct HXbtree *required,
+static bool required_ok(const struct HXmap *required,
     const struct HXclist_head *options)
 {
-	const struct HXbtree_node *e;
+	const struct HXmap_node *e;
 	void *t;
 
-	if ((t = HXbtrav_init(required)) == NULL)
+	if ((t = HXmap_travinit(required, 0)) == NULL)
 		return false;
 
-	while ((e = HXbtraverse(t)) != NULL)
+	while ((e = HXmap_traverse(t)) != NULL)
 		if (!kvplist_contains(options, e->key)) {
 			l0g("option \"%s\" required\n",
 			    static_cast(const char *, e->key));
-			HXbtrav_free(t);
+			HXmap_travfree(t);
 			return false;
 		}
 
-	HXbtrav_free(t);
+	HXmap_travfree(t);
 	return true;
 }
 
@@ -82,32 +82,32 @@ static bool required_ok(const struct HXbtree *required,
  *
  * Checks @options whether any of them appear in @deny. If so, returns false.
  */
-static bool deny_ok(const struct HXbtree *denied,
+static bool deny_ok(const struct HXmap *denied,
     const struct HXclist_head *options)
 {
-	const struct HXbtree_node *e;
+	const struct HXmap_node *e;
 	void *t;
 
 	if (denied->items == 0) {
 		w4rn("no denied options\n");
 		return true;
-	} else if (HXbtree_find(denied, "*") != NULL && options->items != 0) {
+	} else if (HXmap_find(denied, "*") != NULL && options->items != 0) {
 		l0g("all mount options denied, user tried to specify one\n");
 		return false;
 	}
 
-	if ((t = HXbtrav_init(denied)) == NULL)
+	if ((t = HXmap_travinit(denied, 0)) == NULL)
 		return false;
 
-	while ((e = HXbtraverse(t)) != NULL)
+	while ((e = HXmap_traverse(t)) != NULL)
 		if (kvplist_contains(options, e->key)) {
 			l0g("option \"%s\" denied\n",
 			    static_cast(const char *, e->key));
-			HXbtrav_free(t);
+			HXmap_travfree(t);
 			return false;
 		}
 
-	HXbtrav_free(t);
+	HXmap_travfree(t);
 	return true;
 }
 

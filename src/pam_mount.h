@@ -42,7 +42,6 @@
 	misc_warn(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 
-struct HXbtree;
 struct HXdeque;
 struct HXformatmap;
 struct HXproc;
@@ -120,7 +119,7 @@ struct config {
 	bool seen_mntoptions_require, seen_mntoptions_allow;
 	hxmc_t *luserconf;
 	struct HXdeque *command[_CMD_MAX];
-	struct HXbtree *options_require, *options_allow, *options_deny;
+	struct HXmap *options_require, *options_allow, *options_deny;
 	struct HXclist_head volume_list;
 	int level;
 	char *msg_authpw, *msg_sessionpw, *path;
