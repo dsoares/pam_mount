@@ -93,6 +93,10 @@ struct vol {
 	bool globalconf;
 	/* set, so that umount can rmdir it */
 	bool created_mntpt;
+	/* expansion already took place */
+	bool is_expanded;
+	/* was handed off to mount_op() */
+	bool mnt_processed;
 	const char *user;
 	char *fstype, *server, *volume, *mountpoint, *cipher;
 	char *fs_key_cipher, *fs_key_hash, *fs_key_path;

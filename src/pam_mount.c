@@ -470,6 +470,13 @@ static int process_volumes(struct config *config, const char *authtok)
 
 	HXlist_for_each_entry(vol, &config->volume_list, list) {
 		/*
+		 * Remember what we processed already - the function can
+		 * be called multiple times.
+		 */
+		if (vol->mnt_processed)
+			continue;
+		vol->mnt_processed = true;
+		/*
 		 * luserconf_volume_record_sane() is called here so that a user
 		 * can nest loopback images. otherwise ownership tests will
 		 * fail if parent loopback image not yet mounted.
