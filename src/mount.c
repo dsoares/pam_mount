@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <libHX/arbtree.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
@@ -33,7 +32,6 @@
 /* Functions */
 static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
-static void run_ofl(const struct config * const, struct HXbtree *);
 
 //-----------------------------------------------------------------------------
 /**
@@ -82,16 +80,18 @@ static void log_output(int fd, const char *cmsg)
  * Runs `ofl` on a directory/mountpoint and logs its output, for debugging
  * purposes.
  */
-static void run_ofl(const struct config *const config, struct HXbtree *vinfo)
+static void run_ofl(const struct config *const config,
+    struct HXformat_map *vinfo)
 {
-	const char *mntpt;
+	hxmc_t *mntpt = NULL;
 	struct stat sb;
 
-	mntpt = HXbtree_get(vinfo, "MNTPT");
-	if (stat(mntpt, &sb) < 0 && errno == ENOENT)
-		return;
-	ofl_printf = misc_warn;
-	ofl(mntpt, 0);
+	HXformat_aprintf(vinfo, &mntpt, "%(MNTPT)");
+	if (!(stat(mntpt, &sb) < 0 && errno == ENOENT)) {
+		ofl_printf = misc_warn;
+		ofl(mntpt, 0);
+	}
+	HXmc_free(mntpt);
 }
 
 /**
@@ -109,7 +109,7 @@ static void run_ofl(const struct config *const config, struct HXbtree *vinfo)
 	/* elsewhere */
 #else
 int pmt_already_mounted(const struct config *const config,
-    const struct vol *vpt, struct HXbtree *vinfo)
+    const struct vol *vpt, struct HXformat_map *vinfo)
 {
 	l0g("check for previous mount not implemented on arch.\n");
 	return -1;
@@ -306,7 +306,7 @@ static inline bool mkmountpoint(struct vol *volume, const char *d)
  * Returns zero on error, positive non-zero for success.
  */
 int do_unmount(const struct config *config, struct vol *vpt,
-    struct HXbtree *vinfo, const char *const password)
+    struct HXformat_map *vinfo, const char *const password)
 {
 	struct HXdeque *argv;
 	struct HXproc proc;
@@ -366,7 +366,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 }
 
 static int check_filesystem(const struct config *config, const struct vol *vpt,
-    struct HXbtree *vinfo)
+    struct HXformat_map *vinfo)
 {
 /* PRE:    config points to a valid struct config
  *         config->volume[vol] is a valid struct vol
@@ -435,7 +435,7 @@ static int check_filesystem(const struct config *config, const struct vol *vpt,
  * @vinfo:	variable substituions
  */
 static void mount_set_fsck(const struct config *config,
-    const struct vol *vol, struct HXbtree *vinfo)
+    const struct vol *vol, struct HXformat_map *vinfo)
 {
 	const struct HXdeque_node *i;
 	hxmc_t *string, *current;
@@ -468,7 +468,7 @@ static void mount_set_fsck(const struct config *config,
  * Returns zero on error, positive non-zero for success.
  */
 int do_mount(const struct config *config, struct vol *vpt,
-    struct HXbtree *vinfo, const char *password)
+    struct HXformat_map *vinfo, const char *password)
 {
 	const struct HXdeque_node *n;
 	struct HXdeque *argv;
@@ -576,7 +576,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
     struct vol *vpt, const char *password)
 {
 	int fnval;
-	struct HXbtree *vinfo;
+	struct HXformat_map *vinfo;
 	struct passwd *pe;
 	hxmc_t *options;
 	char real_mpt[PATH_MAX+1];

@@ -30,7 +30,7 @@
 #endif
 
 int pmt_already_mounted(const struct config *config,
-    const struct vol *vpt, struct HXbtree *vinfo)
+    const struct vol *vpt, struct HXformat_map *vinfo)
 {
 	hxmc_t *dev;
 	bool mounted = false;
