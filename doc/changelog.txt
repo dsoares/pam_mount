@@ -11,6 +11,8 @@ Fixes:
 - doc: mention preferred location of <debug>
 Changes:
 - config: move <debug> to top
+Enhancements:
+- luserconf: delayed parsing and mounting of luserconf volumes
 
 
 v1.27 (July 01 2009)

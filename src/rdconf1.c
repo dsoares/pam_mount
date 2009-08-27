@@ -171,6 +171,9 @@ bool expandconfig(const struct config *config)
 	misc_add_ntdom(vinfo, u);
 
 	HXlist_for_each_entry(vpt, &config->volume_list, list) {
+		if (vpt->is_expanded)
+			continue;
+		vpt->is_expanded = true;
 		if (!expand_user(u, &vpt->server, vinfo) ||
 		    !expand_home(u, &vpt->volume) ||
 		    !expand_user(u, &vpt->volume, vinfo) ||
