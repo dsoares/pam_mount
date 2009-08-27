@@ -463,7 +463,7 @@ static void mount_set_fsck(const struct config *config,
  * @config:	current config
  * @vpt:	volume descriptor
  * @vinfo:
- * @password:	login password
+ * @password:	login password (may be %NULL)
  *
  * Returns zero on error, positive non-zero for success.
  */
@@ -477,7 +477,6 @@ int do_mount(const struct config *config, struct vol *vpt,
 	int ret;
 
 	assert(vinfo != NULL);
-	assert(password != NULL);
 
 	ret = pmt_already_mounted(config, vpt, vinfo);
 	if (ret < 0) {

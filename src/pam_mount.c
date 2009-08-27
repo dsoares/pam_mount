@@ -1,7 +1,7 @@
 /*
  *	pam_mount
  *	Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
- *	Copyright © Jan Engelhardt, 2005 - 2008
+ *	Copyright © Jan Engelhardt, 2005 - 2009
  *	Copyright © Bastian Kleineidam, 2005
  *
  *	This file is part of pam_mount; you can redistribute it and/or
@@ -548,35 +548,54 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		}
 	}
 
-	if (Config.luserconf == NULL || strlen(Config.luserconf) == 0)
-		;
-	else if (!pmt_fileop_exists(Config.luserconf))
-		;
-	else if (pmt_fileop_owns(Config.user, Config.luserconf)) {
-		w4rn("going to readconfig %s\n", Config.luserconf);
-		if (!readconfig(Config.luserconf, false, &Config)) {
-			ret = PAM_SERVICE_ERR;
-			goto out;
-		}
-	} else
-		w4rn("%s does not exist or is not owned by user\n",
-		     Config.luserconf);
-	if (Config.volume_list.items == 0) {
-		w4rn("no volumes to mount\n");
-		ret = PAM_SUCCESS;
-		goto out;
-	}
 	if (!expandconfig(&Config)) {
 		l0g("error expanding configuration\n");
 		ret = PAM_SERVICE_ERR;
 		goto out;
 	}
+	if (Config.volume_list.items > 0)
+		/* There are some volumes, so grab a password. */
+		system_authtok = grab_authtok(pamh);
 
-	system_authtok = grab_authtok(pamh);
 	misc_dump_id("Session open");
-
 	envpath_init(Config.path);
 	ret = process_volumes(&Config, system_authtok);
+
+	/*
+	 * Read luserconf after mounting of initial volumes. This makes it
+	 * possible to store luserconfs on net volumes themselves.
+	 */
+	if (Config.luserconf != NULL && *Config.luserconf != '\0' &&
+	    pmt_fileop_exists(Config.luserconf)) {
+		w4rn("going to readconfig %s\n", Config.luserconf);
+		if (!pmt_fileop_owns(Config.user, Config.luserconf)) {
+			w4rn("%s does not exist or is not owned by user\n",
+			     Config.luserconf);
+		} else if (!readconfig(Config.luserconf, false, &Config)) {
+			ret = PAM_SERVICE_ERR;
+		} else if (!expandconfig(&Config)) {
+			ret = PAM_SERVICE_ERR;
+			l0g("error expanding configuration\n");
+		}
+	}
+
+	if (Config.volume_list.items == 0) {
+		w4rn("no volumes to mount\n");
+		ret = PAM_SUCCESS;
+	} else {
+		int ret2 = PAM_SUCCESS;
+
+		if (system_authtok == NULL)
+			system_authtok = grab_authtok(pamh);
+		else if (!expandconfig(&Config))
+			l0g("error expanding configuration\n");
+		else
+			ret2 = process_volumes(&Config, system_authtok);
+
+		if (ret == PAM_SUCCESS)
+			ret = ret2;
+	}
+
 	memset(system_authtok, 0, strlen(system_authtok));
 	free(system_authtok);
 	modify_pm_count(&Config, Config.user, "1");
