@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.30 (August 27 2009)
+======================
 Fixes:
 - pam_mount: avoid crash in sudo by not calling setenv() with NULL
 - pam_mount: unwind krb5 environment info at the right time
