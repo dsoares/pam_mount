@@ -2,6 +2,10 @@
 For details, see the history as recorded in the git repository.
 
 
+Fixes:
+- pam_mount: fix a potential strlen(NULL) on login
+
+
 v1.30 (August 27 2009)
 ======================
 Fixes:
