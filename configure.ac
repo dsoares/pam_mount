@@ -7,8 +7,8 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [1.30])
-PACKAGE_RELDATE="2009-08-27"
+AC_INIT([pam_mount], [1.31])
+PACKAGE_RELDATE="2009-09-02"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -55,7 +55,7 @@ AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
 AC_CHECK_FUNCS([getmntent getmntinfo])
 
-PKG_CHECK_MODULES([libHX], [libHX >= 3.0])
+PKG_CHECK_MODULES([libHX], [libHX >= 3.0.1])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],

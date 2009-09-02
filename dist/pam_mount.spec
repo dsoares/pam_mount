@@ -1,6 +1,6 @@
 
 Name:		pam_mount
-Version:	1.30
+Version:	1.31
 Release:	0
 Group:		System/Libraries
 Summary:	A PAM module that can mount volumes for a user session
@@ -10,7 +10,7 @@ URL:		http://pam-mount.sf.net/
 Source:		http://downloads.sf.net/pam-mount/%name-%version.tar.bz2
 BuildRequires:	libtool, pam-devel >= 0.99, pkg-config >= 0.19
 BuildRequires:	openssl-devel >= 0.9.8, libxml2-devel >= 2.6
-BuildRequires:	libHX-devel >= 3.0
+BuildRequires:	libHX-devel >= 3.0.1
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers >= 2.6
 Recommends:	cifs-mount xfsprogs
