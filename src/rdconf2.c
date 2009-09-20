@@ -1,6 +1,6 @@
 /*
  *	Copyright (C) Elvis Pfützenreuter, 2000
- *	Copyright © Jan Engelhardt, 2006 - 2008
+ *	Copyright © Jan Engelhardt, 2006 - 2009
  *	Copyright © Bastian Kleineidam, 2005
  *
  *	This file is part of pam_mount; you can redistribute it and/or
@@ -126,7 +126,8 @@ bool luserconf_volume_record_sane(const struct config *config,
 	     vol->volume);
 
 	if (vol->type == CMD_LCLMOUNT || vol->type == CMD_CRYPTMOUNT) {
-		if (!pmt_fileop_owns(config->user, vol->volume)) {
+		if (strcmp(vol->fstype, "tmpfs") != 0 &&
+		    !pmt_fileop_owns(config->user, vol->volume)) {
 			l0g("user-defined volume (%s), volume not owned "
 			    "by user\n", vol->volume);
 			return false;

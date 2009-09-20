@@ -30,7 +30,6 @@
 #include "pam_mount.h"
 
 /* Functions */
-static int fstype_nodev(const char *);
 static inline bool mkmountpoint(struct vol *, const char *);
 
 //-----------------------------------------------------------------------------
@@ -643,7 +642,8 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
  * Returns 1 if the filesystem does not require a block device, 0 if it does
  * require a block device, -1 if we could not find out.
  */
-static int fstype_nodev(const char *name) {
+int fstype_nodev(const char *name)
+{
 	char buf[80];
 	FILE *fp;
 

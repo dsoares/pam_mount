@@ -289,6 +289,7 @@ extern int pmt_cmtab_mounted(const char *, const char *);
  *	MOUNT.C
  */
 extern mount_op_fn_t do_mount, do_unmount;
+extern int fstype_nodev(const char *);
 extern int mount_op(mount_op_fn_t *, const struct config *, struct vol *,
 	const char *);
 extern void umount_final(struct config *);

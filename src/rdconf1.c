@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2006 - 2008
+ *	Copyright © Jan Engelhardt, 2006 - 2009
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -1328,6 +1328,9 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		free(vpt->fs_key_path);
 		vpt->fs_key_path = tmp;
 	}
+
+	if (fstype_nodev(vpt->fstype) == 1 && vpt->volume == NULL)
+		vpt->volume = xstrdup("none");
 
 	return NULL;
 

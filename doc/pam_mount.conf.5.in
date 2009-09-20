@@ -375,7 +375,7 @@ This may come useful in conjunction with pam_chroot:
 Volatile tmpfs mount with restricted size (thanks to Mike Hommey for this
 example):
 .PP
-<volume user="test" fstype="tmpfs" path="none" mountpoint="/home/test"
+<volume user="test" fstype="tmpfs" mountpoint="/home/test"
 options="size=10M,uid=%(USER),mode=0700" />
 .SS dm-crypt volumes
 .PP
