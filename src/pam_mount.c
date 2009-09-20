@@ -583,17 +583,9 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		w4rn("no volumes to mount\n");
 		ret = PAM_SUCCESS;
 	} else {
-		int ret2 = PAM_SUCCESS;
-
 		if (system_authtok == NULL)
 			system_authtok = grab_authtok(pamh);
-		else if (!expandconfig(&Config))
-			l0g("error expanding configuration\n");
-		else
-			ret2 = process_volumes(&Config, system_authtok);
-
-		if (ret == PAM_SUCCESS)
-			ret = ret2;
+		ret = process_volumes(&Config, system_authtok);
 	}
 
 	if (system_authtok != NULL) {
