@@ -2,6 +2,8 @@
 For details, see the history as recorded in the git repository.
 
 
+v1.32 (September 21 2009)
+=========================
 Fixes:
 - luserconf: fix skipping luser volume mounting
 - config: allow arbitrary source paths for tmpfs
