@@ -13,7 +13,7 @@ BuildRequires:	openssl-devel >= 0.9.8, libxml2-devel >= 2.6
 BuildRequires:	libHX-devel >= 3.0.1
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers >= 2.6
-Recommends:	cifs-mount xfsprogs
+Recommends:	cifs-mount
 %if %suse_version < 1030
 Recommends:	util-linux-crypto
 %else

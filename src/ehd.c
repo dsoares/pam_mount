@@ -409,7 +409,7 @@ size_t pmt_block_getsize64(const char *path)
  */
 static bool ehd_fill_options_container(struct ehd_ctl *pg)
 {
-#define DEFAULT_FSTYPE "xfs"
+#define DEFAULT_FSTYPE "ext4"
 	struct container_ctl *cont = &pg->cont;
 	hxmc_t *tmp = HXmc_meminit(NULL, 0);
 	bool ret = false;
