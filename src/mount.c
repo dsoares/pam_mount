@@ -237,9 +237,10 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
 		goto out;
 	}
 	if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid) < 0) {
-		l0g("could not chown %s to %s(%u:%u)\n", d, volume->user,
+		l0g("could not chown %s to %s(%u:%u): %s\n", d, volume->user,
 		    static_cast(unsigned int, passwd_ent->pw_uid),
-		    static_cast(unsigned int, passwd_ent->pw_gid));
+		    static_cast(unsigned int, passwd_ent->pw_gid),
+		    strerror(errno));
 		ret = false;
 		goto out;
 	}
