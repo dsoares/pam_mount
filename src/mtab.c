@@ -39,7 +39,7 @@
 typedef int (*scompare_t)(const char *, const char *);
 
 /* crypto mtab */
-static const char pmt_cmtab_file[] = "/etc/cmtab";
+static const char pmt_cmtab_file[] = LOCALSTATEDIR "/cmtab";
 
 #if defined(__linux__)
 static const char pmt_smtab_file[] = "/etc/mtab";

@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- cmtab is now stored below localstatedir (usually /var/run)
 
 
 v1.35 (April 10 2010)

@@ -1,7 +1,10 @@
 # -*- Makefile -*-
 
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
-		${libHX_CFLAGS} ${libxml_CFLAGS}
+		${libHX_CFLAGS} ${libxml_CFLAGS} \
+		-DLOCALSTATEDIR=\"${varrundir}\"
+
+varrundir		= ${localstatedir}/run
 
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
