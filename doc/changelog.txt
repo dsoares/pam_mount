@@ -1,6 +1,11 @@
 
 For details, see the history as recorded in the git repository.
 
+HEAD
+====
+Fixes:
+- avoid multi-free of auth token when pam_mount is rerun in a PAM stack
+
 
 v1.32 (September 21 2009)
 =========================

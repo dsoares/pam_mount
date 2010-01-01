@@ -1,7 +1,7 @@
 /*
  *	pam_mount
  *	Copyright (C) Elvis Pfützenreuter <epx@conectiva.com>, 2000
- *	Copyright © Jan Engelhardt, 2005 - 2009
+ *	Copyright © Jan Engelhardt, 2005 - 2010
  *	Copyright © Bastian Kleineidam, 2005
  *
  *	This file is part of pam_mount; you can redistribute it and/or
@@ -440,27 +440,34 @@ static int modify_pm_count(struct config *config, char *user,
  */
 static char *grab_authtok(pam_handle_t *pamh)
 {
-	char *system_authtok = NULL;
+	char *authtok = NULL;
 	int ret;
 
 	ret = pam_get_data(pamh, "pam_mount_system_authtok",
-	      static_cast(const void **, static_cast(void *, &system_authtok)));
-	if (ret != PAM_SUCCESS) {
-		if (Args.get_pw_interactive) {
-			ret = read_password(pamh, Config.msg_sessionpw,
-			      &system_authtok);
-			if (ret != PAM_SUCCESS)
-				l0g("warning: could not obtain password "
-				    "interactively either\n");
+	      static_cast(const void **, static_cast(void *, &authtok)));
+	if (ret == PAM_SUCCESS)
+		return authtok;
+
+	/* No stored password, get one, if allowed to. */
+	if (Args.get_pw_interactive) {
+		ret = read_password(pamh, Config.msg_sessionpw, &authtok);
+		if (ret != PAM_SUCCESS)
+			l0g("warning: could not obtain password "
+			    "interactively either\n");
+		ret = pam_set_data(pamh, "pam_mount_system_authtok",
+		      authtok, clean_system_authtok);
+		if (ret == PAM_SUCCESS) {
+			if (mlock(authtok, strlen(authtok) + 1) < 0)
+				w4rn("mlock authtok: %s\n", strerror(errno));
+		} else {
+			l0g("error trying to save authtok for session code\n");
 		}
-		/*
-		 * Proceed without a password. Some volumes may not need one,
-		 * e.g. bind mounts and networked/unencrypted volumes.
-		 */
 	}
-	if (system_authtok == NULL)
-		system_authtok = xstrdup("");
-	return system_authtok;
+	/*
+	 * Proceed without a password. Some volumes may not need one,
+	 * e.g. bind mounts and networked/unencrypted volumes.
+	 */
+	return authtok;
 }
 
 static int process_volumes(struct config *config, const char *authtok)
@@ -588,10 +595,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		ret = process_volumes(&Config, system_authtok);
 	}
 
-	if (system_authtok != NULL) {
-		memset(system_authtok, 0, strlen(system_authtok));
-		free(system_authtok);
-	}
 	modify_pm_count(&Config, Config.user, "1");
 	envpath_restore();
 	if (getuid() == 0)
