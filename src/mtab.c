@@ -451,8 +451,8 @@ static int pmt_mtab_mounted(const char *file, const char *const *spec,
 		char *field[4];
 
 		cmtab_parse_line(line, field);
-		if ((spec[0] == NULL || (*compare[0])(spec[0], field[0]) == 0) &&
-		    (spec[1] == NULL || (*compare[1])(spec[1], field[1]) == 0) &&
+		if ((spec[0] == NULL || (field[0] && (*compare[0])(spec[0], field[0]) == 0)) &&
+		    (spec[1] == NULL || (field[1] && (*compare[1])(spec[1], field[1]) == 0)) &&
 		    (!cmtab_verify || pmt_smtab_mounted(field[CMTABF_CRYPTO_DEV],
 		    spec[CMTABF_MOUNTPOINT], strcmp) > 0)) {
 			ret = true;

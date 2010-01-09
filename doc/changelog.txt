@@ -5,6 +5,7 @@ HEAD
 ====
 Fixes:
 - avoid multi-free of auth token when pam_mount is rerun in a PAM stack
+- avoid NULL dereference when there is an empty line in mtab
 
 
 v1.32 (September 21 2009)
