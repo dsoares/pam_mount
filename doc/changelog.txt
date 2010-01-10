@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v1.33 (January 10 2009)
+=======================
 Fixes:
 - avoid multi-free of auth token when pam_mount is rerun in a PAM stack
 - avoid NULL dereference when there is an empty line in mtab

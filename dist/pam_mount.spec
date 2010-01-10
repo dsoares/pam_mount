@@ -1,6 +1,6 @@
 
 Name:		pam_mount
-Version:	1.32
+Version:	1.33
 Release:	0
 Group:		System/Libraries
 Summary:	A PAM module that can mount volumes for a user session
@@ -42,7 +42,7 @@ dm-crypt and LUKS.
 
 %build
 %configure --with-slibdir=/%_lib %{?_with_selinux:--with-selinux}
-make %{?jobs:-j%jobs};
+make %{?_smp_mflags};
 
 %install
 b="%buildroot";
