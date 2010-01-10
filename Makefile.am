@@ -7,8 +7,8 @@ install-data-hook:
 	${MKDIR_P} ${DESTDIR}${localstatedir}/run/pam_mount;
 
 tmpdir := $(shell mktemp -dtu)
-packer  = bzip2
-packext = .tar.bz2
+packer  = xz
+packext = .tar.xz
 
 .PHONY: tarball
 tarball:
