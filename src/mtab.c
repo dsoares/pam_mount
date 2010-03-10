@@ -126,8 +126,10 @@ static int pmt_mtab_add(const char *file, const char *line)
 	int fd, ret;
 
 	if ((fd = open(file, O_RDWR | O_CREAT | O_APPEND,
-	    S_IRUGO | S_IWUSR)) < 0)
+	    S_IRUGO | S_IWUSR)) < 0) {
+		fprintf(stderr, "Could not open %s: %s\n", file, strerror(errno));
 		return -errno;
+	}
 
 	ret = fcntl(fd, F_SETLKW, &(struct flock){.l_type = F_WRLCK,
 	      	.l_whence = SEEK_SET, .l_start = 0, .l_len = 0});
