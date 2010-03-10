@@ -24,7 +24,7 @@ pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
 autoloop_SOURCES	= autoloop.c ${loop_sources} log.c misc.c spawn.c
-autoloop_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
+autoloop_LDADD		= ${libHX_LIBS}
 
 ismnt_SOURCES		= ismnt.c ${mtab_sources}
 ismnt_LDADD		= ${libHX_LIBS}
