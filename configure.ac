@@ -61,9 +61,9 @@ PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
 	[OpenSSL libcrypto available])])
 
-AC_CHECK_HEADER([security/pam_modules.h], [have_pamheader="yes"])
+AC_CHECK_HEADERS([security/pam_modules.h], [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
-AC_CHECK_HEADER([pam/pam_modules.h], [have_pamheader="yes"])
+AC_CHECK_HEADERS([pam/pam_modules.h], [have_pamheader="yes"])
 if test x"$have_pamheader" != x"yes"; then
 	AC_MSG_ERROR([You are missing PAM headers])
 fi
