@@ -12,6 +12,7 @@ noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
 
 crypto_sources		= crypto.c crypto-cgd.c crypto-dmc.c ${loop_sources}
+crypto_libs		= ${libcrypto_LIBS}
 loop_sources		= loop.c loop-linux.c loop-mdvn.c loop-vnd.c
 mtab_sources		= log.c misc.c mtab.c
 
@@ -19,7 +20,7 @@ pam_mount_la_SOURCES	= log.c misc.c ofl-lib.c mount.c mount-bsd.c \
 			  mount-sysv.c mtab.c pam_mount.c \
 			  rdconf1.c rdconf2.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
-pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${libcrypto_LIBS} \
+pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${crypto_libs} \
 			  ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
@@ -31,13 +32,13 @@ ismnt_LDADD		= ${libHX_LIBS}
 
 mount_crypt_SOURCES	= mtcrypt.c spawn.c \
 			  ${crypto_sources} ${mtab_sources}
-mount_crypt_LDADD	= ${libHX_LIBS} ${libcrypto_LIBS}
+mount_crypt_LDADD	= ${libHX_LIBS} ${crypto_libs}
 
 mount_encfs13_SOURCES	= mtencfs13.c
 mount_encfs13_LDADD	= ${libHX_LIBS}
 
 pmt_ehd_SOURCES		= ehd.c log.c misc.c spawn.c ${crypto_sources}
-pmt_ehd_LDADD		= ${libHX_LIBS} ${libcrypto_LIBS}
+pmt_ehd_LDADD		= ${libHX_LIBS} ${crypto_libs}
 
 pmt_fd0ssh_SOURCES	= fd0ssh.c
 
