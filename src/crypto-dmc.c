@@ -18,6 +18,7 @@
 #include <libHX/defs.h>
 #include <libHX/proc.h>
 #include <libHX/string.h>
+#include <libcryptsetup.h>
 #include "pam_mount.h"
 
 /**
@@ -27,9 +28,8 @@
  */
 int dmc_is_luks(const char *path, bool blkdev)
 {
-	const char *lukscheck_args[] = {
-		"cryptsetup", "isLuks", path, NULL,
-	};
+	struct crypt_device *cd;
+	const char *device = path;
 	char *loop_device;
 	int ret;
 
@@ -43,18 +43,19 @@ int dmc_is_luks(const char *path, bool blkdev)
 			        __func__, strerror(-ret));
 			return ret;
 		}
-		lukscheck_args[2] = loop_device;
+		device = loop_device;
 	}
 
-	if ((ret = HXproc_run_sync(lukscheck_args, HXPROC_VERBOSE)) < 0)
-		fprintf(stderr, "run_sync: %s\n", strerror(-ret));
-	else if (ret > 0xFFFF)
-		/* terminated */
-		ret = -1;
-	else
-		/* exited, and we need success or fail */
-		ret = ret == 0;
-
+	ret = crypt_init(&cd, device);
+	if (ret == 0) {
+		ret = crypt_load(cd, CRYPT_LUKS1, NULL);
+		if (ret == -EINVAL)
+			ret = false;
+		else if (ret == 0)
+			ret = true;
+		/* else keep ret as-is */
+	}
+	crypt_free(cd);
 	if (!blkdev)
 		pmt_loop_release(loop_device);
 	return ret;
@@ -81,10 +82,8 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	char key_size[HXSIZEOF_Z32+2];
 
 	ret = dmc_is_luks(mt->lower_device, true);
-	if (ret < 0) {
-		l0g("cryptsetup isLuks got terminated\n");
+	if (ret < 0)
 		return false;
-	}
 
 	argk = 0;
 	is_luks = ret == 1;
