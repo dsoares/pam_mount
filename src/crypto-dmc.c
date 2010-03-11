@@ -74,48 +74,47 @@ static hxmc_t *dmc_crypto_name(const char *s)
 
 static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 {
-	int ret;
+	int ret, argk;
 	bool is_luks = false;
 	const char *start_args[13];
 	struct HXproc proc;
 	char key_size[HXSIZEOF_Z32];
 
 	ret = dmc_is_luks(mt->lower_device, true);
-	if (ret >= 0) {
-		int argk = 0;
-
-		is_luks = ret == 1;
-		start_args[argk++] = "cryptsetup";
-		if (req->readonly)
-			start_args[argk++] = "--readonly";
-		if (req->fs_cipher != NULL) {
-			start_args[argk++] = "-c";
-			start_args[argk++] = req->fs_cipher;
-		}
-		if (is_luks) {
-			start_args[argk++] = "luksOpen";
-			start_args[argk++] = mt->lower_device;
-			start_args[argk++] = mt->crypto_name;
-		} else {
-			start_args[argk++] = "--key-file=-";
-			start_args[argk++] = "-h";
-			start_args[argk++] = req->fs_hash;
-			start_args[argk++] = "-s";
-			snprintf(key_size, sizeof(key_size), "%u",
-			         (req->trunc_keysize != 0) ?
-			         req->trunc_keysize :
-			         req->key_size * CHAR_BIT);
-			start_args[argk++] = key_size;
-			start_args[argk++] = "create";
-			start_args[argk++] = mt->crypto_name;
-			start_args[argk++] = mt->lower_device;
-		}
-		start_args[argk] = NULL;
-		assert(argk < ARRAY_SIZE(start_args));
-	} else {
+	if (ret < 0) {
 		l0g("cryptsetup isLuks got terminated\n");
 		return false;
 	}
+
+	argk = 0;
+	is_luks = ret == 1;
+	start_args[argk++] = "cryptsetup";
+	if (req->readonly)
+		start_args[argk++] = "--readonly";
+	if (req->fs_cipher != NULL) {
+		start_args[argk++] = "-c";
+		start_args[argk++] = req->fs_cipher;
+	}
+	if (is_luks) {
+		start_args[argk++] = "luksOpen";
+		start_args[argk++] = mt->lower_device;
+		start_args[argk++] = mt->crypto_name;
+	} else {
+		start_args[argk++] = "--key-file=-";
+		start_args[argk++] = "-h";
+		start_args[argk++] = req->fs_hash;
+		start_args[argk++] = "-s";
+		snprintf(key_size, sizeof(key_size), "%u",
+		         (req->trunc_keysize != 0) ?
+		         req->trunc_keysize :
+		         req->key_size * CHAR_BIT);
+		start_args[argk++] = key_size;
+		start_args[argk++] = "create";
+		start_args[argk++] = mt->crypto_name;
+		start_args[argk++] = mt->lower_device;
+	}
+	start_args[argk] = NULL;
+	assert(argk < ARRAY_SIZE(start_args));
 
 	if (Debug)
 		arglist_llog(start_args);
