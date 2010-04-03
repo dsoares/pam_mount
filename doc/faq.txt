@@ -44,7 +44,7 @@ A.  This often means that pam_mount was not run as an auth type module,
     NOT THIS:
 
         auth sufficient pam_ldap.so
-        auth required   pam_mount.so use_first_pass
+        auth required   pam_mount.so
 
 =======================================================================
 
@@ -55,6 +55,8 @@ A.  Like most PAM modules, pam_mount prompts the user for a password.
     may result in both modules prompting for a password. In order to
     get a more desirable behavior, instruct the second module to use
     the first password entered by using the use_first_pass option.
+    The exact option name for other modules may be different from
+    "use_first_pass", so be sure to check their documentation.
 
 =======================================================================
 
