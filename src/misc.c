@@ -103,9 +103,9 @@ void arglist_log(const struct HXdeque *argq)
 
 	str = HXmc_meminit(NULL, 80);
 	for (n = argq->first; n != NULL; n = n->next) {
-		HXmc_strcat(&str, "[");
+		HXmc_strcat(&str, "'");
 		HXmc_strcat(&str, n->ptr);
-		HXmc_strcat(&str, "] ");
+		HXmc_strcat(&str, "' ");
 	}
 
 	misc_warn("command: %s\n", str);
