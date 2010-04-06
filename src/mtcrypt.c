@@ -590,6 +590,12 @@ static int mtcr_umount(struct umount_options *opt)
 
 int main(int argc, const char **argv)
 {
+	int ret;
+
+	ret = HX_init();
+	if (ret <= 0)
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+
 	Debug = false;
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_prefix = HX_basename(*argv);

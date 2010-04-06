@@ -249,6 +249,10 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 
+	ret = HX_init();
+	if (ret <= 0)
+		l0g("libHX init failed: %s\n", strerror(errno));
+
 	initconfig(&Config);
 	parse_pam_args(argc, argv);
 	/*
@@ -288,6 +292,7 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 static void common_exit(void)
 {
 	pmt_sigpipe_setup(false);
+	HX_exit();
 }
 
 /**
@@ -651,11 +656,17 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
     int flags, int argc, const char **argv)
 {
-	int ret = PAM_SUCCESS;
 	const char *pam_user = NULL;
+	int ret;
 
 	assert(pamh != NULL);
 
+	ret = HX_init();
+	if (ret <= 0)
+		l0g("libHX init failed: %s\n", strerror(errno));
+	/* Up the refcount once again due to cleanconfig's delayed nature. */
+	HX_init();
+	ret = PAM_SUCCESS;
 	w4rn("received order to close things\n");
 	if (Config.volume_list.items == 0) {
 		w4rn("No volumes to umount\n");
@@ -694,6 +705,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	 * Note that PMConfig is automatically freed later in clean_config()
 	 */
 	w4rn("pam_mount execution complete\n");
+	HX_exit();
 	return ret;
 }
 

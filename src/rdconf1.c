@@ -222,6 +222,7 @@ static void volume_free(struct vol *vol)
  * @config:	config struct
  *
  * All dynamically allocated memory in the structure is freed.
+ * The caller must ensure HX_init had been called previously.
  */
 void freeconfig(struct config *config)
 {
@@ -259,6 +260,7 @@ void freeconfig(struct config *config)
 	free(config->msg_sessionpw);
 	free(config->path);
 	memset(config, 0, sizeof(*config));
+	HX_exit();
 }
 
 /**

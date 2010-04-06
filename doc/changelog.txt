@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- update for libHX 3.4
 
 
 v1.33 (January 10 2009)

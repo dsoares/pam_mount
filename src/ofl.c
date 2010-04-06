@@ -3,6 +3,7 @@
  *	written by Jan Engelhardt, 2008
  *	Released in the Public Domain.
  */
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,8 +46,11 @@ int main(int argc, const char **argv)
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
 	};
-	bool ret = false;
+	int ret;
 
+	ret = HX_init();
+	if (ret <= 0)
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
 	if (HX_getopt(options_table, &argc, &argv, HXOPT_USAGEONERR) < 0)
 		return EXIT_FAILURE + 1;
 	if (argc == 1) {
@@ -56,7 +60,9 @@ int main(int argc, const char **argv)
 
 	if (signum_str != NULL)
 		signum = parse_signal(signum_str);
+	ret = false;
 	while (*++argv != NULL)
 		ret |= ofl(*argv, signum);
+	HX_exit();
 	return ret ? EXIT_SUCCESS : EXIT_FAILURE;
 }
