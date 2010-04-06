@@ -5,6 +5,8 @@ HEAD
 ====
 Changes:
 - update for libHX 3.4
+Fixes:
+- do decrease the login refcount on logout when no volumes are defined
 
 
 v1.33 (January 10 2009)

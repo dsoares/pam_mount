@@ -692,6 +692,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	if (chdir("/") != 0)
 		l0g("could not chdir\n");
 
+ out:
 	envpath_init(Config.path);
 	if (modify_pm_count(&Config, Config.user, "-1") > 0)
 		w4rn("%s seems to have other remaining open sessions\n",
@@ -700,7 +701,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		umount_final(&Config);
 
 	envpath_restore();
- out:
 	/*
 	 * Note that PMConfig is automatically freed later in clean_config()
 	 */

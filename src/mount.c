@@ -680,6 +680,10 @@ void umount_final(struct config *config)
 {
 	struct vol *vol;
 
+	if (HXlist_empty(&cofig->volume_list))
+		/* Avoid needlessy waiting on usleep */
+		return;
+
 	if (config->sig_hup)
 		HXlist_for_each_entry_rev(vol, &config->volume_list, list)
 			ofl(vol->mountpoint, SIGHUP);
