@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v1.34 (April 08 2009)
+=====================
 Changes:
 - update for libHX 3.4
 Fixes:
