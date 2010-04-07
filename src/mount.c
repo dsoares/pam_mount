@@ -680,7 +680,7 @@ void umount_final(struct config *config)
 {
 	struct vol *vol;
 
-	if (HXlist_empty(&cofig->volume_list))
+	if (HXlist_empty(&config->volume_list.list))
 		/* Avoid needlessy waiting on usleep */
 		return;
 

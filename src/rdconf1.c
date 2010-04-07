@@ -19,12 +19,7 @@
 #elif defined(__linux__)
 #	include <mntent.h>
 #endif
-#include <libHX/ctype_helper.h>
-#include <libHX/defs.h>
-#include <libHX/deque.h>
-#include <libHX/map.h>
-#include <libHX/option.h>
-#include <libHX/string.h>
+#include <libHX.h>
 #include <libHX/libxml_helper.h>
 #include "pam_mount.h"
 

@@ -18,11 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <libHX/ctype_helper.h>
-#include <libHX/defs.h>
-#include <libHX/option.h>
-#include <libHX/proc.h>
-#include <libHX/string.h>
+#include <libHX.h>
 #include <openssl/evp.h>
 #include "pam_mount.h"
 

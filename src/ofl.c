@@ -10,6 +10,7 @@
 #include <string.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/init.h>
 #include <libHX/option.h>
 #include "pam_mount.h"
 
