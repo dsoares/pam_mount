@@ -1325,6 +1325,10 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	if ((tmp = xml_getprop(node, "fskeyhash")) != NULL) {
 		free(vpt->fs_key_hash);
 		vpt->fs_key_hash = tmp;
+	} else {
+		l0g("Volume %s: consider specifying the fskeyhash\n",
+		    (vpt->volume != NULL) ? vpt->volume : "(null)");
+		vpt->fs_key_hash = HX_strdup("md5");
 	}
 	if ((tmp = xml_getprop(node, "fskeypath")) != NULL) {
 		free(vpt->fs_key_path);
