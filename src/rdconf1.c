@@ -126,7 +126,7 @@ static bool expand_user(const char *user, char **dest_pptr,
 
 	if (*dest_pptr == NULL)
 		return true;
-	HXformat_aprintf(vinfo, &tmp, *dest_pptr);
+	HXformat2_aprintf(vinfo, &tmp, *dest_pptr);
 	*dest_pptr = xstrdup(tmp);
 	HXmc_free(tmp);
 	return true;
@@ -1343,18 +1343,18 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 
 //-----------------------------------------------------------------------------
 static const struct pmt_command default_command[] = {
-	{CMD_SMBMOUNT,   "smbfs", {"smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_SMBMOUNT,   "smbfs", {"smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_SMBUMOUNT,  "smbfs", {"smbumount", "%(MNTPT)", NULL}},
-	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(before=\",\" OPTIONS)", NULL}},
-	{CMD_NCPMOUNT,   "ncpfs", {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(before=\",\" OPTIONS)", NULL}},
+	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
+	{CMD_NCPMOUNT,   "ncpfs", {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_NCPUMOUNT,  "ncpfs", {"ncpumount", "%(MNTPT)", NULL}},
-	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", NULL}},
+	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(if %(OPTIONS),-o)", "%(OPTIONS)", NULL}},
 	{CMD_FUSEUMOUNT, "fuse",  {"fusermount", "-u", "%(MNTPT)", NULL}},
 	/* Do not use LCLMOUNT to avoid calling fsck */
-	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "-t", "%(FSTYPE)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(if %(OPTIONS),-o%(OPTIONS)", "-t%(FSTYPE)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_NFSMOUNT,    "nfs4"},
-	{CMD_LCLMOUNT,    NULL,    {"mount", "-p0", "%(ifnempty=\"-o\" OPTIONS)", "%(OPTIONS)", "-t", "%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
-	{CMD_CRYPTMOUNT,  "crypt", {"mount.crypt", "%(ifnempty=\"-ocipher=\" CIPHER)%(CIPHER)", "%(ifnempty=\"-ofsk_cipher=\" FSKEYCIPHER)%(FSKEYCIPHER)", "%(ifnempty=\"-ofsk_hash=\" FSKEYHASH)%(FSKEYHASH)", "%(ifnempty=\"-okeyfile=\" FSKEYPATH)%(FSKEYPATH)", "%(ifnempty=\"-o\" OPTIONS)%(OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_LCLMOUNT,    NULL,    {"mount", "-p0", "%(if %(OPTIONS),-o%(OPTIONS)", "%(OPTIONS)", "-t%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_CRYPTMOUNT,  "crypt", {"mount.crypt", "%(if %(CIPHER),-ocipher=%(CIPHER)", "%(if %(FSKEYCIPHER),-ofsk_cipher=%(FSKEYCIPHER)", "%(if %(FSKEYHASH),-ofsk_hash=%(FSKEYHASH)", "%(if %(FSKEYPATH),-okeyfile=%(FSKEYPATH)", "%(if %(OPTIONS),-o%(OPTIONS)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTUMOUNT, "crypt", {"umount.crypt", "%(MNTPT)", NULL}},
 	{CMD_UMOUNT,     NULL,     {"umount", "%(MNTPT)", NULL}},
 	{CMD_FSCK,       NULL,     {"fsck", "-p", "%(FSCKTARGET)", NULL}},

@@ -85,7 +85,7 @@ static void run_ofl(const struct config *const config,
 	hxmc_t *mntpt = NULL;
 	struct stat sb;
 
-	HXformat_aprintf(vinfo, &mntpt, "%(MNTPT)");
+	HXformat2_aprintf(vinfo, &mntpt, "%(MNTPT)");
 	if (!(stat(mntpt, &sb) < 0 && errno == ENOENT)) {
 		ofl_printf = misc_warn;
 		ofl(mntpt, 0);
@@ -449,7 +449,7 @@ static void mount_set_fsck(const struct config *config,
 	string = HXmc_meminit(NULL, 0);
 
 	for (i = config->command[CMD_FSCK]->first; i != NULL; i = i->next) {
-		if (HXformat_aprintf(vinfo, &current, i->ptr) > 0) {
+		if (HXformat2_aprintf(vinfo, &current, i->ptr) > 0) {
 			HXmc_strcat(&string, current);
 			HXmc_strcat(&string, " ");
 		}

@@ -5,6 +5,17 @@ HEAD
 ====
 Changes:
 - cmtab is now stored below localstatedir (usually /var/run)
+- use HXformat2. This invalidates old constructs like %(before=\"-o\"...),
+  which need to be replaced with the new syntax. (See below.)
+
+In general, the old syntax was only used by commands Note to updaters: As the
+old syntax %(after=...) %(before=...) %(ifempty=...) %(ifnempty=...)
+%(lower=...) %(upper=...) only appeared in commands, and commands are not part
+of the default config file anymore since v1.0~15^2~15, there should be little
+worry. The configuration options in question are <cifsmount>, <cryptmount>,
+<cryptumount>, <fd0ssh>, <fsck>, <fusemount>, <fuseumount>, <lclmount>,
+<nfsmount>, <ncpmount>, <ncpumount>, <pmvarrun>, <smbmount>, <smbumount>
+<umount> and should normally not be needed in pam_mount.conf.xml.
 
 
 v1.35 (April 10 2010)
