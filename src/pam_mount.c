@@ -473,6 +473,8 @@ static char *ses_grab_authtok(pam_handle_t *pamh)
 		if (ret != PAM_SUCCESS)
 			l0g("warning: could not obtain password "
 			    "interactively either\n");
+	}
+	if (authtok != NULL) {
 		ret = pam_set_data(pamh, "pam_mount_system_authtok",
 		      authtok, clean_system_authtok);
 		if (ret == PAM_SUCCESS) {
@@ -483,8 +485,8 @@ static char *ses_grab_authtok(pam_handle_t *pamh)
 		}
 	}
 	/*
-	 * Proceed without a password. Some volumes may not need one,
-	 * e.g. bind mounts and networked/unencrypted volumes.
+	 * Always proceed, even if there is no password. Some volumes may not
+	 * need one, e.g. bind mounts and networked/unencrypted volumes.
 	 */
 	return authtok;
 }

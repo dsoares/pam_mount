@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+- avoid a mlock(NULL) when there is no auth token
 
 
 v1.34 (April 08 2009)
