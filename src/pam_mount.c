@@ -295,6 +295,52 @@ static void common_exit(void)
 	HX_exit();
 }
 
+static void auth_grab_authtok(pam_handle_t *pamh, struct config *config)
+{
+	char *authtok = NULL;
+	int ret;
+
+	if (Args.get_pw_from_pam) {
+		char *ptr = NULL;
+
+		ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
+		      static_cast(void *, &ptr)));
+		if (ret == PAM_SUCCESS && ptr != NULL)
+			authtok = xstrdup(ptr);
+	}
+	if (authtok == NULL && Args.get_pw_interactive) {
+		ret = read_password(pamh, config->msg_authpw, &authtok);
+		if (ret == PAM_SUCCESS && Args.propagate_pw) {
+			/*
+			 * pam_set_item() copies to PAM-internal memory.
+			 *
+			 * Using pam_set_item(PAM_AUTHTOK) here to make the
+			 * password that was just entered available to further
+			 * PAM modules.
+			 */
+			ret = pam_set_item(pamh, PAM_AUTHTOK, authtok);
+			if (ret != PAM_SUCCESS)
+				l0g("warning: failure to export password (%s)\n",
+				    pam_strerror(pamh, ret));
+		}
+	}
+
+	/*
+	 * Save auth token for pam_mount itself, since PAM_AUTHTOK
+	 * will be gone when the auth stage exits.
+	 */
+	if (authtok != NULL) {
+		ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
+		                   clean_system_authtok);
+		if (ret == PAM_SUCCESS) {
+			if (mlock(authtok, strlen(authtok) + 1) < 0)
+				w4rn("mlock authtok: %s\n", strerror(errno));
+		} else {
+			l0g("error trying to save authtok for session code\n");
+		}
+	}
+}
+
 /**
  * pam_sm_authenticate -
  * @pamh:	PAM handle
@@ -310,48 +356,13 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_authenticate(pam_handle_t *pamh, int flags,
     int argc, const char **argv)
 {
 	int ret = PAM_SUCCESS;
-	char *authtok = NULL;
 
 	assert(pamh != NULL);
 
 	if ((ret = common_init(pamh, argc, argv)) != -1)
 		return ret;
 	w4rn(PACKAGE_STRING ": entering auth stage\n");
-
-	if (Args.get_pw_from_pam) {
-		char *ptr = NULL;
-
-		ret = pam_get_item(pamh, PAM_AUTHTOK, static_cast(const void **,
-		      static_cast(void *, &ptr)));
-		if (ret == PAM_SUCCESS && ptr != NULL)
-			authtok = xstrdup(ptr);
-	}
-	if (authtok == NULL && Args.get_pw_interactive) {
-		ret = read_password(pamh, Config.msg_authpw, &authtok);
-		if (ret == PAM_SUCCESS && Args.propagate_pw) {
-			/*
-			 * pam_set_item() copies to PAM-internal memory.
-			 *
-			 * Using pam_set_item(PAM_AUTHTOK) here to make the
-			 * password that was just entered available to further
-			 * PAM modules.
-			 */
-			ret = pam_set_item(pamh, PAM_AUTHTOK, authtok);
-			if (ret != PAM_SUCCESS)
-				l0g("warning: failure to export password (%s)\n",
-				    pam_strerror(pamh, ret));
-		}
-	}
-	if (authtok != NULL) {
-		ret = pam_set_data(pamh, "pam_mount_system_authtok", authtok,
-		                   clean_system_authtok);
-		if (ret == PAM_SUCCESS) {
-			if (mlock(authtok, strlen(authtok) + 1) < 0)
-				w4rn("mlock authtok: %s\n", strerror(errno));
-		} else {
-			l0g("error trying to save authtok for session code\n");
-		}
-	}
+	auth_grab_authtok(pamh, &Config);
 	common_exit();
 	/*
 	 * pam_mount is not really meant to be an auth module. So we should not
@@ -441,9 +452,12 @@ static int modify_pm_count(struct config *config, char *user,
 }
 
 /**
- * grab_authtok - get the password from PAM
+ * ses_grab_authtok - get the password from PAM
+ *
+ * Session stage: reretrieve password that the auth stage stored.
+ * If that does not work, use interactive prompting if enabled.
  */
-static char *grab_authtok(pam_handle_t *pamh)
+static char *ses_grab_authtok(pam_handle_t *pamh)
 {
 	char *authtok = NULL;
 	int ret;
@@ -567,7 +581,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 	}
 	if (Config.volume_list.items > 0)
 		/* There are some volumes, so grab a password. */
-		system_authtok = grab_authtok(pamh);
+		system_authtok = ses_grab_authtok(pamh);
 
 	misc_dump_id("Session open");
 	envpath_init(Config.path);
@@ -595,8 +609,12 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		w4rn("no volumes to mount\n");
 		ret = PAM_SUCCESS;
 	} else {
+		/*
+		 * If there are no global volumes, but luserconf volumes,
+		 * and we still have no password, ask for one now.
+		 */
 		if (system_authtok == NULL)
-			system_authtok = grab_authtok(pamh);
+			system_authtok = ses_grab_authtok(pamh);
 		ret = process_volumes(&Config, system_authtok);
 	}
 
