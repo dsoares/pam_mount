@@ -297,7 +297,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		}
 	}
 
-#ifdef __linux__
+#ifdef HAVE_LIBCRYPTSETUP
 	if (dmc_is_luks(opt->container, opt->blkdev) == 0 &&
 	    opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "

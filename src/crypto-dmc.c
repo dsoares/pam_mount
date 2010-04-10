@@ -1,12 +1,13 @@
 /*
- *	Copyright © Jan Engelhardt, 2008 - 2009
+ *	Copyright © Jan Engelhardt, 2008 - 2010
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#ifdef __linux__
+#include "config.h"
+#ifdef HAVE_LIBCRYPTSETUP
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -174,4 +175,4 @@ const struct ehd_crypto_ops ehd_dmcrypt_ops = {
 	.unload = dmc_unload,
 };
 
-#endif /* __linux__ */
+#endif /* HAVE_LIBCRYPTSETUP */

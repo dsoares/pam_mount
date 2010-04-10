@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
-		${libHX_CFLAGS} ${libxml_CFLAGS} \
+		${libHX_CFLAGS} ${libcryptsetup_CFLAGS} ${libxml_CFLAGS} \
 		-DLOCALSTATEDIR=\"${varrundir}\"
 
 varrundir		= ${localstatedir}/run
@@ -15,7 +15,7 @@ noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
 
 crypto_sources		= crypto.c crypto-cgd.c crypto-dmc.c ${loop_sources}
-crypto_libs		= ${libcrypto_LIBS}
+crypto_libs		= ${libcrypto_LIBS} ${libcryptsetup_LIBS}
 loop_sources		= loop.c loop-linux.c loop-mdvn.c loop-vnd.c
 mtab_sources		= log.c misc.c mtab.c
 

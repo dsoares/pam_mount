@@ -60,6 +60,9 @@ PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
 	[OpenSSL libcrypto available])])
+PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.0.0],
+	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTSETUP], [1],
+	[libcryptsetup available])])
 
 AC_CHECK_HEADERS([security/pam_modules.h], [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
