@@ -3,10 +3,18 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v1.35 (April 10 2010)
+=====================
+Fixes:
 - avoid a mlock(NULL) when there is no auth token
+Changes:
+- print error code when mkmountpoint failed
+- print warning when cmtab is not creatable
 
 
-v1.34 (April 08 2009)
+v1.34 (April 08 20010)
 =====================
 Changes:
 - update for libHX 3.4
