@@ -37,11 +37,11 @@ int dmc_is_luks(const char *path, bool blkdev)
 		ret = pmt_loop_setup(path, &loop_device, true);
 		if (ret == 0) {
 			fprintf(stderr, "No free loop device\n");
-			return -1;
+			return -ENXIO;
 		} else if (ret < 0) {
 			fprintf(stderr, "%s: could not set up loop device: %s\n",
 			        __func__, strerror(-ret));
-			return -1;
+			return ret;
 		}
 		lukscheck_args[2] = loop_device;
 	}
