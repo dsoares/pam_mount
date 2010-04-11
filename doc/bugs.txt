@@ -3,6 +3,19 @@
 Known Issues with other programs
 ================================
 
+[ cryptsetup - awkward input processing ]
+
+Some people create their crypto partition using a command like
+
+	openssl ... | cryptsetup create ...
+
+cryptsetup will strip all data starting from the first newline when
+run without the --key-file=- option. pam_mount makes sure cryptsetup
+will use the entire key material, by using the --key-file option.
+However, since you created your crypto volume with a truncated key
+that is different from the real one, mounting may fail unexpectedly.
+
+
 [ gksu & kdesu ]
 
 gksu interprets any output on stderr as an error. pam_mount writes
