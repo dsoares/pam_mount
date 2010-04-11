@@ -149,25 +149,19 @@ static int dmc_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 
 static int dmc_unload(const struct ehd_mount *mt)
 {
-	const char *args[] = {
-		"cryptsetup", "remove", NULL, NULL,
-	};
-	int ret = 1;
+	struct crypt_device *cd;
+	const char *cname;
+	int ret;
 
-	if (mt->crypto_name != NULL)
-		args[2] = mt->crypto_name;
-	else if (mt->crypto_device != NULL)
-		args[2] = mt->crypto_device;
-	if (args[2] != NULL) {
-		ret = HXproc_run_sync(args, HXPROC_VERBOSE);
-		if (ret != 0)
-			l0g("Could not unload dm-crypt device \"%s\", "
-			    "cryptsetup returned HXproc status %d\n",
-			    mt->crypto_device, ret);
-		ret = !ret;
-	}
+	ret = crypt_init(&cd, mt->crypto_device);
+	if (ret < 0)
+		return ret;
 
-	return ret;
+	cname = (mt->crypto_name != NULL) ? mt->crypto_name :
+	        HX_basename(mt->crypto_device);
+	ret = crypt_deactivate(cd, cname);
+	crypt_free(cd);
+	return (ret < 0) ? ret : 1;
 }
 
 const struct ehd_crypto_ops ehd_dmcrypt_ops = {

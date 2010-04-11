@@ -569,7 +569,8 @@ static int mtcr_umount(struct umount_options *opt)
 		final_ret = 0;
 		ehd_unload(&mount_info);
 	} else if ((ret = ehd_unload(&mount_info)) <= 0) {
-		final_ret = ret;
+		fprintf(stderr, "ehd_unload: %s\n", strerror(-ret));
+		final_ret = 0;
 	} else {
 		if (!opt->no_update)
 			pmt_smtab_remove(mountpoint, SMTABF_MOUNTPOINT);
