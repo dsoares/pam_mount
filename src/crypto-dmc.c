@@ -9,7 +9,6 @@
 #ifdef __linux__
 #include <assert.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,9 +75,9 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 {
 	int ret, argk;
 	bool is_luks = false;
-	const char *start_args[13];
+	const char *start_args[12];
 	struct HXproc proc;
-	char key_size[HXSIZEOF_Z32];
+	char key_size[HXSIZEOF_Z32+2];
 
 	ret = dmc_is_luks(mt->lower_device, true);
 	if (ret < 0) {
@@ -103,12 +102,11 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 		start_args[argk++] = "--key-file=-";
 		start_args[argk++] = "-h";
 		start_args[argk++] = req->fs_hash;
-		start_args[argk++] = "-s";
-		snprintf(key_size, sizeof(key_size), "%u",
-		         (req->trunc_keysize != 0) ?
-		         req->trunc_keysize :
-		         req->key_size * CHAR_BIT);
-		start_args[argk++] = key_size;
+		if (req->trunc_keysize != 0) {
+			snprintf(key_size, sizeof(key_size), "-s%u",
+			         req->trunc_keysize);
+			start_args[argk++] = key_size;
+		}
 		start_args[argk++] = "create";
 		start_args[argk++] = mt->crypto_name;
 		start_args[argk++] = mt->lower_device;

@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- cope better with cryptsetup's assumption that keysize=256
 
 
 v1.35 (April 10 2010)

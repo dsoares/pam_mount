@@ -16,6 +16,24 @@ However, since you created your crypto volume with a truncated key
 that is different from the real one, mounting may fail unexpectedly.
 
 
+[ cryptsetup - key truncation ]
+
+cryptsetup implicitly assumes -s 256, which either pads or truncates
+the key material after it has gone through cryptsetup's hashing (-h),
+if any. This means that
+
+	cryptsetup create -h sha512 ...
+
+will hash the input with SHA-512, then truncate it down to 256 bits,
+unless -s 512 was explicitly specified.
+
+pam_mount won't do this sort of key weakening when a key file is used.
+Remember that a key file is supposed to already contain the _final_ key
+used for the filesystem, i.e. no extra hashing. (This is why pam_mount
+also passes -h plain to cryptsetup by default.) Thus, pam_mount defaults
+to using the key file's length (when decrypted) as the cipher size.
+
+
 [ gksu & kdesu ]
 
 gksu interprets any output on stderr as an error. pam_mount writes

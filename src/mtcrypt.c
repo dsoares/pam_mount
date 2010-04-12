@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -308,14 +309,6 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
 
-	if (opt->dmcrypt_hash != NULL &&
-	    strcmp(opt->dmcrypt_hash, "plain") == 0 &&
-	    opt->trunc_keysize != 0) {
-		fprintf(stderr, "%s: keysize option ignored in plain mode "
-		        "(automatically derived from filesize)\n", **argv);
-		opt->trunc_keysize = 0;
-	}
-
 	opt->fsk_password = pmt_get_password(NULL);
 	return true;
 }
@@ -348,6 +341,7 @@ static int mtcr_mount(struct mount_options *opt)
 			fprintf(stderr, "HXmc_dup: %s\n", strerror(errno));
 			return 0;
 		}
+		/* Leave trunc_keysize at 0 */
 	} else {
 		key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
 		      opt->fsk_cipher, opt->fsk_password);
@@ -355,11 +349,13 @@ static int mtcr_mount(struct mount_options *opt)
 			fprintf(stderr, "Error while decrypting fskey\n");
 			return 0;
 		}
+		mount_request.trunc_keysize = HXmc_length(key) * CHAR_BIT;
 	}
 
 	mount_request.key_data = key;
 	mount_request.key_size = HXmc_length(key);
-	mount_request.trunc_keysize = opt->trunc_keysize;
+	if (opt->trunc_keysize != 0)
+		mount_request.trunc_keysize = opt->trunc_keysize;
 
 	if ((ret = ehd_load(&mount_request, &mount_info)) < 0) {
 		fprintf(stderr, "ehd_load: %s\n", strerror(errno));
