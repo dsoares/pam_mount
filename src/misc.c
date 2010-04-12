@@ -121,9 +121,9 @@ void arglist_llog(const char *const *argv)
 
 	str = HXmc_meminit(NULL, 80);
 	while (*argv != NULL) {
-		HXmc_strcat(&str, "[");
+		HXmc_strcat(&str, "'");
 		HXmc_strcat(&str, *argv);
-		HXmc_strcat(&str, "] ");
+		HXmc_strcat(&str, "' ");
 		++argv;
 	}
 
