@@ -3,9 +3,9 @@ Minimum required packages for building pam_mount from a tarball release:
 
 	* libHX 3.4 or up
 	* libxml 2.6.x or up
-	* pkg-config
-	* Linux-PAM 0.99.x
-	SUN-PAM (compiled-tested only with 5.11.85)
+	* pkg-config 0.19 or up
+	* Linux-PAM 0.99.x or up
+	SUN-PAM (compiled-tested only with 5.11~85)
 	BSD PAM is untested and probably not working right now.
 
 Additional required packages for building from (Git) snapshot:
