@@ -143,8 +143,8 @@ struct kvp {
  * @fs_hash:	hash used for filesystem (cryptsetup name)
  * @container:	path to disk image
  * @key_data:	key material
- * @key_size:	size of key data
- * @trunc_keysize:	extra cryptsetup instruction for truncation
+ * @key_size:	size of key data, in bytes
+ * @trunc_keysize:	extra cryptsetup instruction for truncation (in bits)
  * @readonly:	create readonly mount?
  */
 struct ehd_mtreq {

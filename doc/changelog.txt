@@ -18,6 +18,13 @@ worry. The configuration options in question are <cifsmount>, <cryptmount>,
 <umount> and should normally not be needed in pam_mount.conf.xml.
 
 
+v1.36 (April 13 2010)
+====================
+Changes:
+- cope better with cryptsetup's assumption that keysize=256
+- augment doc/bugs.txt about caveats with cryptsetup create
+
+
 v1.35 (April 10 2010)
 =====================
 Fixes:
@@ -27,7 +34,7 @@ Changes:
 - print warning when cmtab is not creatable
 
 
-v1.34 (April 08 20010)
+v1.34 (April 08 2010)
 =====================
 Changes:
 - update for libHX 3.4
@@ -35,7 +42,7 @@ Fixes:
 - do decrease the login refcount on logout when no volumes are defined
 
 
-v1.33 (January 10 2009)
+v1.33 (January 10 2010)
 =======================
 Fixes:
 - avoid multi-free of auth token when pam_mount is rerun in a PAM stack
