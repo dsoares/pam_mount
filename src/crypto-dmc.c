@@ -75,65 +75,67 @@ static hxmc_t *dmc_crypto_name(const char *s)
 
 static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 {
-	int ret, argk;
-	bool is_luks = false;
-	const char *start_args[12];
-	struct HXproc proc;
-	char key_size[HXSIZEOF_Z32+2];
+	struct crypt_device *cd;
+	unsigned int flags = 0;
+	char *cipher = NULL, *mode;
+	int ret;
 
-	ret = dmc_is_luks(mt->lower_device, true);
-	if (ret < 0)
+	ret = crypt_init(&cd, mt->lower_device);
+	if (ret < 0) {
+		fprintf(stderr, "crypt_init: %s\n", strerror(-ret));
 		return false;
-
-	argk = 0;
-	is_luks = ret == 1;
-	start_args[argk++] = "cryptsetup";
+	}
 	if (req->readonly)
-		start_args[argk++] = "--readonly";
-	if (req->fs_cipher != NULL) {
-		start_args[argk++] = "-c";
-		start_args[argk++] = req->fs_cipher;
-	}
-	if (is_luks) {
-		start_args[argk++] = "luksOpen";
-		start_args[argk++] = mt->lower_device;
-		start_args[argk++] = mt->crypto_name;
-	} else {
-		start_args[argk++] = "--key-file=-";
-		start_args[argk++] = "-h";
-		start_args[argk++] = req->fs_hash;
-		if (req->trunc_keysize != 0) {
-			snprintf(key_size, sizeof(key_size), "-s%u",
-			         req->trunc_keysize);
-			start_args[argk++] = key_size;
+		flags |= CRYPT_ACTIVATE_READONLY;
+
+	ret = crypt_load(cd, CRYPT_LUKS1, NULL);
+	if (ret == 0) {
+		ret = crypt_activate_by_passphrase(cd, mt->crypto_name,
+		      CRYPT_ANY_SLOT, req->key_data, req->key_size, flags);
+		if (ret < 0) {
+			fprintf(stderr, "crypt_activate_by_passphrase: %s\n",
+			        strerror(-ret));
+			goto out;
 		}
-		start_args[argk++] = "create";
-		start_args[argk++] = mt->crypto_name;
-		start_args[argk++] = mt->lower_device;
+	} else {
+		struct crypt_params_plain params = {.hash = req->fs_hash};
+
+		cipher = HX_strdup(req->fs_cipher);
+		if (cipher == NULL) {
+			ret = -errno;
+			goto out;
+		}
+		/* stuff like aes-cbc-essiv:sha256 => aes, cbc-essiv:sha256 */
+		mode = strchr(cipher, '-');
+		if (mode != NULL)
+			*mode++ = '\0';
+		else
+			mode = "plain";
+
+		ret = crypt_format(cd, CRYPT_PLAIN, cipher, mode, NULL, NULL,
+		      req->trunc_keysize, &params);
+		if (ret < 0) {
+			fprintf(stderr, "crypt_format: %s\n", strerror(-ret));
+			goto out;
+		}
+
+		if (strcmp(req->fs_hash, "plain") == 0)
+			ret = crypt_activate_by_volume_key(cd, mt->crypto_name,
+			      req->key_data, req->key_size, flags);
+		else
+			ret = crypt_activate_by_passphrase(cd, mt->crypto_name,
+			      CRYPT_ANY_SLOT, req->key_data, req->key_size,
+			      flags);
+		if (ret < 0) {
+			fprintf(stderr, "crypt_activate: %s\n", strerror(-ret));
+			goto out;
+		}
 	}
-	start_args[argk] = NULL;
-	assert(argk < ARRAY_SIZE(start_args));
 
-	if (Debug)
-		arglist_llog(start_args);
-
-	memset(&proc, 0, sizeof(proc));
-	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDIN;
-	if ((ret = HXproc_run_async(start_args, &proc)) <= 0) {
-		l0g("Error setting up crypto device: %s\n", strerror(-ret));
-		return false;
-	}
-
-	/* Ignore return value, we can't do much in case it fails */
-	if (write(proc.p_stdin, req->key_data, req->key_size) < 0)
-		w4rn("%s: password send erro: %s\n", __func__, strerror(errno));
-	close(proc.p_stdin);
-	if ((ret = HXproc_wait(&proc)) != 0) {
-		w4rn("cryptsetup exited with non-zero status %d\n", ret);
-		return false;
-	}
-
-	return true;
+ out:
+	free(cipher);
+	crypt_free(cd);
+	return ret == 0 ? true : false;
 }
 
 static int dmc_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
