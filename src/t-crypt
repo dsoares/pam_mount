@@ -4,18 +4,21 @@ function cleanup ()
 {
 	umount /mnt || :;
 	cryptsetup remove "$cname" || :;
-	true;
+	losetup -d "$blk";
 }
 
 trap "cleanup; echo FAILED" EXIT
-modprobe brd;
 
-blk="/dev/ram0";
-cname="_dev_ram0";
+blk="/dev/loop7";
+cname="_dev_loop7";
 cblk="/dev/mapper/$cname";
 p128="128bitsXXXXXXXXX"
 p256="256bitsXXXXXXXXXXXXXXXXXXXXXXXXX"
 p512="512bitsXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+
+rm -f t-crypt.fs;
+truncate -s $[64*1048576] t-crypt.fs;
+losetup "$blk" t-crypt.fs;
 
 echo -en "$p512" | \
 	cryptsetup --key-file=- -c aes-xts-plain \
