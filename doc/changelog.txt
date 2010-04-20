@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.0 (April 20 2010)
+====================
 Changes:
 - mount.crypt: make use of libcryptsetup
 - cmtab is now stored below localstatedir (usually /var/run)
