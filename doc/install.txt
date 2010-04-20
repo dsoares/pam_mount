@@ -17,12 +17,12 @@ Additional required packages for building from (Git) snapshot:
 Optional packages for building:
 
 	* openssl 0.9.8 or up
+	* libcryptsetup 1.1.0 or up -- block-level encryption
 
 Suggested packages for runtime:
 
 	local targets:
 	* encfs 1.3 or up -- file-level encryption
-	* cryptsetup 1.0.5 or up -- block-level encryption
 
 	remote targets:
 	* sshfs -- SFTP-over-SSH

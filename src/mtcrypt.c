@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2008 - 2009
+ *	Copyright © Jan Engelhardt, 2008 - 2010
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -154,7 +154,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		else if (strcmp(key, "keyfile") == 0)
 			mo->fsk_file = value;
 		else if (strcmp(key, "keysize") == 0)
-			mo->trunc_keysize = strtoul(value, NULL, 0);
+			mo->trunc_keysize = strtoul(value, NULL, 0) / CHAR_BIT;
 		else if (strcmp(key, "fsck") == 0)
 			mo->fsck = true;
 		else if (strcmp(key, "loop") == 0)
@@ -297,7 +297,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		}
 	}
 
-#ifdef __linux__
+#ifdef HAVE_LIBCRYPTSETUP
 	if (dmc_is_luks(opt->container, opt->blkdev) == 0 &&
 	    opt->dmcrypt_cipher == NULL) {
 		fprintf(stderr, "%s: No dmcrypt cipher specified "
@@ -331,6 +331,9 @@ static int mtcr_mount(struct mount_options *opt)
 		.fs_cipher = opt->dmcrypt_cipher,
 		.fs_hash   = opt->dmcrypt_hash,
 		.readonly  = opt->readonly,
+
+		/* Hack for CRYPT_PLAIN. */
+		.trunc_keysize = 256 / CHAR_BIT,
 	};
 
 	if (opt->fsk_file == NULL) {
@@ -349,7 +352,7 @@ static int mtcr_mount(struct mount_options *opt)
 			fprintf(stderr, "Error while decrypting fskey\n");
 			return 0;
 		}
-		mount_request.trunc_keysize = HXmc_length(key) * CHAR_BIT;
+		mount_request.trunc_keysize = HXmc_length(key);
 	}
 
 	mount_request.key_data = key;
@@ -569,7 +572,8 @@ static int mtcr_umount(struct umount_options *opt)
 		final_ret = 0;
 		ehd_unload(&mount_info);
 	} else if ((ret = ehd_unload(&mount_info)) <= 0) {
-		final_ret = ret;
+		fprintf(stderr, "ehd_unload: %s\n", strerror(-ret));
+		final_ret = 0;
 	} else {
 		if (!opt->no_update)
 			pmt_smtab_remove(mountpoint, SMTABF_MOUNTPOINT);

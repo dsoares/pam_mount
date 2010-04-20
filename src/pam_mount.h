@@ -144,7 +144,7 @@ struct kvp {
  * @container:	path to disk image
  * @key_data:	key material
  * @key_size:	size of key data, in bytes
- * @trunc_keysize:	extra cryptsetup instruction for truncation (in bits)
+ * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
  * @readonly:	create readonly mount?
  */
 struct ehd_mtreq {

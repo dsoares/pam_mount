@@ -11,14 +11,10 @@ Source:		http://downloads.sf.net/pam-mount/%name-%version.tar.bz2
 BuildRequires:	libtool, pam-devel >= 0.99, pkg-config >= 0.19
 BuildRequires:	openssl-devel >= 0.9.8, libxml2-devel >= 2.6
 BuildRequires:	libHX-devel >= 3.4
+BuildRequires:	libcryptsetup-devel >= 1.1.0
 %if "%_vendor" == "suse"
 BuildRequires:	linux-kernel-headers >= 2.6
 Recommends:	cifs-mount
-%if %suse_version < 1030
-Recommends:	util-linux-crypto
-%else
-Recommends:	cryptsetup
-%endif
 %endif
 %if "%_vendor" == "redhat"
 BuildRequires:	kernel-headers

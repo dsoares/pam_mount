@@ -4,6 +4,7 @@ For details, see the history as recorded in the git repository.
 HEAD
 ====
 Changes:
+- mount.crypt: make use of libcryptsetup
 - cmtab is now stored below localstatedir (usually /var/run)
 - use HXformat2. This invalidates old constructs like %(before=\"-o\"...),
   which need to be replaced with the new syntax. (See below.)
