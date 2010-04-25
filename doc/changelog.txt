@@ -3,6 +3,9 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- config: rdconf1 static data had unclosed %(if) tags
+- config: rdconf1 static data had extraneous %(OPTIONS) parameter
 
 
 v2.0 (April 20 2010)
