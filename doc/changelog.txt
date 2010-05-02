@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.1 (May 02 2010)
+==================
 Fixes:
 - config: rdconf1 static data had unclosed %(if) tags
 - config: rdconf1 static data had extraneous %(OPTIONS) parameter
