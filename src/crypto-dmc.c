@@ -54,8 +54,8 @@ int dmc_is_luks(const char *path, bool blkdev)
 		else if (ret == 0)
 			ret = true;
 		/* else keep ret as-is */
+		crypt_free(cd);
 	}
-	crypt_free(cd);
 	if (!blkdev)
 		pmt_loop_release(loop_device);
 	return ret;

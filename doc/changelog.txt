@@ -3,6 +3,9 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- mount.crypt: fix memory scribble crash when crypto device could
+  not be initialized
 
 
 v2.1 (May 02 2010)
