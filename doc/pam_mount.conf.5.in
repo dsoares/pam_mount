@@ -287,7 +287,7 @@ sufficient where one may want to build more complex expressions as to whom a
 volume applies. Instead of attributes, extended user control is set up using
 additional elements within <volume>, for example
 .PP
-<volume path="/dev/shm" mountpoint="~"> <and> <sgrp>students</user> <not>
+<volume path="/dev/shm" mountpoint="~"> <and> <sgrp>students</sgrp> <not>
 <sgrp>profs</sgrp> </not> </and> </volume>
 .PP
 Which translates to (students && !profs).
