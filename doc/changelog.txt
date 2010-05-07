@@ -11,6 +11,7 @@ Fixes:
 - rdconf: do not warn about missing fskeyhash when no fskey specified
 - mount: prefer sysv mount API over bsd
 - pmt-ehd: reword help text for -k option
+- pmt-ehd: apply default value for -k option
 
 
 v2.1 (May 02 2010)

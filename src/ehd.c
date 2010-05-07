@@ -495,6 +495,7 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 		        "specify a key size. Assuming 256 bits. This may fail "
 		        "if the cipher does not support that keysize.\n",
 		        cont->cipher);
+		cont->keybits = 256;
 	}
 
 	if (cipher_digest_security(cont->cipher) < 1) {
