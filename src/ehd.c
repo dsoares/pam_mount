@@ -622,7 +622,8 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 	if (password == NULL || password2 == NULL ||
 	    strcmp(password, password2) != 0) {
 		fprintf(stderr, "Passwords mismatch.\n");
-		return EXIT_FAILURE;
+		ret = EXIT_FAILURE;
+		goto out;
 	}
 
 	ret = ehd_init_volume(pg, password != NULL ? password : "") ?
@@ -630,7 +631,15 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 	if (ret == EXIT_SUCCESS)
 		ehd_final_printout(pg);
 
-	HXmc_free(password);
+ out:
+	if (password != NULL) {
+		memset(password, '\0', HXmc_length(password));
+		HXmc_free(password);
+	}
+	if (password2 != NULL) {
+		memset(password2, '\0', HXmc_length(password2));
+		HXmc_free(password2);
+	}
 	return ret;
 }
 
