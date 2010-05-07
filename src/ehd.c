@@ -249,7 +249,7 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 /**
  * ehd_create_fskey - create encrypted fskey file
  * @password:		Password to encrypt the fskey with
- * @fskey:		Buffer to place fskey in (size: 64 bytes)
+ * @fskey:		Raw fskey (unencrypted)
  */
 static bool ehd_create_fskey(struct ehd_ctl *pg, const char *password,
     const unsigned char *fskey, unsigned int fskey_size)
@@ -349,7 +349,7 @@ static bool ehd_mkfs(const struct ehd_ctl *pg, const hxmc_t *crypto_device)
 static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
-	unsigned char fskey[EVP_MAX_KEY_LENGTH];
+	hxmc_t *fskey;
 	struct ehd_mount mount_info;
 	struct ehd_mtreq mount_request = {
 		.container = cont->path,
@@ -360,16 +360,24 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 		 * strength for the fskeys we generate.
 		 */
 		.fs_hash   = "plain",
-		.key_data  = fskey,
-		.key_size  = sizeof(fskey),
 		.readonly  = false,
 	};
 	bool f_ret = false;
 	int ret;
 
-	RAND_bytes(fskey, sizeof(fskey));
+	mount_request.key_size = (cont->keybits + CHAR_BIT - 1) / CHAR_BIT;
+	fskey = HXmc_meminit(NULL, mount_request.key_size);
+	if (fskey == NULL) {
+		perror("HXmc_meminit");
+		abort();
+	}
+
+	RAND_bytes(signed_cast(unsigned char *, fskey), mount_request.key_size);
+	mount_request.trunc_keysize = mount_request.key_size;
+	mount_request.key_data = fskey;
 	f_ret = false;
-	if (ehd_create_fskey(pg, password, fskey, sizeof(fskey)) &&
+	if (ehd_create_fskey(pg, password, mount_request.key_data,
+	    mount_request.key_size) &&
 	    ehd_load(&mount_request, &mount_info) > 0) {
 		f_ret = ehd_mkfs(pg, mount_info.crypto_device);
 		ret   = ehd_unload(&mount_info);
@@ -378,6 +386,8 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 			f_ret = ret > 0;
 	}
 
+	HXmc_free(fskey);
+	mount_request.key_data = NULL;
 	return f_ret;
 }
 

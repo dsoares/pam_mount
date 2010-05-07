@@ -12,6 +12,7 @@ Fixes:
 - mount: prefer sysv mount API over bsd
 - pmt-ehd: reword help text for -k option
 - pmt-ehd: apply default value for -k option
+- pmt-ehd: fix fskey generation which was pegged at 256 bits
 
 
 v2.1 (May 02 2010)
