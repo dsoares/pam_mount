@@ -574,7 +574,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 		 .help = "Filesystem key cipher (OpenSSL name)",
 		 .htyp = "NAME"},
 		{.sh = 'k', .type = HXTYPE_UINT, .ptr = &cont->keybits,
-		 .help = "Number of bits in filesystem key cipher",
+		 .help = "Number of bits fscipher (-c) operates with",
 		 .htyp = "BITS"},
 		{.sh = 'p', .type = HXTYPE_STRING, .ptr = &fsk->path,
 		 .help = "Filesystem key location", .htyp = "FILE"},

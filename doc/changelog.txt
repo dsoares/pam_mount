@@ -10,6 +10,7 @@ Fixes:
 - fusermount is now called with supplementary groups initialized
 - rdconf: do not warn about missing fskeyhash when no fskey specified
 - mount: prefer sysv mount API over bsd
+- pmt-ehd: reword help text for -k option
 
 
 v2.1 (May 02 2010)
