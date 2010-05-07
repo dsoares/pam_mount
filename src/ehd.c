@@ -368,14 +368,15 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	int ret;
 
 	RAND_bytes(fskey, sizeof(fskey));
-	if (!ehd_create_fskey(pg, password, fskey, sizeof(fskey)))
-		return false;
-	if (ehd_load(&mount_request, &mount_info) <= 0)
-		return false;
-	f_ret = ehd_mkfs(pg, mount_info.crypto_device);
-	ret   = ehd_unload(&mount_info);
-	if (f_ret)
-		f_ret = ret > 0;
+	f_ret = false;
+	if (ehd_create_fskey(pg, password, fskey, sizeof(fskey)) &&
+	    ehd_load(&mount_request, &mount_info) > 0) {
+		f_ret = ehd_mkfs(pg, mount_info.crypto_device);
+		ret   = ehd_unload(&mount_info);
+		/* If mkfs failed, use its code. */
+		if (f_ret)
+			f_ret = ret > 0;
+	}
 
 	return f_ret;
 }
@@ -603,34 +604,34 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 {
 	hxmc_t *password, *password2;
+	int ret;
 
 	if (!ehd_get_options(&argc, &argv, pg))
-		return false;
+		return EXIT_FAILURE;
 
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 	pmtlog_prefix = "ehd";
 
 	if (!ehd_check(pg))
-		return false;
+		return EXIT_FAILURE;
 	if (!ehd_create_container(pg))
-		return false;
+		return EXIT_FAILURE;
 	password  = pmt_get_password(NULL);
 	password2 = pmt_get_password("Reenter password: ");
 	if (password == NULL || password2 == NULL ||
 	    strcmp(password, password2) != 0) {
 		fprintf(stderr, "Passwords mismatch.\n");
-		return false;
+		return EXIT_FAILURE;
 	}
 
-	if (!ehd_init_volume(pg, password != NULL ? password : "")) {
-		HXmc_free(password);
-		return false;
-	} else {
+	ret = ehd_init_volume(pg, password != NULL ? password : "") ?
+	      EXIT_SUCCESS : EXIT_FAILURE;
+	if (ret == EXIT_SUCCESS)
 		ehd_final_printout(pg);
-		HXmc_free(password);
-		return true;
-	}
+
+	HXmc_free(password);
+	return ret;
 }
 
 int main(int argc, const char **argv)
@@ -642,5 +643,5 @@ int main(int argc, const char **argv)
 	OpenSSL_add_all_digests();
 	memset(&pg, 0, sizeof(pg));
 
-	return main2(argc, argv, &pg) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return main2(argc, argv, &pg);
 }
