@@ -135,7 +135,7 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
  out:
 	free(cipher);
 	crypt_free(cd);
-	return ret == 0 ? true : false;
+	return ret >= 0 ? true : false;
 }
 
 static int dmc_load(const struct ehd_mtreq *req, struct ehd_mount *mt)

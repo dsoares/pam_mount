@@ -21,10 +21,13 @@ truncate -s $[64*1048576] t-crypt.fs;
 losetup "$blk" t-crypt.fs;
 
 echo -en "abc" | cryptsetup luksFormat "$blk";
+echo -en "abc\nxyz\n" | cryptsetup luksAddKey "$blk";
 echo -en "abc" | cryptsetup luksOpen "$blk" "$cname";
 mkfs.ext4 "$cblk";
 cryptsetup luksClose "$cname";
 echo -en "abc" | ./mount.crypt -v "$blk" /mnt;
+./umount.crypt --umount /mnt;
+echo -en "xyz" | ./mount.crypt -v "$blk" /mnt;
 ./umount.crypt --umount /mnt;
 
 echo -en "$p512" | \

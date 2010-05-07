@@ -6,6 +6,7 @@ HEAD
 Fixes:
 - mount.crypt: fix memory scribble crash when crypto device could
   not be initialized
+- mount.crypt: do not fail when unlocking key slot other than #0
 
 
 v2.1 (May 02 2010)
