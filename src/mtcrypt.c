@@ -584,19 +584,6 @@ static int mtcr_umount(struct umount_options *opt)
 	return final_ret;
 }
 
-static bool do_umount(int *argc, const char ***argv)
-{
-	bool ret = false;
-	struct HXoption options_table[] = {
-		{.ln = "umount", .ptr = &ret},
-		HXOPT_TABLEEND,
-	};
-	if (strncmp(HX_basename(**argv), "umount", strlen("umount")) == 0)
-		return true;
-	HX_getopt(options_table, argc, argv, HXOPT_PTHRU);
-	return ret;
-}
-
 int main(int argc, const char **argv)
 {
 	int ret;
@@ -615,7 +602,8 @@ int main(int argc, const char **argv)
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 
-	if (do_umount(&argc, &argv)) {
+	/* primitive test, but %HXOPT_PTHRU blows up */
+	if (argc >= 2 && strcmp(argv[1], "--umount") == 0) {
 		struct umount_options opt;
 
 		memset(&opt, 0, sizeof(opt));
