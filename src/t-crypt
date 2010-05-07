@@ -9,8 +9,8 @@ function cleanup ()
 
 trap "cleanup; echo FAILED" ERR
 
-blk="/dev/loop7";
-cname="_dev_loop7";
+blk="/dev/loop94";
+cname="_dev_loop94";
 cblk="/dev/mapper/$cname";
 p128="128bitsXXXXXXXXX"
 p256="256bitsXXXXXXXXXXXXXXXXXXXXXXXXX"
