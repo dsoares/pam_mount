@@ -53,7 +53,7 @@ AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/cgdvar.h dev/vndvar.h])
 AC_CHECK_HEADERS([sys/mdioctl.h sys/mount.h sys/statvfs.h])
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
-AC_CHECK_FUNCS([getmntent getmntinfo])
+AC_CHECK_FUNCS([getmntent getmntinfo initgroups])
 
 PKG_CHECK_MODULES([libHX], [libHX >= 3.4])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])

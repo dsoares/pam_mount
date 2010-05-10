@@ -15,6 +15,7 @@
 #include <libHX/deque.h>
 #include <libHX/proc.h>
 #include <libHX/string.h>
+#include <grp.h>
 #include <pwd.h>
 #include "pam_mount.h"
 
@@ -109,6 +110,9 @@ static void set_myuid(void *data)
 			l0g("could not get passwd entry for user %s\n", user);
 			return;
 		}
+#ifdef HAVE_INITGROUPS
+		initgroups(real_user->pw_name, real_user->pw_gid);
+#endif
 		if (setgid(real_user->pw_gid) == -1) {
 			l0g("could not set gid to %ld\n",
 			    static_cast(long, real_user->pw_gid));
