@@ -242,7 +242,8 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 
 	ret = true;
  out:
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 	return ret;
 }
 
@@ -512,7 +513,7 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 	if (cipher_digest_security(cont->cipher) < 1) {
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
 		        cont->cipher);
-		return false;
+//		return false;
 	}
 
 	ret = true;
@@ -551,11 +552,11 @@ static bool ehd_fill_options_fskey(struct ehd_ctl *pg)
 	if (cipher_digest_security(fsk->cipher) < 1) {
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
 		        fsk->cipher);
-		return false;
+//		return false;
 	} else if (cipher_digest_security(fsk->digest) < 1) {
 		fprintf(stderr, "Digest \"%s\" is considered insecure.\n",
 		        fsk->digest);
-		return false;
+//		return false;
 	}
 
 	ret = true;
