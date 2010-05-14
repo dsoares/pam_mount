@@ -20,6 +20,7 @@ Changes:
 - pmt-ehd: reword help text for -k option
 - mount.crypt: ignore cmtab update errors
 - mount.crypt: add support for keyfile passthru using -ofsk_cipher=none
+- doc: document mount.crypt's -o hash option
 
 
 v2.1 (May 02 2010)

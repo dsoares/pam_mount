@@ -52,6 +52,10 @@ The OpenSSL hash used for producing key and IV.
 The exact type of filesystem in the encrypted container. The default is to let
 the kernel autodetect.
 .TP
+\fBhash\fP
+The cryptsetup hash used for the encrypted volume. This defaults to no hashing,
+because pam_mount assumes EHD volumes with strong and simple fskey generation.
+.TP
 \fBkeyfile\fP
 The path to the key file. This option is mandatory for "normal" crypto volumes
 and should not be used for LUKS volumes.
