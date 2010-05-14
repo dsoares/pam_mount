@@ -207,8 +207,7 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 
 	if (cont->skip_random) {
 		printf("Truncating container\n");
-		fd = open(cont->path, O_WRONLY | O_CREAT | O_TRUNC,
-		     S_IRUSR | S_IWUSR);
+		fd = open(cont->path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 		if (fd < 0) {
 			fprintf(stderr, "open %s: %s\n",
 			        cont->path, strerror(errno));

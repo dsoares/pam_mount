@@ -13,6 +13,7 @@ Fixes:
 - pmt-ehd: reword help text for -k option
 - pmt-ehd: apply default value for -k option
 - pmt-ehd: fix fskey generation which was pegged at 256 bits
+- pmt-ehd: avoid needless overtruncation/sparsifying
 
 
 v2.1 (May 02 2010)
