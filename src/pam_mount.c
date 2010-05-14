@@ -471,6 +471,7 @@ static char *ses_grab_authtok(pam_handle_t *pamh)
 	if (Args.get_pw_interactive) {
 		ret = read_password(pamh, Config.msg_sessionpw, &authtok);
 		if (ret != PAM_SUCCESS)
+			/* authtok is %NULL now */
 			l0g("warning: could not obtain password "
 			    "interactively either\n");
 	}
