@@ -200,6 +200,14 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 	}
 }
 
+/**
+ * keyfile passthru (kfpt)
+ */
+static bool kfpt_selected(const char *c)
+{
+	return c != NULL && strcmp(c, "none") == 0;
+}
+
 static bool mtcr_get_mount_options(int *argc, const char ***argv,
     struct mount_options *opt)
 {
@@ -216,6 +224,8 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
 	};
+	bool kfpt;
+	int ret;
 
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
@@ -285,12 +295,20 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		return false;
 	}
 
-	if (opt->fsk_file != NULL) {
+	kfpt = kfpt_selected(opt->fsk_cipher);
+	if (opt->fsk_file == NULL) {
+		if (opt->fsk_cipher != NULL)
+			fprintf(stderr, "%s: fsk_cipher is ignored because no "
+			        "keyfile given\n", **argv);
+		if (opt->fsk_hash != NULL)
+			fprintf(stderr, "%s: fsk_hash is ignored because no "
+			        "keyfile given\n", **argv);
+	} else {
 		if (opt->fsk_cipher == NULL) {
 			fprintf(stderr, "%s: No openssl cipher specified "
 			        "(use -o fsk_cipher=xxx)\n", **argv);
 			return false;
-		} else if (opt->fsk_hash == NULL) {
+		} else if (!kfpt && opt->fsk_hash == NULL) {
 			fprintf(stderr, "%s: No openssl hash specified "
 			        "(use -o fsk_hash=xxx)\n", **argv);
 			return false;
@@ -298,19 +316,58 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	}
 
 #ifdef HAVE_LIBCRYPTSETUP
-	if (dmc_is_luks(opt->container, opt->blkdev) == 0 &&
-	    opt->dmcrypt_cipher == NULL) {
-		fprintf(stderr, "%s: No dmcrypt cipher specified "
-		        "(use -o cipher=xxx)\n", **argv);
-		return false;
+	ret = dmc_is_luks(opt->container, opt->blkdev);
+	if (ret > 0) {
+		/* LUKS */
+		if (opt->dmcrypt_cipher != NULL)
+			fprintf(stderr, "%s: dmcrypt cipher ignored for LUKS "
+			        "volumes\n", **argv);
+		if (opt->dmcrypt_hash != NULL)
+			fprintf(stderr, "%s: dmcrypt hash ignored for LUKS "
+			        "volumes\n", **argv);
+	} else if (ret == 0) {
+		/* PLAIN */
+		if (opt->dmcrypt_cipher == NULL) {
+			fprintf(stderr, "%s: No dmcrypt cipher specified "
+			        "(use -o cipher=xxx)\n", **argv);
+			return false;
+		}
 	}
 #endif
 
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
-
-	opt->fsk_password = pmt_get_password(NULL);
+	if (!kfpt)
+		opt->fsk_password = pmt_get_password(NULL);
 	return true;
+}
+
+static hxmc_t *mtcr_slurp_file(const char *file)
+{
+	hxmc_t *buf, *ln = NULL;
+	struct stat sb;
+	FILE *fp;
+
+	fp = fopen(file, "r");
+	if (fp == NULL) {
+		fprintf(stderr, "Could not open %s: %s\n",
+		        file, strerror(errno));
+		return NULL;
+	}
+
+	if (fstat(fileno(fp), &sb) == 0 && S_ISREG(sb.st_mode))
+		buf = HXmc_meminit(NULL, sb.st_size);
+	else
+		buf = HXmc_meminit(NULL, 4096 / CHAR_BIT);
+
+	if (buf == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
+	} else {
+		while (HX_getl(&ln, fp) != NULL)
+			HXmc_strcat(&buf, ln);
+	}
+	fclose(fp);
+	return buf;
 }
 
 /**
@@ -345,6 +402,11 @@ static int mtcr_mount(struct mount_options *opt)
 			return 0;
 		}
 		/* Leave trunc_keysize at 0 */
+	} else if (kfpt_selected(opt->fsk_cipher)) {
+		key = mtcr_slurp_file(opt->fsk_file);
+		if (key == NULL)
+			return 0;
+		mount_request.trunc_keysize = HXmc_length(key);
 	} else {
 		key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
 		      opt->fsk_cipher, opt->fsk_password);
@@ -434,7 +496,6 @@ static int mtcr_mount(struct mount_options *opt)
 	    mount_info.crypto_device)) <= 0) {
 		fprintf(stderr, "pmt_cmtab_add: %s\n", strerror(errno));
 		/* ignore error on cmtab - let user have his crypto */
-		ret = 0;
 	} else if (opt->no_update) {
 		/* awesome logic */;
 	} else {
@@ -602,8 +663,8 @@ int main(int argc, const char **argv)
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 
-	/* primitive test, but %HXOPT_PTHRU blows up */
-	if (argc >= 2 && strcmp(argv[1], "--umount") == 0) {
+	/* primitive test, but everything else falls down */
+	if (getenv("PMT_DEBUG_UMOUNT") != NULL) {
 		struct umount_options opt;
 
 		memset(&opt, 0, sizeof(opt));
