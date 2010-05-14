@@ -205,14 +205,13 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 	bool ret = false;
 	int fd = -1;
 
+	fd = open(cont->path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd < 0) {
+		fprintf(stderr, "open %s: %s\n", cont->path, strerror(errno));
+		return false;
+	}
 	if (cont->skip_random) {
 		printf("Truncating container\n");
-		fd = open(cont->path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-		if (fd < 0) {
-			fprintf(stderr, "open %s: %s\n",
-			        cont->path, strerror(errno));
-			return false;
-		}
 		if (!cont->blkdev) {
 			/*
 			 * /dev nodes should not be owned by user, even if it
@@ -238,7 +237,13 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 		printf("Writing random data to container\n");
 		ehd_xfer("/dev/urandom", cont->path, cont->size);
 	}
-
+	/*
+	 * Kill off any potential LUKS header, otherwise ehd_load, which will
+	 * be called later, misidentifies our (new) PLAIN volume.
+	 */
+	lseek(fd, 0, SEEK_SET);
+	if (write(fd, "\0\0\0\0", 4) != 4)
+		fprintf(stderr, "write: %s\n", strerror(errno));
 	ret = true;
  out:
 	if (fd >= 0)
