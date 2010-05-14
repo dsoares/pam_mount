@@ -26,9 +26,9 @@ echo -en "abc" | cryptsetup luksOpen "$blk" "$cname";
 mkfs.ext4 "$cblk";
 cryptsetup luksClose "$cname";
 echo -en "abc" | ./mount.crypt -v "$blk" /mnt;
-./umount.crypt --umount /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 echo -en "xyz" | ./mount.crypt -v "$blk" /mnt;
-./umount.crypt --umount /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
 echo -en "$p512" | \
 	cryptsetup --key-file=- -c aes-xts-plain \
@@ -38,7 +38,7 @@ cryptsetup remove "$cname";
 echo -en "$p512" | \
 	./mount.crypt -vo "hash=sha512,keysize=512,cipher=aes-xts-plain" \
 	"$blk" /mnt;
-./umount.crypt --umount /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
 echo -en "$p512" | \
 	cryptsetup --key-file=- -c aes-xts-plain \
@@ -48,7 +48,7 @@ cryptsetup remove "$cname";
 echo -en "$p512" | \
 	./mount.crypt -vo "keysize=512,cipher=aes-xts-plain" \
 	"$blk" /mnt;
-./umount.crypt --umount /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
 echo -en "$p512" >/dev/shm/p512.key;
 echo -en "$p512" | openssl bf-cbc -pass pass:abc >/dev/shm/p512.enc;
@@ -59,7 +59,7 @@ cryptsetup remove "$cname";
 echo -en abc | \
 	./mount.crypt -vo keyfile=/dev/shm/p512.enc,cipher=aes-xts-plain,fsk_cipher=bf-cbc,fsk_hash=md5 \
 	"$blk" /mnt;
-./umount.crypt --umount /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
 for p in "short" "$p128" "$p256" "$p512"; do
 	echo -en "$p" | cryptsetup --key-file=- -c aes-cbc-essiv:sha256 \
@@ -68,7 +68,7 @@ for p in "short" "$p128" "$p256" "$p512"; do
 	cryptsetup remove "$cname";
 	echo -en "$p" | ./mount.crypt -vo \
 		hash=sha512,cipher=aes-cbc-essiv:sha256 "$blk" /mnt;
-	./umount.crypt --umount /mnt;
+	PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 done;
 
 for ((k = 32; k <= 448; k += 8)); do
@@ -79,7 +79,7 @@ for ((k = 32; k <= 448; k += 8)); do
 	echo -en "$p512" | ./mount.crypt -vo \
 		"hash=sha512,keysize=$k,cipher=blowfish" \
 		"$blk" /mnt;
-	./umount.crypt --umount /mnt;
+	PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 done;
 
 trap "" ERR;
