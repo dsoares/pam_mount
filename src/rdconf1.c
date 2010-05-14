@@ -1313,6 +1313,10 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		free(vpt->cipher);
 		vpt->cipher = tmp;
 	}
+	if ((tmp = xml_getprop(node, "fskeypath")) != NULL) {
+		free(vpt->fs_key_path);
+		vpt->fs_key_path = tmp;
+	}
 	if ((tmp = xml_getprop(node, "fskeycipher")) != NULL) {
 		free(vpt->fs_key_cipher);
 		vpt->fs_key_cipher = tmp;
@@ -1320,14 +1324,10 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 	if ((tmp = xml_getprop(node, "fskeyhash")) != NULL) {
 		free(vpt->fs_key_hash);
 		vpt->fs_key_hash = tmp;
-	} else {
+	} else if (vpt->fs_key_path != NULL) {
 		l0g("Volume %s: consider specifying the fskeyhash\n",
 		    (vpt->volume != NULL) ? vpt->volume : "(null)");
 		vpt->fs_key_hash = HX_strdup("md5");
-	}
-	if ((tmp = xml_getprop(node, "fskeypath")) != NULL) {
-		free(vpt->fs_key_path);
-		vpt->fs_key_path = tmp;
 	}
 
 	if (fstype_nodev(vpt->fstype) == 1 && vpt->volume == NULL)
