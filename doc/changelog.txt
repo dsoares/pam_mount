@@ -18,6 +18,7 @@ Fixes:
 Changes:
 - pmt-ehd: speed up writing random data
 - pmt-ehd: reword help text for -k option
+- mount.crypt: ignore cmtab update errors
 
 
 v2.1 (May 02 2010)

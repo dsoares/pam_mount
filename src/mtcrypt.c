@@ -434,7 +434,6 @@ static int mtcr_mount(struct mount_options *opt)
 	    mount_info.crypto_device)) <= 0) {
 		fprintf(stderr, "pmt_cmtab_add: %s\n", strerror(errno));
 		/* ignore error on cmtab - let user have his crypto */
-		ret = 0;
 	} else if (opt->no_update) {
 		/* awesome logic */;
 	} else {
