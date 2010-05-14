@@ -15,6 +15,8 @@ Fixes:
 - pmt-ehd: fix fskey generation which was pegged at 256 bits
 - pmt-ehd: avoid needless overtruncation/sparsifying
 - pmt-ehd: zero LUKS header to avoid setup failure of PLAIN volume
+Changes:
+- pmt-ehd: speed up writing random data
 
 
 v2.1 (May 02 2010)

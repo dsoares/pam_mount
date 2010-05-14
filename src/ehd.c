@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/misc.h>
 #include <libHX/option.h>
 #include <libHX/proc.h>
 #include <libHX/string.h>
@@ -156,46 +157,55 @@ static bool ehd_check(const struct ehd_ctl *pg)
 	return true;
 }
 
-/**
- * ehd_xfer - transfer bytes around
- * @src_path:	source file
- * @dst_path:	destination file
- * @z:		number of bytes to copy
- */
-static bool ehd_xfer(const char *src_path, const char *dst_path, ssize_t z)
+static bool ehd_xfer(int fd, size_t z)
 {
-	int src_fd = -1, dst_fd = -1;
-	bool ret = false;
+#define BUFSIZE (65536 / sizeof(*buffer) * sizeof(*buffer))
+	unsigned int i;
+	bool ret = true;
+	int *buffer;
+	ssize_t wret;
 
-	if ((src_fd = open(src_path, O_RDONLY)) < 0) {
-		fprintf(stderr, "open %s: %s\n", src_path, strerror(errno));
-		goto out;
+	buffer = malloc(BUFSIZE);
+	if (buffer == NULL) {
+		perror("malloc");
+		return false;
 	}
-	if ((dst_fd = open(dst_path, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXUGO)) < 0) {
-		fprintf(stderr, "open %s: %s\n", dst_path, strerror(errno));
-		goto out;
-	}
+
+	printf("Writing random data to container\n");
+	for (i = 0; i < BUFSIZE / sizeof(*buffer); ++i)
+		buffer[i] = HX_rand();
 
 	while (z > 0) {
-		char buf[4096];
-		ssize_t r, w;
-
-		r = read(src_fd, buf, sizeof(buf));
-		if (r <= 0) {
-			perror("read");
-			goto out;
-		}
-		z -= r;
-		w = write(dst_fd, buf, r);
-		if (w < 0) {
+		wret = write(fd, buffer, (z >= BUFSIZE) ? BUFSIZE : z);
+		if (wret < 0) {
 			perror("write");
-			goto out;
+			ret = false;
+			break;
+		}
+		z -= wret;
+		if ((z & 0xffffff) == 0) {
+			printf("\r\e[2K%zu MB left", z >> 20);
+			fflush(stdout);
 		}
 	}
+	printf("\n");
+	free(buffer);
+	return ret;
+#undef BUFSIZE
+}
 
- out:
-	close(src_fd);
-	close(dst_fd);
+static bool ehd_xfer2(const char *name, size_t size)
+{
+	bool ret;
+	int fd;
+
+	fd = open(name, O_WRONLY);
+	if (fd < 0) {
+		fprintf(stderr, "open %s: %s\n", name, strerror(errno));
+		return false;
+	}
+	ret = ehd_xfer(fd, size);
+	close(fd);
 	return ret;
 }
 
@@ -234,8 +244,7 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 			}
 		}
 	} else {
-		printf("Writing random data to container\n");
-		ehd_xfer("/dev/urandom", cont->path, cont->size);
+		ehd_xfer(fd, cont->size);
 	}
 	/*
 	 * Kill off any potential LUKS header, otherwise ehd_load, which will
@@ -384,6 +393,8 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	if (ehd_create_fskey(pg, password, mount_request.key_data,
 	    mount_request.key_size) &&
 	    ehd_load(&mount_request, &mount_info) > 0) {
+		if (!cont->skip_random)
+			ehd_xfer2(mount_info.crypto_device, cont->size);
 		f_ret = ehd_mkfs(pg, mount_info.crypto_device);
 		ret   = ehd_unload(&mount_info);
 		/* If mkfs failed, use its code. */
