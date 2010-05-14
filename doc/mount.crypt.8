@@ -29,9 +29,9 @@ Turn on debugging and be a bit more verbose.
 .SH Mount options
 .TP
 \fBcipher\fP
-The cryptsetup cipher used for the encrypted volume. This option is mandatory.
-pmt-ehd(8) defaults to creating volumes with "aes\-cbc\-essiv:sha256" as a
-cipher.
+The cryptsetup cipher used for the encrypted volume. This option is mandatory
+for PLAIN (non-LUKS) volumes. pmt-ehd(8) defaults to creating volumes with
+"aes\-cbc\-essiv:sha256" as a cipher.
 .TP
 \fBdm\-timeout=\fP\fIseconds\fP
 Wait at most this many seconds for udev to create /dev/mapper/\fIname\fP after

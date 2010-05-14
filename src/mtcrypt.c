@@ -225,6 +225,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		HXOPT_TABLEEND,
 	};
 	bool kfpt;
+	int ret;
 
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
@@ -295,7 +296,14 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	}
 
 	kfpt = kfpt_selected(opt->fsk_cipher);
-	if (opt->fsk_file != NULL) {
+	if (opt->fsk_file == NULL) {
+		if (opt->fsk_cipher != NULL)
+			fprintf(stderr, "%s: fsk_cipher is ignored because no "
+			        "keyfile given\n", **argv);
+		if (opt->fsk_hash != NULL)
+			fprintf(stderr, "%s: fsk_hash is ignored because no "
+			        "keyfile given\n", **argv);
+	} else {
 		if (opt->fsk_cipher == NULL) {
 			fprintf(stderr, "%s: No openssl cipher specified "
 			        "(use -o fsk_cipher=xxx)\n", **argv);
@@ -308,11 +316,22 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	}
 
 #ifdef HAVE_LIBCRYPTSETUP
-	if (dmc_is_luks(opt->container, opt->blkdev) == 0 &&
-	    opt->dmcrypt_cipher == NULL) {
-		fprintf(stderr, "%s: No dmcrypt cipher specified "
-		        "(use -o cipher=xxx)\n", **argv);
-		return false;
+	ret = dmc_is_luks(opt->container, opt->blkdev);
+	if (ret > 0) {
+		/* LUKS */
+		if (opt->dmcrypt_cipher != NULL)
+			fprintf(stderr, "%s: dmcrypt cipher ignored for LUKS "
+			        "volumes\n", **argv);
+		if (opt->dmcrypt_hash != NULL)
+			fprintf(stderr, "%s: dmcrypt hash ignored for LUKS "
+			        "volumes\n", **argv);
+	} else if (ret == 0) {
+		/* PLAIN */
+		if (opt->dmcrypt_cipher == NULL) {
+			fprintf(stderr, "%s: No dmcrypt cipher specified "
+			        "(use -o cipher=xxx)\n", **argv);
+			return false;
+		}
 	}
 #endif
 

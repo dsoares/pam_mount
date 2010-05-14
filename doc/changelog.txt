@@ -21,6 +21,7 @@ Changes:
 - mount.crypt: ignore cmtab update errors
 - mount.crypt: add support for keyfile passthru using -ofsk_cipher=none
 - doc: document mount.crypt's -o hash option
+- mount.crypt: warn on ignored options
 
 
 v2.1 (May 02 2010)
