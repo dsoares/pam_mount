@@ -7,7 +7,7 @@
  *	of the License, or (at your option) any later version.
  */
 #include "config.h"
-#ifdef HAVE_GETMNTINFO /* entire file */
+#if !defined(HAVE_GETMNTENT) && defined(HAVE_GETMNTINFO) /* entire file */
 
 #ifdef HAVE_SYS_MOUNT_H
 #	include <sys/mount.h>
@@ -69,4 +69,4 @@ int pmt_already_mounted(const struct config *config,
 	return mounted || pmt_cmtab_mounted(dev, vpt->mountpoint);
 }
 
-#endif /* HAVE_GETMNTINFO */
+#endif /* !HAVE_GETMNTENT && HAVE_GETMNTINFO */
