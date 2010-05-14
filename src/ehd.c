@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/misc.h>
 #include <libHX/option.h>
 #include <libHX/proc.h>
 #include <libHX/string.h>
@@ -156,46 +157,55 @@ static bool ehd_check(const struct ehd_ctl *pg)
 	return true;
 }
 
-/**
- * ehd_xfer - transfer bytes around
- * @src_path:	source file
- * @dst_path:	destination file
- * @z:		number of bytes to copy
- */
-static bool ehd_xfer(const char *src_path, const char *dst_path, ssize_t z)
+static bool ehd_xfer(int fd, size_t z)
 {
-	int src_fd = -1, dst_fd = -1;
-	bool ret = false;
+#define BUFSIZE (65536 / sizeof(*buffer) * sizeof(*buffer))
+	unsigned int i;
+	bool ret = true;
+	int *buffer;
+	ssize_t wret;
 
-	if ((src_fd = open(src_path, O_RDONLY)) < 0) {
-		fprintf(stderr, "open %s: %s\n", src_path, strerror(errno));
-		goto out;
+	buffer = malloc(BUFSIZE);
+	if (buffer == NULL) {
+		perror("malloc");
+		return false;
 	}
-	if ((dst_fd = open(dst_path, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXUGO)) < 0) {
-		fprintf(stderr, "open %s: %s\n", dst_path, strerror(errno));
-		goto out;
-	}
+
+	printf("Writing random data to container\n");
+	for (i = 0; i < BUFSIZE / sizeof(*buffer); ++i)
+		buffer[i] = HX_rand();
 
 	while (z > 0) {
-		char buf[4096];
-		ssize_t r, w;
-
-		r = read(src_fd, buf, sizeof(buf));
-		if (r <= 0) {
-			perror("read");
-			goto out;
-		}
-		z -= r;
-		w = write(dst_fd, buf, r);
-		if (w < 0) {
+		wret = write(fd, buffer, (z >= BUFSIZE) ? BUFSIZE : z);
+		if (wret < 0) {
 			perror("write");
-			goto out;
+			ret = false;
+			break;
+		}
+		z -= wret;
+		if ((z & 0xffffff) == 0) {
+			printf("\r\e[2K%zu MB left", z >> 20);
+			fflush(stdout);
 		}
 	}
+	printf("\n");
+	free(buffer);
+	return ret;
+#undef BUFSIZE
+}
 
- out:
-	close(src_fd);
-	close(dst_fd);
+static bool ehd_xfer2(const char *name, size_t size)
+{
+	bool ret;
+	int fd;
+
+	fd = open(name, O_WRONLY);
+	if (fd < 0) {
+		fprintf(stderr, "open %s: %s\n", name, strerror(errno));
+		return false;
+	}
+	ret = ehd_xfer(fd, size);
+	close(fd);
 	return ret;
 }
 
@@ -205,15 +215,13 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 	bool ret = false;
 	int fd = -1;
 
+	fd = open(cont->path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd < 0) {
+		fprintf(stderr, "open %s: %s\n", cont->path, strerror(errno));
+		return false;
+	}
 	if (cont->skip_random) {
 		printf("Truncating container\n");
-		fd = open(cont->path, O_WRONLY | O_CREAT | O_TRUNC,
-		     S_IRUSR | S_IWUSR);
-		if (fd < 0) {
-			fprintf(stderr, "open %s: %s\n",
-			        cont->path, strerror(errno));
-			return false;
-		}
 		if (!cont->blkdev) {
 			/*
 			 * /dev nodes should not be owned by user, even if it
@@ -236,20 +244,26 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 			}
 		}
 	} else {
-		printf("Writing random data to container\n");
-		ehd_xfer("/dev/urandom", cont->path, cont->size);
+		ehd_xfer(fd, cont->size);
 	}
-
+	/*
+	 * Kill off any potential LUKS header, otherwise ehd_load, which will
+	 * be called later, misidentifies our (new) PLAIN volume.
+	 */
+	lseek(fd, 0, SEEK_SET);
+	if (write(fd, "\0\0\0\0", 4) != 4)
+		fprintf(stderr, "write: %s\n", strerror(errno));
 	ret = true;
  out:
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 	return ret;
 }
 
 /**
  * ehd_create_fskey - create encrypted fskey file
  * @password:		Password to encrypt the fskey with
- * @fskey:		Buffer to place fskey in (size: 64 bytes)
+ * @fskey:		Raw fskey (unencrypted)
  */
 static bool ehd_create_fskey(struct ehd_ctl *pg, const char *password,
     const unsigned char *fskey, unsigned int fskey_size)
@@ -349,7 +363,7 @@ static bool ehd_mkfs(const struct ehd_ctl *pg, const hxmc_t *crypto_device)
 static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
-	unsigned char fskey[EVP_MAX_KEY_LENGTH];
+	hxmc_t *fskey;
 	struct ehd_mount mount_info;
 	struct ehd_mtreq mount_request = {
 		.container = cont->path,
@@ -360,23 +374,36 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 		 * strength for the fskeys we generate.
 		 */
 		.fs_hash   = "plain",
-		.key_data  = fskey,
-		.key_size  = sizeof(fskey),
 		.readonly  = false,
 	};
 	bool f_ret = false;
 	int ret;
 
-	RAND_bytes(fskey, sizeof(fskey));
-	if (!ehd_create_fskey(pg, password, fskey, sizeof(fskey)))
-		return false;
-	if (ehd_load(&mount_request, &mount_info) <= 0)
-		return false;
-	f_ret = ehd_mkfs(pg, mount_info.crypto_device);
-	ret   = ehd_unload(&mount_info);
-	if (f_ret)
-		f_ret = ret > 0;
+	mount_request.key_size = (cont->keybits + CHAR_BIT - 1) / CHAR_BIT;
+	fskey = HXmc_meminit(NULL, mount_request.key_size);
+	if (fskey == NULL) {
+		perror("HXmc_meminit");
+		abort();
+	}
 
+	RAND_bytes(signed_cast(unsigned char *, fskey), mount_request.key_size);
+	mount_request.trunc_keysize = mount_request.key_size;
+	mount_request.key_data = fskey;
+	f_ret = false;
+	if (ehd_create_fskey(pg, password, mount_request.key_data,
+	    mount_request.key_size) &&
+	    ehd_load(&mount_request, &mount_info) > 0) {
+		if (!cont->skip_random)
+			ehd_xfer2(mount_info.crypto_device, cont->size);
+		f_ret = ehd_mkfs(pg, mount_info.crypto_device);
+		ret   = ehd_unload(&mount_info);
+		/* If mkfs failed, use its code. */
+		if (f_ret)
+			f_ret = ret > 0;
+	}
+
+	HXmc_free(fskey);
+	mount_request.key_data = NULL;
 	return f_ret;
 }
 
@@ -495,12 +522,13 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 		        "specify a key size. Assuming 256 bits. This may fail "
 		        "if the cipher does not support that keysize.\n",
 		        cont->cipher);
+		cont->keybits = 256;
 	}
 
 	if (cipher_digest_security(cont->cipher) < 1) {
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
 		        cont->cipher);
-		return false;
+//		return false;
 	}
 
 	ret = true;
@@ -539,11 +567,11 @@ static bool ehd_fill_options_fskey(struct ehd_ctl *pg)
 	if (cipher_digest_security(fsk->cipher) < 1) {
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
 		        fsk->cipher);
-		return false;
+//		return false;
 	} else if (cipher_digest_security(fsk->digest) < 1) {
 		fprintf(stderr, "Digest \"%s\" is considered insecure.\n",
 		        fsk->digest);
-		return false;
+//		return false;
 	}
 
 	ret = true;
@@ -574,7 +602,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 		 .help = "Filesystem key cipher (OpenSSL name)",
 		 .htyp = "NAME"},
 		{.sh = 'k', .type = HXTYPE_UINT, .ptr = &cont->keybits,
-		 .help = "Number of bits in filesystem key cipher",
+		 .help = "Number of bits fscipher (-c) operates with",
 		 .htyp = "BITS"},
 		{.sh = 'p', .type = HXTYPE_STRING, .ptr = &fsk->path,
 		 .help = "Filesystem key location", .htyp = "FILE"},
@@ -602,34 +630,43 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 {
 	hxmc_t *password, *password2;
+	int ret;
 
 	if (!ehd_get_options(&argc, &argv, pg))
-		return false;
+		return EXIT_FAILURE;
 
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 	pmtlog_prefix = "ehd";
 
 	if (!ehd_check(pg))
-		return false;
+		return EXIT_FAILURE;
 	if (!ehd_create_container(pg))
-		return false;
+		return EXIT_FAILURE;
 	password  = pmt_get_password(NULL);
 	password2 = pmt_get_password("Reenter password: ");
 	if (password == NULL || password2 == NULL ||
 	    strcmp(password, password2) != 0) {
 		fprintf(stderr, "Passwords mismatch.\n");
-		return false;
+		ret = EXIT_FAILURE;
+		goto out;
 	}
 
-	if (!ehd_init_volume(pg, password != NULL ? password : "")) {
-		HXmc_free(password);
-		return false;
-	} else {
+	ret = ehd_init_volume(pg, password != NULL ? password : "") ?
+	      EXIT_SUCCESS : EXIT_FAILURE;
+	if (ret == EXIT_SUCCESS)
 		ehd_final_printout(pg);
+
+ out:
+	if (password != NULL) {
+		memset(password, '\0', HXmc_length(password));
 		HXmc_free(password);
-		return true;
 	}
+	if (password2 != NULL) {
+		memset(password2, '\0', HXmc_length(password2));
+		HXmc_free(password2);
+	}
+	return ret;
 }
 
 int main(int argc, const char **argv)
@@ -641,5 +678,5 @@ int main(int argc, const char **argv)
 	OpenSSL_add_all_digests();
 	memset(&pg, 0, sizeof(pg));
 
-	return main2(argc, argv, &pg) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return main2(argc, argv, &pg);
 }

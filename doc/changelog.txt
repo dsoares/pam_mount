@@ -10,6 +10,14 @@ Fixes:
 - fusermount is now called with supplementary groups initialized
 - rdconf: do not warn about missing fskeyhash when no fskey specified
 - mount: prefer sysv mount API over bsd
+- pmt-ehd: reword help text for -k option
+- pmt-ehd: apply default value for -k option
+- pmt-ehd: fix fskey generation which was pegged at 256 bits
+- pmt-ehd: avoid needless overtruncation/sparsifying
+- pmt-ehd: zero LUKS header to avoid setup failure of PLAIN volume
+Changes:
+- pmt-ehd: speed up writing random data
+- pmt-ehd: reword help text for -k option
 
 
 v2.1 (May 02 2010)
