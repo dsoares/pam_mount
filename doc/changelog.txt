@@ -19,6 +19,7 @@ Changes:
 - pmt-ehd: speed up writing random data
 - pmt-ehd: reword help text for -k option
 - mount.crypt: ignore cmtab update errors
+- mount.crypt: add support for keyfile passthru using -ofsk_cipher=none
 
 
 v2.1 (May 02 2010)

@@ -109,8 +109,9 @@ login will most likely hang.
 Cryptsetup cipher name for the volume. To be used with the \fBcrypt\fP fstype.
 .TP
 \fBfskeycipher="\fP\fIciphertype\fP\fB"\fP
-OpenSSL cipher name for the fskey. Use with the \fBcrypt\fP fstype
-(dm\-crypt and LUKS).
+OpenSSL cipher name for the fskey. Use with the \fBcrypt\fP fstype (dm\-crypt
+and LUKS). The special cipher keyword "\fBnone\fP" may be used to directly pass
+the file's contents to cryptsetup without decryption by OpenSSL.
 .TP
 \fBfskeyhash="\fP\fIhash\fP\fB"\fP
 OpenSSL hash name for the fskey.

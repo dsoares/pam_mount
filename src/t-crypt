@@ -20,6 +20,14 @@ rm -f t-crypt.fs;
 truncate -s $[64*1048576] t-crypt.fs;
 losetup "$blk" t-crypt.fs;
 
+echo -en "$p256" | cryptsetup luksFormat "$blk";
+echo -en "$p256" | cryptsetup luksOpen "$blk" "$cname";
+mkfs.ext4 "$cblk";
+cryptsetup luksClose "$cname";
+echo -en "$p256" >t-crypt.key;
+./mount.crypt -vo keyfile=t-crypt.key,fsk_cipher=none "$blk" /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
+
 echo -en "abc" | cryptsetup luksFormat "$blk";
 echo -en "abc\nxyz\n" | cryptsetup luksAddKey "$blk";
 echo -en "abc" | cryptsetup luksOpen "$blk" "$cname";

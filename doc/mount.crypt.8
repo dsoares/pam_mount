@@ -41,7 +41,9 @@ calling cryptsetup(8). The default value is 0 seconds.
 Run fsck on the container before mounting it.
 .TP
 \fBfsk_cipher\fP
-The OpenSSL cipher used for the filesystem key.
+The OpenSSL cipher used for the filesystem key. The special keyword "none" can
+be used to bypass decryption and pass the file contents directly to
+libcryptsetup.
 .TP
 \fBfsk_hash\fP
 The OpenSSL hash used for producing key and IV.
