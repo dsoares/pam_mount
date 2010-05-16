@@ -3,6 +3,14 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.2 (May 16 2010)
+==================
+Notes:
+- see doc/bugs.txt for cryptsetup behavior that impacts
+  pam_mount users since version 2.0
+
 Fixes:
 - mount.crypt: fix memory scribble crash when crypto device could
   not be initialized

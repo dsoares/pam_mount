@@ -34,6 +34,18 @@ also passes -h plain to cryptsetup by default.) Thus, pam_mount defaults
 to using the key file's length (when decrypted) as the cipher size.
 
 
+[ shell - key expansion ]
+
+Some HOWTOs suggest manual key generation for encrypted volumes, however
+they fail to guard against shell semantics, such as:
+
+	echo $KEY | openssl ...
+
+This implicitly adds a newline into the stream, which is unwanted for
+key generation. Please use the pmt-ehd tool to create PLAIN-type
+encrypted volumes.
+
+
 [ gksu & kdesu ]
 
 gksu interprets any output on stderr as an error. pam_mount writes
