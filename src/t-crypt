@@ -20,6 +20,7 @@ rm -f t-crypt.fs;
 truncate -s $[64*1048576] t-crypt.fs;
 losetup "$blk" t-crypt.fs;
 
+# Test keyfile passthru
 echo -en "$p256" | cryptsetup luksFormat "$blk";
 echo -en "$p256" | cryptsetup luksOpen "$blk" "$cname";
 mkfs.ext4 "$cblk";
@@ -28,6 +29,7 @@ echo -en "$p256" >t-crypt.key;
 ./mount.crypt -vo keyfile=t-crypt.key,fsk_cipher=none "$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
+# Test multiple key slots
 echo -en "abc" | cryptsetup luksFormat "$blk";
 echo -en "abc\nxyz\n" | cryptsetup luksAddKey "$blk";
 echo -en "abc" | cryptsetup luksOpen "$blk" "$cname";
@@ -58,6 +60,7 @@ echo -en "$p512" | \
 	"$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
+# Test pmt-ehd style keyfile
 echo -en "$p512" >/dev/shm/p512.key;
 echo -en "$p512" | openssl bf-cbc -pass pass:abc >/dev/shm/p512.enc;
 cryptsetup --key-file=/dev/shm/p512.key -c aes-xts-plain -h plain -s 512 \
@@ -69,6 +72,7 @@ echo -en abc | \
 	"$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
+# Test implicit libcryptsetup truncation after hashing
 for p in "short" "$p128" "$p256" "$p512"; do
 	echo -en "$p" | cryptsetup --key-file=- -c aes-cbc-essiv:sha256 \
 		-h sha512 create "$cname" "$blk";
@@ -79,6 +83,7 @@ for p in "short" "$p128" "$p256" "$p512"; do
 	PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 done;
 
+# Test truncation with various cipher block sizes
 for ((k = 32; k <= 448; k += 8)); do
 	echo -en "$p512" | cryptsetup --key-file=- -c blowfish \
 		-h sha512 -s "$k" create "$cname" "$blk";
