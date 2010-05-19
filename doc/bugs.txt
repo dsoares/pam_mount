@@ -39,9 +39,14 @@ to using the key file's length (when decrypted) as the cipher size.
 Some HOWTOs suggest manual key generation for encrypted volumes, however
 they fail to guard against shell semantics, such as:
 
+	KEY=$(head -c79 /dev/urandom)
+
+At least bash strips all \x00 bytes from the input. There might be worse
+behavior. Furthermore,
+
 	echo $KEY | openssl ...
 
-This implicitly adds a newline into the stream, which is unwanted for
+implicitly adds a newline into the stream, which is unwanted for
 key generation. Please use the pmt-ehd tool to create PLAIN-type
 encrypted volumes.
 
