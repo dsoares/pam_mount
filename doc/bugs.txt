@@ -9,9 +9,13 @@ Some people create their crypto partition using a command like
 
 	openssl ... | cryptsetup create ...
 
-cryptsetup will strip all data starting from the first newline when
-run without the --key-file=- option. pam_mount makes sure cryptsetup
-will use the entire key material, by using the --key-file option.
+Without any extra arguments, input is processed as if it were
+interactive, that is, everything starting from the first newline is
+ignored. This is standard behavior for stdin. Other truncations to
+binary characters may happen.
+
+pam_mount's mount.crypt makes sure that libcryptsetup uses the entire
+key material, including newlines, NUL bytes or other characters.
 However, since you created your crypto volume with a truncated key
 that is different from the real one, mounting may fail unexpectedly.
 
