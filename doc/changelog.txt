@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.3 (May 19 2010)
+==================
 Fixes:
 - umount.crypt had erroneously mounted instead of umounted
 
