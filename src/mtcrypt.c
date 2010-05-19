@@ -663,8 +663,12 @@ int main(int argc, const char **argv)
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 
-	/* primitive test, but everything else falls down */
-	if (getenv("PMT_DEBUG_UMOUNT") != NULL) {
+	/*
+	 * When invoking umount.crypt via the libtool helper script,
+	 * argv[0] is always "mount.crypt" due to the symlinking.
+	 */
+	if (strncmp(HX_basename(*argv), "umount", 6) == 0 ||
+	    getenv("PMT_DEBUG_UMOUNT") != NULL) {
 		struct umount_options opt;
 
 		memset(&opt, 0, sizeof(opt));

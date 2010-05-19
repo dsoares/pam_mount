@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- umount.crypt had erroneously mounted instead of umounted
 
 
 v2.2 (May 16 2010)
