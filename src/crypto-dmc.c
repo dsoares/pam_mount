@@ -6,8 +6,6 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include "config.h"
-#ifdef HAVE_LIBCRYPTSETUP
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -169,5 +167,3 @@ const struct ehd_crypto_ops ehd_dmcrypt_ops = {
 	.load   = dmc_load,
 	.unload = dmc_unload,
 };
-
-#endif /* HAVE_LIBCRYPTSETUP */
