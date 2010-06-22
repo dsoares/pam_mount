@@ -578,7 +578,9 @@ static bool user_in_sgrp(const char *user, const char *grp, bool icase)
 	const char *const *wp;
 
 	if ((gent = getgrnam(grp)) == NULL) {
-		w4rn("getgrnam(\"%s\") failed: %s\n", grp, strerror(errno));
+		if (errno != 0)
+			w4rn("getgrnam(\"%s\") failed: %s\n",
+			     grp, strerror(errno));
 		return false;
 	}
 
@@ -1047,6 +1049,8 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 			continue;
 
 		if ((grp = getgrgid(pwd->pw_gid)) == NULL) {
+			if (errno == 0)
+				return 0;
 			w4rn("getgrgid(%ld) failed: %s\n",
 			     static_cast(long, pwd->pw_gid), strerror(errno));
 			return -1;
@@ -1181,6 +1185,8 @@ static int rc_volume_cond(const char *user, xmlNode *node)
 	int ret;
 
 	if ((pwd_ent = getpwnam(user)) == NULL) {
+		if (errno == 0)
+			return 0;
 		l0g("getpwnam: %s\n", strerror(errno));
 		return -1;
 	}
