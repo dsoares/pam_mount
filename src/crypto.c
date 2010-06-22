@@ -18,9 +18,11 @@
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX/string.h>
-#include <openssl/evp.h>
 #include "config.h"
 #include "pam_mount.h"
+#ifdef HAVE_LIBCRYPTO
+#	include <openssl/evp.h>
+#endif
 
 /**
  * ehd_mtfree - free data associated with an EHD mount info block
@@ -84,6 +86,8 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	ret = ehd_dmcrypt_ops.load(req, mt);
 #elif defined(HAVE_DEV_CGDVAR_H)
 	ret = ehd_cgd_ops.load(req, mt);
+#else
+	ret = -EOPNOTSUPP;
 #endif
 	if (ret <= 0)
 		goto out_ser;
@@ -119,6 +123,8 @@ int ehd_unload(const struct ehd_mount *mt)
 	ret = ehd_dmcrypt_ops.unload(mt);
 #elif defined(HAVE_DEV_CGDVAR_H)
 	ret = ehd_cgd_ops.unload(mt);
+#else
+	ret = -EOPNOTSUPP;
 #endif
 
 	/* Try to free loop device even if cryptsetup remove failed */
@@ -128,6 +134,7 @@ int ehd_unload(const struct ehd_mount *mt)
 	return ret;
 }
 
+#ifdef HAVE_LIBCRYPTO
 struct decrypt_info {
 	const char *keyfile;
 	hxmc_t *password;
@@ -223,6 +230,7 @@ hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
 	close(fd);
 	return f_ret;
 }
+#endif /* HAVE_LIBCRYPTO */
 
 static unsigned int __cipher_digest_security(const char *s)
 {

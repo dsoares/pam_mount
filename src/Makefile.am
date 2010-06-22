@@ -9,7 +9,10 @@ varrundir		= ${localstatedir}/run
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
 bin_PROGRAMS		= pmt-fd0ssh pmt-ofl
-sbin_PROGRAMS		= pmt-ehd pmvarrun
+sbin_PROGRAMS		= pmvarrun
+if HAVE_LIBCRYPTO
+sbin_PROGRAMS		+= pmt-ehd
+endif
 ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
