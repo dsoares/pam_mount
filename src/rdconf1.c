@@ -1059,9 +1059,8 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 		ret = rc_volume_cond_pgrp(pwd, parent);
 		if (ret < 0 || ret > 0)
 			return ret;
-		const char *nnn = signed_cast(const char *, node->content);
 		return user_in_sgrp(pwd->pw_name,
-		       (void*)nnn,
+		       signed_cast(const char *, node->content),
 		       parse_bool_f(xml_getprop(parent, "icase")));
 	}
 
