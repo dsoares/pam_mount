@@ -3,6 +3,11 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- make libcryptsetup truly optional at compile-time
+  (it was only claimed in the doc, but not fully realized until now)
+- make libcrypto truly optional at compile-time
+  (this had once worked in pam_mount 0.x, now it does again)
 
 
 v2.3 (May 19 2010)

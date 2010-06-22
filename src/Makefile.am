@@ -9,12 +9,18 @@ varrundir		= ${localstatedir}/run
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
 bin_PROGRAMS		= pmt-fd0ssh pmt-ofl
-sbin_PROGRAMS		= pmt-ehd pmvarrun
+sbin_PROGRAMS		= pmvarrun
+if HAVE_LIBCRYPTO
+sbin_PROGRAMS		+= pmt-ehd
+endif
 ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
 
-crypto_sources		= crypto.c crypto-cgd.c crypto-dmc.c ${loop_sources}
+crypto_sources		= crypto.c crypto-cgd.c ${loop_sources}
+if HAVE_LIBCRYPTSETUP
+crypto_sources		+= crypto-dmc.c
+endif
 crypto_libs		= ${libcrypto_LIBS} ${libcryptsetup_LIBS}
 loop_sources		= loop.c loop-linux.c loop-mdvn.c loop-vnd.c
 mtab_sources		= log.c misc.c mtab.c

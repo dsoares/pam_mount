@@ -17,7 +17,7 @@ Additional required packages for building from (Git) snapshot:
 Optional packages for building:
 
 	* openssl 0.9.8 or up
-	* libcryptsetup 1.1.0 or up -- block-level encryption
+	* libcryptsetup 1.1.2 or up -- block-level encryption
 
 Suggested packages for runtime:
 

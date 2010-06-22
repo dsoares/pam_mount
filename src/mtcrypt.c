@@ -20,8 +20,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <libHX.h>
-#include <openssl/evp.h>
 #include "pam_mount.h"
+#ifdef HAVE_LIBCRYPTO
+#	include <openssl/evp.h>
+#endif
 
 /**
  * @object:		volume or mountpoint; used by remount
@@ -408,6 +410,7 @@ static int mtcr_mount(struct mount_options *opt)
 			return 0;
 		mount_request.trunc_keysize = HXmc_length(key);
 	} else {
+#ifdef HAVE_OPENSSL
 		key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
 		      opt->fsk_cipher, opt->fsk_password);
 		if (key == NULL) {
@@ -415,6 +418,10 @@ static int mtcr_mount(struct mount_options *opt)
 			return 0;
 		}
 		mount_request.trunc_keysize = HXmc_length(key);
+#else
+		fprintf(stderr, "mtcrypt was compiled without OpenSSL support\n");
+		return 0;
+#endif
 	}
 
 	mount_request.key_data = key;
@@ -660,8 +667,10 @@ int main(int argc, const char **argv)
 	pmtlog_prefix = HX_basename(*argv);
 
 	setenv("PATH", PMT_DFL_PATH, true);
+#ifdef HAVE_LIBCRYPTO
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
+#endif
 
 	/*
 	 * When invoking umount.crypt via the libtool helper script,
