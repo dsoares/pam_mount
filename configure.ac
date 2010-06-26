@@ -66,7 +66,9 @@ AC_ARG_WITH([crypto],
 if test "x$with_crypto" = x; then
 	PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 		[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
-		[OpenSSL libcrypto available])],
+		[OpenSSL libcrypto available])
+		have_libcrypto=yes
+		],
 		[true])
 elif test "x$with_crypto" = xyes; then
 	PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
