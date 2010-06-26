@@ -6,8 +6,6 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include "config.h"
-#ifdef HAVE_DEV_CGDVAR_H
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -82,5 +80,3 @@ const struct ehd_crypto_ops ehd_cgd_ops = {
 	.load   = cgd_load,
 	.unload = cgd_unload,
 };
-
-#endif /* HAVE_DEV_CGDVAR_H */

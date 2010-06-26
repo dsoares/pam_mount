@@ -7,8 +7,6 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include "config.h"
-#ifdef HAVE_DEV_VNDVAR_H
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -78,5 +76,3 @@ int pmt_loop_release(const char *device)
 	close(loopfd);
 	return ret;
 }
-
-#endif /* HAVE_DEV_VNDVAR_H */

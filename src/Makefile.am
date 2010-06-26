@@ -17,12 +17,21 @@ ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
 
-crypto_sources		= crypto.c crypto-cgd.c ${loop_sources}
+crypto_sources		= crypto.c ${loop_sources}
 if HAVE_LIBCRYPTSETUP
 crypto_sources		+= crypto-dmc.c
 endif
+if HAVE_CGD
+crypto_sources		+= crypto-cgd.c
+endif
 crypto_libs		= ${libcrypto_LIBS} ${libcryptsetup_LIBS}
-loop_sources		= loop.c loop-linux.c loop-mdvn.c loop-vnd.c
+loop_sources		= loop.c loop-linux.c
+if HAVE_MDIO
+loop_sources		+= loop-mdvn.c
+endif
+if HAVE_VND
+loop_sources		+= loop-vnd.c
+endif
 mtab_sources		= log.c misc.c mtab.c
 
 pam_mount_la_SOURCES	= log.c misc.c ofl-lib.c mount.c mount-bsd.c \

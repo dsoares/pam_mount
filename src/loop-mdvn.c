@@ -7,8 +7,6 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
-#include "config.h"
-#ifdef HAVE_SYS_MDIOCTL_H
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -76,5 +74,3 @@ int pmt_loop_release(const char *device)
 	close(fd);
 	return ret;
 }
-
-#endif /* HAVE_SYS_MDIOCTL_H */
