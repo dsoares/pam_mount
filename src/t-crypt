@@ -44,6 +44,9 @@ PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 echo -en "xyz" | ./mount.crypt -v "$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
+xts_checks ()
+{
+	# we pick XTS here because it is one cipher that allows keysize=512
 echo -en "$p512" | \
 	cryptsetup --key-file=- -c aes-xts-plain \
 	-h sha512 -s 512 create "$cname" "$blk";
@@ -76,6 +79,13 @@ echo -en abc | \
 	"$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
+}
+
+modprobe -q xts || :;
+if grep -q '\b''xts''\b' /proc/crypto 2>/dev/null; then
+	xts_checks
+fi;
+
 # Test implicit libcryptsetup truncation after hashing
 for p in "short" "$p128" "$p256" "$p512"; do
 	echo -en "$p" | cryptsetup --key-file=- -c aes-cbc-essiv:sha256 \
@@ -99,6 +109,6 @@ for ((k = 32; k <= 448; k += 8)); do
 	PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 done;
 
+echo -e "\e[32m""All tests passed""\e[0m";
 trap "" ERR;
 cleanup;
-echo "All tests passed";
