@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.4 (June 26 2010)
+===================
 Notes:
 - see doc/bugs.txt for cryptsetup behavior that impacts
   pam_mount users since version 2.0
