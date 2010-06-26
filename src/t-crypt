@@ -29,6 +29,10 @@ echo -en "$p256" >t-crypt.key;
 ./mount.crypt -vo keyfile=t-crypt.key,fsk_cipher=none "$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
+# test umount by container
+./mount.crypt -vo keyfile=t-crypt.key,fsk_cipher=none "$blk" /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt "$blk";
+
 # Test multiple key slots
 echo -en "abc" | cryptsetup luksFormat "$blk";
 echo -en "abc\nxyz\n" | cryptsetup luksAddKey "$blk";

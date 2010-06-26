@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- umount.crypt: fix use of a wrong field for smtab/cmtab staleness check
 Changes:
 - make libcryptsetup truly optional at compile-time
   (it was only claimed in the doc, but not fully realized until now)
