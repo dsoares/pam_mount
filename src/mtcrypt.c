@@ -410,7 +410,7 @@ static int mtcr_mount(struct mount_options *opt)
 			return 0;
 		mount_request.trunc_keysize = HXmc_length(key);
 	} else {
-#ifdef HAVE_OPENSSL
+#ifdef HAVE_LIBCRYPTO
 		key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
 		      opt->fsk_cipher, opt->fsk_password);
 		if (key == NULL) {
