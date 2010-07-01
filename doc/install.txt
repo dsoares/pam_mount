@@ -23,6 +23,7 @@ Suggested packages for runtime:
 
 	* device-mapper 1.02.48 -- race condition fix
 	* hxtools
+		- fd0ssh: to support passing passwords to SSH
 		- ofl: to support kill-on-logout
 
 	local targets:

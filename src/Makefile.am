@@ -8,7 +8,6 @@ varrundir		= ${localstatedir}/run
 
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
-bin_PROGRAMS		= pmt-fd0ssh
 sbin_PROGRAMS		= pmvarrun
 if HAVE_LIBCRYPTO
 sbin_PROGRAMS		+= pmt-ehd
@@ -57,8 +56,6 @@ mount_encfs13_LDADD	= ${libHX_LIBS}
 
 pmt_ehd_SOURCES		= ehd.c log.c misc.c spawn.c ${crypto_sources}
 pmt_ehd_LDADD		= ${libHX_LIBS} ${crypto_libs}
-
-pmt_fd0ssh_SOURCES	= fd0ssh.c
 
 pmvarrun_SOURCES = pmvarrun.c log.c
 pmvarrun_LDADD   = ${libHX_LIBS}
