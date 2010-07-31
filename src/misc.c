@@ -31,10 +31,10 @@ struct HXbtree;
  */
 void misc_dump_id(const char *where)
 {
-	w4rn("%s: (e/ruid=%u/%u, e/rgid=%u/%u)\n", where,
+	w4rn("%s: (ruid/rgid=%u/%u, e=%u/%u)\n", where,
 	     static_cast(unsigned int, getuid()),
-	     static_cast(unsigned int, geteuid()),
 	     static_cast(unsigned int, getgid()),
+	     static_cast(unsigned int, geteuid()),
 	     static_cast(unsigned int, getegid()));
 }
 
