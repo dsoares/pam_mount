@@ -603,7 +603,8 @@ static const char *rc_command(xmlNode *node, struct config *config,
 	char *arg, *wp;
 
 	if (config->level != CONTEXT_GLOBAL)
-		return "Tried to set command from user config\n";
+		return "Tried to set command from user config: "
+		       "not permitted\n";
 	if ((node = node->children) == NULL)
 		return NULL;
 
@@ -678,7 +679,8 @@ static const char *rc_luserconf(xmlNode *node, struct config *config,
 	char *s;
 
 	if (config->level != CONTEXT_GLOBAL)
-		return "Tried to set <luserconf> from user config";
+		return "Tried to set <luserconf> from user config: "
+		       "meaningless";
 	if ((pent = getpwnam(config->user)) == NULL)
 		return "Could not get password entry";
 	if ((s = xml_getprop(node, "name")) == NULL)
@@ -712,8 +714,8 @@ static const char *rc_mntoptions(xmlNode *node, struct config *config,
 	int ret;
 
 	if (config->level != CONTEXT_GLOBAL)
-		return "Tried to set <mntoptions allow=...> from user config";
-
+		return "Tried to set <mntoptions allow=...> from user config: "
+		       "not permitted";
 	if ((options = xml_getprop(node, "allow")) != NULL) {
 		if (!config->seen_mntoptions_allow) {
 			HXmap_free(config->options_allow);
