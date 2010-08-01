@@ -61,35 +61,33 @@ AM_CONDITIONAL([HAVE_VND], [test "x$ac_cv_header_dev_vndvar_h" = "xyes"])
 PKG_CHECK_MODULES([libHX], [libHX >= 3.4])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 
-AC_ARG_WITH([crypto],
-	AS_HELP_STRING([--without-crypto], [Disable use of OpenSSL cryptography]))
-if test "x$with_crypto" = x; then
+with_crypto="yes";
+AC_ARG_WITH(
+	[crypto],
+	AS_HELP_STRING([--without-crypto], [Disable use of OpenSSL cryptography]),
+	[],
+	[with_crypto="no"]
+)
+
+with_cryptsetup="yes";
+AC_ARG_WITH([cryptsetup],
+	AS_HELP_STRING([--without-cryptsetup], [Disable use of libcryptsetup]),
+	[],
+	[with_cryptsetup="no"]
+)
+
+if test "x$with_crypto" = "xyes"; then
 	PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 		[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
-		[OpenSSL libcrypto available])
-		have_libcrypto=yes
-		],
-		[true])
-elif test "x$with_crypto" = xyes; then
-	PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
-		[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
-		[OpenSSL libcrypto available])])
-fi
+			[OpenSSL libcrypto available])])
+fi;
 AM_CONDITIONAL([HAVE_LIBCRYPTO], [test "x$have_libcrypto" = xyes])
 
-AC_ARG_WITH([cryptsetup],
-	AS_HELP_STRING([--without-cryptsetup], [Disable use of libcryptsetup]))
-if test "x$with_cryptsetup" = x; then
-	PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.1.2], [
-		AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTSETUP], [1], [libcryptsetup available])
-		have_libcryptsetup=yes
-	], [true])
-elif test "x$with_cryptsetup" = xyes; then
-	PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.1.2], [
-		AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTSETUP], [1], [libcryptsetup available])
-		have_libcryptsetup=yes
-	])
-fi
+if test "x$with_cryptsetup" = "xyes"; then
+	PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.1.2],
+		[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTSETUP], [1],
+			[libcryptsetup available])])
+fi;
 AM_CONDITIONAL([HAVE_LIBCRYPTSETUP], [test "x$have_libcryptsetup" = xyes])
 
 AC_CHECK_HEADERS([security/pam_modules.h], [have_pamheader="yes"])

@@ -34,6 +34,12 @@ Suggested packages for runtime:
 	configuration validation:
 	* xmllint (libxml2)
 
+Notes for configure:
+
+OpenSSL and/or libcryptsetup are optional, to build without them however
+you need to explicitly specify --without-crypto and/or
+--without-libcryptsetup, respectively.
+
 DTD installation usage:
 
 	Configure pam_mount with:
