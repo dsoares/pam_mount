@@ -21,6 +21,7 @@ truncate -s $[64*1048576] t-crypt.fs;
 losetup "$blk" t-crypt.fs;
 
 # Test keysize interaction
+echo "TEST-k8-$LINENO:";
 dd if=/dev/urandom of=t-crypt.key bs=4k count=1;
 echo basekey | cryptsetup luksFormat "$blk";
 echo basekey | cryptsetup luksAddKey "$blk" t-crypt.key;
@@ -31,6 +32,7 @@ cryptsetup luksClose "$cname";
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
 # Test keyfile passthru
+echo "TEST-k7-$LINENO:";
 echo -en "$p256" | cryptsetup luksFormat "$blk";
 echo -en "$p256" | cryptsetup luksOpen "$blk" "$cname";
 mkfs.ext4 "$cblk";
@@ -40,10 +42,12 @@ echo -en "$p256" >t-crypt.key;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
 # test umount by container
+echo "TEST-k6-$LINENO:";
 ./mount.crypt -vo keyfile=t-crypt.key,fsk_cipher=none "$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt "$blk";
 
 # Test multiple key slots
+echo "TEST-k5-$LINENO:";
 echo -en "abc" | cryptsetup luksFormat "$blk";
 echo -en "abc\nxyz\n" | cryptsetup luksAddKey "$blk";
 echo -en "abc" | cryptsetup luksOpen "$blk" "$cname";
@@ -57,6 +61,7 @@ PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 xts_checks ()
 {
 	# we pick XTS here because it is one cipher that allows keysize=512
+echo "TEST-k4-$LINENO:";
 echo -en "$p512" | \
 	cryptsetup --key-file=- -c aes-xts-plain \
 	-h sha512 -s 512 create "$cname" "$blk";
@@ -67,6 +72,7 @@ echo -en "$p512" | \
 	"$blk" /mnt;
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
+echo "TEST-k3-$LINENO:";
 echo -en "$p512" | \
 	cryptsetup --key-file=- -c aes-xts-plain \
 	-h plain -s 512 create "$cname" "$blk";
@@ -78,6 +84,7 @@ echo -en "$p512" | \
 PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
 
 # Test pmt-ehd style keyfile
+echo "TEST-k2-$LINENO:";
 echo -en "$p512" >/dev/shm/p512.key;
 echo -en "$p512" | openssl bf-cbc -pass pass:abc >/dev/shm/p512.enc;
 cryptsetup --key-file=/dev/shm/p512.key -c aes-xts-plain -h plain -s 512 \
@@ -97,6 +104,7 @@ if grep -q '\b''xts''\b' /proc/crypto 2>/dev/null; then
 fi;
 
 # Test implicit libcryptsetup truncation after hashing
+echo "TEST-k1-$LINENO:";
 for p in "short" "$p128" "$p256" "$p512"; do
 	echo -en "$p" | cryptsetup --key-file=- -c aes-cbc-essiv:sha256 \
 		-h sha512 create "$cname" "$blk";
@@ -108,6 +116,7 @@ for p in "short" "$p128" "$p256" "$p512"; do
 done;
 
 # Test truncation with various cipher block sizes
+echo "TEST-k0-$LINENO:";
 for ((k = 32; k <= 448; k += 8)); do
 	echo -en "$p512" | cryptsetup --key-file=- -c blowfish \
 		-h sha512 -s "$k" create "$cname" "$blk";
