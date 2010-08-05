@@ -20,6 +20,16 @@ rm -f t-crypt.fs;
 truncate -s $[64*1048576] t-crypt.fs;
 losetup "$blk" t-crypt.fs;
 
+# Use of openssl key assumes dmcrypthash=plain
+echo "TEST-k9-$LINENO";
+echo -en "basekey" | openssl bf-cbc -pass pass:letmein >t-crypt.key;
+openssl bf-cbc -d -pass pass:letmein <t-crypt.key | \
+	cryptsetup -c serpent create "$cname" "$blk";
+mkfs.ext4 "$cblk";
+cryptsetup remove "$cname";
+echo letmein | ./mount.crypt -vo fsk_cipher=bf-cbc,fsk_hash=md5,keyfile=t-crypt.key,cipher=serpent,hash=ripemd160,keysize=256 "$blk" /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
+
 # Test keysize interaction
 echo "TEST-k8-$LINENO:";
 dd if=/dev/urandom of=t-crypt.key bs=4k count=1;
