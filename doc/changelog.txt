@@ -7,6 +7,7 @@ Changes:
 - mount.crypt: fix incorrect processing of binary files in keyfile passthrough
 - call mount.crypt by means of mount -t crypt (selinux), same for umount
 - reorder the default path to search in /usr/local first, then /usr, /
+- config: add missing fd0ssh command to restore volumes using ssh
 
 
 v2.4 (June 26 2010)

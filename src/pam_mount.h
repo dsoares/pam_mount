@@ -28,7 +28,10 @@
  * so just provide our own.
  */
 #define PMT_DFL_PATH \
-	"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+	"/usr/local/libexec/hxtools:/usr/local/lib/hxtools:" \
+	"/usr/local/sbin:/usr/local/bin:" \
+	"/usr/libexec/hxtools:/usr/lib/hxtools:" \
+	"/usr/sbin:/usr/bin:/sbin:/bin"
 #define PMT_DFL_DMCRYPT_CIPHER "aes-cbc-essiv:sha256"
 #define PMT_DFL_FSK_CIPHER     "aes-256-cbc"
 #define PMT_DFL_FSK_HASH       "sha1"
