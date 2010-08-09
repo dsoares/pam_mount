@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- mount.crypt: fix incorrect processing of binary files in keyfile passthrough
 
 
 v2.4 (June 26 2010)

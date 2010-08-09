@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -346,29 +347,30 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 
 static hxmc_t *mtcr_slurp_file(const char *file)
 {
-	hxmc_t *buf, *ln = NULL;
 	struct stat sb;
-	FILE *fp;
+	char tmp[4096];
+	hxmc_t *buf;
+	int fd;
 
-	fp = fopen(file, "r");
-	if (fp == NULL) {
+	if ((fd = open(file, O_RDONLY | O_BINARY)) < 0) {
 		fprintf(stderr, "Could not open %s: %s\n",
 		        file, strerror(errno));
 		return NULL;
 	}
 
-	if (fstat(fileno(fp), &sb) == 0 && S_ISREG(sb.st_mode))
+	if (fstat(fd, &sb) == 0 && S_ISREG(sb.st_mode))
 		buf = HXmc_meminit(NULL, sb.st_size);
 	else
 		buf = HXmc_meminit(NULL, 4096 / CHAR_BIT);
 
 	if (buf == NULL) {
-		fprintf(stderr, "%s\n", strerror(errno));
+		fprintf(stderr, "%s: %s\n", __func__, strerror(errno));
 	} else {
-		while (HX_getl(&ln, fp) != NULL)
-			HXmc_strcat(&buf, ln);
+		ssize_t ret;
+		while ((ret = read(fd, tmp, sizeof(tmp))) > 0)
+			HXmc_memcat(&buf, tmp, ret);
 	}
-	fclose(fp);
+	close(fd);
 	return buf;
 }
 
@@ -429,6 +431,8 @@ static int mtcr_mount(struct mount_options *opt)
 	if (opt->trunc_keysize != 0)
 		mount_request.trunc_keysize = opt->trunc_keysize;
 
+	w4rn("keysize=%u trunc_keysize=%u\n", mount_request.key_size,
+	     mount_request.trunc_keysize);
 	if ((ret = ehd_load(&mount_request, &mount_info)) < 0) {
 		fprintf(stderr, "ehd_load: %s\n", strerror(errno));
 		return 0;

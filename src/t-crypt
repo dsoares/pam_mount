@@ -20,6 +20,16 @@ rm -f t-crypt.fs;
 truncate -s $[64*1048576] t-crypt.fs;
 losetup "$blk" t-crypt.fs;
 
+# Test keysize interaction
+dd if=/dev/urandom of=t-crypt.key bs=4k count=1;
+echo basekey | cryptsetup luksFormat "$blk";
+echo basekey | cryptsetup luksAddKey "$blk" t-crypt.key;
+cryptsetup luksOpen --key-file t-crypt.key "$blk" "$cname";
+mkfs.ext4 "$cblk";
+cryptsetup luksClose "$cname";
+./mount.crypt -vo keyfile=t-crypt.key,fsk_cipher=none "$blk" /mnt;
+PMT_DEBUG_UMOUNT=1 ./umount.crypt /mnt;
+
 # Test keyfile passthru
 echo -en "$p256" | cryptsetup luksFormat "$blk";
 echo -en "$p256" | cryptsetup luksOpen "$blk" "$cname";
