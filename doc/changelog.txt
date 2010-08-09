@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.5 (August 10 2010)
+=====================
 Changes:
 - mount.crypt: fix incorrect processing of binary files in keyfile passthrough
 - call mount.crypt by means of mount -t crypt (selinux), same for umount
