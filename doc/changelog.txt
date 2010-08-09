@@ -8,6 +8,7 @@ Changes:
 - call mount.crypt by means of mount -t crypt (selinux), same for umount
 - reorder the default path to search in /usr/local first, then /usr, /
 - config: add missing fd0ssh command to restore volumes using ssh
+- ofl is now run as a separate process (selinux policy simplification)
 
 
 v2.4 (June 26 2010)

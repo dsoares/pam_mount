@@ -77,20 +77,37 @@ static void log_output(int fd, const char *cmsg)
  * @vinfo:
  *
  * Runs `ofl` on a directory/mountpoint and logs its output, for debugging
- * purposes.
+ * purposes. (ofl is a better-suited lsof/fuser.)
  */
-static void run_ofl(const struct config *const config,
-    struct HXformat_map *vinfo)
+static void run_ofl(const struct config *const config, const char *mntpt,
+    unsigned int signum)
 {
-	hxmc_t *mntpt = NULL;
+	struct HXformat_map *vinfo;
+	struct HXproc proc;
+	struct HXdeque *argv;
 	struct stat sb;
+	int ret;
 
-	HXformat2_aprintf(vinfo, &mntpt, "%(MNTPT)");
-	if (!(stat(mntpt, &sb) < 0 && errno == ENOENT)) {
-		ofl_printf = misc_warn;
-		ofl(mntpt, 0);
-	}
-	HXmc_free(mntpt);
+	if (stat(mntpt, &sb) < 0 && errno == ENOENT)
+		return;
+
+	vinfo = HXformat_init();
+	if (vinfo == NULL)
+		return;
+	format_add(vinfo, "MNTPT", mntpt);
+	HXformat_add(vinfo, "SIGNAL", reinterpret_cast(void *,
+		static_cast(long, signum)), HXFORMAT_IMMED | HXTYPE_UINT);
+	argv = arglist_build(config->command[CMD_OFL], vinfo);
+	HXformat_free(vinfo);
+	if (argv == NULL)
+		return;
+	memset(&proc, 0, sizeof(proc));
+	proc.p_flags = HXPROC_VERBOSE;
+	ret = pmt_spawn_dq(argv, &proc);
+	if (ret <= 0)
+		l0g("error executing ofl: %s\n", strerror(-ret));
+	else
+		HXproc_wait(&proc);
 }
 
 /**
@@ -320,9 +337,9 @@ int do_unmount(const struct config *config, struct vol *vpt,
 	if (Debug)
 		/*
 		 * Often, a process still exists with ~ as its pwd after
-		 * logging out.  Running lsof helps debug this.
+		 * logging out. Running ofl helps debug this.
 		 */
-		run_ofl(config, vinfo);
+		run_ofl(config, vpt->mountpoint, 0);
 
 	switch (vpt->type) {
 		case CMD_CRYPTMOUNT:
@@ -687,16 +704,16 @@ void umount_final(struct config *config)
 
 	if (config->sig_hup)
 		HXlist_for_each_entry_rev(vol, &config->volume_list, list)
-			ofl(vol->mountpoint, SIGHUP);
+			run_ofl(config, vol->mountpoint, SIGHUP);
 	if (config->sig_term) {
 		usleep(config->sig_wait);
 		HXlist_for_each_entry_rev(vol, &config->volume_list, list)
-			ofl(vol->mountpoint, SIGTERM);
+			run_ofl(config, vol->mountpoint, SIGTERM);
 	}
 	if (config->sig_kill) {
 		usleep(config->sig_wait);
 		HXlist_for_each_entry_rev(vol, &config->volume_list, list)
-			ofl(vol->mountpoint, SIGKILL);
+			run_ofl(config, vol->mountpoint, SIGKILL);
 	}
 	HXlist_for_each_entry_rev(vol, &config->volume_list, list) {
 		w4rn("going to unmount\n");

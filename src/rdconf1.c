@@ -1367,6 +1367,7 @@ static const struct pmt_command default_command[] = {
 	{CMD_FSCK,       NULL,     {"fsck", "-p", "%(FSCKTARGET)", NULL}},
 	{CMD_PMVARRUN,   NULL,     {"pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
 	{CMD_FD0SSH,      NULL,    {"pmt-fd0ssh", NULL}},
+	{CMD_OFL,        NULL,     {"pmt-ofl", "-k%(SIGNAL)", "%(MNTPT)", NULL}},
 	{-1},
 };
 
@@ -1389,6 +1390,7 @@ static const struct callbackmap cf_tags[] = {
 	{"nfsmount",        rc_command,             CMD_NFSMOUNT},
 	{"ncpmount",        rc_command,             CMD_NCPMOUNT},
 	{"ncpumount",       rc_command,             CMD_NCPUMOUNT},
+	{"ofl",             rc_command,             CMD_OFL},
 	{"path",            rc_string,              CMDA_PATH},
 	{"pmvarrun",        rc_command,             CMD_PMVARRUN},
 	{"smbmount",        rc_command,             CMD_SMBMOUNT},

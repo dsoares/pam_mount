@@ -2,7 +2,7 @@
 	(volume*,debug?,luserconf?,mntoptions*,
 	path?,logout?,mkmountpoint?,fsck?,cifsmount?,
 	smbmount?,smbumount?,ncpmount?,ncpumount?,fusemount?,
-	fuseumount?,fd0ssh?,umount?,
+	fuseumount?,fd0ssh?,ofl?,umount?,
 	lclmount?,cryptmount?,nfsmount?,pmvarrun?,
 	msg-authpw?,msg-sessionpw?)>
 <!ELEMENT debug EMPTY>

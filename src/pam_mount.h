@@ -73,6 +73,7 @@ enum command_type {
 	CMD_FSCK,
 	CMD_PMVARRUN,
 	CMD_FD0SSH,
+	CMD_OFL,
 	_CMD_MAX,
 	CMD_NONE,
 };

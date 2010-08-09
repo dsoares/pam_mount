@@ -34,7 +34,7 @@ loop_sources		+= loop-vnd.c
 endif
 mtab_sources		= log.c misc.c mtab.c
 
-pam_mount_la_SOURCES	= log.c misc.c ofl-lib.c mount.c mount-bsd.c \
+pam_mount_la_SOURCES	= log.c misc.c mount.c mount-bsd.c \
 			  mount-sysv.c mtab.c pam_mount.c \
 			  rdconf1.c rdconf2.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
@@ -60,7 +60,7 @@ pmt_ehd_LDADD		= ${libHX_LIBS} ${crypto_libs}
 
 pmt_fd0ssh_SOURCES	= fd0ssh.c
 
-pmt_ofl_SOURCES		= ofl.c ofl-lib.c
+pmt_ofl_SOURCES		= ofl.c
 pmt_ofl_LDADD		= ${libHX_LIBS}
 
 pmvarrun_SOURCES = pmvarrun.c log.c
