@@ -5,6 +5,7 @@ HEAD
 ====
 Changes:
 - mount.crypt: fix incorrect processing of binary files in keyfile passthrough
+- call mount.crypt by means of mount -t crypt (selinux)
 
 
 v2.4 (June 26 2010)
