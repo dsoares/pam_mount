@@ -31,7 +31,6 @@
 <mntoptions deny="*" />
 -->
 <mntoptions require="nosuid,nodev" />
-<path>/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin</path>
 
 <logout wait="0" hup="0" term="0" kill="0" />
 
