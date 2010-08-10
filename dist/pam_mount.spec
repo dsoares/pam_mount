@@ -20,6 +20,7 @@ Recommends:	cifs-mount
 BuildRequires:	kernel-headers
 %endif
 Requires:	device-mapper >= 1.02.48
+Requires:	hxtools
 BuildRoot:	%_tmppath/%name-%version-build
 Prefix:		%_prefix
 

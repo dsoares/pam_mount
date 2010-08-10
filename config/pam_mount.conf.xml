@@ -32,6 +32,7 @@
 -->
 <mntoptions require="nosuid,nodev" />
 
+<!-- requires ofl from hxtools to be present -->
 <logout wait="0" hup="0" term="0" kill="0" />
 
 
