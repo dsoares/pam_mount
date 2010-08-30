@@ -575,6 +575,8 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 			l0g("error trying to save config structure\n");
 			goto out;
 		}
+		/* Up the reference count by one, for freeconfig */
+		HX_init();
 	}
 
 	if (!expandconfig(&Config)) {
@@ -685,8 +687,6 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 	ret = HX_init();
 	if (ret <= 0)
 		l0g("libHX init failed: %s\n", strerror(errno));
-	/* Up the refcount once again due to cleanconfig's delayed nature. */
-	HX_init();
 	ret = PAM_SUCCESS;
 	w4rn("received order to close things\n");
 	if (Config.volume_list.items == 0) {
