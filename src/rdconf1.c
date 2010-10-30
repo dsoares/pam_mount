@@ -1367,7 +1367,7 @@ static const struct pmt_command default_command[] = {
 	{CMD_FSCK,       NULL,     {"fsck", "-p", "%(FSCKTARGET)", NULL}},
 	{CMD_PMVARRUN,   NULL,     {"pmvarrun", "-u", "%(USER)", "-o", "%(OPERATION)", NULL}},
 	{CMD_FD0SSH,      NULL,    {"pmt-fd0ssh", NULL}},
-	{CMD_OFL,        NULL,     {"pmt-ofl", "-k%(SIGNAL)", "%(MNTPT)", NULL}},
+	{CMD_OFL,        NULL,     {"ofl", "-k%(SIGNAL)", "%(MNTPT)", NULL}},
 	{-1},
 };
 

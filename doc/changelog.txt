@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- remove shipped copy of ofl, use hxtools's original variant
 
 
 v2.5 (August 10 2010)
@@ -13,6 +15,7 @@ Changes:
 - reorder the default path to search in /usr/local first, then /usr, /
 - config: add missing fd0ssh command to restore volumes using ssh
 - ofl is now run as a separate process (selinux policy simplification)
+- remove shipped copy of fd0ssh, use hxtools's original variant
 
 
 v2.4 (June 26 2010)
