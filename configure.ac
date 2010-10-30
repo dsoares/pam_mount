@@ -7,13 +7,13 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [2.5])
-PACKAGE_RELDATE="2010-08-10"
+AC_INIT([pam_mount], [2.6])
+PACKAGE_RELDATE="2010-10-30"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_INSTALL
-AM_INIT_AUTOMAKE([-Wall dist-bzip2 no-dist-gzip foreign subdir-objects])
+AM_INIT_AUTOMAKE([-Wall no-dist foreign subdir-objects])
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
@@ -58,7 +58,7 @@ AM_CONDITIONAL([HAVE_CGD], [test "x$ac_cv_header_dev_cgdvar_h" = "xyes"])
 AM_CONDITIONAL([HAVE_MDIO], [test "x$ac_cv_header_sys_mdioctl_h" = "xyes"])
 AM_CONDITIONAL([HAVE_VND], [test "x$ac_cv_header_dev_vndvar_h" = "xyes"])
 
-PKG_CHECK_MODULES([libHX], [libHX >= 3.4])
+PKG_CHECK_MODULES([libHX], [libHX >= 3.6])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 
 with_crypto="yes";

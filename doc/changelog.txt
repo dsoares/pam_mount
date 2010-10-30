@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- pam_mount: up the refcount once freeconfig is live
 Changes:
 - remove shipped copy of ofl, use hxtools's original variant
 
