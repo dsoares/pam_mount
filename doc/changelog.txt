@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- conf: %(shell EXPR) is now activated and usable from the global config file
 
 
 v2.6 (2010-10-30)

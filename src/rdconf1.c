@@ -156,6 +156,13 @@ bool expandconfig(const struct config *config)
 		goto rfalse;
 	}
 
+	/*
+	 * Because user's volumes will also be mounted with UID 0,
+	 * deactivate shell expansion for now.
+	 */
+	if (config->level == CONTEXT_GLOBAL)
+		HXformat_add(vinfo, "/libhx/exec", NULL, HXFORMAT_IMMED);
+
 	HXformat_add(vinfo, "USER", u, HXTYPE_STRING);
 	HXformat_add(vinfo, "USERUID", reinterpret_cast(void *,
 		static_cast(long, pe->pw_uid)), HXTYPE_UINT | HXFORMAT_IMMED);
@@ -182,7 +189,7 @@ bool expandconfig(const struct config *config)
 		/*
 		 * Substitution on the key seems odd indeed, and was not
 		 * originally intended. But it should be done, since the
-		 * option separator is notalways ",", e.g. with AUFS.
+		 * option separator is not always ",", e.g. with AUFS.
 		 * Least Surprise says: do the expansion on the key
 		 * nevertheless.
 		 */
