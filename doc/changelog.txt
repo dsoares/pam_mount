@@ -3,6 +3,9 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- config: options need to have a space for mount.fuse
+
 
 v2.7 (2010-12-01)
 =================

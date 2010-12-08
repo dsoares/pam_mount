@@ -1362,7 +1362,7 @@ static const struct pmt_command default_command[] = {
 	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_NCPMOUNT,   "ncpfs", {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_NCPUMOUNT,  "ncpfs", {"ncpumount", "%(MNTPT)", NULL}},
-	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(if %(OPTIONS),-o%(OPTIONS))", NULL}},
+	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(if %(OPTIONS),-o)", "%(OPTIONS)", NULL}},
 	{CMD_FUSEUMOUNT, "fuse",  {"fusermount", "-u", "%(MNTPT)", NULL}},
 	/* Do not use LCLMOUNT to avoid calling fsck */
 	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
