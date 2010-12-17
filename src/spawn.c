@@ -110,8 +110,25 @@ static void set_myuid(void *data)
 			l0g("could not get passwd entry for user %s\n", user);
 			return;
 		}
-#ifdef HAVE_INITGROUPS
-		initgroups(real_user->pw_name, real_user->pw_gid);
+#if defined(HAVE_GETGROUPLIST) && defined(HAVE_GETGROUPS) \
+	&& defined(HAVE_SETGROUPS)
+		int ngrps, maxgrps, tmp_ngrps;
+		gid_t *groups;
+		maxgrps = sysconf(_SC_NGROUPS_MAX);
+		if (maxgrps == -1) // value was indeterminate
+			maxgrps = 16394; // should be more than enough
+		groups = malloc(maxgrps * sizeof(gid_t));
+		if (groups) {
+			ngrps = maxgrps;
+			getgrouplist(user, real_user->pw_gid, groups, &ngrps);
+			tmp_ngrps = getgroups(maxgrps, &groups[ngrps]);
+			if (tmp_ngrps > 0)
+				ngrps += tmp_ngrps;
+			if (setgroups(ngrps, groups) == -1){
+				l0g("could not load groups for user %s\n", user);
+			}
+			free(groups);
+		}
 #endif
 		if (setgid(real_user->pw_gid) == -1) {
 			l0g("could not set gid to %ld\n",

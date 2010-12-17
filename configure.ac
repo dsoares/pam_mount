@@ -53,7 +53,7 @@ AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/cgdvar.h dev/vndvar.h])
 AC_CHECK_HEADERS([sys/mdioctl.h sys/mount.h sys/statvfs.h])
 AC_CHECK_MEMBERS([struct loop_info64.lo_file_name], [], [],
 	[#include <linux/loop.h>])
-AC_CHECK_FUNCS([getmntent getmntinfo initgroups])
+AC_CHECK_FUNCS([getmntent getmntinfo getgrouplist getgroups setgroups])
 AM_CONDITIONAL([HAVE_CGD], [test "x$ac_cv_header_dev_cgdvar_h" = "xyes"])
 AM_CONDITIONAL([HAVE_MDIO], [test "x$ac_cv_header_sys_mdioctl_h" = "xyes"])
 AM_CONDITIONAL([HAVE_VND], [test "x$ac_cv_header_dev_vndvar_h" = "xyes"])
