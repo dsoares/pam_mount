@@ -1,9 +1,8 @@
 
-
 Known Issues with other programs
-================================
 
-[ cryptsetup - awkward input processing ]
+
+== cryptsetup — awkward input processing ==
 
 Some people create their crypto partition using a command like
 
@@ -20,7 +19,7 @@ However, since you created your crypto volume with a truncated key
 that is different from the real one, mounting may fail unexpectedly.
 
 
-[ cryptsetup - key truncation ]
+== cryptsetup — key truncation ==
 
 cryptsetup implicitly assumes -s 256, which either pads or truncates
 the key material after it has gone through cryptsetup's hashing (-h),
@@ -38,7 +37,7 @@ also passes -h plain to cryptsetup by default.) Thus, pam_mount defaults
 to using the key file's length (when decrypted) as the cipher size.
 
 
-[ shell - key expansion ]
+== shell — key expansion ==
 
 Some HOWTOs suggest manual key generation for encrypted volumes, however
 they fail to guard against shell semantics, such as:
@@ -55,14 +54,14 @@ key generation. Please use the pmt-ehd tool to create PLAIN-type
 encrypted volumes.
 
 
-[ gksu & kdesu ]
+== gksu & kdesu ==
 
 gksu interprets any output on stderr as an error. pam_mount writes
 debug output to stderr, so this combination will only work if debugging
 is disabled in pam_mount, or gksu gets fixed.
 
 
-[ sshd - various ]
+== sshd — various ==
 
 The "UsePAM" configuration option is required to be enabled to make
 sshd go through the PAM stacks.
@@ -88,7 +87,7 @@ pam_mount can ask your for a password. Read the sshd documentation
 about possible pitfalls involved using UseLogin.
 
 
-[ su, probably others - privilege drop ]
+== su, probably others — privilege drop ==
 
 I sometimes get reports about unmount failing because of insufficient
 privileges. Some programs and/or distributions and/or pam
@@ -96,17 +95,13 @@ configurations seem to drop the root privileges after successful
 authentification. This goes counter to pam_mount which needs these
 privileges for umount. (May not apply for FUSE mounts.)
 
-The following programs are confirmed to have this issue:
+Known constellations include
 
-	* su/sux from coreutils
-
-Unverified programs:
-
+	* su from coreutils, on some distros
 	* GDM on Ubuntu
 
 
-[ sudo ]
-
+== sudo ==
 
 sudo has an internal bug (def_prompt is NULL) that leads to a crash
 when a PAM module tries to invoke the conversation function.
@@ -115,14 +110,13 @@ Seen with at least 1.6.9p17.
 Reference: http://bugs.debian.org/492333
 
 
-[ truecrypt ]
-
+== truecrypt ==
 
 The scriptable interface of Truecrypt 5 and upwards is broken and
 cannot be used by pam_mount.
 
 
-[ vsftpd - not using PAM ]
+== vsftpd — not using PAM ==
 
 vsftpd does not run through the PAM session code, hence will never
 call pam_mount's mounting functions.
