@@ -556,6 +556,18 @@ int do_mount(const struct config *config, struct vol *vpt,
 		return 0;
 	}
 
+	if (!proc.p_exited || proc.p_status != 0) {
+		/*
+		 * Remove mountpoint if mount failed, to flag unavailability
+		 * of service (e.g. when mntpt is the user's home directory).
+		 */
+		if (rmdir(vpt->mountpoint) < 0)
+			/* non-fatal, but warn */
+			w4rn("could not remove %s again: %s\n",
+			     vpt->mountpoint, strerror(errno));
+		vpt->created_mntpt = false;
+	}
+
 	if (Debug)
 		HXproc_run_sync((const char *const []){"df", "-Ta", NULL},
 		                HXPROC_VERBOSE);
