@@ -80,17 +80,17 @@ static void initgroups2(const char *user, const struct passwd *real_user)
 	if (maxgrps == -1) // value was indeterminate
 		maxgrps = 16394; // should be more than enough
 	groups = malloc(maxgrps * sizeof(gid_t));
-	if (groups) {
-		ngrps = maxgrps;
-		getgrouplist(user, real_user->pw_gid, groups, &ngrps);
-		tmp_ngrps = getgroups(maxgrps, &groups[ngrps]);
-		if (tmp_ngrps > 0)
-			ngrps += tmp_ngrps;
-		if (setgroups(ngrps, groups) == -1){
-			l0g("could not load groups for user %s\n", user);
-		}
-		free(groups);
+	if (groups != NULL)
+		return;
+	ngrps = maxgrps;
+	getgrouplist(user, real_user->pw_gid, groups, &ngrps);
+	tmp_ngrps = getgroups(maxgrps, &groups[ngrps]);
+	if (tmp_ngrps > 0)
+		ngrps += tmp_ngrps;
+	if (setgroups(ngrps, groups) == -1){
+		l0g("could not load groups for user %s\n", user);
 	}
+	free(groups);
 #endif
 }
 /**
