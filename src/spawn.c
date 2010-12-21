@@ -83,7 +83,10 @@ static void initgroups2(const char *user, const struct passwd *real_user)
 	if (groups != NULL)
 		return;
 	ngrps = maxgrps;
-	getgrouplist(user, real_user->pw_gid, groups, &ngrps);
+	if (getgrouplist(user, real_user->pw_gid, groups, &ngrps) < 0)
+		ngrps = 0;
+	else
+		maxgrps -= ngrps;
 	tmp_ngrps = getgroups(maxgrps, &groups[ngrps]);
 	if (tmp_ngrps > 0)
 		ngrps += tmp_ngrps;
