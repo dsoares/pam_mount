@@ -78,7 +78,7 @@ static void initgroups2(const char *user, const struct passwd *real_user)
 	gid_t *groups;
 	maxgrps = sysconf(_SC_NGROUPS_MAX);
 	if (maxgrps == -1) // value was indeterminate
-		maxgrps = 16394; // should be more than enough
+		maxgrps = 64;
 	groups = malloc(maxgrps * sizeof(gid_t));
 	if (groups != NULL)
 		return;
