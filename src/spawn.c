@@ -70,6 +70,29 @@ int pmt_spawn_dq(struct HXdeque *argq, struct HXproc *proc)
 	return ret;
 }
 
+static void initgroups2(const char *user, const struct passwd *real_user)
+{
+#if defined(HAVE_GETGROUPLIST) && defined(HAVE_GETGROUPS) \
+	&& defined(HAVE_SETGROUPS)
+	int ngrps, maxgrps, tmp_ngrps;
+	gid_t *groups;
+	maxgrps = sysconf(_SC_NGROUPS_MAX);
+	if (maxgrps == -1) // value was indeterminate
+		maxgrps = 16394; // should be more than enough
+	groups = malloc(maxgrps * sizeof(gid_t));
+	if (groups) {
+		ngrps = maxgrps;
+		getgrouplist(user, real_user->pw_gid, groups, &ngrps);
+		tmp_ngrps = getgroups(maxgrps, &groups[ngrps]);
+		if (tmp_ngrps > 0)
+			ngrps += tmp_ngrps;
+		if (setgroups(ngrps, groups) == -1){
+			l0g("could not load groups for user %s\n", user);
+		}
+		free(groups);
+	}
+#endif
+}
 /**
  * set_myuid -
  * @user:	switch to specified user
@@ -110,26 +133,7 @@ static void set_myuid(void *data)
 			l0g("could not get passwd entry for user %s\n", user);
 			return;
 		}
-#if defined(HAVE_GETGROUPLIST) && defined(HAVE_GETGROUPS) \
-	&& defined(HAVE_SETGROUPS)
-		int ngrps, maxgrps, tmp_ngrps;
-		gid_t *groups;
-		maxgrps = sysconf(_SC_NGROUPS_MAX);
-		if (maxgrps == -1) // value was indeterminate
-			maxgrps = 16394; // should be more than enough
-		groups = malloc(maxgrps * sizeof(gid_t));
-		if (groups) {
-			ngrps = maxgrps;
-			getgrouplist(user, real_user->pw_gid, groups, &ngrps);
-			tmp_ngrps = getgroups(maxgrps, &groups[ngrps]);
-			if (tmp_ngrps > 0)
-				ngrps += tmp_ngrps;
-			if (setgroups(ngrps, groups) == -1){
-				l0g("could not load groups for user %s\n", user);
-			}
-			free(groups);
-		}
-#endif
+		initgroups2(user, real_user);
 		if (setgid(real_user->pw_gid) == -1) {
 			l0g("could not set gid to %ld\n",
 			    static_cast(long, real_user->pw_gid));
