@@ -566,7 +566,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		l0g("error sending password to mount\n");
 	close(proc.p_stdin);
 
-	log_output(proc.p_stderr, "Errors from underlying mount program:\n");
+	log_output(proc.p_stderr, "Messages from underlying mount program:\n");
 	if ((ret = HXproc_wait(&proc)) < 0) {
 		l0g("error waiting for child: %s\n", strerror(-ret));
 		return 0;
