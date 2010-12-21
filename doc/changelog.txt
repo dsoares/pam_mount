@@ -6,6 +6,8 @@ HEAD
 Fixes:
 - config: options need to have a space for mount.fuse
 - pam_mount: fix truncation of groups on FUSE mounts
+Changes:
+- pam_mount: reimplement mkmountpoint
 
 
 v2.7 (2010-12-01)

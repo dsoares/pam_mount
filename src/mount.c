@@ -215,60 +215,7 @@ static void log_pm_input(const struct config *const config,
 }
 
 /**
- * mkmountpoint_real - create mountpoint directory
- * @volume:	volume description
- * @d:		directory
- *
- * If the directory @d does not exist, create it and all its parents if
- * @volume->created_mntpt = true. On success, returns true, otherwise false.
- */
-static bool mkmountpoint_real(struct vol *const volume, const char *const d)
-{
-	bool ret = true;
-	struct passwd *passwd_ent;
-	char dcopy[PATH_MAX + 1], *parent;
-
-	assert(d != NULL);
-
-	strncpy(dcopy, d, sizeof_z(dcopy));
-	dcopy[sizeof_z(dcopy)] = '\0';
-	parent = HX_dirname(dcopy);
-	if (!pmt_fileop_exists(parent) && mkmountpoint(volume, parent) == 0) {
-		ret = false;
-		goto out;
-	}
-	if ((passwd_ent = getpwnam(volume->user)) == NULL) {
-		l0g("could not determine uid from %s to make %s\n", volume->user, d);
-		ret = false;
-		goto out;
-	}
-	/*
-	 * The directory will be created in a restricted mode S_IRWXU here.
-	 * When mounted, the root directory of the new vfsmount will override
-	 * it, so there is no need to use S_IRWXUGO or S_IRWXU | S_IXUGO here.
-	 *
-	 * Workaround for CIFS on root_squashed NFS: +S_IXUGO
-	 */
-	if (mkdir(d, S_IRWXU | S_IXUGO) < 0) {
-		ret = false;
-		goto out;
-	}
-	if (chown(d, passwd_ent->pw_uid, passwd_ent->pw_gid) < 0) {
-		l0g("could not chown %s to %s(%u:%u): %s\n", d, volume->user,
-		    static_cast(unsigned int, passwd_ent->pw_uid),
-		    static_cast(unsigned int, passwd_ent->pw_gid),
-		    strerror(errno));
-		ret = false;
-		goto out;
-	}
-	volume->created_mntpt = true;
- out:
-	free(parent);
-	return ret;
-}
-
-/**
- * mkmountpoint_pick - create mountpoint for volume
+ * mkmountpoint - create mountpoint for volume
  * @volume:	volume structure
  * @d:		directory to create
  *
@@ -279,40 +226,77 @@ static bool mkmountpoint_real(struct vol *const volume, const char *const d)
  *
  * If that fails, do as usual (create as root, chown to user).
  */
-static bool mkmountpoint_pick(struct vol *volume, const char *d)
+static bool mkmountpoint(struct vol *volume, const char *d)
 {
-	struct passwd *pe;
-	bool ret;
+	const struct passwd *pe;
+	hxmc_t *dtmp;
+	char *last;
+	bool ret = true;
 
 	if ((pe = getpwnam(volume->user)) == NULL) {
 		l0g("getpwuid: %s\n", strerror(errno));
 		return false;
 	}
+	dtmp = HXmc_strinit(d);
+	if (dtmp == NULL || HXmc_strcat(&dtmp, "/") == NULL) {
+		l0g("HXmc_strinit: %s\n", strerror(errno));
+		return false;
+	}
 
-	w4rn("creating mount point %s\n", d);
-	if (seteuid(pe->pw_uid) == 0)
-		if (mkmountpoint_real(volume, d))
-			return true;
-
+	last = dtmp;
+	while ((last = strchr(last + 1, '/')) != NULL) {
+		*last = '\0';
+		w4rn("%s: checking %s\n", __func__, dtmp);
+		if (pmt_fileop_exists(dtmp)) {
+			/* If it exists, all is good... */
+			*last = '/';
+			continue;
+		}
+		/*
+		 * Prefer creation using user id, due to NFS possibly using
+		 * root_squashed NFS.
+		 *
+		 * The directory will be created in a restricted mode S_IRWXU
+		 * here. When mounted, the root directory of the new vfsmount
+		 * will override it, so there is no need to use S_IRWXUGO or
+		 * S_IRWXU | S_IXUGO here.
+		 *
+		 * Workaround for CIFS on root_squashed NFS: +S_IXUGO
+		 */
+		if (seteuid(pe->pw_uid) < 0) {
+			l0g("seteuid %ld failed\n",
+			    static_cast(long, pe->pw_uid));
+		} else if (mkdir(dtmp, S_IRWXU | S_IXUGO) == 0) {
+			/* Was createable as user - ok */
+			w4rn("mkdir[%ld] %s\n",
+			     static_cast(long, pe->pw_uid), dtmp);
+			*last = '/';
+			continue;
+		}
+		/* Try with root again. */
+		if (seteuid(0) < 0) {
+			l0g("seteuid 0 failed\n");
+			ret = false;
+			break;
+		}
+		if (mkdir(dtmp, S_IRWXU | S_IXUGO) < 0) {
+			l0g("mkdir %s failed: %s\n", dtmp, strerror(errno));
+			ret = false;
+			break;
+		}
+		w4rn("mkdir[0] %s\n", dtmp);
+		if (chown(dtmp, pe->pw_uid, pe->pw_gid) < 0) {
+			l0g("chown %s failed: %s\n", dtmp, strerror(errno));
+			ret = false;
+			break;
+		}
+		w4rn("chown %s -> %ld:%ld\n", dtmp,
+		     pe->pw_uid, pe->pw_gid);
+	}
+	HXmc_free(dtmp);
+	/* restore state: */
 	seteuid(0);
-	ret = mkmountpoint_real(volume, d);
-	if (!ret)
-		l0g("tried to create %s but failed\n", d);
-	return ret;
-}
-
-/**
- * mkmountpoint -
- *
- * Wrapper for mkmountpoint_pick(). Switch back to root user after
- * mkmountpoint() operation. This is needed, otherwise the PAM stack will
- * (more or less) spuriously fail with PAM_SYSTEM_ERR.
- */
-static inline bool mkmountpoint(struct vol *volume, const char *d)
-{
-	bool r = mkmountpoint_pick(volume, d);
-	seteuid(0);
-	return r;
+	return volume->created_mntpt = ret;
 }
 
 /**
