@@ -7,8 +7,8 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [2.7])
-PACKAGE_RELDATE="2010-12-01"
+AC_INIT([pam_mount], [2.8])
+PACKAGE_RELDATE="2010-12-22"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])

@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.8 (2010-12-22)
+=================
 Fixes:
 - config: options need to have a space for mount.fuse
 - pam_mount: fix truncation of groups on FUSE mounts
