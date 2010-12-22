@@ -263,9 +263,11 @@ static bool mkmountpoint(struct vol *volume, const char *d)
 		 *
 		 * Workaround for CIFS on root_squashed NFS: +S_IXUGO
 		 */
-		if (seteuid(pe->pw_uid) < 0) {
-			l0g("seteuid %ld failed\n",
-			    static_cast(long, pe->pw_uid));
+		if (setegid(pe->pw_gid) < 0 ||
+		    seteuid(pe->pw_uid) < 0) {
+			l0g("seteuid/setegid %ld:%ld failed: %s\n",
+			    static_cast(long, pe->pw_uid),
+			    static_cast(long, pe->pw_gid), strerror(errno));
 		} else if (mkdir(dtmp, S_IRWXU | S_IXUGO) == 0) {
 			/* Was createable as user - ok */
 			w4rn("mkdir[%ld] %s\n",
