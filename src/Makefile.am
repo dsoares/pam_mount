@@ -1,8 +1,8 @@
 # -*- Makefile -*-
 
+AM_CPPFLAGS = -DLOCALSTATEDIR=\"${varrundir}\"
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
-		${libHX_CFLAGS} ${libcryptsetup_CFLAGS} ${libxml_CFLAGS} \
-		-DLOCALSTATEDIR=\"${varrundir}\"
+		${libHX_CFLAGS} ${libcryptsetup_CFLAGS} ${libxml_CFLAGS}
 
 varrundir		= ${localstatedir}/run
 

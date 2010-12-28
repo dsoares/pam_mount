@@ -43,8 +43,8 @@ AM_CONDITIONAL([WITH_DTD], [test "x$with_dtd" = "xtrue"])
 
 CHECK_GCC_FVISIBILITY
 
-regular_CFLAGS="-D_FILE_OFFSET_BITS=64 \
-	-D_REENTRANT -Wall -Waggregate-return -Wmissing-declarations \
+regular_CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_REENTRANT"
+regular_CFLAGS="-Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
 	-Wformat=2 -pipe"
 AC_SUBST([regular_CFLAGS])
