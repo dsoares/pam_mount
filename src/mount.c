@@ -293,7 +293,8 @@ static bool mkmountpoint(struct vol *volume, const char *d)
 			break;
 		}
 		w4rn("chown %s -> %ld:%ld\n", dtmp,
-		     pe->pw_uid, pe->pw_gid);
+		     static_cast(long, pe->pw_uid),
+		     static_cast(long, pe->pw_gid));
 	}
 	HXmc_free(dtmp);
 	/* restore state: */
