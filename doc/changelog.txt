@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- build: fix configure --without-crypt{o,setup}
 
 
 v2.8 (2010-12-22)

@@ -61,19 +61,15 @@ AM_CONDITIONAL([HAVE_VND], [test "x$ac_cv_header_dev_vndvar_h" = "xyes"])
 PKG_CHECK_MODULES([libHX], [libHX >= 3.6])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 
-with_crypto="yes";
 AC_ARG_WITH(
 	[crypto],
 	AS_HELP_STRING([--without-crypto], [Disable use of OpenSSL cryptography]),
-	[],
-	[with_crypto="no"]
+	[with_crypto="$withval"]
 )
 
-with_cryptsetup="yes";
 AC_ARG_WITH([cryptsetup],
 	AS_HELP_STRING([--without-cryptsetup], [Disable use of libcryptsetup]),
-	[],
-	[with_cryptsetup="no"]
+	[with_crypto="$withval"]
 )
 
 if test "x$with_crypto" = "xyes"; then
