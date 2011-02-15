@@ -7,6 +7,7 @@ Fixes:
 - build: fix configure --without-crypt{o,setup}
 Enhancements:
 - debug: print /proc/self/mountinfo when available (and avoid df)
+- pam_mount: support mounting files with bind/move
 
 
 v2.8 (2010-12-22)

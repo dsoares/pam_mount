@@ -53,6 +53,21 @@ int pmt_fileop_exists(const char *file)
 	return stat(file, &sb) == 0;
 }
 
+/**
+ * pmt_fileop_isreg -
+ * @path:	path to check
+ *
+ * Check if a path is a regular file and return positive non-zero if that was
+ * successful. Returns 0 for error. %errno will be set in case of error.
+ */
+int pmt_fileop_isreg(const char *path)
+{
+	struct stat sb;
+
+	if (stat(path, &sb) != 0)
+		return false;
+	return S_ISREG(sb.st_mode);
+}
 
 /**
  * pmt_fileop_owns -

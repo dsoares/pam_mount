@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -232,13 +233,18 @@ static bool mkmountpoint(struct vol *volume, const char *d)
 	hxmc_t *dtmp;
 	char *last;
 	bool ret = true;
+	bool is_file;
+
+	is_file = (kvplist_contains(&volume->options, "bind") ||
+	          kvplist_contains(&volume->options, "move")) &&
+	          pmt_fileop_isreg(volume->volume);
 
 	if ((pe = getpwnam(volume->user)) == NULL) {
 		l0g("getpwuid: %s\n", strerror(errno));
 		return false;
 	}
 	dtmp = HXmc_strinit(d);
-	if (dtmp == NULL || HXmc_strcat(&dtmp, "/") == NULL) {
+	if (dtmp == NULL || (!is_file && HXmc_strcat(&dtmp, "/") == NULL)) {
 		l0g("HXmc_strinit: %s\n", strerror(errno));
 		return false;
 	}
@@ -297,7 +303,23 @@ static bool mkmountpoint(struct vol *volume, const char *d)
 		     static_cast(long, pe->pw_gid));
 	}
 	HXmc_free(dtmp);
+
+	/* Touch the file for bind mount */
+	if (is_file && !pmt_fileop_exists(d)) {
+		int fd = open(d, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+		if (fd < 0) {
+			l0g("creat %s failed: %s\n", d, strerror(errno));
+			ret = false;
+			goto out;
+		}
+		close(fd);
+		if (chown(d, pe->pw_uid, pe->pw_gid) < 0) {
+			l0g("chown %s failed: %s\n", d, strerror(errno));
+			ret = false;
+		}
+	}
 	/* restore state: */
+ out:
 	seteuid(0);
 	return volume->created_mntpt = ret;
 }
