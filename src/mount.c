@@ -571,9 +571,14 @@ int do_mount(const struct config *config, struct vol *vpt,
 		vpt->created_mntpt = false;
 	}
 
-	if (Debug)
-		HXproc_run_sync((const char *const []){"df", "-Ta", NULL},
-		                HXPROC_VERBOSE);
+	if (Debug) {
+		if (pmt_fileop_exists("/proc/self/mountinfo"))
+			pmt_readfile("/proc/self/mountinfo");
+		else if (pmt_fileop_exists("/proc/self/mounts"))
+			pmt_readfile("/proc/self/mounts");
+		else if (pmt_fileop_exists("/proc/mounts"))
+			pmt_readfile("/proc/mounts");
+	}
 
 	/* pass on through the result from the umount process */
 	return proc.p_exited && proc.p_status == 0;

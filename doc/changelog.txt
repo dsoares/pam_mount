@@ -5,6 +5,8 @@ HEAD
 ====
 Fixes:
 - build: fix configure --without-crypt{o,setup}
+Enhancements:
+- debug: print /proc/self/mountinfo when available (and avoid df)
 
 
 v2.8 (2010-12-22)
