@@ -126,6 +126,10 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 			      flags);
 		if (ret < 0) {
 			fprintf(stderr, "crypt_activate: %s\n", strerror(-ret));
+			if (ret == -EINVAL)
+				fprintf(stderr, "This likely means that the "
+				        "wrong cipher, hash and/or keysize "
+				        "was chosen.\n");
 			goto out;
 		}
 	}
