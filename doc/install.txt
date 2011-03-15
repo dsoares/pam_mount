@@ -1,7 +1,7 @@
 
 Minimum required packages for building pam_mount from a tarball release:
 
-	* libHX 3.4 or up
+	* libHX 3.6 or up
 	* libxml 2.6.x or up
 	* pkg-config 0.19 or up
 	* Linux-PAM 0.99.x or up
@@ -21,7 +21,6 @@ Optional packages for building:
 
 Suggested packages for runtime:
 
-	* device-mapper 1.02.48 -- race condition fix
 	* hxtools
 		- fd0ssh: to support passing passwords to SSH
 		- ofl: to support kill-on-logout
