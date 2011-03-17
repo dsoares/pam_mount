@@ -2,7 +2,8 @@
 
 AM_CPPFLAGS = -DLOCALSTATEDIR=\"${varrundir}\"
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
-		${libHX_CFLAGS} ${libcryptsetup_CFLAGS} ${libxml_CFLAGS}
+		${libHX_CFLAGS} ${libcrypto_CFLAGS} ${libcryptsetup_CFLAGS} \
+		${libxml_CFLAGS}
 
 varrundir		= ${localstatedir}/run
 
@@ -33,9 +34,10 @@ loop_sources		+= loop-vnd.c
 endif
 mtab_sources		= log.c misc.c mtab.c
 
-pam_mount_la_SOURCES	= log.c misc.c mount.c mount-bsd.c \
-			  mount-sysv.c mtab.c pam_mount.c \
+pam_mount_la_SOURCES	= ${mtab_sources} mount.c mount-bsd.c \
+			  mount-sysv.c pam_mount.c \
 			  rdconf1.c rdconf2.c spawn.c
+# Separate compilation required
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
 pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${crypto_libs} \
 			  ${libxml_LIBS}
