@@ -64,26 +64,36 @@ PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 AC_ARG_WITH(
 	[crypto],
 	AS_HELP_STRING([--without-crypto], [Disable use of OpenSSL cryptography]),
-	[with_crypto="$withval"]
+	[with_crypto="$withval"],
+	[with_crypto="auto"]
 )
 
 AC_ARG_WITH([cryptsetup],
 	AS_HELP_STRING([--without-cryptsetup], [Disable use of libcryptsetup]),
-	[with_crypto="$withval"]
+	[with_cryptsetup="$withval"],
+	[with_cryptsetup="auto"]
 )
 
-if test "x$with_crypto" = "xyes"; then
-	PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
-		[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
-			[OpenSSL libcrypto available])])
-fi;
-AM_CONDITIONAL([HAVE_LIBCRYPTO], [test "x$with_crypto" = xyes])
+PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
+	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
+		[OpenSSL libcrypto available])
+	 with_crypto="yes";
+	],
+	[if test "x$with_crypto" = xyes; then
+		AC_MSG_ERROR([$libcrypto_PKG_ERRORS])
+	fi;]
+)
+AM_CONDITIONAL([HAVE_LIBCRYPTO], [test "x$with_crypto" != xno])
 
-if test "x$with_cryptsetup" = "xyes"; then
-	PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.1.2],
-		[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTSETUP], [1],
-			[libcryptsetup available])])
-fi;
+PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.1.2],
+	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTSETUP], [1],
+		[libcryptsetup available])
+	 with_cryptsetup="yes";
+	],
+	[if test "x$with_cryptsetup" = xyes; then
+		AC_MSG_ERROR([$libcryptsetup_PKG_ERRORS])
+	fi;]
+)
 AM_CONDITIONAL([HAVE_LIBCRYPTSETUP], [test "x$with_cryptsetup" = xyes])
 
 AC_CHECK_HEADERS([security/pam_modules.h], [have_pamheader="yes"])
