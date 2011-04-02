@@ -74,6 +74,7 @@ AC_ARG_WITH([cryptsetup],
 	[with_cryptsetup="auto"]
 )
 
+if test "$with_crypto" != no; then
 PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTO], [1],
 		[OpenSSL libcrypto available])
@@ -83,8 +84,10 @@ PKG_CHECK_MODULES([libcrypto], [libcrypto >= 0.9.8],
 		AC_MSG_ERROR([$libcrypto_PKG_ERRORS])
 	fi;]
 )
-AM_CONDITIONAL([HAVE_LIBCRYPTO], [test "x$with_crypto" != xno])
+fi;
+AM_CONDITIONAL([HAVE_LIBCRYPTO], [test "$with_crypto" = yes])
 
+if test "$with_cryptsetup" != no; then
 PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.1.2],
 	[AC_DEFINE_UNQUOTED([HAVE_LIBCRYPTSETUP], [1],
 		[libcryptsetup available])
@@ -94,7 +97,8 @@ PKG_CHECK_MODULES([libcryptsetup], [libcryptsetup >= 1.1.2],
 		AC_MSG_ERROR([$libcryptsetup_PKG_ERRORS])
 	fi;]
 )
-AM_CONDITIONAL([HAVE_LIBCRYPTSETUP], [test "x$with_cryptsetup" = xyes])
+fi
+AM_CONDITIONAL([HAVE_LIBCRYPTSETUP], [test "$with_cryptsetup" = yes])
 
 AC_CHECK_HEADERS([security/pam_modules.h], [have_pamheader="yes"])
 # Mac OS X 10.3 puts PAM headers in /usr/include/pam.
