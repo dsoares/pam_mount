@@ -649,7 +649,7 @@ static int mtcr_umount(struct umount_options *opt)
 	} else {
 		if (!opt->no_update)
 			pmt_smtab_remove(mountpoint, SMTABF_MOUNTPOINT);
-		pmt_cmtab_remove(mountpoint, CMTABF_MOUNTPOINT);
+		pmt_cmtab_remove(mountpoint);
 		final_ret = 1;
 	}
 

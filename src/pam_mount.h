@@ -288,7 +288,7 @@ extern int pmt_cmtab_add(const char *, const char *,
 	const char *, const char *);
 extern int pmt_cmtab_get(const char *, enum cmtab_field,
 	char **, char **, char **, char **);
-extern int pmt_cmtab_remove(const char *, enum cmtab_field);
+extern int pmt_cmtab_remove(const char *);
 extern int pmt_cmtab_mounted(const char *, const char *);
 
 /*

@@ -324,7 +324,7 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
 			break;
 		}
 
-		pmt_cmtab_remove(*mountpoint, CMTABF_MOUNTPOINT);
+		pmt_cmtab_remove(*mountpoint);
 		free(*mountpoint);
 		free(*container);
 		free(*loop_device);
@@ -424,15 +424,12 @@ int pmt_smtab_remove(const char *spec, enum smtab_field type)
 /**
  * pmt_cmtab_remove - remove a cmtab entry
  * @spec:	specificator to match on (must be %CMTABF_*)
- * @type:	type of the specificator
  *
  * By definition, removal operates on the most recent entry in an mtab.
  */
-int pmt_cmtab_remove(const char *spec, enum cmtab_field type)
+int pmt_cmtab_remove(const char *spec)
 {
-	if (type >= __CMTABF_MAX)
-		return -EINVAL;
-	return pmt_mtab_remove(pmt_cmtab_file, spec, type);
+	return pmt_mtab_remove(pmt_cmtab_file, spec, CMTABF_MOUNTPOINT);
 }
 
 static int pmt_mtab_mounted(const char *file, const char *const *spec,
