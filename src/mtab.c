@@ -274,13 +274,19 @@ static int pmt_cmtab_get1(const char *spec, enum cmtab_field type,
 			free(*container);
 			*container = HX_strdup(field[1]);
 		}
-		if (loop_device != NULL && strcmp(field[2], "-") != 0) {
+		if (loop_device != NULL) {
 			free(*loop_device);
-			*loop_device = HX_strdup(field[2]);
+			if (strcmp(field[2], "-") != 0)
+				*loop_device = HX_strdup(field[2]);
+			else
+				*loop_device = NULL;
 		}
-		if (crypto_device != NULL && strcmp(field[3], "-") != 0) {
+		if (crypto_device != NULL) {
 			free(*crypto_device);
-			*crypto_device = HX_strdup(field[3]);
+			if (strcmp(field[3], "-") != 0)
+				*crypto_device = HX_strdup(field[3]);
+			else
+				*crypto_device = NULL;
 		}
 		ret = 1;
 		/*
