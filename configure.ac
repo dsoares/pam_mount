@@ -58,7 +58,7 @@ AM_CONDITIONAL([HAVE_CGD], [test "x$ac_cv_header_dev_cgdvar_h" = "xyes"])
 AM_CONDITIONAL([HAVE_MDIO], [test "x$ac_cv_header_sys_mdioctl_h" = "xyes"])
 AM_CONDITIONAL([HAVE_VND], [test "x$ac_cv_header_dev_vndvar_h" = "xyes"])
 
-PKG_CHECK_MODULES([libHX], [libHX >= 3.6])
+PKG_CHECK_MODULES([libHX], [libHX >= 3.10.1])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 
 AC_ARG_WITH(

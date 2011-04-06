@@ -94,30 +94,19 @@ static bool ehd_check(const struct ehd_ctl *pg)
 	}
 
 	if (exists && S_ISLNK(sb.st_mode)) {
-		char target[256];
-		unsigned int i = sizeof(target);
+		hxmc_t *target = NULL;
 
 		/* Get confirmation for overwriting files */
 		++ask;
-		memset(target, 0, i);
-		ret = readlink(cont->path, target, sizeof(target));
+		ret = HX_readlink(&target, cont->path);
 		if (ret < 0) {
 			fprintf(stderr, "readlink %s: %s\n",
-			        cont->path, strerror(errno));
+			        cont->path, strerror(-ret));
 			return false;
 		}
-		--i;
-		if (target[i] != '\0' && i >= 16) {
-			target[i--] = '\0';
-			target[i--] = '.';
-			target[i--] = '.';
-			target[i--] = '.';
-		} else {
-			target[i--] = '\0';
-		}
-
 		printf("%s is a symlink and points to %s\n",
 		       cont->path, target);
+		HXmc_free(target);
 		/* Get extra confirmation */
 		++ask;
 
