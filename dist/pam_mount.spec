@@ -1,6 +1,6 @@
 
 Name:		pam_mount
-Version:	2.8
+Version:	2.9
 Release:	0
 Group:		System/Libraries
 Summary:	A PAM module that can mount volumes for a user session
@@ -19,7 +19,7 @@ Recommends:	cifs-mount
 %if "%_vendor" == "redhat"
 BuildRequires:	kernel-headers
 %endif
-Requires:	device-mapper >= 1.02.48
+Requires:	device-mapper >= 1.1.2
 Requires:	hxtools
 BuildRoot:	%_tmppath/%name-%version-build
 Prefix:		%_prefix
