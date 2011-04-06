@@ -17,48 +17,73 @@ ssbin_PROGRAMS		= mount.crypt mount.encfs13
 noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
 
-crypto_sources		= crypto.c ${loop_sources}
+noinst_LTLIBRARIES	= libpmt_crypto.la libpmt_loop.la libpmt_mtab.la
+
+#
+# libpmt_crypto
+#
+libpmt_crypto_la_SOURCES = crypto.c
+libpmt_crypto_la_LIBADD = libpmt_loop.la ${libcrypto_LIBS} ${libHX_LIBS}
 if HAVE_LIBCRYPTSETUP
-crypto_sources		+= crypto-dmc.c
+libpmt_crypto_la_SOURCES += crypto-dmc.c
+libpmt_crypto_la_LIBADD += ${libcryptsetup_LIBS}
 endif
 if HAVE_CGD
-crypto_sources		+= crypto-cgd.c
+libpmt_crypto_la_SOURCES += crypto-cgd.c
 endif
-crypto_libs		= ${libcrypto_LIBS} ${libcryptsetup_LIBS}
-loop_sources		= loop.c loop-linux.c
+
+#
+# libpmt_loop
+#
+libpmt_loop_la_SOURCES = loop.c loop-linux.c
 if HAVE_MDIO
-loop_sources		+= loop-mdvn.c
+libpmt_loop_la_SOURCES += loop-mdvn.c
 endif
 if HAVE_VND
-loop_sources		+= loop-vnd.c
+libpmt_loop_la_SOURCES += loop-vnd.c
 endif
-mtab_sources		= log.c misc.c mtab.c
 
-pam_mount_la_SOURCES	= ${mtab_sources} mount.c mount-bsd.c \
+#
+# libpmt_mtab
+#
+libpmt_mtab_la_SOURCES = log.c misc.c mtab.c
+libpmt_mtab_la_CFLAGS  = ${AM_CFLAGS}
+libpmt_mtab_la_LIBADD  = ${libHX_LIBS}
+
+#
+# pam_mount.so
+#
+pam_mount_la_SOURCES	= mount.c mount-bsd.c \
 			  mount-sysv.c pam_mount.c \
 			  rdconf1.c rdconf2.c spawn.c
-# Separate compilation required
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
-pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} \
-			  ${libxml_LIBS}
+pam_mount_la_LIBADD	= -lpam libpmt_mtab.la ${libHX_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
-autoloop_SOURCES	= autoloop.c ${loop_sources} log.c misc.c spawn.c
-autoloop_LDADD		= ${libHX_LIBS}
+#
+# test tools
+#
+autoloop_SOURCES	= autoloop.c log.c misc.c spawn.c
+autoloop_LDADD		= libpmt_loop.la ${libHX_LIBS}
 
-ismnt_SOURCES		= ismnt.c ${mtab_sources}
-ismnt_LDADD		= ${libHX_LIBS}
+ismnt_SOURCES		= ismnt.c
+ismnt_LDADD		= libpmt_mtab.la
 
-mount_crypt_SOURCES	= mtcrypt.c spawn.c \
-			  ${crypto_sources} ${mtab_sources}
-mount_crypt_LDADD	= ${libHX_LIBS} ${crypto_libs}
+#
+# mount helpers
+#
+mount_crypt_SOURCES	= mtcrypt.c spawn.c
+mount_crypt_LDADD	= libpmt_crypto.la libpmt_mtab.la ${libHX_LIBS}
 
 mount_encfs13_SOURCES	= mtencfs13.c
 mount_encfs13_LDADD	= ${libHX_LIBS}
 
-pmt_ehd_SOURCES		= ehd.c log.c misc.c spawn.c ${crypto_sources}
-pmt_ehd_LDADD		= ${libHX_LIBS} ${crypto_libs}
+pmt_ehd_SOURCES		= ehd.c log.c misc.c spawn.c
+pmt_ehd_LDADD		= libpmt_crypto.la ${libHX_LIBS}
 
+#
+# runtime helpers
+#
 pmvarrun_SOURCES = pmvarrun.c log.c
 pmvarrun_LDADD   = ${libHX_LIBS}
 
@@ -93,4 +118,3 @@ uninstall-hook:
 	-for i in ${mtcrypt_symlinks}; do \
 		rm "${DESTDIR}${ssbindir}/$$i"; \
 	done;
-
