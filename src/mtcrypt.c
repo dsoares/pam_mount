@@ -658,9 +658,10 @@ static int mtcr_umount(struct umount_options *opt)
 
 int main(int argc, const char **argv)
 {
+	struct stat sb;
 	int ret;
 
-	if (access("/etc/mtab", W_OK) != 0) {
+	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0) {
 		fprintf(stderr, "This version of mount.crypt does not support "
 		        "mtab-less systems yet.\n");
 		return EXIT_FAILURE;
