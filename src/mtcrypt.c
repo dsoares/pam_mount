@@ -660,6 +660,12 @@ int main(int argc, const char **argv)
 {
 	int ret;
 
+	if (access("/etc/mtab", W_OK) != 0) {
+		fprintf(stderr, "This version of mount.crypt does not support "
+		        "mtab-less systems yet.\n");
+		return EXIT_FAILURE;
+	}
+
 	ret = HX_init();
 	if (ret <= 0) {
 		fprintf(stderr, "HX_init: %s\n", strerror(errno));

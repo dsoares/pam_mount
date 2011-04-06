@@ -5,6 +5,8 @@ HEAD
 ====
 Fixes:
 - build: fix configure --without-crypt{o,setup}
+Changes:
+- mount.crypt: warn of unwritable /etc/mtab
 Enhancements:
 - debug: print /proc/self/mountinfo when available (and avoid df)
 - pam_mount: support mounting files with bind/move
