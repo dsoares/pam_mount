@@ -20,7 +20,7 @@ static char *mt_opts;
 int main(int argc, const char **argv)
 {
 	unsigned int i = 0;
-	const char **args;
+	const char *args[7];
 	struct HXoption options_table[] = {
 		{.sh = 'o', .type = HXTYPE_STRING, .ptr = &mt_opts,
 		 .help = "Mount options"},
@@ -35,7 +35,6 @@ int main(int argc, const char **argv)
 		return EXIT_FAILURE;
 	}
 
-	args = malloc(sizeof(char *) * 7);
 	args[i++] = "encfs";
 	args[i++] = argv[1]; /* src */
 	args[i++] = argv[2]; /* mntpt */
