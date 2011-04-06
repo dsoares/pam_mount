@@ -39,7 +39,7 @@ pam_mount_la_SOURCES	= ${mtab_sources} mount.c mount-bsd.c \
 			  rdconf1.c rdconf2.c spawn.c
 # Separate compilation required
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
-pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} ${crypto_libs} \
+pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} \
 			  ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
