@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2008 - 2010
+ *	Copyright © Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -43,7 +43,8 @@
  * @remount:		issue a remount
  */
 struct mount_options {
-	const char *object, *container, *mountpoint, *fstype;
+	hxmc_t *object, *container, *mountpoint;
+	const char *fstype;
 	const char *dmcrypt_cipher, *dmcrypt_hash;
 	const char *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
@@ -64,56 +65,13 @@ struct mount_options {
  * @blkdev:		@container is a block device
  */
 struct umount_options {
-	const char *object;
+	hxmc_t *object;
 	unsigned int no_update, ro_fallback;
 	bool is_cont, blkdev;
 };
 
 static const char *const mtab_file  = "/etc/mtab";
 static const char *const kmtab_file = "/proc/mounts";
-
-static hxmc_t *readlinkf(const char *file)
-{
-	static const unsigned int bufsize = 256;
-	const char *const args[] = {"readlink", "-fn", file, NULL};
-	struct HXproc proc;
-	ssize_t readret;
-	char *buf;
-	int ret;
-
-	if ((buf = malloc(bufsize)) == NULL) {
-		fprintf(stderr, "malloc: %s\n", strerror(errno));
-		return NULL;
-	}
-	arglist_llog(args);
-	memset(&proc, 0, sizeof(proc));
-	proc.p_flags = HXPROC_VERBOSE | HXPROC_STDOUT;
-	if ((ret = HXproc_run_async(args, &proc)) <= 0) {
-		fprintf(stderr, "spawn_startl readlink: %s\n", strerror(-ret));
-		free(buf);
-		return NULL;
-	}
-
-	readret = read(proc.p_stdout, buf, bufsize);
-	if (readret < 0) {
-		fprintf(stderr, "read: %s\n", strerror(errno));
-		goto out;
-	} else if (readret >= bufsize) {
-		fprintf(stderr, "Hm, path too long for us\n");
-		goto out;
-	}
-
-	buf[readret] = '\0';
-	close(proc.p_stdout);
-	HXproc_wait(&proc);
-	return buf;
-
- out:
-	free(buf);
-	close(proc.p_stdout);
-	HXproc_wait(&proc);
-	return NULL;
-}
 
 static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 {
@@ -242,7 +200,14 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 			return false;
 		}
 
-		opt->object = readlinkf((*argv)[1]);
+		/* Only absolute paths should be in mtab. */
+		ret = HX_realpath(&opt->object, (*argv)[1],
+		      HX_REALPATH_DEFAULT | HX_REALPATH_ABSOLUTE);
+		if (ret < 0) {
+			fprintf(stderr, "realpath %s: %s\n",
+			        (*argv)[1], strerror(-ret));
+			return false;
+		}
 		if (stat(opt->object, &sb) < 0) {
 			/* If it does not exist, it cannot be the container. */
 			opt->is_cont = false;
@@ -273,8 +238,20 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		return false;
 	}
 
-	opt->container  = readlinkf((*argv)[1]);
-	opt->mountpoint = readlinkf((*argv)[2]);
+	ret = HX_realpath(&opt->container, (*argv)[1],
+	      HX_REALPATH_DEFAULT | HX_REALPATH_ABSOLUTE);
+	if (ret < 0) {
+		fprintf(stderr, "realpath %s: %s\n",
+		        (*argv)[1], strerror(-ret));
+		return false;
+	}
+	ret = HX_realpath(&opt->mountpoint, (*argv)[2],
+	      HX_REALPATH_DEFAULT | HX_REALPATH_ABSOLUTE);
+	if (ret < 0) {
+		fprintf(stderr, "realpath %s: %s\n",
+		        (*argv)[2], strerror(-ret));
+		return false;
+	}
 
 	if (stat(opt->mountpoint, &sb) < 0) {
 		fprintf(stderr, "%s: stat %s: %s\n", **argv, opt->mountpoint,
@@ -535,6 +512,7 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
 	};
+	int ret;
 
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
@@ -545,7 +523,13 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 		return false;
 	}
 
-	opt->object = readlinkf((*argv)[1]);
+	ret = HX_realpath(&opt->object, (*argv)[1],
+	      HX_REALPATH_DEFAULT | HX_REALPATH_ABSOLUTE);
+	if (ret < 0) {
+		fprintf(stderr, "realpath %s: %s\n",
+		        opt->object, strerror(-ret));
+		return false;
+	}
 	if (stat(opt->object, &sb) < 0) {
 		/* If it does not exist, it cannot be the container. */
 		opt->is_cont = false;
