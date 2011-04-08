@@ -3,7 +3,7 @@
 AM_CPPFLAGS = -DRUNDIR=\"${rundir}\"
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
 		${libHX_CFLAGS} ${libcrypto_CFLAGS} ${libcryptsetup_CFLAGS} \
-		${libxml_CFLAGS}
+		${libmount_CFLAGS} ${libxml_CFLAGS}
 
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
