@@ -52,7 +52,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 			continue;
 		}
 		close(loopfd);
-		*result = xstrdup(dev);
+		*result = HX_strdup(dev);
 		if (*result == NULL)
 			ret = -ENOMEM;
 		else

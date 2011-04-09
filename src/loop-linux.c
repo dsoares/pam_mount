@@ -101,7 +101,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 		}
 		ioctl(loopfd, LOOP_SET_STATUS64, &info);
 		close(loopfd);
-		*result = xstrdup(dev);
+		*result = HX_strdup(dev);
 		if (*result == NULL)
 			ret = -ENOMEM;
 		else

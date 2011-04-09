@@ -63,7 +63,7 @@ pam_mount_la_LDFLAGS	= -module -avoid-version
 #
 # test tools
 #
-autoloop_SOURCES	= autoloop.c log.c misc.c spawn.c
+autoloop_SOURCES	= autoloop.c
 autoloop_LDADD		= libpmt_loop.la ${libHX_LIBS}
 
 ismnt_SOURCES		= ismnt.c
