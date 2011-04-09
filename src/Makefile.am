@@ -51,11 +51,10 @@ libpmt_mtab_la_LIBADD  = ${libHX_LIBS}
 #
 # pam_mount.so
 #
-pam_mount_la_SOURCES	= mount.c mount-bsd.c \
-			  mount-sysv.c pam_mount.c \
+pam_mount_la_SOURCES	= log.c misc.c mount.c pam_mount.c \
 			  rdconf1.c rdconf2.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
-pam_mount_la_LIBADD	= -lpam libpmt_mtab.la ${libHX_LIBS} \
+pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} \
 			  ${libmount_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
