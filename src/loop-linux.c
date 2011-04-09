@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <libHX/defs.h>
+#include <libHX/string.h>
 #include "pam_mount.h"
 
 #ifdef HAVE_LINUX_FS_H
