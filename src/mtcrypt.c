@@ -70,9 +70,6 @@ struct umount_options {
 	bool is_cont, blkdev;
 };
 
-static const char *const mtab_file  = "/etc/mtab";
-static const char *const kmtab_file = "/proc/mounts";
-
 static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 {
 	struct mount_options *mo = cbi->current->uptr;
