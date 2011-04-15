@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.10 (2011-04-15)
+==================
 Fixes:
 - loop-linux: wait for loop device deallocation to succeed
 - crypto: avoid premature attempt of unloading the loop device
