@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- loop-linux: wait for loop device deallocation to succeed
 
 
 v2.9 (2011-04-06)
