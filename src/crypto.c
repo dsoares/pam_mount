@@ -32,10 +32,8 @@ void ehd_mtfree(struct ehd_mount *mt)
 	free(mt->container);
 	HXmc_free(mt->crypto_device);
 	HXmc_free(mt->crypto_name);
-	if (mt->loop_device != NULL) {
-		pmt_loop_release(mt->lower_device);
+	if (mt->loop_device != NULL)
 		free(mt->loop_device);
-	}
 }
 
 /**
@@ -98,6 +96,7 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	ret = -errno;
  out_ser:
 	saved_errno = errno;
+	ehd_unload(mt);
 	ehd_mtfree(mt);
 	errno = saved_errno;
 	return ret;
