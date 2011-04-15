@@ -661,11 +661,10 @@ int main(int argc, const char **argv)
 	struct stat sb;
 	int ret;
 
-	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0) {
-		fprintf(stderr, "This version of mount.crypt does not support "
-		        "mtab-less systems yet.\n");
-		return EXIT_FAILURE;
-	}
+	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0)
+		fprintf(stderr, "BIG FAT WARNING: This version of mount.crypt "
+		        "does not support unmounting crypto volumes through "
+		        "umount(8) on systems with read-only mtab yet.\n");
 
 	ret = HX_init();
 	if (ret <= 0) {
