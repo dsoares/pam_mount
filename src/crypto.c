@@ -117,7 +117,7 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
  */
 int ehd_unload(const struct ehd_mount *mt)
 {
-	int ret;
+	int ret, ret2;
 
 #ifdef HAVE_LIBCRYPTSETUP
 	ret = ehd_dmcrypt_ops.unload(mt);
@@ -126,11 +126,12 @@ int ehd_unload(const struct ehd_mount *mt)
 #else
 	ret = -EOPNOTSUPP;
 #endif
-
 	/* Try to free loop device even if cryptsetup remove failed */
-	if (mt->loop_device != NULL)
-		ret = pmt_loop_release(mt->loop_device);
-
+	if (mt->loop_device != NULL) {
+		ret2 = pmt_loop_release(mt->loop_device);
+		if (ret > 0)
+			ret = ret2;
+	}
 	return ret;
 }
 
