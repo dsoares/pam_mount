@@ -189,12 +189,6 @@ bool volume_record_sane(const struct config *config, const struct vol *vpt)
 		l0g("mount command not defined for this type\n");
 		return false;
 	}
-	if (vpt->type == CMD_SMBMOUNT || vpt->type == CMD_CIFSMOUNT ||
-	    vpt->type == CMD_NCPMOUNT || vpt->type == CMD_NFSMOUNT)
-		if (vpt->server == NULL || strlen(vpt->server) == 0) {
-			l0g("remote mount type specified without server\n");
-			return false;
-		}
 	if (vpt->volume == NULL) {
 		l0g("volume source is not defined\n");
 		return false;

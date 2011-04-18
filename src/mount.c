@@ -159,22 +159,34 @@ hxmc_t *pmt_vol_to_dev(const struct vol *vol)
 	switch (vol->type) {
 	case CMD_SMBMOUNT:
 	case CMD_CIFSMOUNT:
-		ret = HXmc_strinit("//");
-		HXmc_strcat(&ret, vol->server);
-		HXmc_strcat(&ret, "/");
-		HXmc_strcat(&ret, vol->volume);
+		if (vol->server != NULL) {
+			ret = HXmc_strinit("//");
+			HXmc_strcat(&ret, vol->server);
+			HXmc_strcat(&ret, "/");
+			HXmc_strcat(&ret, vol->volume);
+		} else {
+			ret = HXmc_strinit(vol->volume);
+		}
 		break;
 
 	case CMD_NCPMOUNT:
-		ret = HXmc_strinit(vol->server);
-		HXmc_strcat(&ret, "/");
-		HXmc_strcat(&ret, kvplist_get(&vol->options, "user"));
+		if (vol->server != NULL) {
+			ret = HXmc_strinit(vol->server);
+			HXmc_strcat(&ret, "/");
+			HXmc_strcat(&ret, kvplist_get(&vol->options, "user"));
+		} else {
+			ret = HXmc_strinit(vol->volume);
+		}
 		break;
 
 	case CMD_NFSMOUNT:
-		ret = HXmc_strinit(vol->server);
-		HXmc_strcat(&ret, ":");
-		HXmc_strcat(&ret, vol->volume);
+		if (vol->server != NULL) {
+			ret = HXmc_strinit(vol->server);
+			HXmc_strcat(&ret, ":");
+			HXmc_strcat(&ret, vol->volume);
+		} else {
+			ret = HXmc_strinit(vol->volume);
+		}
 		break;
 
 	default:
@@ -657,6 +669,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
 	format_add(vinfo, "FSTYPE",   vpt->fstype);
 	format_add(vinfo, "VOLUME",   vpt->volume);
+	format_add(vinfo, "COMBOPATH", vpt->combopath);
 	format_add(vinfo, "SERVER",   vpt->server);
 	format_add(vinfo, "USER",     vpt->user);
 	format_add(vinfo, "CIPHER",   vpt->cipher);

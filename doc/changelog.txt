@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Enhancements:
+- config: allow specifying CIFS/NCP/NFS <volume>s without a "server" attribute
 
 
 v2.10 (2011-04-15)

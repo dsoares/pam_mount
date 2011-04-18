@@ -81,7 +81,9 @@ the user that logs in to get access to the files by default.
 \fBserver="\fP\fIname\fP\fB"\fP
 Defines the server to which to connect in case of \fBcifs\fP, \fBsmbfs\fP and
 \fBncpfs\fP and \fBnfs\fP fstypes. For all other fs types, this attribute is
-ignored.
+ignored. You can also specify the server in the \fBpath\fP attribute instead,
+but need to adhere to the specific syntax that is a particular fstype requires.
+(E.g. CIFS uses "//server/path", whereas NFS uses "server:path", etc.)
 .TP
 \fBpath="\fP\fIpath\fP\fB"\fP
 This mandatory attribute specifies the location of the volume, relative to the

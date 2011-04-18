@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2006 - 2009
+ *	Copyright © Jan Engelhardt, 2006 - 2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -1358,15 +1358,15 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 
 //-----------------------------------------------------------------------------
 static const struct pmt_command default_command[] = {
-	{CMD_SMBMOUNT,   "smbfs", {"smbmount", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
+	{CMD_SMBMOUNT,   "smbfs", {"smbmount", "%(COMBOPATH)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_SMBUMOUNT,  "smbfs", {"smbumount", "%(MNTPT)", NULL}},
-	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "//%(SERVER)/%(VOLUME)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
-	{CMD_NCPMOUNT,   "ncpfs", {"ncpmount", "%(SERVER)/%(USER)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
+	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "%(COMBOPATH)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
+	{CMD_NCPMOUNT,   "ncpfs", {"ncpmount", "%(COMBOPATH)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_NCPUMOUNT,  "ncpfs", {"ncpumount", "%(MNTPT)", NULL}},
 	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(if %(OPTIONS),-o)", "%(OPTIONS)", NULL}},
 	{CMD_FUSEUMOUNT, "fuse",  {"fusermount", "-u", "%(MNTPT)", NULL}},
 	/* Do not use LCLMOUNT to avoid calling fsck */
-	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(SERVER):%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(COMBOPATH)", "%(MNTPT)", NULL}},
 	{CMD_NFSMOUNT,    "nfs4"},
 	{CMD_LCLMOUNT,    NULL,    {"mount", "-p0", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTMOUNT,  "crypt", {"mount", "-t", "crypt", "%(if %(CIPHER),-ocipher=%(CIPHER))", "%(if %(FSKEYCIPHER),-ofsk_cipher=%(FSKEYCIPHER))", "%(if %(FSKEYHASH),-ofsk_hash=%(FSKEYHASH))", "%(if %(FSKEYPATH),-okeyfile=%(FSKEYPATH))", "%(if %(OPTIONS),-o%(OPTIONS))", "%(VOLUME)", "%(MNTPT)", NULL}},
