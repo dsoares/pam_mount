@@ -29,7 +29,7 @@ int dmc_is_luks(const char *path, bool blkdev)
 	struct crypt_device *cd;
 	const char *device = path;
 	char *loop_device;
-	int ret;
+	int ret, ret2;
 
 	if (!blkdev) {
 		ret = pmt_loop_setup(path, &loop_device, true);
@@ -54,8 +54,12 @@ int dmc_is_luks(const char *path, bool blkdev)
 		/* else keep ret as-is */
 		crypt_free(cd);
 	}
-	if (!blkdev)
-		pmt_loop_release(loop_device);
+	if (!blkdev) {
+		ret2 = pmt_loop_release(loop_device);
+		if (ret2 < 0)
+			fprintf(stderr, "pmt_loop_release: %s\n",
+			        strerror(-ret));
+	}
 	return ret;
 }
 
