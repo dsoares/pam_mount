@@ -16,6 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libHX/defs.h>
+#include <libHX/string.h>
 #include "pam_mount.h"
 #include <dev/vndvar.h>
 
@@ -51,7 +52,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 			continue;
 		}
 		close(loopfd);
-		*result = xstrdup(dev);
+		*result = HX_strdup(dev);
 		if (*result == NULL)
 			ret = -ENOMEM;
 		else

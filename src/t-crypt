@@ -1,5 +1,14 @@
 #!/bin/bash -ex
 
+function cryptsetup ()
+{
+	sleep 1;
+	command cryptsetup "$@";
+	ret="$?";
+	sleep 1; # udev...
+	return $ret;
+}
+
 function cleanup ()
 {
 	umount /mnt || :;

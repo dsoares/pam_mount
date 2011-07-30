@@ -15,7 +15,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
+#include <libHX/defs.h>
+#include <libHX/string.h>
 #include "pam_mount.h"
 
 #ifdef HAVE_LINUX_FS_H
@@ -99,7 +102,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 		}
 		ioctl(loopfd, LOOP_SET_STATUS64, &info);
 		close(loopfd);
-		*result = xstrdup(dev);
+		*result = HX_strdup(dev);
 		if (*result == NULL)
 			ret = -ENOMEM;
 		else
@@ -113,12 +116,24 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 
 int pmt_loop_release(const char *device)
 {
-	int loopfd, ret = 1;
+	static const struct timespec wait_time = {0, 200000000};
+	unsigned int count = 50;
+	int loopfd, ret;
 
 	if ((loopfd = open(device, O_RDONLY)) < 0)
 		return -errno;
-	if (ioctl(loopfd, LOOP_CLR_FD) < 0)
+	do {
+		/*
+		 * Oh yeah this interface sucks. There is no guarantee we
+		 * are the authoritative holder for the loop device.
+		 */
+		if (ioctl(loopfd, LOOP_CLR_FD) >= 0) {
+			ret = 1;
+			break;
+		}
 		ret = -errno;
+		nanosleep(&wait_time, NULL);
+	} while (--count > 0);
 	close(loopfd);
 	return ret;
 }
