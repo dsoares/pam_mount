@@ -49,13 +49,6 @@ struct HXformatmap;
 struct HXproc;
 struct loop_info64;
 
-enum auth_type {
-	GET_PASS,
-	USE_FIRST_PASS,
-	TRY_FIRST_PASS,
-	SOFT_TRY_PASS,
-};
-
 enum command_type {
 	CMD_SMBMOUNT,
 	CMD_SMBUMOUNT,
