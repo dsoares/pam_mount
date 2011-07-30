@@ -18,18 +18,12 @@ int pmt_already_mounted(const struct config *const config,
     const struct vol *vpt, struct HXformat_map *vinfo)
 {
 	int (*xcmp)(const char *, const char *);
-	hxmc_t *dev;
 	int cret, sret;
-
-	if ((dev = pmt_vol_to_dev(vpt)) == NULL) {
-		l0g("pmt::vol_to_dev: %s\n", strerror(errno));
-		return -1;
-	}
 
 	xcmp = fstype2_icase(vpt->type) ? strcasecmp : strcmp;
 
-	cret = pmt_cmtab_mounted(dev, vpt->mountpoint);
-	sret = pmt_smtab_mounted(dev, vpt->mountpoint, xcmp);
+	cret = pmt_cmtab_mounted(vpt->combopath, vpt->mountpoint);
+	sret = pmt_smtab_mounted(vpt->combopath, vpt->mountpoint, xcmp);
 	if (cret > 0 || sret > 0)
 		return true;
 	if (cret == 0 && sret == 0)

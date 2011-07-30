@@ -83,6 +83,11 @@ enum {
 	PMTLOG_DSTMAX,
 };
 
+/**
+ * @server:	server name, if any
+ * @volume:	path relative to server, or full path in case @server is empty
+ * @combopath:	concatenation of @server and @volume dependent upon @fstype
+ */
 struct vol {
 	struct HXlist_head list;
 	enum command_type type;
@@ -95,7 +100,7 @@ struct vol {
 	/* was handed off to mount_op() */
 	bool mnt_processed;
 	const char *user;
-	char *fstype, *server, *volume, *mountpoint, *cipher;
+	char *fstype, *server, *volume, *combopath, *mountpoint, *cipher;
 	char *fs_key_cipher, *fs_key_hash, *fs_key_path;
 	/* May be NULL if no options */
 	struct HXclist_head options;

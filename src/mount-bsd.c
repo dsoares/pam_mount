@@ -32,18 +32,12 @@
 int pmt_already_mounted(const struct config *config,
     const struct vol *vpt, struct HXformat_map *vinfo)
 {
-	hxmc_t *dev;
 	bool mounted = false;
 	struct local_statfs *mntbuf;
 	int num_mounts, i;
 
 	if ((num_mounts = getmntinfo(&mntbuf, LOCAL_NOWAIT)) <= 0) {
 		l0g("getmntinfo: %s\n", strerror(errno));
-		return -1;
-	}
-
-	if ((dev = pmt_vol_to_dev(vpt)) == NULL) {
-		l0g("pmt::vol_to_dev: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -58,15 +52,14 @@ int pmt_already_mounted(const struct config *config,
 		 * FIXME: Does BSD also turn "symlink mountpoints" into "real
 		 * mountpoints"?
 		 */
-		if (xcmp(mnt->f_mntfromname, dev) == 0 &&
+		if (xcmp(mnt->f_mntfromname, vpt->combopath) == 0 &&
 		    strcmp(mnt->f_mntonname, vpt->mountpoint) == 0) {
 			mounted = 1;
 			break;
 		}
 	}
 
-	HXmc_free(dev);
-	return mounted || pmt_cmtab_mounted(dev, vpt->mountpoint);
+	return mounted || pmt_cmtab_mounted(vpt->combopath, vpt->mountpoint);
 }
 
 #endif /* !HAVE_GETMNTENT && HAVE_GETMNTINFO */

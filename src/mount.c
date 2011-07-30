@@ -638,6 +638,13 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	if ((vinfo = HXformat_init()) == NULL)
 		return 0;
 
+	HXmc_free(vpt->combopath);
+	vpt->combopath = pmt_vol_to_dev(vpt);
+	if (vpt->combopath == NULL) {
+		l0g("vol_to_dev: %s\n", strerror(errno));
+		return 0;
+	}
+
 	if (realpath(vpt->mountpoint, real_mpt) == NULL) {
 		w4rn("Could not get realpath of %s: %s\n",
 		     vpt->mountpoint, strerror(errno));

@@ -212,6 +212,7 @@ static void volume_free(struct vol *vol)
 	free(vol->fstype);
 	free(vol->server);
 	free(vol->volume);
+	HXmc_free(vol->combopath);
 	free(vol->cipher);
 	free(vol->fs_key_cipher);
 	free(vol->fs_key_hash);
