@@ -13,7 +13,7 @@ sbin_PROGRAMS		= pmvarrun
 if HAVE_LIBCRYPTO
 sbin_PROGRAMS		+= pmt-ehd
 endif
-ssbin_PROGRAMS		= mount.crypt mount.encfs13
+ssbin_PROGRAMS		= mount.crypt
 noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
 
@@ -74,9 +74,6 @@ ismnt_LDADD		= libpmt_mtab.la
 #
 mount_crypt_SOURCES	= mtcrypt.c spawn.c
 mount_crypt_LDADD	= libpmt_crypto.la libpmt_mtab.la ${libHX_LIBS}
-
-mount_encfs13_SOURCES	= mtencfs13.c
-mount_encfs13_LDADD	= ${libHX_LIBS}
 
 pmt_ehd_SOURCES		= ehd.c log.c misc.c spawn.c
 pmt_ehd_LDADD		= libpmt_crypto.la ${libHX_LIBS}

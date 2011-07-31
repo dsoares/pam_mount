@@ -67,7 +67,7 @@ fstype attribute implies \fBfstype="auto"\fP. Note that mounting with \fBauto\fP
 may fail if the filesystem kernel module is not loaded yet, since \fBmount\fP(8)
 will check /proc/partitions.
 .IP ""
-The fstypes \fBcifs\fP, \fBencfs13\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP,
+The fstypes \fBcifs\fP, \fBsmbfs\fP, \fBncpfs\fP, \fBfuse\fP,
 \fBnfs\fP and \fBnfs\fP are overriden by pam_mount and we run the respective
 helper programs directly instead of invoking \fBmount\fP(8) with the basic
 default set of arguments which are often insufficient for networked
@@ -75,7 +75,7 @@ filesystems. See this manpage's section "Examples" below for more details.
 .TP
 \fBnoroot="1"\fP
 Call the mount program without root privileges. It defaults to yes for the
-\fBencfs13\fP and \fBfuse\fP fstypes, because FUSE volumes must be mounted as
+\fBfuse\fP fstype, because FUSE volumes must be mounted as
 the user that logs in to get access to the files by default.
 .TP
 \fBserver="\fP\fIname\fP\fB"\fP
@@ -353,14 +353,8 @@ mountpoint="~" />
 .PP
 <volume fstype="fuse" path="encfs#/crypto/%(USER)" mountpoint="~"
 options="nonempty" />
-.SS encfs 1.3.x
 .PP
-encfs 1.3.x did not support option passthrough, which is why a separate helper
-(/sbin/mount.encfs13, installed by pam_mount) is needed. This variant also
-supports 1.4.x, but it is encouraged to use fstype=fuse in that case.
-.PP
-<volume fstype="encfs13" path="/crypto/%(USER)" mountpoint="~"
-options="nonempty" />
+(encfs 1.3 is no longer supported.)
 .SS NFS mounts
 .PP
 <volume fstype="nfs" server="fileserver" path="/home/%(USER)" mountpoint="~" />

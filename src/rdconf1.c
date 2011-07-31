@@ -1263,14 +1263,11 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 		vpt->fstype = xstrdup("auto");
 	}
 
-	if ((tmp = xml_getprop(node, "noroot")) != NULL) {
+	if ((tmp = xml_getprop(node, "noroot")) != NULL)
 		vpt->noroot = parse_bool_f(tmp);
-	} else if (vpt->fstype != NULL) {
+	else if (vpt->fstype != NULL)
 		/* Figure out whether we want to act as user. */
-		vpt->noroot =
-			strcmp(vpt->fstype, "fuse") == 0 ||
-			strcmp(vpt->fstype, "encfs13") == 0;
-	}
+		vpt->noroot = strcmp(vpt->fstype, "fuse") == 0;
 
 	/* Source location */
 	if ((tmp = xml_getprop(node, "server")) != NULL) {

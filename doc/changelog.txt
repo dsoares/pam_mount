@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Changes:
+- support for old encfs 1.3.x has been removed
 Enhancements:
 - config: allow specifying CIFS/NCP/NFS <volume>s without a "server" attribute
 
