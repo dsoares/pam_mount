@@ -20,7 +20,7 @@ static int al_setup(const char **argv)
 	char *dev;
 	int ret;
 
-	ret = pmt_loop_setup(argv[1], &dev, false);
+	ret = pmt_loop_setup(argv[1], &dev, LOSETUP_RW);
 	if (ret == 0) {
 		fprintf(stderr, "%s: error: no free loop devices\n",
 		        HX_basename(*argv));

@@ -32,7 +32,7 @@ int dmc_is_luks(const char *path, bool blkdev)
 	int ret, ret2;
 
 	if (!blkdev) {
-		ret = pmt_loop_setup(path, &loop_device, true);
+		ret = pmt_loop_setup(path, &loop_device, LOSETUP_RO);
 		if (ret == 0) {
 			fprintf(stderr, "No free loop device\n");
 			return -ENXIO;

@@ -363,7 +363,7 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 		 * strength for the fskeys we generate.
 		 */
 		.fs_hash   = "plain",
-		.readonly  = false,
+		.readonly  = LOSETUP_RW,
 	};
 	bool f_ret = false;
 	int ret;

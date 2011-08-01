@@ -221,6 +221,11 @@ extern int dmc_is_luks(const char *, bool);
 /*
  *	LOOP.C
  */
+enum {
+	LOSETUP_RW = 0,
+	LOSETUP_RO = 1,
+};
+
 extern size_t pmt_block_getsize64(const char *);
 extern int pmt_loop_setup(const char *, char **, bool);
 extern int pmt_loop_release(const char *);
