@@ -505,13 +505,13 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 	if (cont->cipher == NULL) {
 		cont->cipher = HX_strdup(PMT_DFL_DMCRYPT_CIPHER);
 		if (cont->keybits == 0)
-			cont->keybits = 256;
+			cont->keybits = PMT_DFL_DMCRYPT_STRENGTH;
 	} else if (cont->keybits == 0) {
 		fprintf(stderr, "You have chosen the cipher %s, but did not "
 		        "specify a key size. Assuming 256 bits. This may fail "
 		        "if the cipher does not support that keysize.\n",
 		        cont->cipher);
-		cont->keybits = 256;
+		cont->keybits = PMT_DFL_DMCRYPT_STRENGTH;
 	}
 
 	if (cipher_digest_security(cont->cipher) < 1) {
