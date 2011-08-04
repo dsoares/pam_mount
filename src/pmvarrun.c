@@ -1,7 +1,7 @@
 /*
  *	pam_mount
  *	Copyright © W. Michael Petullo <mike@flyn.org>, 2004
- *	Copyright © Jan Engelhardt, 2005 - 2008
+ *	Copyright © Jan Engelhardt, 2005-2011
  *	Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
  *
  *	This file is part of pam_mount; you can redistribute it and/or
@@ -10,10 +10,10 @@
  *	of the License, or (at your option) any later version.
  */
 /*
-pmvarrun.c -- Updates /var/run/pam_mount/<user>.
-    A seperate program is needed so that /var/run/pam_mount/<user> may be
+pmvarrun.c -- Updates /run/pam_mount/<user>.
+    A seperate program is needed so that /run/pam_mount/<user> may be
     created with a pam_mount-specific security context (otherwise SELinux
-    policy will conflict with gdm, which also creates files in /var/run).
+    policy will conflict with whatever called pam_mount.so).
 */
 
 #include <sys/stat.h>
@@ -29,14 +29,14 @@ pmvarrun.c -- Updates /var/run/pam_mount/<user>.
 #include <string.h>
 #include <unistd.h>
 #include <libHX/defs.h>
+#include <libHX/io.h>
 #include <libHX/string.h>
 #include <pwd.h>
 #include "pam_mount.h"
 
 /* Definitions */
 #define ASCIIZ_LLX      sizeof("0xFFFFFFFF""FFFFFFFF")
-#define VAR_RUN         "/var/run"
-#define VAR_RUN_PMT     VAR_RUN "/pam_mount"
+#define VAR_RUN_PMT     RUNDIR "/pam_mount"
 
 struct settings {
 	char *user;
@@ -289,7 +289,7 @@ int main(int argc, const char **argv)
 /**
  * create_var_run -
  *
- * Creates the /var/run/pam_mount directory required by pmvarrun and sets
+ * Creates the /run/pam_mount directory required by pmvarrun and sets
  * proper permissions on it.
  *
  * Returns >0 for success or <=0 to indicate errno.
@@ -299,7 +299,7 @@ static int create_var_run(void)
 	int ret;
 
 	w4rn("creating " VAR_RUN_PMT);
-	if (mkdir(VAR_RUN_PMT, 0000) < 0) {
+	if (HX_mkdir(VAR_RUN_PMT) < 0) {
 		ret = -errno;
 		l0g("unable to create " VAR_RUN_PMT ": %s\n", strerror(errno));
 		return ret;
