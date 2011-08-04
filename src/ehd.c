@@ -26,15 +26,16 @@
 #include <libHX/option.h>
 #include <libHX/proc.h>
 #include <libHX/string.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <security/pam_appl.h>
+#include <libcryptsetup.h>
 #include <pwd.h>
 #include "pam_mount.h"
 
 /**
  * @size:		container size in bytes
  * @path:		store container at this path
+ * @loop_dev:		loop device in use (may be %NULL)
+ * @device:		pointer to either @path or @loop_dev as crypto demands
  * @fstype:		initialize container with this filesystem
  * @cipher:		cipher specification as understood by cryptsetup
  * @keybits:		block size, as understood by cryptsetup and the cipher
@@ -43,19 +44,9 @@
  */
 struct container_ctl {
 	unsigned long long size;
-	char *path, *fstype, *cipher, *user;
+	char *path, *loop_dev, *device, *fstype, *cipher, *hash, *user;
 	unsigned int keybits, skip_random, uid;
 	bool blkdev;
-};
-
-/**
- * struct fskey_ctl - fskey generation control block
- * @path:	read/write fskey at this path
- * @cipher:	cipher name specification as understood by OpenSSL
- * @digest:	digest name specification as understood by OpenSSL
- */
-struct fskey_ctl {
-	char *path, *cipher, *digest;
 };
 
 /**
@@ -68,7 +59,6 @@ struct fskey_ctl {
 struct ehd_ctl {
 	unsigned int force_level;
 	struct container_ctl cont;
-	struct fskey_ctl fskey;
 	bool interactive;
 };
 
@@ -235,96 +225,10 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 	} else {
 		ehd_xfer(fd, cont->size);
 	}
-	/*
-	 * Kill off any potential LUKS header, otherwise ehd_load, which will
-	 * be called later, misidentifies our (new) PLAIN volume.
-	 */
-	lseek(fd, 0, SEEK_SET);
-	if (write(fd, "\0\0\0\0", 4) != 4)
-		fprintf(stderr, "write: %s\n", strerror(errno));
 	ret = true;
  out:
 	if (fd >= 0)
 		close(fd);
-	return ret;
-}
-
-/**
- * ehd_create_fskey - create encrypted fskey file
- * @password:		Password to encrypt the fskey with
- * @fskey:		Raw fskey (unencrypted)
- */
-static bool ehd_create_fskey(struct ehd_ctl *pg, const char *password,
-    const unsigned char *fskey, unsigned int fskey_size)
-{
-	const struct container_ctl *cont = &pg->cont;
-	const struct fskey_ctl *fsk = &pg->fskey;
-	unsigned char salt[PKCS5_SALT_LEN], key[EVP_MAX_KEY_LENGTH];
-	unsigned char iv[EVP_MAX_IV_LENGTH];
-	const EVP_CIPHER *cipher;
-	const EVP_MD *digest;
-	EVP_CIPHER_CTX ctx;
-	int out_len, out_cumul_len, fd;
-	hxmc_t *out;
-	bool ret = false;
-
-	digest = EVP_get_digestbyname(fsk->digest);
-	if (digest == NULL) {
-		fprintf(stderr, "Unknown digest: %s\n", fsk->digest);
-		return false;
-	}
-
-	cipher = EVP_get_cipherbyname(fsk->cipher);
-	if (cipher == NULL) {
-		fprintf(stderr, "Unknown cipher: %s\n", fsk->cipher);
-		return false;
-	}
-
-	printf("Using openssl cipher \"%s\" and hash \"%s\"\n",
-	       fsk->cipher, fsk->digest);
-
-	/* Make some salt */
-	RAND_bytes(salt, sizeof(salt));
-	out = HXmc_meminit(NULL, strlen("Salted__") + sizeof(salt) +
-	      fskey_size + cipher->block_size);
-	HXmc_strcpy(&out, "Salted__");
-	HXmc_memcat(&out, salt, sizeof(salt));
-	out_cumul_len = HXmc_length(out);
-
-	/* Then pepper */
-	EVP_BytesToKey(cipher, digest, salt,
-	               signed_cast(const unsigned char *, password),
-	               strlen(password), 1, key, iv);
-
-	/* And hex salad */
-	EVP_CIPHER_CTX_init(&ctx);
-	EVP_EncryptInit_ex(&ctx, cipher, NULL, key, iv);
-	EVP_EncryptUpdate(&ctx, signed_cast(unsigned char *,
-	                  &out[out_cumul_len]), &out_len, fskey, fskey_size);
-	out_cumul_len += out_len;
-	EVP_EncryptFinal_ex(&ctx, signed_cast(unsigned char *,
-	                    &out[out_cumul_len]), &out_len);
-	out_cumul_len += out_len;
-	EVP_CIPHER_CTX_cleanup(&ctx);
-
-	if ((fd = open(fsk->path, O_WRONLY | O_TRUNC | O_CREAT,
-	    S_IRUSR | S_IWUSR)) < 0) {
-		fprintf(stderr, "Could not open %s: %s\n",
-		        fsk->path, strerror(errno));
-		goto out;
-	}
-	if (fchown(fd, cont->uid, -1) < 0) {
-		perror("fchown");
-		goto out;
-	}
-	if (write(fd, out, out_cumul_len) != out_cumul_len) {
-		perror("write");
-		goto out;
-	}
-	ret = true;
- out:
-	close(fd);
-	HXmc_free(out);
 	return ret;
 }
 
@@ -346,42 +250,99 @@ static bool ehd_mkfs(const struct ehd_ctl *pg, const hxmc_t *crypto_device)
 	return ret == 0;
 }
 
+static void ehd_parse_name(const char *s, char *cipher, size_t cipher_size,
+    char *cipher_mode, size_t cm_size)
+{
+	const char *p;
+
+	p = strchr(s, '-');
+	if (p == NULL)
+		p = s + strlen(s);
+	*cipher = '\0';
+	HX_strlncat(cipher, s, cipher_size, p - s);
+	if (p == NULL || *p != '-')
+		return;
+	++p;
+	HX_strlcpy(cipher_mode, p, cm_size);
+}
+
+static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
+{
+	/*
+	 * Pick what? WP specifies that XTS has a wider support range than
+	 * ESSIV. But XTS is also double complexity due to the double key,
+	 * without adding anything of value.
+	 */
+	struct container_ctl *cont = &pg->cont;
+	char cipher[32], cipher_mode[32];
+	struct crypt_params_luks1 format_params = {.hash = cont->hash};
+	struct crypt_device *cd = NULL;
+	int ret;
+
+	ehd_parse_name(cont->cipher, cipher, sizeof(cipher),
+	               cipher_mode, sizeof(cipher_mode));
+	ret = crypt_init(&cd, cont->device);
+	if (ret < 0) {
+		fprintf(stderr, "crypt_init: %s\n", strerror(-ret));
+		goto out;
+	}
+	ret = crypt_format(cd, CRYPT_LUKS1, cipher, cipher_mode, NULL, NULL,
+	      (cont->keybits + CHAR_BIT - 1) / CHAR_BIT, &format_params);
+	if (ret < 0) {
+		fprintf(stderr, "crypt_format: %s\n", strerror(-ret));
+		goto out2;
+	}
+	ret = crypt_keyslot_add_by_volume_key(cd, CRYPT_ANY_SLOT, NULL, 0,
+	      password, strlen(password));
+	if (ret < 0) {
+		fprintf(stderr, "add_by_volume_key: %s\n", strerror(-ret));
+		goto out2;
+	}
+	ret = 1;
+ out2:
+	crypt_free(cd);
+ out:
+	return ret;
+}
+
 /**
  * ehd_init_volume - set up loop device association if necessary
  */
 static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
-	hxmc_t *fskey;
 	struct ehd_mount mount_info;
 	struct ehd_mtreq mount_request = {
 		.container = cont->path,
-		.fs_cipher = cont->cipher,
-		/*
-		 * "plain" because pmt-ehd generates mathematically perfect
-		 * fskeys itself and further hashing would only reduce the
-		 * strength for the fskeys we generate.
-		 */
-		.fs_hash   = "plain",
+		.key_data  = password,
+		.key_size  = strlen(password),
 		.readonly  = LOSETUP_RW,
 	};
-	bool f_ret = false;
 	int ret;
 
-	mount_request.key_size = (cont->keybits + CHAR_BIT - 1) / CHAR_BIT;
-	fskey = HXmc_meminit(NULL, mount_request.key_size);
-	if (fskey == NULL) {
-		perror("HXmc_meminit");
-		abort();
+	if (cont->blkdev) {
+		cont->device = cont->path;
+	} else {
+		ret = pmt_loop_setup(cont->path, &cont->loop_dev, LOSETUP_RW);
+		if (ret == 0) {
+			fprintf(stderr, "loop_setup: error: no free loop "
+			        "devices\n");
+			return false;
+		} else if (ret < 0) {
+			fprintf(stderr, "loop_setup: error: %s\n",
+			        strerror(-ret));
+			return false;
+		}
+		cont->device = cont->loop_dev;
 	}
 
-	RAND_bytes(signed_cast(unsigned char *, fskey), mount_request.key_size);
-	mount_request.trunc_keysize = mount_request.key_size;
-	mount_request.key_data = fskey;
-	f_ret = false;
-	if (ehd_create_fskey(pg, password, mount_request.key_data,
-	    mount_request.key_size) &&
-	    ehd_load(&mount_request, &mount_info) > 0) {
+	ehd_init_volume_luks(pg, password);
+	ret = pmt_loop_release(cont->device);
+	if (ret <= 0)
+		fprintf(stderr, "loop_release: warning: %s\n", strerror(-ret));
+
+	bool f_ret = false;
+	if (ehd_load(&mount_request, &mount_info) > 0) {
 		if (!cont->skip_random)
 			ehd_xfer2(mount_info.crypto_device, cont->size);
 		f_ret = ehd_mkfs(pg, mount_info.crypto_device);
@@ -391,22 +352,17 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 			f_ret = ret > 0;
 	}
 
-	HXmc_free(fskey);
-	mount_request.key_data = NULL;
 	return f_ret;
 }
 
 static void ehd_final_printout(const struct ehd_ctl *pg)
 {
 	printf(
-		"-- The (important parts) of the new entry:\n\n"
+		"-- (The important parts of) the new entry:\n\n"
 		"<volume fstype=\"crypt\" path=\"%s\" "
-		"mountpoint=\"REPLACEME\" cipher=\"%s\" "
-		"fskeycipher=\"%s\" fskeyhash=\"%s\" "
-		"fskeypath=\"%s\" />\n\n"
+		"mountpoint=\"REPLACEME\" />\n\n"
 		"-- Substitute paths by absolute ones.\n\n",
-		pg->cont.path, pg->cont.cipher, pg->fskey.cipher,
-		pg->fskey.digest, pg->fskey.path);
+		pg->cont.path);
 }
 
 #ifdef HAVE_LINUX_FS_H
@@ -513,53 +469,16 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 		        cont->cipher);
 		cont->keybits = PMT_DFL_DMCRYPT_STRENGTH;
 	}
+	if (cont->hash == NULL)
+		cont->hash = HX_strdup(PMT_DFL_DMCRYPT_HASH);
 
 	if (cipher_digest_security(cont->cipher) < 1) {
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
 		        cont->cipher);
 //		return false;
-	}
-
-	ret = true;
- out:
-	HXmc_free(tmp);
-	return ret;
-}
-
-static bool ehd_fill_options_fskey(struct ehd_ctl *pg)
-{
-	struct fskey_ctl *fsk = &pg->fskey;
-	hxmc_t *tmp = HXmc_meminit(NULL, 0);
-	bool ret = false;
-
-	if (fsk->path == NULL) {
-		if (!pg->interactive) {
-			fprintf(stderr, "You must specify the path to store "
-			        "the filesystem key at, using the -p option\n");
-			goto out;
-		}
-		*tmp = '\0';
-		do {
-			printf("Filesystem key location: ");
-			fflush(stdout);
-			HX_getl(&tmp, stdin);
-			HX_chomp(tmp);
-		} while (*tmp == '\0');
-		fsk->path = HX_strdup(tmp);
-	}
-
-	if (fsk->cipher == NULL)
-		fsk->cipher = HX_strdup(PMT_DFL_FSK_CIPHER);
-	if (fsk->digest == NULL)
-		fsk->digest = HX_strdup(PMT_DFL_FSK_HASH);
-
-	if (cipher_digest_security(fsk->cipher) < 1) {
-		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
-		        fsk->cipher);
-//		return false;
-	} else if (cipher_digest_security(fsk->digest) < 1) {
-		fprintf(stderr, "Digest \"%s\" is considered insecure.\n",
-		        fsk->digest);
+	} else if (cipher_digest_security(cont->hash) < 1) {
+		fprintf(stderr, "Hash \"%s\" is considered insecure.\n",
+		        cont->hash);
 //		return false;
 	}
 
@@ -572,7 +491,6 @@ static bool ehd_fill_options_fskey(struct ehd_ctl *pg)
 static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 {
 	struct container_ctl *cont = &pg->cont;
-	struct fskey_ctl *fsk = &pg->fskey;
 	struct HXoption options_table[] = {
 		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &Debug,
 		 .help = "Enable debugging"},
@@ -584,17 +502,12 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 		 .htyp = "NAME"},
 		{.sh = 'f', .type = HXTYPE_STRING, .ptr = &cont->path,
 		 .help = "Path of the new container", .htyp = "FILE/BDEV"},
-		{.sh = 'h', .type = HXTYPE_STRING, .ptr = &fsk->digest,
-		 .help = "Digest for key generation (OpenSSL name)",
-		 .htyp = "NAME"},
-		{.sh = 'i', .type = HXTYPE_STRING, .ptr = &fsk->cipher,
-		 .help = "Filesystem key cipher (OpenSSL name)",
+		{.sh = 'h', .type = HXTYPE_STRING, .ptr = &cont->hash,
+		 .help = "Name of hash to be used for master keys (cryptsetup name)",
 		 .htyp = "NAME"},
 		{.sh = 'k', .type = HXTYPE_UINT, .ptr = &cont->keybits,
 		 .help = "Number of bits fscipher (-c) operates with",
 		 .htyp = "BITS"},
-		{.sh = 'p', .type = HXTYPE_STRING, .ptr = &fsk->path,
-		 .help = "Filesystem key location", .htyp = "FILE"},
 		{.sh = 's', .type = HXTYPE_ULLONG, .ptr = &cont->size,
 		 .help = "Container size in megabytes"},
 		{.sh = 't', .type = HXTYPE_STRING, .ptr = &cont->fstype,
@@ -613,7 +526,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 		return false;
 
 	pg->interactive = isatty(fileno(stdin));
-	return ehd_fill_options_container(pg) && ehd_fill_options_fskey(pg);
+	return ehd_fill_options_container(pg);
 }
 
 static int main2(int argc, const char **argv, struct ehd_ctl *pg)
@@ -632,6 +545,10 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 		return EXIT_FAILURE;
 	if (!ehd_create_container(pg))
 		return EXIT_FAILURE;
+	printf("NOTE: Use the end-user passphrase here. DO NOT feed it a hash "
+	       "of a passphrase or anything otherwise fancy. pmt-ehd(8), as "
+	       "well as cryptsetup(8)'s luksFormat will, by default, do the "
+	       "master key generation and hashing themselves!\n");
 	password  = pmt_get_password(NULL);
 	password2 = pmt_get_password("Reenter password: ");
 	if (password == NULL || password2 == NULL ||
@@ -663,8 +580,6 @@ int main(int argc, const char **argv)
 	struct ehd_ctl pg;
 
 	Debug = false;
-	OpenSSL_add_all_ciphers();
-	OpenSSL_add_all_digests();
 	memset(&pg, 0, sizeof(pg));
 
 	return main2(argc, argv, &pg);
