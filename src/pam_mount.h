@@ -290,6 +290,9 @@ extern int pmt_cmtab_get(const char *, enum cmtab_field,
 	char **, char **, char **, char **);
 extern int pmt_cmtab_remove(const char *);
 extern int pmt_cmtab_mounted(const char *, const char *);
+extern const char *pmt_cmtab_path(void);
+extern const char *pmt_smtab_path(void);
+extern const char *pmt_kmtab_path(void);
 
 /*
  *	MOUNT.C

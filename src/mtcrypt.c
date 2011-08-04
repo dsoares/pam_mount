@@ -585,6 +585,28 @@ static int mtcr_remount(struct mount_options *opt)
 }
 
 /**
+ */
+static void mtcr_log_contents(const char *file)
+{
+	hxmc_t *ln = NULL;
+	FILE *fp;
+
+	if (file == NULL)
+		return;
+	w4rn("Dumping contents of %s\n", file);
+	if ((fp = fopen(file, "r")) == NULL) {
+		w4rn("Failed to open %s: %s\n", file, strerror(errno));
+		return;
+	}
+	while (HX_getl(&ln, fp) != NULL) {
+		HX_chomp(ln);
+		w4rn("%s\n", ln);
+	}
+	HXmc_free(ln);
+	fclose(fp);
+}
+
+/**
  * mtcr_umount - unloads the EHD from mountpoint
  *
  * Returns positive non-zero for success.
@@ -604,8 +626,13 @@ static int mtcr_umount(struct umount_options *opt)
 		fprintf(stderr, "pmt_cmtab_get: %s\n", strerror(-ret));
 		return 0;
 	} else if (ret == 0) {
-		fprintf(stderr, "%s is not mounted (according to cmtab/smtab)\n",
-		        opt->object);
+		fprintf(stderr, "No vfsmount found while searching for \"%s\" "
+		        "as a container file, or as a mountpoint. (According "
+		        "to the intersection of cmtab (%s) with smtabs)\n",
+		        opt->object, pmt_cmtab_path());
+		mtcr_log_contents(pmt_cmtab_path());
+		mtcr_log_contents(pmt_smtab_path());
+		mtcr_log_contents(pmt_kmtab_path());
 		return 1;
 	}
 

@@ -526,3 +526,18 @@ int pmt_cmtab_mounted(const char *container, const char *mountpoint)
 
 	return pmt_mtab_mounted(pmt_cmtab_file, p_spec, p_compare, true);
 }
+
+const char *pmt_cmtab_path(void)
+{
+	return pmt_cmtab_file;
+}
+
+const char *pmt_smtab_path(void)
+{
+	return (*pmt_smtab_file != '\0') ? pmt_smtab_file : NULL;
+}
+
+const char *pmt_kmtab_path(void)
+{
+	return (*pmt_kmtab_file != '\0') ? pmt_kmtab_file : NULL;
+}

@@ -5,6 +5,8 @@ HEAD
 ====
 Changes:
 - support for old encfs 1.3.x has been removed
+- mount.crypt: print the location of cmtab/smtab and its contents
+  when an entry was not found
 - mount.crypt: use /run directory to store cmtab
 - pmvarrun: use /run/pam_mount directory
 - pmt-ehd: exclusively create LUKS partitions from now on
