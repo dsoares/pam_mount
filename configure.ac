@@ -28,6 +28,10 @@ AC_ARG_WITH([ssbindir], AS_HELP_STRING([--with-ssbindir=PATH],
 	[Path to the super sbin directory [[/sbin]]]),
 	[ssbindir="$withval"], [ssbindir="/sbin"])
 AC_SUBST(ssbindir)
+AC_ARG_WITH([rundir], AS_HELP_STRING([--with-rundir=PATH],
+	[Path to the run directory [[/run]]]),
+	[rundir="$withval"], [rundir="/run"])
+AC_SUBST([rundir])
 AC_ARG_WITH([dtd], AS_HELP_STRING([--with-dtd],
 	[Install XML DTD file]),
 	[with_dtd=true], [with_dtd=false])

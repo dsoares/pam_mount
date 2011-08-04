@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2009
+ *	Copyright © Jan Engelhardt, 2009-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -33,13 +33,19 @@
 #include <unistd.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/io.h>
 #include <libHX/string.h>
 #include "pam_mount.h"
 
 typedef int (*scompare_t)(const char *, const char *);
 
+enum {
+	MKDIR_NEVER = false,
+	MKDIR_MAY   = true,
+};
+
 /* crypto mtab */
-static const char pmt_cmtab_file[] = LOCALSTATEDIR "/cmtab";
+static const char pmt_cmtab_file[] = RUNDIR "/cmtab";
 
 #if defined(__linux__)
 static const char pmt_smtab_file[] = "/etc/mtab";
@@ -121,9 +127,24 @@ static char *mt_unescape(char *input)
 	return input_orig;
 }
 
-static int pmt_mtab_add(const char *file, const char *line)
+static int pmt_mtab_add(const char *file, const char *line, bool do_mkdir)
 {
 	int fd, ret;
+
+	if (do_mkdir) {
+		char *dirname = HX_dirname(file);
+
+		if (dirname == NULL) {
+			l0g("HX_dirname: %s\n", strerror(errno));
+			return -errno;
+		}
+		ret = HX_mkdir(dirname);
+		free(dirname);
+		if (ret < 0) {
+			l0g("HX_mkdir: %s\n", strerror(-ret));
+			return ret;
+		}
+	}
 
 	if ((fd = open(file, O_RDWR | O_CREAT | O_APPEND,
 	    S_IRUGO | S_IWUSR)) < 0) {
@@ -164,7 +185,7 @@ int pmt_smtab_add(const char *device, const char *mountpoint,
 	HXmc_strcat(&line, " ");
 	mt_esccat(&line, options);
 	HXmc_strcat(&line, " 0 0\n");
-	ret = pmt_mtab_add(pmt_smtab_file, line);
+	ret = pmt_mtab_add(pmt_smtab_file, line, MKDIR_NEVER);
 	HXmc_free(line);
 	return ret;
 }
@@ -196,7 +217,7 @@ int pmt_cmtab_add(const char *mountpoint, const char *container,
 	HXmc_strcat(&line, "\t");
 	mt_esccat(&line, crypto_device);
 	HXmc_strcat(&line, "\n");
-	ret = pmt_mtab_add(pmt_cmtab_file, line);
+	ret = pmt_mtab_add(pmt_cmtab_file, line, MKDIR_MAY);
 	HXmc_free(line);
 	return ret;
 }

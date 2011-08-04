@@ -5,6 +5,7 @@ HEAD
 ====
 Changes:
 - support for old encfs 1.3.x has been removed
+- mount.crypt: use /run directory to store cmtab
 Enhancements:
 - config: allow specifying CIFS/NCP/NFS <volume>s without a "server" attribute
 

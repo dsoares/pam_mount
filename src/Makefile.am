@@ -1,11 +1,9 @@
 # -*- Makefile -*-
 
-AM_CPPFLAGS = -DLOCALSTATEDIR=\"${varrundir}\"
+AM_CPPFLAGS = -DRUNDIR=\"${rundir}\"
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
 		${libHX_CFLAGS} ${libcrypto_CFLAGS} ${libcryptsetup_CFLAGS} \
 		${libxml_CFLAGS}
-
-varrundir		= ${localstatedir}/run
 
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
