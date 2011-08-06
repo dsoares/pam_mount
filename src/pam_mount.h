@@ -279,6 +279,11 @@ enum cmtab_field {
 	__CMTABF_MAX,
 };
 
+enum {
+	PMT_BY_CONTAINER = 1 << 0,
+	PMT_BY_CRYPTODEV = 1 << 1,
+};
+
 extern int pmt_smtab_add(const char *, const char *,
 	const char *, const char *);
 extern int pmt_smtab_remove(const char *, enum smtab_field);

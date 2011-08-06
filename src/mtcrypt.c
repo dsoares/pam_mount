@@ -636,6 +636,11 @@ static int mtcr_umount(struct umount_options *opt)
 		mtcr_log_contents(pmt_smtab_path());
 		mtcr_log_contents(pmt_kmtab_path());
 		return 1;
+	} else {
+		if (ret & PMT_BY_CONTAINER)
+			w4rn("Found container in smtab\n");
+		if (ret & PMT_BY_CRYPTODEV)
+			w4rn("Found crypto device in smtab\n");
 	}
 
 	umount_args[argk++] = "umount";

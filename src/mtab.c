@@ -345,10 +345,14 @@ int pmt_cmtab_get(const char *spec, enum cmtab_field type, char **mountpoint,
 			break;
 
 		/* Guard against stale entries - verify that it is mounted. */
-		if (*container != NULL &&
-		    (pmt_smtab_mounted(*container, *mountpoint, strcmp) > 0 ||
-		    pmt_smtab_mounted(*crypto_device, *mountpoint, strcmp) > 0)) {
-			ret = 1;
+		if (*container != NULL) {
+			ret = 0;
+			if (pmt_smtab_mounted(*container,
+			    *mountpoint, strcmp) > 0)
+				ret |= PMT_BY_CONTAINER;
+			if (pmt_smtab_mounted(*crypto_device,
+			    *mountpoint, strcmp) > 0)
+				ret |= PMT_BY_CRYPTODEV;
 			break;
 		}
 
