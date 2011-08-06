@@ -1,4 +1,4 @@
-pam_mount(8)                    pam_mount 2.10                    pam_mount(8)
+pam_mount(8)                    pam_mount 2.11                    pam_mount(8)
 
 
 
@@ -187,4 +187,4 @@ Community Support
 
 
 
-pam_mount 2.10                    2011-04-15                      pam_mount(8)
+pam_mount 2.11                    2011-08-07                      pam_mount(8)

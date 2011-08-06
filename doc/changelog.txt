@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.11 (2011-08-07)
+==================
 Fixes:
 - mount.crypt: fix a bogus "realpath (null): ..." message when trying to
   umount a non-existing directory
