@@ -355,7 +355,7 @@ static hxmc_t *mtcr_slurp_file(const char *file)
  */
 static int mtcr_mount(struct mount_options *opt)
 {
-	const char *mount_args[9];
+	const char *mount_args[8];
 	const char *fsck_args[4];
 	struct stat sb;
 	int ret, argk;
@@ -455,9 +455,6 @@ static int mtcr_mount(struct mount_options *opt)
 
 	argk = 0;
 	mount_args[argk++] = "mount";
-#ifdef __linux__
-	mount_args[argk++] = "-n";
-#endif
 	if (opt->fstype != NULL) {
 		mount_args[argk++] = "-t";
 		mount_args[argk++] = opt->fstype;
@@ -555,10 +552,10 @@ static int mtcr_remount(struct mount_options *opt)
 {
 	const char *rmt_args[6];
 	int ret, argk = 0;
-	char *mntpt;
+	char *mntpt, *cont;
 
 	ret = pmt_cmtab_get(opt->object, opt->is_cont ?
-	      CMTABF_CONTAINER : CMTABF_MOUNTPOINT, &mntpt, NULL, NULL, NULL);
+	      CMTABF_CONTAINER : CMTABF_MOUNTPOINT, &mntpt, &cont, NULL, NULL);
 	if (ret == 0) {
 		fprintf(stderr, "Nothing found that could be remounted.\n");
 		return 1;
@@ -567,6 +564,8 @@ static int mtcr_remount(struct mount_options *opt)
 		return ret;
 	}
 
+	if (!opt->no_update)
+		pmt_smtab_remove(mntpt, SMTABF_MOUNTPOINT);
 	rmt_args[argk++] = "mount";
 #ifdef __linux__
 	rmt_args[argk++] = "-i";
@@ -582,7 +581,11 @@ static int mtcr_remount(struct mount_options *opt)
 		fprintf(stderr, "remount %s failed with run_sync status %d\n",
 		        opt->object, ret);
 
+	if (!opt->no_update)
+		pmt_smtab_add(cont, mntpt, "crypt", (opt->extra_opts != NULL) ?
+			opt->extra_opts : "defaults");
 	free(mntpt);
+	free(cont);
 	return ret;
 }
 
@@ -615,7 +618,7 @@ static void mtcr_log_contents(const char *file)
  */
 static int mtcr_umount(struct umount_options *opt)
 {
-	const char *umount_args[5];
+	const char *umount_args[4];
 	int final_ret, ret, argk = 0;
 	struct ehd_mount mount_info;
 	char *mountpoint = NULL;
@@ -643,10 +646,13 @@ static int mtcr_umount(struct umount_options *opt)
 			w4rn("Found crypto device in smtab\n");
 	}
 
+	if (!opt->no_update)
+		pmt_smtab_remove(mountpoint, SMTABF_MOUNTPOINT);
+	pmt_cmtab_remove(mountpoint);
+
 	umount_args[argk++] = "umount";
 #ifdef __linux__
-	/* Always pass in -n, as we manually edit /etc/mtab */
-	umount_args[argk++] = "-ni";
+	umount_args[argk++] = "-i";
 #endif
 	umount_args[argk++] = mountpoint;
 	umount_args[argk]   = NULL;
@@ -662,9 +668,6 @@ static int mtcr_umount(struct umount_options *opt)
 		fprintf(stderr, "ehd_unload: %s\n", strerror(-ret));
 		final_ret = 0;
 	} else {
-		if (!opt->no_update)
-			pmt_smtab_remove(mountpoint, SMTABF_MOUNTPOINT);
-		pmt_cmtab_remove(mountpoint);
 		final_ret = 1;
 	}
 
