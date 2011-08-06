@@ -31,6 +31,10 @@
 #include <pwd.h>
 #include "pam_mount.h"
 
+static const char ehd_default_dmcipher[] = "aes-cbc-essiv:sha256";
+static const unsigned int ehd_default_strength = 256; /* cipher, not ESSIV */
+static const char ehd_default_hash[] = "sha512"; /* for PBKDF2 */
+
 /**
  * @size:		container size in bytes
  * @path:		store container at this path
@@ -459,18 +463,18 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 	cont->size <<= 20; /* megabytes -> bytes */
 
 	if (cont->cipher == NULL) {
-		cont->cipher = HX_strdup(PMT_DFL_DMCRYPT_CIPHER);
+		cont->cipher = HX_strdup(ehd_default_dmcipher);
 		if (cont->keybits == 0)
-			cont->keybits = PMT_DFL_DMCRYPT_STRENGTH;
+			cont->keybits = ehd_default_strength;
 	} else if (cont->keybits == 0) {
 		fprintf(stderr, "You have chosen the cipher %s, but did not "
 		        "specify a key size. Assuming 256 bits. This may fail "
 		        "if the cipher does not support that keysize.\n",
 		        cont->cipher);
-		cont->keybits = PMT_DFL_DMCRYPT_STRENGTH;
+		cont->keybits = ehd_default_strength;
 	}
 	if (cont->hash == NULL)
-		cont->hash = HX_strdup(PMT_DFL_DMCRYPT_HASH);
+		cont->hash = HX_strdup(ehd_default_hash);
 
 	if (cipher_digest_security(cont->cipher) < 1) {
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",

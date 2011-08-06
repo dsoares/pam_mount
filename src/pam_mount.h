@@ -32,11 +32,6 @@
 	"/usr/local/sbin:/usr/local/bin:" \
 	"/usr/libexec/hxtools:/usr/lib/hxtools:" \
 	"/usr/sbin:/usr/bin:/sbin:/bin"
-#define PMT_DFL_DMCRYPT_CIPHER "aes-cbc-essiv:sha256"
-#define PMT_DFL_DMCRYPT_STRENGTH	256	/* cipher, not ESSIV */
-#define PMT_DFL_DMCRYPT_HASH		"sha512"	/* for PBKDF2 */
-#define PMT_DFL_FSK_CIPHER     "aes-256-cbc"
-#define PMT_DFL_FSK_HASH       "sha1"
 
 /* Note that you will also need to change PMPREFIX in pmvarrun.c then! */
 #define l0g(fmt, ...) \

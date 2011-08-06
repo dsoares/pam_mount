@@ -607,7 +607,7 @@ static int mtcr_umount(struct umount_options *opt)
 		fprintf(stderr, "pmt_cmtab_get: %s\n", strerror(-ret));
 		return 0;
 	} else if (ret == 0) {
-		fprintf(stderr, "%s is not mounted (according to cmtab)\n",
+		fprintf(stderr, "%s is not mounted (according to cmtab/smtab)\n",
 		        opt->object);
 		return 1;
 	}
