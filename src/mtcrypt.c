@@ -550,7 +550,7 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
  */
 static int mtcr_remount(struct mount_options *opt)
 {
-	const char *rmt_args[6];
+	const char *rmt_args[5];
 	int ret, argk = 0;
 	char *mntpt, *cont;
 
@@ -567,9 +567,6 @@ static int mtcr_remount(struct mount_options *opt)
 	if (!opt->no_update)
 		pmt_smtab_remove(mntpt, SMTABF_MOUNTPOINT);
 	rmt_args[argk++] = "mount";
-#ifdef __linux__
-	rmt_args[argk++] = "-i";
-#endif
 	rmt_args[argk++] = "-o";
 	rmt_args[argk++] = opt->extra_opts;
 	rmt_args[argk++] = mntpt;
@@ -618,7 +615,7 @@ static void mtcr_log_contents(const char *file)
  */
 static int mtcr_umount(struct umount_options *opt)
 {
-	const char *umount_args[4];
+	const char *umount_args[3];
 	int final_ret, ret, argk = 0;
 	struct ehd_mount mount_info;
 	char *mountpoint = NULL;
@@ -651,9 +648,6 @@ static int mtcr_umount(struct umount_options *opt)
 	pmt_cmtab_remove(mountpoint);
 
 	umount_args[argk++] = "umount";
-#ifdef __linux__
-	umount_args[argk++] = "-i";
-#endif
 	umount_args[argk++] = mountpoint;
 	umount_args[argk]   = NULL;
 

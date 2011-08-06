@@ -14,6 +14,7 @@ Changes:
 - mount.crypt: add diagnostic to determine how the smtab entry was found
 - mount.crypt: do not call lower-level helpers with -n option
   (there are setups where that has no effect anyway)
+- mount.crypt: do not call lower-level helpers with -i option
 - mount.crypt: use /run directory to store cmtab
 - pmvarrun: use /run/pam_mount directory
 - pmt-ehd: exclusively create LUKS partitions from now on
