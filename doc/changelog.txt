@@ -3,6 +3,9 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- mount.crypt: fix a bogus "realpath (null): ..." message when trying to
+  umount a non-existing directory
 Changes:
 - support for old encfs 1.3.x has been removed
 - mount.crypt: print the location of cmtab/smtab and its contents

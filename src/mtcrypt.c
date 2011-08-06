@@ -524,7 +524,7 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 	      HX_REALPATH_DEFAULT | HX_REALPATH_ABSOLUTE);
 	if (ret < 0) {
 		fprintf(stderr, "realpath %s: %s\n",
-		        opt->object, strerror(-ret));
+		        (*argv)[1], strerror(-ret));
 		return false;
 	}
 	if (stat(opt->object, &sb) < 0) {
