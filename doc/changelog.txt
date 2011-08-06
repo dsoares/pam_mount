@@ -6,6 +6,7 @@ HEAD
 Fixes:
 - mount.crypt: fix a bogus "realpath (null): ..." message when trying to
   umount a non-existing directory
+- mount.crypt: make -v option on umount work again
 Changes:
 - support for old encfs 1.3.x has been removed
 - mount.crypt: print the location of cmtab/smtab and its contents

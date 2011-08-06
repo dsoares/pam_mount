@@ -514,6 +514,8 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
 
+	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+
 	if (*argc < 2 || *(*argv)[1] == '\0') {
 		fprintf(stderr, "%s: You need to specify the container "
 		        "or its mountpoint\n", **argv);
