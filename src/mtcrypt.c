@@ -674,9 +674,11 @@ int main(int argc, const char **argv)
 	int ret;
 
 	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0)
-		fprintf(stderr, "BIG FAT WARNING: This version of mount.crypt "
-		        "does not support unmounting crypto volumes through "
-		        "umount(8) on systems with read-only mtab yet.\n");
+		fprintf(stderr, "NOTE: mount.crypt does not support utab "
+		        "(systems with no mtab or read-only mtab) yet. This "
+		        "means that you will temporarily need to call "
+		        "umount.crypt(8) rather than umount(8) to get crypto "
+		        "volumes unmounted.\n");
 
 	ret = HX_init();
 	if (ret <= 0) {
