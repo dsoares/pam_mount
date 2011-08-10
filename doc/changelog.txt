@@ -3,6 +3,7 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+config: default to calling umount.crypt directly
 
 
 v2.11 (2011-08-07)
