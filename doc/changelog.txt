@@ -3,7 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
-config: default to calling umount.crypt directly
+Fixes:
+- build: make build of pmt-ehd dependent upon HAVE_LIBCRYPTSETUP
+Changes:
+- config: default to calling umount.crypt directly
 
 
 v2.11 (2011-08-07)
