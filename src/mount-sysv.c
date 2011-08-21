@@ -14,24 +14,4 @@
 #include <string.h>
 #include "pam_mount.h"
 
-int pmt_already_mounted(const struct config *const config,
-    const struct vol *vpt, struct HXformat_map *vinfo)
-{
-	int (*xcmp)(const char *, const char *);
-	int cret, sret;
-
-	xcmp = fstype2_icase(vpt->type) ? strcasecmp : strcmp;
-
-	cret = pmt_cmtab_mounted(vpt->combopath, vpt->mountpoint);
-	sret = pmt_smtab_mounted(vpt->combopath, vpt->mountpoint, xcmp);
-	if (cret > 0 || sret > 0)
-		return true;
-	if (cret == 0 && sret == 0)
-		return false;
-	if (sret < 0)
-		return sret;
-	if (cret < 0)
-		return cret;
-	return false;
-}
 #endif /* HAVE_GETMNTENT */
