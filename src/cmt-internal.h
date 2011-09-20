@@ -33,7 +33,7 @@ struct ehd_mount_info {
  * @readonly:		whether to create a readonly vfsmount
  */
 struct ehd_mount_request {
-	char *container, *mountpoint;
+	char *container, *crypto_name, *mountpoint;
 	char *fs_cipher, *fs_hash;
 	void *key_data;
 	unsigned int key_size, trunc_keysize;

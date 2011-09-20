@@ -1,4 +1,4 @@
-.TH mount.crypt 8 "2008\-10\-08" "pam_mount" "pam_mount"
+.TH mount.crypt 8 "2011\-12\-15" "pam_mount" "pam_mount"
 .SH Name
 .PP
 mount.crypt - mount a dm\-crypt encrypted volume
@@ -32,6 +32,10 @@ Turn on debugging and be a bit more verbose.
 The cryptsetup cipher used for the encrypted volume. This option is mandatory
 for PLAIN (non-LUKS) volumes. pmt-ehd(8) defaults to creating volumes with
 "aes\-cbc\-essiv:sha256" as a cipher.
+.TP
+\fBcrypto_name\fP
+Select the name for the crypto device (optional). This option is currently
+only usable with dm-crypt systems.
 .TP
 \fBdm\-timeout=\fP\fIseconds\fP
 Wait at most this many seconds for udev to create /dev/mapper/\fIname\fP after

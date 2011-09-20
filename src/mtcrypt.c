@@ -32,6 +32,7 @@
  * @object:		volume or mountpoint; used by remount
  * @container:		path to the volume (like (bdev) /dev/sda2 or
  * 			(file) /home/user.!@#)
+ * @crypto_name:	preferred name of the crypto device (where possible)
  * @mountpoint:		where to put this
  * @extra_options:	options to pass down
  * @no_update:		do not update mtab
@@ -47,7 +48,7 @@
 struct mount_options {
 	hxmc_t *object, *container, *mountpoint;
 	const char *fstype;
-	const char *dmcrypt_cipher, *dmcrypt_hash;
+	const char *crypto_name, *dmcrypt_cipher, *dmcrypt_hash;
 	const char *fsk_hash, *fsk_cipher, *fsk_file;
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
@@ -144,6 +145,8 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			if (!mtcr_debug)
 				ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
 			mtcr_debug = true;
+		} else if (strcmp(key, "crypto_name") == 0) {
+			mo->crypto_name = value;
 		} else {
 			if (!first)
 				HXmc_strcat(&passthru, ",");
@@ -416,6 +419,9 @@ static int mtcr_mount(struct mount_options *opt)
 		return 0;
 	}
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CONTAINER, opt->container);
+	if (ret < 0)
+		goto out_r;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CRYPTONAME, opt->crypto_name);
 	if (ret < 0)
 		goto out_r;
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_FS_CIPHER, opt->dmcrypt_cipher);

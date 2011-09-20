@@ -65,12 +65,17 @@ EXPORT_SYMBOL int ehd_is_luks(const char *path, bool blkdev)
 	return ret;
 }
 
-static hxmc_t *dmc_crypto_name(const char *s)
+static hxmc_t *dmc_crypto_name(const struct ehd_mount_request *req,
+    const struct ehd_mount_info *mt)
 {
 	hxmc_t *ret;
 	char *p;
 
-	ret = HXmc_strinit(s);
+	if (req->crypto_name != NULL)
+		ret = HXmc_strinit(req->crypto_name);
+	else
+		ret = HXmc_strinit(mt->container);
+
 	for (p = ret; *p != '\0'; ++p)
 		if (!HX_isalnum(*p))
 			*p = '_';
@@ -150,7 +155,7 @@ static bool dmc_run(const struct ehd_mount_request *req,
 static int dmc_load(const struct ehd_mount_request *req,
     struct ehd_mount_info *mt)
 {
-	mt->crypto_name = dmc_crypto_name(mt->container);
+	mt->crypto_name = dmc_crypto_name(req, mt);
 	w4rn("Using %s as dmdevice name\n", mt->crypto_name);
 	mt->crypto_device = HXmc_strinit("/dev/mapper/");
 	HXmc_strcat(&mt->crypto_device, mt->crypto_name);

@@ -152,6 +152,7 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	va_start(args, opt);
 	switch (opt) {
 	case EHD_MTREQ_CONTAINER:
+	case EHD_MTREQ_CRYPTONAME:
 	case EHD_MTREQ_MOUNTPOINT:
 	case EHD_MTREQ_FS_CIPHER:
 	case EHD_MTREQ_FS_HASH:
@@ -182,6 +183,10 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	case EHD_MTREQ_CONTAINER:
 		free(rq->container);
 		rq->container = nv;
+		break;
+	case EHD_MTREQ_CRYPTONAME:
+		free(rq->crypto_name);
+		rq->crypto_name = nv;
 		break;
 	case EHD_MTREQ_MOUNTPOINT:
 		free(rq->container);

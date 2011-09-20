@@ -68,6 +68,7 @@ enum ehd_mtreq_opt {
 	EHD_MTREQ_KEY_SIZE,
 	EHD_MTREQ_TRUNC_KEYSIZE,
 	EHD_MTREQ_READONLY,
+	EHD_MTREQ_CRYPTONAME,
 };
 
 enum ehd_mtinfo_opt {
