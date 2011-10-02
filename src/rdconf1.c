@@ -115,9 +115,6 @@ static bool expand_home(const char *user, char **path_pptr)
  *
  * Substitutes all occurrences of %(USER) by the username. Returns NULL on
  * failure, otherwise @dest.
- *
- * (This should probably be done by the fmt_ptrn stuff, but is not at the
- * moment due to to-XML transition period.)
  */
 static bool expand_user(const char *user, char **dest_pptr,
     const struct HXformat_map *vinfo)

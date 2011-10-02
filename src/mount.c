@@ -25,6 +25,7 @@
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
+#include <libHX/io.h>
 #include <libHX/proc.h>
 #include <libmount.h>
 #include <grp.h>
@@ -669,8 +670,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	int fnval;
 	struct HXformat_map *vinfo;
 	struct passwd *pe;
-	hxmc_t *options;
-	char real_mpt[PATH_MAX+1];
+	hxmc_t *options, *resmnt = NULL;
 
 	/*
 	 * This expansion (the other is in expandconfig()!) expands the mount
@@ -692,13 +692,13 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 		return 0;
 	}
 
-	if (realpath(vpt->mountpoint, real_mpt) == NULL) {
+	fnval = HX_realpath(&resmnt, vpt->mountpoint, HX_REALPATH_DEFAULT);
+	if (fnval <= 0) {
 		w4rn("Could not get realpath of %s: %s\n",
-		     vpt->mountpoint, strerror(errno));
+		     vpt->mountpoint, strerror(-fnval));
 	} else {
-		real_mpt[sizeof(real_mpt)-1] = '\0';
-		free(vpt->mountpoint);
-		vpt->mountpoint = xstrdup(real_mpt);
+		vpt->mountpoint = HX_strdup(resmnt);
+		HXmc_free(resmnt);
 	}
 
 	format_add(vinfo, "MNTPT",    vpt->mountpoint);
