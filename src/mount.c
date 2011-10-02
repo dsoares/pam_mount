@@ -26,6 +26,7 @@
 #include <libHX/defs.h>
 #include <libHX/deque.h>
 #include <libHX/proc.h>
+#include <libmount.h>
 #include <grp.h>
 #include <pwd.h>
 #include "pam_mount.h"
@@ -112,6 +113,25 @@ static void run_ofl(const struct config *const config, const char *mntpt,
 }
 
 /**
+ * Compares a given utab entry to the volume. crypt-type volumes will always
+ * be compared case-sensitive since they always use an existing file.
+ */
+static bool pmt_utabent_matches(const struct vol *vpt, struct libmnt_fs *fs)
+{
+	int (*xcmp)(const char *, const char *);
+	const char *source = mnt_fs_get_source(fs);
+	const char *target = mnt_fs_get_target(fs);
+	bool result = false;
+
+	xcmp = fstype2_icase(vpt->type) ? strcasecmp : strcmp;
+	if (source != NULL)
+		result = xcmp(vpt->volume, source) == 0;
+	if (target != NULL)
+		result &= strcmp(vpt->mountpoint, target) == 0;
+	return result;
+}
+
+/**
  * already_mounted -
  * @config:	current config
  * @vpt:	volume descriptor
@@ -120,18 +140,33 @@ static void run_ofl(const struct config *const config, const char *mntpt,
  * Checks if @config->volume[@vol] is already mounted, and returns 1 if this
  * the case, 0 if not and -1 on error.
  */
-#if defined(HAVE_GETMNTENT)
-	/* elsewhere */
-#elif defined(HAVE_GETMNTINFO)
-	/* elsewhere */
-#else
 int pmt_already_mounted(const struct config *const config,
     const struct vol *vpt, struct HXformat_map *vinfo)
 {
-	l0g("check for previous mount not implemented on arch.\n");
-	return -1;
+	struct libmnt_context *ctx;
+	struct libmnt_table *table;
+	struct libmnt_iter *iter;
+	struct libmnt_fs *fs;
+	int ret = 0;
+
+	ctx = mnt_new_context();
+	if (ctx == NULL)
+		return -1;
+	if (mnt_context_get_mtab(ctx, &table) != 0)
+		goto out;
+	iter = mnt_new_iter(MNT_ITER_BACKWARD);
+	if (iter == NULL)
+		goto out;
+
+	while (mnt_table_next_fs(table, iter, &fs) == 0)
+		if (pmt_utabent_matches(vpt, fs)) {
+			ret = 1;
+			break;
+		}
+ out:
+	mnt_free_context(ctx);
+	return ret;
 }
-#endif
 
 static bool fstype_networked(enum command_type fstype)
 {

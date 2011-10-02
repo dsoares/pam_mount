@@ -3,7 +3,9 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
-config: default to calling umount.crypt directly
+Changes:
+- config: default to calling umount.crypt directly
+- pam_mount: use libmount for utab/mtab operations
 
 
 v2.11 (2011-08-07)
