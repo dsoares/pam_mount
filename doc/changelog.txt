@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.12 (2011-10-06)
+==================
 Fixes:
 - build: make build of pmt-ehd dependent upon HAVE_LIBCRYPTSETUP
 - mount.crypt: restore support for files >= 4 GB
