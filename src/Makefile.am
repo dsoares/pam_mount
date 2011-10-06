@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-AM_CPPFLAGS = -DRUNDIR=\"${rundir}\"
+AM_CPPFLAGS = ${regular_CPPFLAGS} -DRUNDIR=\"${rundir}\"
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
 		${libHX_CFLAGS} ${libcrypto_CFLAGS} ${libcryptsetup_CFLAGS} \
 		${libxml_CFLAGS}

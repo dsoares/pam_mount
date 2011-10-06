@@ -51,6 +51,7 @@ regular_CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_REENTRANT"
 regular_CFLAGS="-Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
 	-Wformat=2 -pipe"
+AC_SUBST([regular_CPPFLAGS])
 AC_SUBST([regular_CFLAGS])
 
 AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/cgdvar.h dev/vndvar.h])
