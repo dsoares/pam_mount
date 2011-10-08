@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-AM_CPPFLAGS = -DRUNDIR=\"${rundir}\"
+AM_CPPFLAGS = ${regular_CPPFLAGS} -DRUNDIR=\"${rundir}\"
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
 		${libHX_CFLAGS} ${libcrypto_CFLAGS} ${libcryptsetup_CFLAGS} \
 		${libmount_CFLAGS} ${libxml_CFLAGS}
@@ -8,7 +8,7 @@ AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
 sbin_PROGRAMS		= pmvarrun
-if HAVE_LIBCRYPTO
+if HAVE_LIBCRYPTSETUP
 sbin_PROGRAMS		+= pmt-ehd
 endif
 ssbin_PROGRAMS		= mount.crypt

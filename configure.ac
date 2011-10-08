@@ -7,8 +7,8 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [2.11])
-PACKAGE_RELDATE="2011-08-07"
+AC_INIT([pam_mount], [2.12])
+PACKAGE_RELDATE="2011-10-06"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -51,6 +51,7 @@ regular_CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_REENTRANT"
 regular_CFLAGS="-Wall -Waggregate-return -Wmissing-declarations \
 	-Wmissing-prototypes -Wredundant-decls -Wshadow -Wstrict-prototypes \
 	-Wformat=2 -pipe"
+AC_SUBST([regular_CPPFLAGS])
 AC_SUBST([regular_CFLAGS])
 
 AC_CHECK_HEADERS([linux/fs.h linux/major.h dev/cgdvar.h dev/vndvar.h])

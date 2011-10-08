@@ -4,8 +4,16 @@ For details, see the history as recorded in the git repository.
 HEAD
 ====
 Changes:
-- config: default to calling umount.crypt directly
 - pam_mount: use libmount for utab/mtab operations
+
+
+v2.12 (2011-10-06)
+==================
+Fixes:
+- build: make build of pmt-ehd dependent upon HAVE_LIBCRYPTSETUP
+- mount.crypt: restore support for files >= 4 GB
+Changes:
+- config: default to calling umount.crypt directly
 
 
 v2.11 (2011-08-07)
