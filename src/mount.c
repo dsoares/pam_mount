@@ -550,6 +550,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 	struct HXdeque *argv;
 	struct HXproc proc;
 	const char *mount_user;
+	hxmc_t *ll_password;
 	int ret;
 
 	assert(vinfo != NULL);
@@ -583,6 +584,16 @@ int do_mount(const struct config *config, struct vol *vpt,
 	}
 
 	password = (password != NULL) ? password : "";
+	if (vpt->type != CMD_CRYPTMOUNT && vpt->fs_key_cipher != NULL &&
+	    strlen(vpt->fs_key_cipher) > 0)
+		/* In case of %CMD_CRYPTMOUNT, mount.crypt will deal with it */
+		ll_password = ehd_decrypt_key(vpt->fs_key_path,
+		              vpt->fs_key_hash, vpt->fs_key_cipher, password);
+	else
+		ll_password = HXmc_strinit(password);
+	if (ll_password == NULL)
+		return 0;
+
 	if ((argv = HXdeque_init()) == NULL)
 		misc_log("malloc: %s\n", strerror(errno));
 	if (vpt->uses_ssh)
@@ -614,14 +625,17 @@ int do_mount(const struct config *config, struct vol *vpt,
 	               HXPROC_NULL_STDOUT | HXPROC_STDERR;
 	proc.p_ops   = &pmt_dropprivs_ops;
 	proc.p_data  = const_cast1(char *, mount_user);
-	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0)
+	if ((ret = pmt_spawn_dq(argv, &proc)) <= 0) {
+		HXmc_free(ll_password);
 		return 0;
+	}
 
-	if (write(proc.p_stdin, password, strlen(password)) !=
-	    strlen(password))
+	if (write(proc.p_stdin, ll_password, HXmc_length(ll_password)) !=
+	    HXmc_length(ll_password))
 		/* FIXME: clean: returns value of exit below */
 		l0g("error sending password to mount\n");
 	close(proc.p_stdin);
+	HXmc_free(ll_password);
 
 	log_output(proc.p_stderr, "Messages from underlying mount program:\n");
 	if ((ret = HXproc_wait(&proc)) < 0) {
