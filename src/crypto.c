@@ -137,7 +137,7 @@ int ehd_unload(const struct ehd_mount *mt)
 #ifdef HAVE_LIBCRYPTO
 struct decrypt_info {
 	const char *keyfile;
-	hxmc_t *password;
+	const char *password;
 	const EVP_CIPHER *cipher;
 	const EVP_MD *digest;
 
@@ -179,7 +179,7 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 }
 
 hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
-    const char *cipher_name, hxmc_t *password)
+    const char *cipher_name, const char *password)
 {
 	struct decrypt_info info = {
 		.keyfile  = keyfile,

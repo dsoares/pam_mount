@@ -208,7 +208,7 @@ extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
 extern int ehd_unload(const struct ehd_mount *);
 extern void ehd_mtfree(struct ehd_mount *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
-	hxmc_t *);
+	const char *);
 extern unsigned int cipher_digest_security(const char *);
 extern hxmc_t *pmt_get_password(const char *);
 
