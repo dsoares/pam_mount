@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libHX.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/evp.h>
@@ -77,6 +78,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 	bool first = true;
 	char *copt;
 	char *key;
+	int ret;
 
 	if ((copt = xstrdup(cbi->data)) == NULL)
 		return;
@@ -92,17 +94,26 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			++key;
 		if (strcmp(key, "cipher") == 0) {
 			mo->dmcrypt_cipher = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Cipher \"%s\" is considered "
 				        "insecure.\n", value);
 		} else if (strcmp(key, "fsk_cipher") == 0) {
 			mo->fsk_cipher = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Cipher \"%s\" is considered "
 				        "insecure.\n", value);
 		} else if (strcmp(key, "fsk_hash") == 0) {
 			mo->fsk_hash = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Hash \"%s\" is considered "
 				        "insecure.\n", value);
 		} else if (strcmp(key, "dm-timeout") == 0)
@@ -120,7 +131,10 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			l0g("loop mount option ignored\n");
 		else if (strcmp(key, "hash") == 0) {
 			mo->dmcrypt_hash = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Hash \"%s\" is considered "
 				        "insecure.\n", value);
 		} else if (strcmp(key, "verbose") == 0)

@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2008
+ *	Copyright © Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -19,6 +19,7 @@
 #include <libHX/defs.h>
 #include <libHX/string.h>
 #include "config.h"
+#include "libcryptmount.h"
 #include "pam_mount.h"
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/evp.h>
@@ -243,9 +244,9 @@ static unsigned int __cipher_digest_security(const char *s)
 
 	for (i = 0; i < ARRAY_SIZE(blacklist); ++i)
 		if (strcmp(s, blacklist[i]) == 0)
-			return 0;
+			return EHD_SECURITY_SUBPAR;
 
-	return 2;
+	return EHD_SECURITY_UNSPEC;
 }
 
 /**
@@ -253,24 +254,31 @@ static unsigned int __cipher_digest_security(const char *s)
  * @s:	name of the cipher or digest specification
  * 	(can either be OpenSSL or cryptsetup name)
  *
- * Returns 0 if it is considered insecure, 1 if I would have a bad feeling
- * using it, and 2 if it is appropriate.
+ * Returns the lowest security class ("weakest element of the chain")
+ * of the compound string.
  */
-unsigned int cipher_digest_security(const char *s)
+EXPORT_SYMBOL int ehd_cipherdigest_security(const char *s)
 {
 	char *base, *tmp, *wp;
-	unsigned int ret;
+	unsigned int verdict, ret;
 
-	if ((base = xstrdup(s)) == NULL)
-		return 2;
+	if (s == NULL)
+		return EHD_SECURITY_UNSPEC;
+	if ((base = HX_strdup(s)) == NULL)
+		return -errno;
 
 	tmp = base;
-	while ((wp = HX_strsep(&tmp, ",-.:_")) != NULL)
-		if ((ret = __cipher_digest_security(wp)) < 2)
-			break;
+	verdict = EHD_SECURITY_UNSPEC;
+	while ((wp = HX_strsep(&tmp, ",-.:_")) != NULL) {
+		ret = __cipher_digest_security(wp);
+		if (verdict == EHD_SECURITY_UNSPEC)
+			verdict = ret;
+		else if (ret < verdict)
+			verdict = ret;
+	}
 
 	free(base);
-	return ret;
+	return verdict;
 }
 
 static struct {

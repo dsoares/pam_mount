@@ -29,6 +29,7 @@
 #include <security/pam_appl.h>
 #include <libcryptsetup.h>
 #include <pwd.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 static const char ehd_default_dmcipher[] = "aes-cbc-essiv:sha256";
@@ -465,15 +466,18 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 	if (cont->hash == NULL)
 		cont->hash = HX_strdup(ehd_default_hash);
 
-	if (cipher_digest_security(cont->cipher) < 1) {
+	ret = ehd_cipherdigest_security(cont->cipher);
+	if (ret < 0)
+		fprintf(stderr, "pmt_cipherdigest_security: %s\n", strerror(-ret));
+	else if (ret < EHD_SECURITY_UNSPEC)
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
 		        cont->cipher);
-//		return false;
-	} else if (cipher_digest_security(cont->hash) < 1) {
+	ret = ehd_cipherdigest_security(cont->hash);
+	if (ret < 0)
+		fprintf(stderr, "pmt_cipherdigest_security: %s\n", strerror(-ret));
+	else if (ret < EHD_SECURITY_UNSPEC)
 		fprintf(stderr, "Hash \"%s\" is considered insecure.\n",
 		        cont->hash);
-//		return false;
-	}
 
 	ret = true;
  out:
