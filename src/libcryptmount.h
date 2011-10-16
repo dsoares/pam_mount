@@ -28,6 +28,9 @@ enum {
 	EHD_SECURITY_ADEQUATE,
 };
 
+extern int cryptmount_init(void);
+extern void cryptmount_exit(void);
+
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);
 

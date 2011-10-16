@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +18,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <libHX/defs.h>
+#include <libHX/init.h>
 #include <libHX/string.h>
 #include "config.h"
 #include "libcryptmount.h"
@@ -24,6 +26,43 @@
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/evp.h>
 #endif
+
+static pthread_mutex_t ehd_init_lock = PTHREAD_MUTEX_INITIALIZER;
+static unsigned long ehd_use_count;
+
+static void __attribute__((constructor)) ehd_ident(void)
+{
+	if (getenv("LIBCRYPTMOUNT_IDENTIFY") != NULL)
+		fprintf(stderr, "# " PACKAGE_NAME " " PACKAGE_VERSION "\n");
+}
+
+EXPORT_SYMBOL int cryptmount_init(void)
+{
+	int ret;
+
+	pthread_mutex_lock(&ehd_init_lock);
+	if (ehd_use_count == 0) {
+		ret = HX_init();
+		if (ret < 0) {
+			pthread_mutex_unlock(&ehd_init_lock);
+			return ret;
+		}
+	}
+	++ehd_use_count;
+	pthread_mutex_unlock(&ehd_init_lock);
+	return 1;
+}
+
+EXPORT_SYMBOL void cryptmount_exit(void)
+{
+	pthread_mutex_lock(&ehd_init_lock);
+	if (ehd_use_count == 0)
+		fprintf(stderr, "%s: reference count is already zero!\n",
+		        __func__);
+	else if (--ehd_use_count == 0)
+		HX_exit();
+	pthread_mutex_unlock(&ehd_init_lock);
+}
 
 /**
  * ehd_mtfree - free data associated with an EHD mount info block
