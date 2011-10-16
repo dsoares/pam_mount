@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX/string.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 #ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
@@ -30,7 +31,7 @@
  */
 static const unsigned int LINUX_MAX_MINOR = 1 << 20;
 
-int pmt_loop_setup(const char *filename, char **result, bool ro)
+EXPORT_SYMBOL int ehd_loop_setup(const char *filename, char **result, bool ro)
 {
 	struct loop_info64 info;
 	const char *dev_prefix;
@@ -92,7 +93,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 	return ret;
 }
 
-int pmt_loop_release(const char *device)
+EXPORT_SYMBOL int ehd_loop_release(const char *device)
 {
 	static const struct timespec wait_time = {0, 200000000};
 	unsigned int count = 50;

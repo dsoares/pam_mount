@@ -219,17 +219,6 @@ extern const struct ehd_crypto_ops ehd_dmcrypt_ops;
 extern int dmc_is_luks(const char *, bool);
 
 /*
- *	LOOP.C
- */
-enum {
-	LOSETUP_RW = 0,
-	LOSETUP_RO = 1,
-};
-
-extern int pmt_loop_setup(const char *, char **, bool);
-extern int pmt_loop_release(const char *);
-
-/*
  *	LOG.C
  */
 extern const char *pmtlog_prefix;

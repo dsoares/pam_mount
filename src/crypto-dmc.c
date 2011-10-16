@@ -17,6 +17,7 @@
 #include <libHX/proc.h>
 #include <libHX/string.h>
 #include <libcryptsetup.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 /**
@@ -32,7 +33,7 @@ int dmc_is_luks(const char *path, bool blkdev)
 	int ret, ret2;
 
 	if (!blkdev) {
-		ret = pmt_loop_setup(path, &loop_device, LOSETUP_RO);
+		ret = ehd_loop_setup(path, &loop_device, EHD_LOSETUP_RO);
 		if (ret == 0) {
 			fprintf(stderr, "No free loop device\n");
 			return -ENXIO;
@@ -55,9 +56,9 @@ int dmc_is_luks(const char *path, bool blkdev)
 		crypt_free(cd);
 	}
 	if (!blkdev) {
-		ret2 = pmt_loop_release(loop_device);
+		ret2 = ehd_loop_release(loop_device);
 		if (ret2 < 0)
-			fprintf(stderr, "pmt_loop_release: %s\n",
+			fprintf(stderr, "ehd_loop_release: %s\n",
 			        strerror(-ret));
 	}
 	return ret;

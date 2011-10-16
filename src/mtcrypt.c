@@ -154,9 +154,9 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		if (strcmp(key, "remount") == 0)
 			mo->remount = true;
 		else if (strcmp(key, "ro") == 0)
-			mo->readonly = LOSETUP_RO;
+			mo->readonly = EHD_LOSETUP_RO;
 		else if (strcmp(key, "rw") == 0)
-			mo->readonly = LOSETUP_RW;
+			mo->readonly = EHD_LOSETUP_RW;
 	}
 
 	if (*passthru != '\0') {

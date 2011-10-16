@@ -66,7 +66,7 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	} else {
 		/* need losetup since cryptsetup needs block device */
 		w4rn("Setting up loop device for file %s\n", req->container);
-		ret = pmt_loop_setup(req->container, &mt->loop_device,
+		ret = ehd_loop_setup(req->container, &mt->loop_device,
 		      req->readonly);
 		if (ret == 0) {
 			l0g("Error: no free loop devices\n");
@@ -128,7 +128,7 @@ int ehd_unload(const struct ehd_mount *mt)
 #endif
 	/* Try to free loop device even if cryptsetup remove failed */
 	if (mt->loop_device != NULL) {
-		ret2 = pmt_loop_release(mt->loop_device);
+		ret2 = ehd_loop_release(mt->loop_device);
 		if (ret > 0)
 			ret = ret2;
 	}

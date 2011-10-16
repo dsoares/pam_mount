@@ -2,6 +2,9 @@
 #define _CRYPTMOUNT_H 1
 
 #include <libHX/string.h>
+#ifndef __cplusplus
+#	include <stdbool.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,6 +30,18 @@ enum {
 
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);
+
+/*
+ *	loop.c
+ */
+enum {
+	EHD_LOSETUP_RW = 0,
+	EHD_LOSETUP_RO = 1,
+};
+
+extern int ehd_loop_setup(const char *, char **, bool);
+extern int ehd_loop_release(const char *);
+
 
 #ifdef __cplusplus
 } /* extern "C" */

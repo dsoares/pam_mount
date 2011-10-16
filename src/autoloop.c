@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <libHX/string.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 static unsigned int al_do_usetup;
@@ -20,7 +21,7 @@ static int al_setup(const char **argv)
 	char *dev;
 	int ret;
 
-	ret = pmt_loop_setup(argv[1], &dev, LOSETUP_RW);
+	ret = ehd_loop_setup(argv[1], &dev, EHD_LOSETUP_RW);
 	if (ret == 0) {
 		fprintf(stderr, "%s: error: no free loop devices\n",
 		        HX_basename(*argv));
@@ -41,7 +42,7 @@ static int al_usetup(const char *loop_dev)
 {
 	int ret;
 
-	if ((ret = pmt_loop_release(loop_dev)) < 0)
+	if ((ret = ehd_loop_release(loop_dev)) < 0)
 		fprintf(stderr, "warning: loop_release: %s\n", strerror(-ret));
 	return EXIT_SUCCESS;
 }

@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX/string.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 #include <dev/vndvar.h>
 
@@ -26,7 +27,7 @@
  */
 static const unsigned BSD_VND_MINORS = 16;
 
-int pmt_loop_setup(const char *filename, char **result, bool ro)
+EXPORT_SYMBOL int ehd_loop_setup(const char *filename, char **result, bool ro)
 {
 	struct vnd_ioctl info;
 	unsigned int i;
@@ -63,7 +64,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 	return ret;
 }
 
-int pmt_loop_release(const char *device)
+EXPORT_SYMBOL int ehd_loop_release(const char *device)
 {
 	int loopfd, ret = 1;
 	struct vnd_ioctl info;

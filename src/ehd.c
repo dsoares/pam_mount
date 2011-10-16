@@ -321,14 +321,14 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 		.container = cont->path,
 		.key_data  = password,
 		.key_size  = strlen(password),
-		.readonly  = LOSETUP_RW,
+		.readonly  = EHD_LOSETUP_RW,
 	};
 	int ret;
 
 	if (cont->blkdev) {
 		cont->device = cont->path;
 	} else {
-		ret = pmt_loop_setup(cont->path, &cont->loop_dev, LOSETUP_RW);
+		ret = ehd_loop_setup(cont->path, &cont->loop_dev, EHD_LOSETUP_RW);
 		if (ret == 0) {
 			fprintf(stderr, "loop_setup: error: no free loop "
 			        "devices\n");
@@ -342,7 +342,7 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	}
 
 	ehd_init_volume_luks(pg, password);
-	ret = pmt_loop_release(cont->device);
+	ret = ehd_loop_release(cont->device);
 	if (ret <= 0)
 		fprintf(stderr, "loop_release: warning: %s\n", strerror(-ret));
 

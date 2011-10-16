@@ -19,9 +19,10 @@
 #include <libHX/defs.h>
 #include <libHX/string.h>
 #include <sys/mdioctl.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
-int pmt_loop_setup(const char *filename, char **result, bool ro)
+EXPORT_SYMBOL int ehd_loop_setup(const char *filename, char **result, bool ro)
 {
 	struct stat sb;
 	struct md_ioctl info = {
@@ -51,7 +52,7 @@ int pmt_loop_setup(const char *filename, char **result, bool ro)
 	return ret;
 }
 
-int pmt_loop_release(const char *device)
+EXPORT_SYMBOL int ehd_loop_release(const char *device)
 {
 	struct md_ioctl info = {.md_version = MDIOVERSION};
 	int ret, fd;
