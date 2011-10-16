@@ -73,7 +73,7 @@ ismnt_LDADD		= libpmt_mtab.la
 mount_crypt_SOURCES	= mtcrypt.c spawn.c
 mount_crypt_LDADD	= libpmt_crypto.la libpmt_mtab.la ${libHX_LIBS}
 
-pmt_ehd_SOURCES		= ehd.c log.c misc.c spawn.c
+pmt_ehd_SOURCES		= ehd.c bdev.c log.c misc.c spawn.c
 pmt_ehd_LDADD		= libpmt_crypto.la ${libHX_LIBS}
 
 #

@@ -197,6 +197,11 @@ static inline const char *znul(const char *s)
 }
 
 /*
+ *	BDEV.C
+ */
+extern size_t pmt_block_getsize64(const char *);
+
+/*
  *	CRYPTO.C
  */
 extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
@@ -223,7 +228,6 @@ enum {
 	LOSETUP_RO = 1,
 };
 
-extern size_t pmt_block_getsize64(const char *);
 extern int pmt_loop_setup(const char *, char **, bool);
 extern int pmt_loop_release(const char *);
 

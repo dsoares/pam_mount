@@ -369,17 +369,6 @@ static void ehd_final_printout(const struct ehd_ctl *pg)
 		pg->cont.path);
 }
 
-#ifdef HAVE_LINUX_FS_H
-	/* elsewhere */
-#else
-size_t pmt_block_getsize64(const char *path)
-{
-	fprintf(stderr, "%s: pam_mount does not know how to retrieve the "
-	        "size of a block device on this platform.\n", __func__);
-	return 0;
-}
-#endif
-
 /**
  * ehd_fill_options_container - complete container control block
  */

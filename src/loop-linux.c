@@ -21,28 +21,6 @@
 #include <libHX/string.h>
 #include "pam_mount.h"
 
-#ifdef HAVE_LINUX_FS_H
-#include <linux/fs.h>
-size_t pmt_block_getsize64(const char *path)
-{
-	uint64_t s;
-	int fd;
-
-	if ((fd = open(path, O_RDONLY | O_WRONLY)) < 0) {
-		fprintf(stderr, "open %s: %s\n", path, strerror(errno));
-		return 0;
-	}
-
-	if (ioctl(fd, BLKGETSIZE64, &s) < 0) {
-		fprintf(stderr, "ioctl on %s: %s\n", path, strerror(errno));
-		return 0;
-	}
-
-	close(fd);
-	return s;
-}
-#endif /* HAVE_LINUX_FS_H */
-
 #ifdef HAVE_STRUCT_LOOP_INFO64_LO_FILE_NAME
 #include <linux/loop.h>
 
