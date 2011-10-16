@@ -329,7 +329,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
 	if (!kfpt)
-		opt->fsk_password = pmt_get_password(NULL);
+		opt->fsk_password = ehd_get_password(NULL);
 	return true;
 }
 

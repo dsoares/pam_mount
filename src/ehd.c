@@ -546,8 +546,8 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 	       "of a passphrase or anything otherwise fancy. pmt-ehd(8), as "
 	       "well as cryptsetup(8)'s luksFormat will, by default, do the "
 	       "master key generation and hashing themselves!\n");
-	password  = pmt_get_password(NULL);
-	password2 = pmt_get_password("Reenter password: ");
+	password  = ehd_get_password(NULL);
+	password2 = ehd_get_password("Reenter password: ");
 	if (password == NULL || password2 == NULL ||
 	    strcmp(password, password2) != 0) {
 		fprintf(stderr, "Passwords mismatch.\n");
