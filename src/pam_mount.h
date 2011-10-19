@@ -180,7 +180,6 @@ extern size_t pmt_block_getsize64(const char *);
 /*
  *	CRYPTO.C
  */
-extern int ehd_unload(const struct ehd_mount *);
 extern void ehd_mtfree(struct ehd_mount *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	const char *);

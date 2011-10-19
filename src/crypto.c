@@ -151,7 +151,7 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
  * not look as easy as the loop one, and does not look shared (i.e. available
  * as a system library) either.
  */
-int ehd_unload(const struct ehd_mount *mt)
+EXPORT_SYMBOL int ehd_unload(const struct ehd_mount *mt)
 {
 	int ret, ret2;
 
