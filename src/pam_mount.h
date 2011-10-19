@@ -171,11 +171,6 @@ struct ehd_mount {
 	hxmc_t *crypto_device;
 };
 
-struct ehd_crypto_ops {
-	int (*load)(const struct ehd_mtreq *, struct ehd_mount *);
-	int (*unload)(const struct ehd_mount *);
-};
-
 typedef int (mount_op_fn_t)(const struct config *, struct vol *,
 	struct HXformat_map *, const char *);
 

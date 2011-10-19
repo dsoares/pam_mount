@@ -21,6 +21,7 @@
 #include <libHX/init.h>
 #include <libHX/string.h>
 #include "config.h"
+#include "cmt-internal.h"
 #include "libcryptmount.h"
 #include "pam_mount.h"
 #ifdef HAVE_LIBCRYPTO

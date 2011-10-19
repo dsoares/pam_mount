@@ -14,7 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libHX/string.h>
-#include "pam_mount.h"
+#include "cmt-internal.h"
 #include <dev/cgdvar.h>
 
 /*
