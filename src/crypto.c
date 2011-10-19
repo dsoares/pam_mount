@@ -79,15 +79,11 @@ void ehd_mtfree(struct ehd_mount *mt)
 
 /**
  * ehd_load - set up crypto device for an EHD container
- * @cont_path:		path to the container
- * @crypto_device:	store crypto device here
- * @cipher:		filesystem cipher
- * @hash:		hash function for cryptsetup (default: plain)
- * @fskey:		unencrypted fskey data (not path)
- * @fskey_size:		size of @fskey, in bytes
- * @readonly:		set up loop device as readonly
+ * @req:	parameters for setting up the mount
+ * @mt:		EHD mount state
  */
-int ehd_load(const struct ehd_mount_request *req, struct ehd_mount *mt)
+EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
+    struct ehd_mount *mt)
 {
 	struct stat sb;
 	int saved_errno, ret;

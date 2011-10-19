@@ -28,8 +28,32 @@ enum {
 	EHD_SECURITY_ADEQUATE,
 };
 
+/**
+ * struct ehd_mount_request - mapping and mount request for EHD
+ * @container:		path to disk image
+ * @mountpoint:		where to mount the volume on
+ * @readonly:		whether to create a readonly vfsmount
+ * @key_data:		key material/password
+ * @key_size:		size of key data, in bytes
+ * @fs_cipher:		cipher used for filesystem, if any. (cryptsetup name)
+ * @fs_hash:		hash used for filesystem, if any. (cryptsetup name)
+ * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
+ */
+struct ehd_mount_request {
+	const char *container;
+	const char *mountpoint;
+	const char *fs_cipher, *fs_hash;
+	const void *key_data;
+	unsigned int key_size, trunc_keysize;
+	bool readonly;
+};
+
+struct ehd_mount;
+
 extern int cryptmount_init(void);
 extern void cryptmount_exit(void);
+
+extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount *);
 
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);

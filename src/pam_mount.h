@@ -136,25 +136,6 @@ struct kvp {
 };
 
 /**
- * struct ehd_request - mapping and mount request for EHD
- * @mountpoint:	where to mount EHD
- * @fs_cipher:	cipher used for filesystem (cryptsetup name)
- * @fs_hash:	hash used for filesystem (cryptsetup name)
- * @container:	path to disk image
- * @key_data:	key material
- * @key_size:	size of key data, in bytes
- * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
- * @readonly:	create readonly mount?
- */
-struct ehd_mount_request {
-	const char *mountpoint;
-	const char *fs_cipher, *fs_hash, *container;
-	const void *key_data;
-	unsigned int key_size, trunc_keysize;
-	bool readonly;
-};
-
-/**
  * struct ehd_mount - EHD mount info
  * @container:		path to disk image
  * @lower_device:	link to either @container if a block device,
@@ -199,7 +180,6 @@ extern size_t pmt_block_getsize64(const char *);
 /*
  *	CRYPTO.C
  */
-extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount *);
 extern int ehd_unload(const struct ehd_mount *);
 extern void ehd_mtfree(struct ehd_mount *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
