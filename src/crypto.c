@@ -87,7 +87,7 @@ void ehd_mtfree(struct ehd_mount *mt)
  * @fskey_size:		size of @fskey, in bytes
  * @readonly:		set up loop device as readonly
  */
-int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
+int ehd_load(const struct ehd_mount_request *req, struct ehd_mount *mt)
 {
 	struct stat sb;
 	int saved_errno, ret;

@@ -146,7 +146,7 @@ struct kvp {
  * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
  * @readonly:	create readonly mount?
  */
-struct ehd_mtreq {
+struct ehd_mount_request {
 	const char *mountpoint;
 	const char *fs_cipher, *fs_hash, *container;
 	const void *key_data;
@@ -199,7 +199,7 @@ extern size_t pmt_block_getsize64(const char *);
 /*
  *	CRYPTO.C
  */
-extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
+extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount *);
 extern int ehd_unload(const struct ehd_mount *);
 extern void ehd_mtfree(struct ehd_mount *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,

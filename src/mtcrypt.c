@@ -375,7 +375,7 @@ static int mtcr_mount(struct mount_options *opt)
 	int ret, argk;
 	hxmc_t *key;
 	struct ehd_mount mount_info;
-	struct ehd_mtreq mount_request = {
+	struct ehd_mount_request mount_request = {
 		.container = opt->container,
 		.fs_cipher = opt->dmcrypt_cipher,
 		.fs_hash   = opt->dmcrypt_hash,

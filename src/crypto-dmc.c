@@ -77,7 +77,7 @@ static hxmc_t *dmc_crypto_name(const char *s)
 	return ret;
 }
 
-static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
+static bool dmc_run(const struct ehd_mount_request *req, struct ehd_mount *mt)
 {
 	struct crypt_device *cd;
 	unsigned int flags = 0;
@@ -146,7 +146,7 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	return ret >= 0 ? true : false;
 }
 
-static int dmc_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
+static int dmc_load(const struct ehd_mount_request *req, struct ehd_mount *mt)
 {
 	mt->crypto_name = dmc_crypto_name(mt->container);
 	w4rn("Using %s as dmdevice name\n", mt->crypto_name);

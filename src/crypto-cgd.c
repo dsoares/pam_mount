@@ -23,7 +23,7 @@
  */
 static const unsigned int BSD_CGD_MINORS = 8;
 
-static int cgd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
+static int cgd_load(const struct ehd_mount_request *req, struct ehd_mount *mt)
 {
 	struct cgd_ioctl info;
 	unsigned int i;
