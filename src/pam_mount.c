@@ -31,6 +31,7 @@
 #include <libHX/defs.h>
 #include <libHX/proc.h>
 #include <libHX.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 #ifndef PAM_EXTERN
@@ -252,6 +253,9 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	ret = HX_init();
 	if (ret <= 0)
 		l0g("libHX init failed: %s\n", strerror(errno));
+	ret = cryptmount_init();
+	if (ret <= 0)
+		l0g("libcryptmount init failed: %s\n", strerror(errno));
 
 	initconfig(&Config);
 	parse_pam_args(argc, argv);
@@ -292,6 +296,7 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 static void common_exit(void)
 {
 	pmt_sigpipe_setup(false);
+	cryptmount_exit();
 	HX_exit();
 }
 

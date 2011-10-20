@@ -680,24 +680,8 @@ static int mtcr_umount(struct umount_options *opt)
 	return final_ret;
 }
 
-int main(int argc, const char **argv)
+static int main2(int argc, const char **argv)
 {
-	struct stat sb;
-	int ret;
-
-	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0)
-		fprintf(stderr, "NOTE: mount.crypt does not support utab "
-		        "(systems with no mtab or read-only mtab) yet. This "
-		        "means that you will temporarily need to call "
-		        "umount.crypt(8) rather than umount(8) to get crypto "
-		        "volumes unmounted.\n");
-
-	ret = HX_init();
-	if (ret <= 0) {
-		fprintf(stderr, "HX_init: %s\n", strerror(errno));
-		abort();
-	}
-
 	Debug = false;
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_prefix = HX_basename(*argv);
@@ -737,4 +721,33 @@ int main(int argc, const char **argv)
 	}
 
 	return EXIT_FAILURE;
+}
+
+int main(int argc, const char **argv)
+{
+	struct stat sb;
+	int ret;
+
+	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0)
+		fprintf(stderr, "NOTE: mount.crypt does not support utab "
+		        "(systems with no mtab or read-only mtab) yet. This "
+		        "means that you will temporarily need to call "
+		        "umount.crypt(8) rather than umount(8) to get crypto "
+		        "volumes unmounted.\n");
+
+	ret = HX_init();
+	if (ret <= 0) {
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+		abort();
+	}
+	ret = cryptmount_init();
+	if (ret <= 0) {
+		fprintf(stderr, "cryptmount_init: %s\n", strerror(errno));
+		abort();
+	}
+
+	ret = main2(argc, argv);
+	cryptmount_exit();
+	HX_exit();
+	return ret;
 }

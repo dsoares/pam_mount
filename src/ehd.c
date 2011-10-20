@@ -1,6 +1,6 @@
 /*
  *	Encrypted Home Disk manipulation utility
- *	Copyright © Jan Engelhardt, 2008
+ *	Copyright © Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/init.h>
 #include <libHX/misc.h>
 #include <libHX/option.h>
 #include <libHX/proc.h>
@@ -575,9 +576,24 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 int main(int argc, const char **argv)
 {
 	struct ehd_ctl pg;
+	int ret;
+
+	ret = HX_init();
+	if (ret <= 0) {
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+		abort();
+	}
+	ret = cryptmount_init();
+	if (ret <= 0) {
+		fprintf(stderr, "cryptmount_init: %s\n", strerror(errno));
+		abort();
+	}
 
 	Debug = false;
 	memset(&pg, 0, sizeof(pg));
 
-	return main2(argc, argv, &pg);
+	ret = main2(argc, argv, &pg);
+	cryptmount_exit();
+	HX_exit();
+	return ret;
 }

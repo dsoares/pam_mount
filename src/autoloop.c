@@ -1,15 +1,18 @@
 /*
  *	Internal diagnostic tool to debug pmt loop.c
- *	Copyright © Jan Engelhardt, 2008 - 2009
+ *	Copyright © Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <libHX/init.h>
 #include <libHX/string.h>
 #include "libcryptmount.h"
 #include "pam_mount.h"
@@ -68,6 +71,12 @@ int main(int argc, const char **argv)
 {
 	int ret;
 
+	ret = HX_init();
+	if (ret <= 0) {
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+		abort();
+	}
+
 	if (!al_get_options(&argc, &argv))
 		return EXIT_FAILURE;
 	if (al_do_usetup)
@@ -75,5 +84,6 @@ int main(int argc, const char **argv)
 	else
 		ret = al_setup(argv);
 
+	HX_exit();
 	return ret;
 }
