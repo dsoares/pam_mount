@@ -26,14 +26,14 @@
  * @path:	path to the crypto container
  * @blkdev:	path is definitely a block device
  */
-int dmc_is_luks(const char *path, bool blkdev)
+EXPORT_SYMBOL int ehd_is_luks(const char *path, bool blkdev)
 {
 	struct crypt_device *cd;
 	const char *device = path;
 	char *loop_device;
 	int ret, ret2;
 
-	if (!blkdev) {
+	if (blkdev != EHD_BLKDEV_ASSURED) {
 		ret = ehd_loop_setup(path, &loop_device, EHD_LOSETUP_RO);
 		if (ret == 0) {
 			fprintf(stderr, "No free loop device\n");
@@ -56,7 +56,7 @@ int dmc_is_luks(const char *path, bool blkdev)
 		/* else keep ret as-is */
 		crypt_free(cd);
 	}
-	if (!blkdev) {
+	if (blkdev != EHD_BLKDEV_ASSURED) {
 		ret2 = ehd_loop_release(loop_device);
 		if (ret2 < 0)
 			fprintf(stderr, "ehd_loop_release: %s\n",

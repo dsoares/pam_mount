@@ -184,12 +184,6 @@ extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	const char *);
 
 /*
- *	CRYPTO-*.C
- */
-
-extern int dmc_is_luks(const char *, bool);
-
-/*
  *	LOG.C
  */
 extern const char *pmtlog_prefix;

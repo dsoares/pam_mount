@@ -11,6 +11,16 @@ extern "C" {
 #endif
 
 /**
+ * Mnemonics for functions expecting a "blkdev?" argument, e.g. ehd_is_luks.
+ * %EHD_BLKDEV_NEEDED:	the argument may not be a block device
+ * %EHD_BLKDEV_ASSURED:	the argument is assured to be a block device
+ */
+enum {
+	EHD_BLKDEV_UNKNOWN = 0,
+	EHD_BLKDEV_ASSURED = 1,
+};
+
+/**
  * Result codes for ehd_cipherdigest_security
  * (negative indicates system error code).
  *
@@ -56,6 +66,7 @@ extern void cryptmount_exit(void);
 extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info *);
 extern int ehd_unload(const struct ehd_mount_info *);
 extern void ehd_mountinfo_free(struct ehd_mount_info *);
+extern int ehd_is_luks(const char *, bool);
 
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);

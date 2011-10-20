@@ -171,6 +171,13 @@ EXPORT_SYMBOL int ehd_unload(const struct ehd_mount_info *mt)
 	return ret;
 }
 
+#ifndef HAVE_LIBCRYPTSETUP
+EXPORT_SYMBOL int ehd_is_luks(const char *device, bool blkdev)
+{
+	return -EINVAL;
+}
+#endif
+
 #ifdef HAVE_LIBCRYPTO
 struct decrypt_info {
 	const char *keyfile;

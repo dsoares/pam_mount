@@ -306,8 +306,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		}
 	}
 
-#ifdef HAVE_LIBCRYPTSETUP
-	ret = dmc_is_luks(opt->container, opt->blkdev);
+	ret = ehd_is_luks(opt->container, opt->blkdev);
 	if (ret > 0) {
 		/* LUKS */
 		if (opt->dmcrypt_cipher != NULL)
@@ -324,7 +323,6 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 			return false;
 		}
 	}
-#endif
 
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
