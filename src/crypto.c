@@ -180,7 +180,6 @@ EXPORT_SYMBOL int ehd_is_luks(const char *device, bool blkdev)
 
 #ifdef HAVE_LIBCRYPTO
 struct decrypt_info {
-	const char *keyfile;
 	const char *password;
 	const EVP_CIPHER *cipher;
 	const EVP_MD *digest;
@@ -225,7 +224,6 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 {
 	struct decrypt_info info = {
-		.keyfile  = par->keyfile,
 		.digest   = EVP_get_digestbyname(par->digest),
 		.cipher   = EVP_get_cipherbyname(par->cipher),
 		.password = par->password,
@@ -244,8 +242,8 @@ EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 		l0g("Unknown cipher: %s\n", par->cipher);
 		return false;
 	}
-	if ((fd = open(info.keyfile, O_RDONLY)) < 0) {
-		l0g("Could not open %s: %s\n", info.keyfile, strerror(errno));
+	if ((fd = open(par->keyfile, O_RDONLY)) < 0) {
+		l0g("Could not open %s: %s\n", par->keyfile, strerror(errno));
 		return false;
 	}
 	if (fstat(fd, &sb) < 0) {
