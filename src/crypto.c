@@ -68,7 +68,7 @@ EXPORT_SYMBOL void cryptmount_exit(void)
 /**
  * ehd_mtfree - free data associated with an EHD mount info block
  */
-void ehd_mtfree(struct ehd_mount_info *mt)
+EXPORT_SYMBOL void ehd_mountinfo_free(struct ehd_mount_info *mt)
 {
 	free(mt->container);
 	HXmc_free(mt->crypto_device);
@@ -134,7 +134,7 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
  out_ser:
 	saved_errno = errno;
 	ehd_unload(mt);
-	ehd_mtfree(mt);
+	ehd_mountinfo_free(mt);
 	errno = saved_errno;
 	return ret;
 }

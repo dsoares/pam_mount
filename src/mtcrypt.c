@@ -432,7 +432,7 @@ static int mtcr_mount(struct mount_options *opt)
 		if (Debug)
 			fprintf(stderr, "No crypto device assigned\n");
 		ehd_unload(&mount_info);
-		ehd_mtfree(&mount_info);
+		ehd_mountinfo_free(&mount_info);
 		return 0;
 	}
 
@@ -462,7 +462,7 @@ static int mtcr_mount(struct mount_options *opt)
 			        "intervention required, run_sync status %d\n",
 			        ret);
 			ehd_unload(&mount_info);
-			ehd_mtfree(&mount_info);
+			ehd_mountinfo_free(&mount_info);
 			return false;
 		}
 	}
@@ -500,7 +500,7 @@ static int mtcr_mount(struct mount_options *opt)
 			opt->extra_opts : "defaults");
 	}
 
-	ehd_mtfree(&mount_info);
+	ehd_mountinfo_free(&mount_info);
 	return ret;
 }
 
