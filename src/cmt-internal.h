@@ -9,4 +9,7 @@ struct ehd_crypto_ops {
 	int (*unload)(const struct ehd_mount_info *);
 };
 
+extern const struct ehd_crypto_ops ehd_cgd_ops;
+extern const struct ehd_crypto_ops ehd_dmcrypt_ops;
+
 #endif /* _CMT_INTERNAL_H */

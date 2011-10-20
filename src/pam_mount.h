@@ -187,8 +187,6 @@ extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 /*
  *	CRYPTO-*.C
  */
-extern const struct ehd_crypto_ops ehd_cgd_ops;
-extern const struct ehd_crypto_ops ehd_dmcrypt_ops;
 
 extern int dmc_is_luks(const char *, bool);
 
