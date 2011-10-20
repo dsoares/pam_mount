@@ -200,7 +200,7 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 
 	if (EVP_BytesToKey(info->cipher, info->digest, info->salt,
 	    signed_cast(const unsigned char *, info->password),
-	    (info->password == NULL) ? 0 : HXmc_length(info->password),
+	    (info->password == NULL) ? 0 : strlen(info->password),
 	    1, key, iv) <= 0) {
 		l0g("EVP_BytesToKey failed\n");
 		return false;

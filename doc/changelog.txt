@@ -3,7 +3,7 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
-Fixes;
+Fixes:
 - pam_mount: restore keyfile support for non-crypto mounts
   (useful for accessing volumes with a different password than the login one)
 Changes:
