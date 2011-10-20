@@ -222,14 +222,13 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	return out;
 }
 
-hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
-    const char *cipher_name, const char *password)
+EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 {
 	struct decrypt_info info = {
-		.keyfile  = keyfile,
-		.digest   = EVP_get_digestbyname(digest_name),
-		.cipher   = EVP_get_cipherbyname(cipher_name),
-		.password = password,
+		.keyfile  = par->keyfile,
+		.digest   = EVP_get_digestbyname(par->digest),
+		.cipher   = EVP_get_cipherbyname(par->cipher),
+		.password = par->password,
 	};
 	hxmc_t *f_ret = NULL;
 	unsigned char *buf;
@@ -238,11 +237,11 @@ hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
 	int fd;
 
 	if (info.digest == NULL) {
-		l0g("Unknown digest: %s\n", digest_name);
+		l0g("Unknown digest: %s\n", par->digest);
 		return false;
 	}
 	if (info.cipher == NULL) {
-		l0g("Unknown cipher: %s\n", cipher_name);
+		l0g("Unknown cipher: %s\n", par->cipher);
 		return false;
 	}
 	if ((fd = open(info.keyfile, O_RDONLY)) < 0) {

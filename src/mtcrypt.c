@@ -399,8 +399,14 @@ static int mtcr_mount(struct mount_options *opt)
 		mount_request.trunc_keysize = HXmc_length(key);
 	} else {
 #ifdef HAVE_LIBCRYPTO
-		key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
-		      opt->fsk_cipher, opt->fsk_password);
+		struct ehd_decryptkf_params dp = {
+			.keyfile  = opt->fsk_file,
+			.digest   = opt->fsk_hash,
+			.cipher   = opt->fsk_cipher,
+			.password = opt->fsk_password,
+		};
+
+		key = ehd_decrypt_keyfile(&dp);
 		if (key == NULL) {
 			fprintf(stderr, "Error while decrypting fskey\n");
 			return 0;

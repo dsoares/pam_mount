@@ -178,12 +178,6 @@ static inline const char *znul(const char *s)
 extern size_t pmt_block_getsize64(const char *);
 
 /*
- *	CRYPTO.C
- */
-extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
-	const char *);
-
-/*
  *	LOG.C
  */
 extern const char *pmtlog_prefix;

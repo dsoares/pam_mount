@@ -39,6 +39,17 @@ enum {
 };
 
 /**
+ * struct ehd_decryptkf_params - parameter agglomerator for ehd_decrypt_keyfile
+ * @keyfile:	path to the key file
+ * @digest:	digest used for the key file
+ * @cipher:	cipher used for the key file
+ * @password:	password to unlock the key material
+ */
+struct ehd_decryptkf_params {
+	const char *keyfile, *digest, *cipher, *password;
+};
+
+/**
  * struct ehd_mount_request - mapping and mount request for EHD
  * @container:		path to disk image
  * @mountpoint:		where to mount the volume on
@@ -67,6 +78,8 @@ extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info *);
 extern int ehd_unload(const struct ehd_mount_info *);
 extern void ehd_mountinfo_free(struct ehd_mount_info *);
 extern int ehd_is_luks(const char *, bool);
+
+extern hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *);
 
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);
