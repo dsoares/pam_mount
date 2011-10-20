@@ -48,13 +48,13 @@ struct ehd_mount_request {
 	bool readonly;
 };
 
-struct ehd_mount;
+struct ehd_mount_info;
 
 extern int cryptmount_init(void);
 extern void cryptmount_exit(void);
 
-extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount *);
-extern int ehd_unload(const struct ehd_mount *);
+extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info *);
+extern int ehd_unload(const struct ehd_mount_info *);
 
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);

@@ -68,7 +68,7 @@ EXPORT_SYMBOL void cryptmount_exit(void)
 /**
  * ehd_mtfree - free data associated with an EHD mount info block
  */
-void ehd_mtfree(struct ehd_mount *mt)
+void ehd_mtfree(struct ehd_mount_info *mt)
 {
 	free(mt->container);
 	HXmc_free(mt->crypto_device);
@@ -83,7 +83,7 @@ void ehd_mtfree(struct ehd_mount *mt)
  * @mt:		EHD mount state
  */
 EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
-    struct ehd_mount *mt)
+    struct ehd_mount_info *mt)
 {
 	struct stat sb;
 	int saved_errno, ret;
@@ -151,7 +151,7 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
  * not look as easy as the loop one, and does not look shared (i.e. available
  * as a system library) either.
  */
-EXPORT_SYMBOL int ehd_unload(const struct ehd_mount *mt)
+EXPORT_SYMBOL int ehd_unload(const struct ehd_mount_info *mt)
 {
 	int ret, ret2;
 

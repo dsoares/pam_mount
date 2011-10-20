@@ -316,7 +316,7 @@ static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
 static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
-	struct ehd_mount mount_info;
+	struct ehd_mount_info mount_info;
 	struct ehd_mount_request mount_request = {
 		.container = cont->path,
 		.key_data  = password,

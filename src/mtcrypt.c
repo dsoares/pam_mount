@@ -374,7 +374,7 @@ static int mtcr_mount(struct mount_options *opt)
 	struct stat sb;
 	int ret, argk;
 	hxmc_t *key;
-	struct ehd_mount mount_info;
+	struct ehd_mount_info mount_info;
 	struct ehd_mount_request mount_request = {
 		.container = opt->container,
 		.fs_cipher = opt->dmcrypt_cipher,
@@ -631,7 +631,7 @@ static int mtcr_umount(struct umount_options *opt)
 {
 	const char *umount_args[3];
 	int final_ret, ret, argk = 0;
-	struct ehd_mount mount_info;
+	struct ehd_mount_info mount_info;
 	char *mountpoint = NULL;
 
 	memset(&mount_info, 0, sizeof(mount_info));

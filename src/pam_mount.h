@@ -144,7 +144,7 @@ struct kvp {
  * @crypto_name:	crypto device that was created (basename only)
  * @crypto_device:	full path to the crypto device
  */
-struct ehd_mount {
+struct ehd_mount_info {
 	char *container;
 	const char *lower_device;
 	char *loop_device;
@@ -180,7 +180,7 @@ extern size_t pmt_block_getsize64(const char *);
 /*
  *	CRYPTO.C
  */
-extern void ehd_mtfree(struct ehd_mount *);
+extern void ehd_mtfree(struct ehd_mount_info *);
 extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
 	const char *);
 
