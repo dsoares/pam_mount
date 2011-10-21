@@ -58,9 +58,11 @@ enum {
  * @digest:	digest used for the key file
  * @cipher:	cipher used for the key file
  * @password:	password to unlock the key material
+ * @result:	result pointer to unencrypted content
  */
 struct ehd_decryptkf_params {
 	const char *keyfile, *digest, *cipher, *password;
+	hxmc_t *result;
 };
 
 /**

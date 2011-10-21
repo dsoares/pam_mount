@@ -180,7 +180,7 @@ EXPORT_SYMBOL int ehd_is_luks(const char *device, bool blkdev)
 
 #ifdef HAVE_LIBCRYPTO
 struct decrypt_info {
-	const char *password;
+	struct ehd_decryptkf_params *p;
 	const EVP_CIPHER *cipher;
 	const EVP_MD *digest;
 
@@ -199,8 +199,8 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	hxmc_t *out;
 
 	if (EVP_BytesToKey(info->cipher, info->digest, info->salt,
-	    signed_cast(const unsigned char *, info->password),
-	    (info->password == NULL) ? 0 : strlen(info->password),
+	    signed_cast(const unsigned char *, info->p->password),
+	    (info->p->password == NULL) ? 0 : strlen(info->p->password),
 	    1, key, iv) <= 0) {
 		l0g("EVP_BytesToKey failed\n");
 		return false;
@@ -218,15 +218,16 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	HXmc_setlen(&out, out_cumul_len);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
+	info->p->result = out;
 	return out;
 }
 
 EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 {
 	struct decrypt_info info = {
-		.digest   = EVP_get_digestbyname(par->digest),
-		.cipher   = EVP_get_cipherbyname(par->cipher),
-		.password = par->password,
+		.digest = EVP_get_digestbyname(par->digest),
+		.cipher = EVP_get_cipherbyname(par->cipher),
+		.p      = par,
 	};
 	hxmc_t *f_ret = NULL;
 	unsigned char *buf;
