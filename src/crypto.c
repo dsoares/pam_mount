@@ -273,6 +273,22 @@ EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 }
 #endif /* HAVE_LIBCRYPTO */
 
+EXPORT_SYMBOL const char *ehd_decryptkf_strerror(int e)
+{
+	if (e <= 0)
+		return strerror(-e);
+	switch (e) {
+	case EHD_DECRYPTKF_NODIGEST:
+		return "Unknown digest";
+	case EHD_DECRYPTKF_NOCIPHER:
+		return "Unknown cipher";
+	case EHD_DECRYPTKF_OTHER:
+		return "Other unspecified error";
+	default:
+		return "Unknown error code";
+	}
+}
+
 static unsigned int __cipher_digest_security(const char *s)
 {
 	static const char *const blacklist[] = {

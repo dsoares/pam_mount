@@ -21,6 +21,20 @@ enum {
 };
 
 /**
+ * Result codes for ehd_decrypt_keyfile
+ * %EHD_DECRYPTKF_SUCCESS:	no error
+ * %EHD_DECRYPTKF_NODIGEST:	the digest is not known
+ * %EHD_DECRYPTKF_NOCIPHER:	the cipher is not known
+ * %EHD_DECRYPTKF_OTHER:	other unspecified error
+ */
+enum {
+	EHD_DECRYPTKF_SUCCESS = 0,
+	EHD_DECRYPTKF_NODIGEST,
+	EHD_DECRYPTKF_NOCIPHER,
+	EHD_DECRYPTKF_OTHER,
+};
+
+/**
  * Result codes for ehd_cipherdigest_security
  * (negative indicates system error code).
  *
@@ -80,6 +94,7 @@ extern void ehd_mountinfo_free(struct ehd_mount_info *);
 extern int ehd_is_luks(const char *, bool);
 
 extern hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *);
+extern const char *ehd_decryptkf_strerror(int);
 
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);
