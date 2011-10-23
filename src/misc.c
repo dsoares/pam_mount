@@ -313,22 +313,6 @@ hxmc_t *kvplist_to_str(const struct HXclist_head *optlist)
 }
 
 /**
- * xmalloc - allocate memory
- * @n:	size of the new buffer
- *
- * Wrapper around malloc() that warns when no new memory block could be
- * obtained.
- */
-void *xmalloc(size_t n)
-{
-	void *ret;
-	if ((ret = malloc(n)) == NULL)
-		l0g("%s: Could not allocate %lu bytes\n",
-		    __func__, static_cast(unsigned long, n));
-	return ret;
-}
-
-/**
  * xrealloc - resize memory block
  * @orig:	original address of the buffer
  * @n:		new size of the buffer

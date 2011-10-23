@@ -97,8 +97,8 @@ static bool expand_home(const char *user, char **path_pptr)
 		return false;
 	}
 	size = strlen(pe->pw_dir) + strlen(path) + 1;
-	if ((buf = xmalloc(size)) == NULL) {
-		l0g("%s\n", strerror(errno));
+	if ((buf = malloc(size)) == NULL) {
+		l0g("%s: malloc %zu: %s\n", __func__, size, strerror(errno));
 		return NULL;
 	}
 	snprintf(buf, size, "%s%s", pe->pw_dir, path + 1);
@@ -281,9 +281,11 @@ static bool str_to_optkv(struct HXclist_head *optlist, char *str)
 		return true;
 
 	while ((ptr = HX_strsep(&str, ",")) != NULL) {
-		kvp = xmalloc(sizeof(struct kvp));
-		if (kvp == NULL)
+		kvp = malloc(sizeof(struct kvp));
+		if (kvp == NULL) {
+			l0g("%s: malloc: %s\n", __func__, strerror(errno));
 			return false;
+		}
 		HXlist_init(&kvp->list);
 		value = strchr(ptr, '=');
 		if (value != NULL) {

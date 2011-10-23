@@ -207,7 +207,6 @@ extern int pmt_fileop_owns(const char *, const char *);
 extern void pmt_readfile(const char *);
 extern char *relookup_user(const char *);
 extern long str_to_long(const char *);
-extern void *xmalloc(size_t);
 extern void *xrealloc(void *, size_t);
 extern char *xstrdup(const char *);
 

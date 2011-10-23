@@ -252,8 +252,11 @@ EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 		goto out;
 	}
 
-	if ((buf = xmalloc(sb.st_size)) == NULL)
+	if ((buf = malloc(sb.st_size)) == NULL) {
+		l0g("%s: malloc %zu: %s\n", __func__, sb.st_size,
+		    strerror(errno));
 		return false;
+	}
 
 	if ((i_ret = read(fd, buf, sb.st_size)) != sb.st_size) {
 		l0g("Incomplete read of %u bytes got %Zd bytes\n",
