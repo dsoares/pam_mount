@@ -313,23 +313,6 @@ hxmc_t *kvplist_to_str(const struct HXclist_head *optlist)
 }
 
 /**
- * xrealloc - resize memory block
- * @orig:	original address of the buffer
- * @n:		new size of the buffer
- *
- * Wrapper around realloc() that warns when no new memory block could be
- * obtained.
- */
-void *xrealloc(void *orig, size_t n)
-{
-	void *ret;
-	if ((ret = realloc(orig, n)) == NULL)
-		l0g("%s: Could not reallocate to %lu bytes\n",
-		    __func__, static_cast(unsigned long, n));
-	return ret;
-}
-
-/**
  * xstrdup -
  * @src:	source string
  *
