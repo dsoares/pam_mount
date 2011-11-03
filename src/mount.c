@@ -534,6 +534,26 @@ static void mount_set_fsck(const struct config *config,
 	HXmc_free(string);
 }
 
+static void pmt_readfile(const char *file)
+{
+	hxmc_t *ln = NULL;
+	FILE *fp;
+
+	if ((fp = fopen(file, "r")) == NULL) {
+		l0g("%s: Could not open %s: %s\n", __func__, file,
+		    strerror(errno));
+		return;
+	}
+
+	while (HX_getl(&ln, fp) != NULL) {
+		HX_chomp(ln);
+		l0g("%s\n", ln);
+	}
+
+	HXmc_free(ln);
+	fclose(fp);
+}
+
 /**
  * do_mount -
  * @config:	current config

@@ -204,7 +204,6 @@ extern void misc_dump_id(const char *);
 extern int pmt_fileop_exists(const char *);
 extern int pmt_fileop_isreg(const char *);
 extern int pmt_fileop_owns(const char *, const char *);
-extern void pmt_readfile(const char *);
 extern char *relookup_user(const char *);
 extern long str_to_long(const char *);
 extern char *xstrdup(const char *);
