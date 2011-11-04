@@ -30,6 +30,7 @@
 #include <libmount.h>
 #include <grp.h>
 #include <pwd.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 /* Functions */
@@ -605,12 +606,23 @@ int do_mount(const struct config *config, struct vol *vpt,
 
 	password = (password != NULL) ? password : "";
 	if (vpt->type != CMD_CRYPTMOUNT && vpt->fs_key_cipher != NULL &&
-	    strlen(vpt->fs_key_cipher) > 0)
-		/* In case of %CMD_CRYPTMOUNT, mount.crypt will deal with it */
-		ll_password = ehd_decrypt_key(vpt->fs_key_path,
-		              vpt->fs_key_hash, vpt->fs_key_cipher, password);
-	else
+	    strlen(vpt->fs_key_cipher) > 0) {
+		/*
+		 * In case of %CMD_CRYPTMOUNT, mount.crypt will deal with
+		 * any openssl decryption. Without %CMD_CRYPTMOUNT however,
+		 * we have to do this ourselves.
+		 */
+		struct ehd_decryptkf_params dp = {
+			.keyfile  = vpt->fs_key_path,
+			.digest   = vpt->fs_key_hash,
+			.cipher   = vpt->fs_key_cipher,
+			.password = password,
+		};
+		ehd_decrypt_keyfile(&dp);
+		ll_password = dp.result;
+	} else {
 		ll_password = HXmc_strinit(password);
+	}
 	if (ll_password == NULL)
 		return 0;
 

@@ -406,7 +406,8 @@ static int mtcr_mount(struct mount_options *opt)
 			.password = opt->fsk_password,
 		};
 
-		key = ehd_decrypt_keyfile(&dp);
+		ehd_decrypt_keyfile(&dp);
+		key = dp.result;
 		if (key == NULL) {
 			fprintf(stderr, "Error while decrypting fskey\n");
 			return 0;
