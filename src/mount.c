@@ -618,7 +618,10 @@ int do_mount(const struct config *config, struct vol *vpt,
 			.cipher   = vpt->fs_key_cipher,
 			.password = password,
 		};
-		ehd_decrypt_keyfile(&dp);
+		ret = ehd_decrypt_keyfile(&dp);
+		if (ret != EHD_DECRYPTKF_SUCCESS)
+			l0g("ehd_decrypt_keyfile: %s\n",
+			    ehd_decryptkf_strerror(ret));
 		ll_password = dp.result;
 	} else {
 		ll_password = HXmc_strinit(password);

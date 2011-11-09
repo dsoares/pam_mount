@@ -190,7 +190,7 @@ struct decrypt_info {
 	const unsigned char *salt;
 };
 
-static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
+static int ehd_decrypt_key2(const struct decrypt_info *info)
 {
 	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 	unsigned int out_cumul_len = 0;
@@ -201,10 +201,8 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	if (EVP_BytesToKey(info->cipher, info->digest, info->salt,
 	    signed_cast(const unsigned char *, info->p->password),
 	    (info->p->password == NULL) ? 0 : strlen(info->p->password),
-	    1, key, iv) <= 0) {
-		l0g("EVP_BytesToKey failed\n");
-		return false;
-	}
+	    1, key, iv) <= 0)
+		return EHD_DECRYPTKF_OTHER;
 
 	out = HXmc_meminit(NULL, info->keysize + info->cipher->block_size);
 	EVP_CIPHER_CTX_init(&ctx);
@@ -219,46 +217,40 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
 	info->p->result = out;
-	return out;
+	return 0;
 }
 
-EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
+EXPORT_SYMBOL int ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 {
 	struct decrypt_info info = {
 		.digest = EVP_get_digestbyname(par->digest),
 		.cipher = EVP_get_cipherbyname(par->cipher),
 		.p      = par,
 	};
-	hxmc_t *f_ret = NULL;
 	unsigned char *buf;
 	struct stat sb;
 	ssize_t i_ret;
-	int fd;
+	int fd, ret;
 
-	if (info.digest == NULL) {
-		l0g("Unknown digest: %s\n", par->digest);
-		return false;
-	}
-	if (info.cipher == NULL) {
-		l0g("Unknown cipher: %s\n", par->cipher);
-		return false;
-	}
-	if ((fd = open(par->keyfile, O_RDONLY)) < 0) {
-		l0g("Could not open %s: %s\n", par->keyfile, strerror(errno));
-		return false;
-	}
+	if (info.digest == NULL)
+		return EHD_DECRYPTKF_NODIGEST;
+	if (info.cipher == NULL)
+		return EHD_DECRYPTKF_NOCIPHER;
+	if ((fd = open(par->keyfile, O_RDONLY)) < 0)
+		return -errno;
 	if (fstat(fd, &sb) < 0) {
+		ret = -errno;
 		l0g("stat: %s\n", strerror(errno));
 		goto out;
 	}
-
 	if ((buf = malloc(sb.st_size)) == NULL) {
+		ret = -errno;
 		l0g("%s: malloc %zu: %s\n", __func__, sb.st_size,
 		    strerror(errno));
-		return false;
+		goto out;
 	}
-
 	if ((i_ret = read(fd, buf, sb.st_size)) != sb.st_size) {
+		ret = (i_ret < 0) ? -errno : EHD_DECRYPTKF_OTHER;
 		l0g("Incomplete read of %u bytes got %Zd bytes\n",
 		    sb.st_size, i_ret);
 		goto out2;
@@ -267,13 +259,13 @@ EXPORT_SYMBOL hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 	info.salt    = &buf[strlen("Salted__")];
 	info.data    = info.salt + PKCS5_SALT_LEN;
 	info.keysize = sb.st_size - (info.data - buf);
-	f_ret = ehd_decrypt_key2(&info);
+	ret = ehd_decrypt_key2(&info);
 
  out2:
 	free(buf);
  out:
 	close(fd);
-	return f_ret;
+	return ret;
 }
 #endif /* HAVE_LIBCRYPTO */
 

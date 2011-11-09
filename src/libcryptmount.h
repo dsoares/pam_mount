@@ -95,7 +95,7 @@ extern int ehd_unload(const struct ehd_mount_info *);
 extern void ehd_mountinfo_free(struct ehd_mount_info *);
 extern int ehd_is_luks(const char *, bool);
 
-extern hxmc_t *ehd_decrypt_keyfile(struct ehd_decryptkf_params *);
+extern int ehd_decrypt_keyfile(struct ehd_decryptkf_params *);
 extern const char *ehd_decryptkf_strerror(int);
 
 extern int ehd_cipherdigest_security(const char *);

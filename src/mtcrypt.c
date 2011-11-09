@@ -406,10 +406,11 @@ static int mtcr_mount(struct mount_options *opt)
 			.password = opt->fsk_password,
 		};
 
-		ehd_decrypt_keyfile(&dp);
+		ret = ehd_decrypt_keyfile(&dp);
 		key = dp.result;
-		if (key == NULL) {
-			fprintf(stderr, "Error while decrypting fskey\n");
+		if (ret != EHD_DECRYPTKF_SUCCESS || key == NULL) {
+			fprintf(stderr, "Error while decrypting fskey: %s\n",
+			        ehd_decryptkf_strerror(ret));
 			return 0;
 		}
 		mount_request.trunc_keysize = HXmc_length(key);
