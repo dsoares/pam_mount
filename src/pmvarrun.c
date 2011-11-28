@@ -264,7 +264,6 @@ int main(int argc, const char **argv)
 	/* pam_mount.so will pick stderr up */
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
-	pmtlog_prefix = "pmvarrun";
 
 	set_defaults(&settings);
 	parse_args(argc, argv, &settings);

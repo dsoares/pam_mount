@@ -692,7 +692,6 @@ static int main2(int argc, const char **argv)
 {
 	Debug = false;
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
-	pmtlog_prefix = HX_basename(*argv);
 
 	setenv("PATH", PMT_DFL_PATH, true);
 #ifdef HAVE_LIBCRYPTO

@@ -537,7 +537,6 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
-	pmtlog_prefix = "ehd";
 
 	if (!ehd_check(pg))
 		return EXIT_FAILURE;

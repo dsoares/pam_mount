@@ -244,7 +244,6 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	char buf[8];
 	int ret;
 
-	pmtlog_prefix = "pam_mount";
 	pmtlog_path[PMTLOG_ERR][PMTLOG_SYSLOG] = true;
 	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
 	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;

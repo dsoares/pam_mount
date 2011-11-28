@@ -14,7 +14,6 @@
 #include <syslog.h>
 #include "pam_mount.h"
 
-const char *pmtlog_prefix;
 bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
 unsigned int Debug = true;
 
