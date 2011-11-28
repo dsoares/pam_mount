@@ -102,6 +102,12 @@ extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);
 
 /*
+ *	log.c
+ */
+extern int ehd_dbg(const char *, ...);
+extern int ehd_err(const char *, ...);
+
+/*
  *	loop.c
  */
 enum {

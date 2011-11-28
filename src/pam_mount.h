@@ -35,10 +35,10 @@
 
 /* Note that you will also need to change PMPREFIX in pmvarrun.c then! */
 #define l0g(fmt, ...) \
-	misc_log(("(%s:%u): " fmt), HX_basename(__FILE__), \
+	ehd_err(("(%s:%u): " fmt), HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 #define w4rn(fmt, ...) \
-	misc_warn(("(%s:%u): " fmt), HX_basename(__FILE__), \
+	ehd_dbg(("(%s:%u): " fmt), HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 
 struct HXdeque;

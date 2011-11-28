@@ -12,19 +12,17 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <syslog.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
 unsigned int Debug = true;
 
 /**
- * misc_log - log an error/warning
+ * ehd_err - log an error/warning
  * @format:	printf(3)-style format specifier
- *
- * Do not call this function directly; use the l0g() macro instead, so that
- * file name and line number show up.
  */
-int misc_log(const char *format, ...)
+EXPORT_SYMBOL int ehd_err(const char *format, ...)
 {
 	va_list args, arg2;
 	int ret = 0;
@@ -43,7 +41,7 @@ int misc_log(const char *format, ...)
 }
 
 /**
- * misc_warn - debug logger
+ * ehd_dbg - log informational messages
  * @format:	printf(3)-style format specifier
  *
  * If debugging is turned on, the message is logged to syslog and %stderr.
@@ -52,7 +50,7 @@ int misc_log(const char *format, ...)
  * Do not call this function directly; use the w4rn() macro instead, so that
  * file name and line number show up.
  */
-int misc_warn(const char *format, ...)
+EXPORT_SYMBOL int ehd_dbg(const char *format, ...)
 {
 	va_list args, arg2;
 	int ret = 0;

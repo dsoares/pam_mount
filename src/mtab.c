@@ -35,6 +35,7 @@
 #include <libHX/defs.h>
 #include <libHX/io.h>
 #include <libHX/string.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 typedef int (*scompare_t)(const char *, const char *);

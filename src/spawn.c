@@ -17,6 +17,7 @@
 #include <libHX/string.h>
 #include <grp.h>
 #include <pwd.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 static pthread_mutex_t pmt_sigchld_lock = PTHREAD_MUTEX_INITIALIZER;

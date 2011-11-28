@@ -630,7 +630,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		return 0;
 
 	if ((argv = HXdeque_init()) == NULL)
-		misc_log("malloc: %s\n", strerror(errno));
+		l0g("malloc: %s\n", strerror(errno));
 	if (vpt->uses_ssh)
 		for (n = config->command[CMD_FD0SSH]->first;
 		     n != NULL; n = n->next)

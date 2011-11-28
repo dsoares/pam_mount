@@ -21,6 +21,7 @@
 #endif
 #include <libHX.h>
 #include <libHX/libxml_helper.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 /* Definitions */

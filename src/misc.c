@@ -22,6 +22,7 @@
 #include <libHX/list.h>
 #include <libHX/string.h>
 #include <pwd.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 struct HXbtree;
@@ -105,7 +106,7 @@ int pmt_fileop_owns(const char *user, const char *file)
  * arglist_log - dump command
  * @argq:	argument list
  *
- * Log @argq using misc_warn() when debugging is turned on.
+ * Log @argq using ehd_log() when debugging is turned on.
  */
 void arglist_log(const struct HXdeque *argq)
 {
@@ -123,7 +124,7 @@ void arglist_log(const struct HXdeque *argq)
 		HXmc_strcat(&str, "' ");
 	}
 
-	misc_warn("command: %s\n", str);
+	ehd_dbg("command: %s\n", str);
 	HXmc_free(str);
 }
 
@@ -142,7 +143,7 @@ void arglist_llog(const char *const *argv)
 		++argv;
 	}
 
-	misc_warn("command: %s\n", str);
+	ehd_dbg("command: %s\n", str);
 	HXmc_free(str);
 }
 
@@ -168,7 +169,7 @@ void arglist_add(struct HXdeque *argq, const char *arg,
 		return;
 
 	if (filled == NULL || HXdeque_push(argq, filled) == NULL)
-		misc_log("malloc: %s\n", strerror(errno));
+		l0g("malloc: %s\n", strerror(errno));
 }
 
 /**
@@ -186,7 +187,7 @@ struct HXdeque *arglist_build(const struct HXdeque *cmd,
 	struct HXdeque *aq;
 
 	if ((aq = HXdeque_init()) == NULL)
-		misc_log("malloc: %s\n", strerror(errno));
+		l0g("malloc: %s\n", strerror(errno));
 
 	for (n = cmd->first; n != NULL; n = n->next)
 		arglist_add(aq, n->ptr, vinfo);
