@@ -655,12 +655,13 @@ static const char *rc_debug(xmlNode *node, struct config *config,
     unsigned int cmd)
 {
 	char *s;
-	if ((s = xml_getprop(node, "enable")) != NULL)
-		Debug = config->debug = strtoul(s, NULL, 0);
-
-		pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] =
-		pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] =
-			Debug;
+	if ((s = xml_getprop(node, "enable")) != NULL) {
+		if (config->debug)
+			ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_UNSET);
+		config->debug = strtoul(s, NULL, 0);
+		if (config->debug)
+			ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
+	}
 	free(s);
 	return NULL;
 }

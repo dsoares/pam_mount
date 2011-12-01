@@ -54,6 +54,8 @@ static void set_defaults(struct settings *);
 static void usage(int, const char *);
 static int write_count(int, long, const char *);
 
+static unsigned int pmvr_debug;
+
 /**
  * usage - display help
  * @exitcode:	numeric value we will be exiting with
@@ -80,10 +82,11 @@ static void set_defaults(struct settings *settings)
 	settings->user      = NULL;
 	settings->operation = 1;
 
-	if ((s = getenv("_PMT_DEBUG_LEVEL")) != NULL) {
-		Debug = strtoul(s, NULL, 0);
-		pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = Debug;
-		pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	if ((s = getenv("_PMT_DEBUG_LEVEL")) != NULL &&
+	    strtoul(s, NULL, 0) != 0) {
+		if (!pmvr_debug)
+			ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
+		pmvr_debug = true;
 	}
 }
 
@@ -174,7 +177,9 @@ static void parse_args(int argc, const char **argv, struct settings *settings)
 			usage(EXIT_SUCCESS, NULL);
 			break;
 		case 'd':
-			Debug = true;
+			if (!pmvr_debug)
+				ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
+			pmvr_debug = true;
 			break;
 		case 'o':
 			settings->operation = str_to_long(optarg);
@@ -261,11 +266,7 @@ int main(int argc, const char **argv)
 	struct settings settings;
 	int ret;
 
-	Debug = false;
-	/* pam_mount.so will pick stderr up */
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
-
+	ehd_logctl(EHD_LOGFT_NOSYSLOG, EHD_LOG_SET);
 	set_defaults(&settings);
 	parse_args(argc, argv, &settings);
 

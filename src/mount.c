@@ -392,7 +392,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
 
-	if (Debug)
+	if (config->debug)
 		/*
 		 * Often, a process still exists with ~ as its pwd after
 		 * logging out. Running ofl helps debug this.
@@ -690,7 +690,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		vpt->created_mntpt = false;
 	}
 
-	if (Debug) {
+	if (config->debug) {
 		if (pmt_fileop_exists("/proc/self/mountinfo"))
 			pmt_readfile("/proc/self/mountinfo");
 		else if (pmt_fileop_exists("/proc/self/mounts"))
@@ -776,7 +776,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	options = kvplist_to_str(&vpt->options);
 	HXformat_add(vinfo, "OPTIONS", options, HXTYPE_STRING | HXFORMAT_IMMED);
 
-	if (Debug)
+	if (config->debug)
 		log_pm_input(config, vpt);
 
 	fnval = (*mnt)(config, vpt, vinfo, password);

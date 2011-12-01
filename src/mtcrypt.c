@@ -71,6 +71,8 @@ struct umount_options {
 	bool is_cont, blkdev;
 };
 
+static unsigned int mtcr_debug;
+
 static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 {
 	struct mount_options *mo = cbi->current->uptr;
@@ -137,9 +139,11 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Hash \"%s\" is considered "
 				        "insecure.\n", value);
-		} else if (strcmp(key, "verbose") == 0)
-			Debug = pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = true;
-		else {
+		} else if (strcmp(key, "verbose") == 0) {
+			if (!mtcr_debug)
+				ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
+			mtcr_debug = true;
+		} else {
 			if (!first)
 				HXmc_strcat(&passthru, ",");
 			first = false;
@@ -191,7 +195,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		 .uptr = opt, .help = "Mount options"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->readonly,
 		 .help = "Set up devices and mounts as read-only"},
-		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &Debug,
+		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &mtcr_debug,
 		 .help = "Enable debugging"},
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
@@ -202,7 +206,8 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
 
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	if (mtcr_debug)
+		ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
 
 	if (opt->remount) {
 		if (*argc < 2 || *(*argv)[1] == '\0') {
@@ -435,7 +440,7 @@ static int mtcr_mount(struct mount_options *opt)
 	}
 	HXmc_free(key);
 	if (mount_info.crypto_device == NULL) {
-		if (Debug)
+		if (mtcr_debug)
 			fprintf(stderr, "No crypto device assigned\n");
 		ehd_unload(&mount_info);
 		ehd_mountinfo_free(&mount_info);
@@ -521,7 +526,7 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 		 .help = "Do not update /etc/mtab"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->ro_fallback,
 		 .help = "(Option ignored)"},
-		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &Debug,
+		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &mtcr_debug,
 		 .help = "Be verbose - enable debugging"},
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
@@ -531,7 +536,8 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
 
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	if (mtcr_debug)
+		ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
 
 	if (*argc < 2 || *(*argv)[1] == '\0') {
 		fprintf(stderr, "%s: You need to specify the container "
@@ -690,9 +696,7 @@ static int mtcr_umount(struct umount_options *opt)
 
 static int main2(int argc, const char **argv)
 {
-	Debug = false;
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
-
+	ehd_logctl(EHD_LOGFT_NOSYSLOG, EHD_LOG_SET);
 	setenv("PATH", PMT_DFL_PATH, true);
 #ifdef HAVE_LIBCRYPTO
 	OpenSSL_add_all_ciphers();

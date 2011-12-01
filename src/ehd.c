@@ -36,6 +36,7 @@
 static const char ehd_default_dmcipher[] = "aes-cbc-essiv:sha256";
 static const unsigned int ehd_default_strength = 256; /* cipher, not ESSIV */
 static const char ehd_default_hash[] = "sha512"; /* for PBKDF2 */
+static unsigned int ehd_debug;
 
 /**
  * @size:		container size in bytes
@@ -490,7 +491,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 {
 	struct container_ctl *cont = &pg->cont;
 	struct HXoption options_table[] = {
-		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &Debug,
+		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &ehd_debug,
 		 .help = "Enable debugging"},
 		{.sh = 'F', .type = HXTYPE_NONE | HXOPT_INC,
 		 .ptr = &pg->force_level,
@@ -532,11 +533,9 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 	hxmc_t *password, *password2;
 	int ret;
 
+	ehd_logctl(EHD_LOGFT_NOSYSLOG, EHD_LOG_SET);
 	if (!ehd_get_options(&argc, &argv, pg))
 		return EXIT_FAILURE;
-
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
 
 	if (!ehd_check(pg))
 		return EXIT_FAILURE;
@@ -588,9 +587,7 @@ int main(int argc, const char **argv)
 		abort();
 	}
 
-	Debug = false;
 	memset(&pg, 0, sizeof(pg));
-
 	ret = main2(argc, argv, &pg);
 	cryptmount_exit();
 	HX_exit();

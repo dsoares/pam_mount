@@ -68,18 +68,6 @@ enum command_type {
 	CMD_NONE,
 };
 
-enum {
-	/* src */
-	PMTLOG_ERR = 0,
-	PMTLOG_DBG,
-	PMTLOG_SRCMAX,
-
-	/* dst */
-	PMTLOG_SYSLOG = 0,
-	PMTLOG_STDERR,
-	PMTLOG_DSTMAX,
-};
-
 /**
  * @server:	server name, if any
  * @volume:	path relative to server, or full path in case @server is empty
@@ -178,15 +166,6 @@ static inline const char *znul(const char *s)
 extern size_t pmt_block_getsize64(const char *);
 
 /*
- *	LOG.C
- */
-extern const char *pmtlog_prefix;
-extern bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
-
-extern int misc_log(const char *, ...);
-extern int misc_warn(const char *, ...);
-
-/*
  *	MISC.C
  */
 extern void arglist_add(struct HXdeque *, const char *,
@@ -269,11 +248,6 @@ extern bool ofl(const char *, unsigned int);
 /*
  *	PAM_MOUNT.C
  */
-#ifndef HAVE_VISIBILITY_HIDDEN
-	/* Workaround Xserver issue */
-#	define Debug pmt_debug
-#endif
-extern unsigned int Debug;
 extern struct config Config;
 
 /*

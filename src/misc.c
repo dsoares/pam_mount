@@ -113,8 +113,7 @@ void arglist_log(const struct HXdeque *argq)
 	const struct HXdeque_node *n;
 	hxmc_t *str = NULL;
 
-	if (!pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] &&
-	    !pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
+	if (!ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_GET))
 		return;
 
 	str = HXmc_meminit(NULL, 80);
@@ -132,7 +131,7 @@ void arglist_llog(const char *const *argv)
 {
 	hxmc_t *str = NULL;
 
-	if (!Debug)
+	if (!ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_GET))
 		return;
 
 	str = HXmc_meminit(NULL, 80);

@@ -15,8 +15,27 @@
 #include "libcryptmount.h"
 #include "pam_mount.h"
 
-bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
-unsigned int Debug = true;
+static unsigned int ehd_log_ft[__EHD_LOGFT_MAX];
+
+EXPORT_SYMBOL int ehd_logctl(enum ehd_log_feature ft, ...)
+{
+	va_list ap;
+	va_start(ap, ft);
+	int a = va_arg(ap, int);
+
+	if (a == EHD_LOG_GET) {
+		return ehd_log_ft[ft];
+	} else if (a == EHD_LOG_SET) {
+		++ehd_log_ft[ft];
+	} else if (a == EHD_LOG_UNSET) {
+		if (ehd_log_ft[ft] == 0)
+			fprintf(stderr, "%s: feature %u is already zero\n",
+			        __func__, ft);
+		else
+			--ehd_log_ft[ft];
+	}
+	return 1;
+}
 
 /**
  * ehd_err - log an error/warning
@@ -29,14 +48,14 @@ EXPORT_SYMBOL int ehd_err(const char *format, ...)
 
 	assert(format != NULL);
 
-	va_start(args, format);
-	va_copy(arg2, args);
-	if (pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR])
-		ret = vfprintf(stderr, format, args);
-	if (pmtlog_path[PMTLOG_ERR][PMTLOG_SYSLOG])
+	if (!ehd_log_ft[EHD_LOGFT_NOSYSLOG]) {
+		va_start(args, format);
+		va_copy(arg2, args);
 		vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
+		va_end(arg2);
+	}
+	ret = vfprintf(stderr, format, args);
 	va_end(args);
-	va_end(arg2);
 	return ret;
 }
 
@@ -56,17 +75,16 @@ EXPORT_SYMBOL int ehd_dbg(const char *format, ...)
 	int ret = 0;
 
 	assert(format != NULL);
-	if (!pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] &&
-	    !pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
+	if (!ehd_log_ft[EHD_LOGFT_DEBUG])
 		return 0;
 
 	va_start(args, format);
-	va_copy(arg2, args);
-	if (pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR])
-		ret = vfprintf(stderr, format, args);
-	if (pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
+	if (!ehd_log_ft[EHD_LOGFT_NOSYSLOG]) {
+		va_copy(arg2, args);
 		vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
+		va_end(arg2);
+	}
+	ret = vfprintf(stderr, format, args);
 	va_end(args);
-	va_end(arg2);
 	return ret;
 }

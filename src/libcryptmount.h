@@ -104,6 +104,24 @@ extern hxmc_t *ehd_get_password(const char *);
 /*
  *	log.c
  */
+/**
+ * %EHDLOG_FT_DEBUG:	enable debugging
+ * %EHDLOG_FT_NOSYSLOG:	disable logging to syslog
+ * 			(only program code should call this, never library code)
+ */
+enum ehd_log_feature {
+	EHD_LOGFT_DEBUG    = 1,
+	EHD_LOGFT_NOSYSLOG,
+	__EHD_LOGFT_MAX,
+};
+
+enum {
+	EHD_LOG_UNSET = -1,
+	EHD_LOG_GET   = 0,
+	EHD_LOG_SET   = 1,
+};
+
+extern int ehd_logctl(enum ehd_log_feature, ...);
 extern int ehd_dbg(const char *, ...);
 extern int ehd_err(const char *, ...);
 
