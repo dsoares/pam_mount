@@ -139,7 +139,7 @@ static int pmt_mtab_add(const char *file, const char *line, bool do_mkdir)
 			l0g("HX_dirname: %s\n", strerror(errno));
 			return -errno;
 		}
-		ret = HX_mkdir(dirname);
+		ret = HX_mkdir(dirname, S_IRUGO | S_IXUGO | S_IWUSR);
 		free(dirname);
 		if (ret < 0) {
 			l0g("HX_mkdir: %s\n", strerror(-ret));

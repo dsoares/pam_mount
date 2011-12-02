@@ -159,7 +159,7 @@ void arglist_add(struct HXdeque *argq, const char *arg,
 {
 	char *filled;
 
-	if (HXformat2_aprintf(vinfo, &filled, arg) == 0)
+	if (HXformat_aprintf(vinfo, &filled, arg) == 0)
 		/*
 		 * This case may happen with e.g. %(before="-o" OPTIONS) where
 		 * OPTIONS is empty. And options expanding to nothing are

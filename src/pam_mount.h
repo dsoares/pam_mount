@@ -15,12 +15,6 @@
 #	define EXPORT_SYMBOL
 #endif
 
-#ifndef S_IRXG
-#	define S_IRXG (S_IRGRP | S_IXGRP)
-#endif
-#ifndef S_IRXO
-#	define S_IRXO (S_IROTH | S_IXOTH)
-#endif
 #define sizeof_z(x) (sizeof(x) - 1)
 
 /*

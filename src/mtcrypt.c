@@ -203,7 +203,8 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	bool kfpt;
 	int ret;
 
-	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
+	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) !=
+	    HXOPT_ERR_SUCCESS)
 		return false;
 
 	if (mtcr_debug)
@@ -533,7 +534,8 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 	};
 	int ret;
 
-	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
+	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) !=
+	    HXOPT_ERR_SUCCESS)
 		return false;
 
 	if (mtcr_debug)

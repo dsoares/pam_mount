@@ -297,10 +297,11 @@ int main(int argc, const char **argv)
  */
 static int create_var_run(void)
 {
+	static const unsigned int mode = S_IRUGO | S_IXUGO | S_IWUSR;
 	int ret;
 
 	w4rn("creating " VAR_RUN_PMT);
-	if (HX_mkdir(VAR_RUN_PMT) < 0) {
+	if (HX_mkdir(VAR_RUN_PMT, mode) < 0) {
 		ret = -errno;
 		l0g("unable to create " VAR_RUN_PMT ": %s\n", strerror(errno));
 		return ret;
@@ -315,7 +316,7 @@ static int create_var_run(void)
 	 * 0755: `su` creates file group owned by user and then releases root
 	 * permissions. User needs to be able to access file on logout.
 	 */
-	if (chmod(VAR_RUN_PMT, S_IRWXU | S_IRXG | S_IRXO) < 0) {
+	if (chmod(VAR_RUN_PMT, mode) < 0) {
 		ret = -errno;
 		l0g("unable to chmod " VAR_RUN_PMT ": %s\n", strerror(errno));
 		return ret;
