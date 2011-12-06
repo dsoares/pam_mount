@@ -524,7 +524,7 @@ static void mount_set_fsck(const struct config *config,
 	string = HXmc_meminit(NULL, 0);
 
 	for (i = config->command[CMD_FSCK]->first; i != NULL; i = i->next) {
-		if (HXformat2_aprintf(vinfo, &current, i->ptr) > 0) {
+		if (HXformat_aprintf(vinfo, &current, i->ptr) > 0) {
 			HXmc_strcat(&string, current);
 			HXmc_strcat(&string, " ");
 		}

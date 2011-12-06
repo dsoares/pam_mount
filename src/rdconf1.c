@@ -124,7 +124,7 @@ static bool expand_user(const char *user, char **dest_pptr,
 
 	if (*dest_pptr == NULL)
 		return true;
-	HXformat2_aprintf(vinfo, &tmp, *dest_pptr);
+	HXformat_aprintf(vinfo, &tmp, *dest_pptr);
 	*dest_pptr = xstrdup(tmp);
 	HXmc_free(tmp);
 	return true;

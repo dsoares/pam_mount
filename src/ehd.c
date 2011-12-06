@@ -521,7 +521,8 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 		HXOPT_TABLEEND,
 	};
 
-	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
+	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) !=
+	    HXOPT_ERR_SUCCESS)
 		return false;
 
 	pg->interactive = isatty(fileno(stdin));
