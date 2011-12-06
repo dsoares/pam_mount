@@ -30,6 +30,7 @@
 #include <libmount.h>
 #include <grp.h>
 #include <pwd.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 /* Functions */
@@ -391,7 +392,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 	assert(vinfo != NULL);
 	assert(password == NULL);	/* password should point to NULL for unmounting */
 
-	if (Debug)
+	if (config->debug)
 		/*
 		 * Often, a process still exists with ~ as its pwd after
 		 * logging out. Running ofl helps debug this.
@@ -534,6 +535,26 @@ static void mount_set_fsck(const struct config *config,
 	HXmc_free(string);
 }
 
+static void pmt_readfile(const char *file)
+{
+	hxmc_t *ln = NULL;
+	FILE *fp;
+
+	if ((fp = fopen(file, "r")) == NULL) {
+		l0g("%s: Could not open %s: %s\n", __func__, file,
+		    strerror(errno));
+		return;
+	}
+
+	while (HX_getl(&ln, fp) != NULL) {
+		HX_chomp(ln);
+		l0g("%s\n", ln);
+	}
+
+	HXmc_free(ln);
+	fclose(fp);
+}
+
 /**
  * do_mount -
  * @config:	current config
@@ -585,17 +606,31 @@ int do_mount(const struct config *config, struct vol *vpt,
 
 	password = (password != NULL) ? password : "";
 	if (vpt->type != CMD_CRYPTMOUNT && vpt->fs_key_cipher != NULL &&
-	    strlen(vpt->fs_key_cipher) > 0)
-		/* In case of %CMD_CRYPTMOUNT, mount.crypt will deal with it */
-		ll_password = ehd_decrypt_key(vpt->fs_key_path,
-		              vpt->fs_key_hash, vpt->fs_key_cipher, password);
-	else
+	    strlen(vpt->fs_key_cipher) > 0) {
+		/*
+		 * In case of %CMD_CRYPTMOUNT, mount.crypt will deal with
+		 * any openssl decryption. Without %CMD_CRYPTMOUNT however,
+		 * we have to do this ourselves.
+		 */
+		struct ehd_decryptkf_params dp = {
+			.keyfile  = vpt->fs_key_path,
+			.digest   = vpt->fs_key_hash,
+			.cipher   = vpt->fs_key_cipher,
+			.password = password,
+		};
+		ret = ehd_decrypt_keyfile(&dp);
+		if (ret != EHD_DECRYPTKF_SUCCESS)
+			l0g("ehd_decrypt_keyfile: %s\n",
+			    ehd_decryptkf_strerror(ret));
+		ll_password = dp.result;
+	} else {
 		ll_password = HXmc_strinit(password);
+	}
 	if (ll_password == NULL)
 		return 0;
 
 	if ((argv = HXdeque_init()) == NULL)
-		misc_log("malloc: %s\n", strerror(errno));
+		l0g("malloc: %s\n", strerror(errno));
 	if (vpt->uses_ssh)
 		for (n = config->command[CMD_FD0SSH]->first;
 		     n != NULL; n = n->next)
@@ -655,7 +690,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		vpt->created_mntpt = false;
 	}
 
-	if (Debug) {
+	if (config->debug) {
 		if (pmt_fileop_exists("/proc/self/mountinfo"))
 			pmt_readfile("/proc/self/mountinfo");
 		else if (pmt_fileop_exists("/proc/self/mounts"))
@@ -741,7 +776,7 @@ int mount_op(mount_op_fn_t *mnt, const struct config *config,
 	options = kvplist_to_str(&vpt->options);
 	HXformat_add(vinfo, "OPTIONS", options, HXTYPE_STRING | HXFORMAT_IMMED);
 
-	if (Debug)
+	if (config->debug)
 		log_pm_input(config, vpt);
 
 	fnval = (*mnt)(config, vpt, vinfo, password);

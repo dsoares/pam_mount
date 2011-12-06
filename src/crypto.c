@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2008
+ *	Copyright © Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,17 +18,57 @@
 #include <termios.h>
 #include <unistd.h>
 #include <libHX/defs.h>
+#include <libHX/init.h>
 #include <libHX/string.h>
 #include "config.h"
+#include "cmt-internal.h"
+#include "libcryptmount.h"
 #include "pam_mount.h"
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/evp.h>
 #endif
 
+static pthread_mutex_t ehd_init_lock = PTHREAD_MUTEX_INITIALIZER;
+static unsigned long ehd_use_count;
+
+static void __attribute__((constructor)) ehd_ident(void)
+{
+	if (getenv("LIBCRYPTMOUNT_IDENTIFY") != NULL)
+		fprintf(stderr, "# " PACKAGE_NAME " " PACKAGE_VERSION "\n");
+}
+
+EXPORT_SYMBOL int cryptmount_init(void)
+{
+	int ret;
+
+	pthread_mutex_lock(&ehd_init_lock);
+	if (ehd_use_count == 0) {
+		ret = HX_init();
+		if (ret < 0) {
+			pthread_mutex_unlock(&ehd_init_lock);
+			return ret;
+		}
+	}
+	++ehd_use_count;
+	pthread_mutex_unlock(&ehd_init_lock);
+	return 1;
+}
+
+EXPORT_SYMBOL void cryptmount_exit(void)
+{
+	pthread_mutex_lock(&ehd_init_lock);
+	if (ehd_use_count == 0)
+		fprintf(stderr, "%s: reference count is already zero!\n",
+		        __func__);
+	else if (--ehd_use_count == 0)
+		HX_exit();
+	pthread_mutex_unlock(&ehd_init_lock);
+}
+
 /**
  * ehd_mtfree - free data associated with an EHD mount info block
  */
-void ehd_mtfree(struct ehd_mount *mt)
+EXPORT_SYMBOL void ehd_mountinfo_free(struct ehd_mount_info *mt)
 {
 	free(mt->container);
 	HXmc_free(mt->crypto_device);
@@ -38,15 +79,11 @@ void ehd_mtfree(struct ehd_mount *mt)
 
 /**
  * ehd_load - set up crypto device for an EHD container
- * @cont_path:		path to the container
- * @crypto_device:	store crypto device here
- * @cipher:		filesystem cipher
- * @hash:		hash function for cryptsetup (default: plain)
- * @fskey:		unencrypted fskey data (not path)
- * @fskey_size:		size of @fskey, in bytes
- * @readonly:		set up loop device as readonly
+ * @req:	parameters for setting up the mount
+ * @mt:		EHD mount state
  */
-int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
+EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
+    struct ehd_mount_info *mt)
 {
 	struct stat sb;
 	int saved_errno, ret;
@@ -65,7 +102,7 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	} else {
 		/* need losetup since cryptsetup needs block device */
 		w4rn("Setting up loop device for file %s\n", req->container);
-		ret = pmt_loop_setup(req->container, &mt->loop_device,
+		ret = ehd_loop_setup(req->container, &mt->loop_device,
 		      req->readonly);
 		if (ret == 0) {
 			l0g("Error: no free loop devices\n");
@@ -97,7 +134,7 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
  out_ser:
 	saved_errno = errno;
 	ehd_unload(mt);
-	ehd_mtfree(mt);
+	ehd_mountinfo_free(mt);
 	errno = saved_errno;
 	return ret;
 }
@@ -114,7 +151,7 @@ int ehd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
  * not look as easy as the loop one, and does not look shared (i.e. available
  * as a system library) either.
  */
-int ehd_unload(const struct ehd_mount *mt)
+EXPORT_SYMBOL int ehd_unload(const struct ehd_mount_info *mt)
 {
 	int ret, ret2;
 
@@ -127,17 +164,23 @@ int ehd_unload(const struct ehd_mount *mt)
 #endif
 	/* Try to free loop device even if cryptsetup remove failed */
 	if (mt->loop_device != NULL) {
-		ret2 = pmt_loop_release(mt->loop_device);
+		ret2 = ehd_loop_release(mt->loop_device);
 		if (ret > 0)
 			ret = ret2;
 	}
 	return ret;
 }
 
+#ifndef HAVE_LIBCRYPTSETUP
+EXPORT_SYMBOL int ehd_is_luks(const char *device, bool blkdev)
+{
+	return -EINVAL;
+}
+#endif
+
 #ifdef HAVE_LIBCRYPTO
 struct decrypt_info {
-	const char *keyfile;
-	const char *password;
+	struct ehd_decryptkf_params *p;
 	const EVP_CIPHER *cipher;
 	const EVP_MD *digest;
 
@@ -147,7 +190,7 @@ struct decrypt_info {
 	const unsigned char *salt;
 };
 
-static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
+static int ehd_decrypt_key2(const struct decrypt_info *info)
 {
 	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 	unsigned int out_cumul_len = 0;
@@ -156,12 +199,10 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	hxmc_t *out;
 
 	if (EVP_BytesToKey(info->cipher, info->digest, info->salt,
-	    signed_cast(const unsigned char *, info->password),
-	    (info->password == NULL) ? 0 : HXmc_length(info->password),
-	    1, key, iv) <= 0) {
-		l0g("EVP_BytesToKey failed\n");
-		return false;
-	}
+	    signed_cast(const unsigned char *, info->p->password),
+	    (info->p->password == NULL) ? 0 : strlen(info->p->password),
+	    1, key, iv) <= 0)
+		return EHD_DECRYPTKF_OTHER;
 
 	out = HXmc_meminit(NULL, info->keysize + info->cipher->block_size);
 	EVP_CIPHER_CTX_init(&ctx);
@@ -175,45 +216,41 @@ static hxmc_t *ehd_decrypt_key2(const struct decrypt_info *info)
 	HXmc_setlen(&out, out_cumul_len);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
-	return out;
+	info->p->result = out;
+	return 0;
 }
 
-hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
-    const char *cipher_name, const char *password)
+EXPORT_SYMBOL int ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 {
 	struct decrypt_info info = {
-		.keyfile  = keyfile,
-		.digest   = EVP_get_digestbyname(digest_name),
-		.cipher   = EVP_get_cipherbyname(cipher_name),
-		.password = password,
+		.digest = EVP_get_digestbyname(par->digest),
+		.cipher = EVP_get_cipherbyname(par->cipher),
+		.p      = par,
 	};
-	hxmc_t *f_ret = NULL;
 	unsigned char *buf;
 	struct stat sb;
 	ssize_t i_ret;
-	int fd;
+	int fd, ret;
 
-	if (info.digest == NULL) {
-		l0g("Unknown digest: %s\n", digest_name);
-		return false;
-	}
-	if (info.cipher == NULL) {
-		l0g("Unknown cipher: %s\n", cipher_name);
-		return false;
-	}
-	if ((fd = open(info.keyfile, O_RDONLY)) < 0) {
-		l0g("Could not open %s: %s\n", info.keyfile, strerror(errno));
-		return false;
-	}
+	if (info.digest == NULL)
+		return EHD_DECRYPTKF_NODIGEST;
+	if (info.cipher == NULL)
+		return EHD_DECRYPTKF_NOCIPHER;
+	if ((fd = open(par->keyfile, O_RDONLY)) < 0)
+		return -errno;
 	if (fstat(fd, &sb) < 0) {
+		ret = -errno;
 		l0g("stat: %s\n", strerror(errno));
 		goto out;
 	}
-
-	if ((buf = xmalloc(sb.st_size)) == NULL)
-		return false;
-
+	if ((buf = malloc(sb.st_size)) == NULL) {
+		ret = -errno;
+		l0g("%s: malloc %zu: %s\n", __func__, sb.st_size,
+		    strerror(errno));
+		goto out;
+	}
 	if ((i_ret = read(fd, buf, sb.st_size)) != sb.st_size) {
+		ret = (i_ret < 0) ? -errno : EHD_DECRYPTKF_OTHER;
 		l0g("Incomplete read of %u bytes got %Zd bytes\n",
 		    sb.st_size, i_ret);
 		goto out2;
@@ -222,15 +259,31 @@ hxmc_t *ehd_decrypt_key(const char *keyfile, const char *digest_name,
 	info.salt    = &buf[strlen("Salted__")];
 	info.data    = info.salt + PKCS5_SALT_LEN;
 	info.keysize = sb.st_size - (info.data - buf);
-	f_ret = ehd_decrypt_key2(&info);
+	ret = ehd_decrypt_key2(&info);
 
  out2:
 	free(buf);
  out:
 	close(fd);
-	return f_ret;
+	return ret;
 }
 #endif /* HAVE_LIBCRYPTO */
+
+EXPORT_SYMBOL const char *ehd_decryptkf_strerror(int e)
+{
+	if (e <= 0)
+		return strerror(-e);
+	switch (e) {
+	case EHD_DECRYPTKF_NODIGEST:
+		return "Unknown digest";
+	case EHD_DECRYPTKF_NOCIPHER:
+		return "Unknown cipher";
+	case EHD_DECRYPTKF_OTHER:
+		return "Other unspecified error";
+	default:
+		return "Unknown error code";
+	}
+}
 
 static unsigned int __cipher_digest_security(const char *s)
 {
@@ -243,9 +296,9 @@ static unsigned int __cipher_digest_security(const char *s)
 
 	for (i = 0; i < ARRAY_SIZE(blacklist); ++i)
 		if (strcmp(s, blacklist[i]) == 0)
-			return 0;
+			return EHD_SECURITY_SUBPAR;
 
-	return 2;
+	return EHD_SECURITY_UNSPEC;
 }
 
 /**
@@ -253,62 +306,69 @@ static unsigned int __cipher_digest_security(const char *s)
  * @s:	name of the cipher or digest specification
  * 	(can either be OpenSSL or cryptsetup name)
  *
- * Returns 0 if it is considered insecure, 1 if I would have a bad feeling
- * using it, and 2 if it is appropriate.
+ * Returns the lowest security class ("weakest element of the chain")
+ * of the compound string.
  */
-unsigned int cipher_digest_security(const char *s)
+EXPORT_SYMBOL int ehd_cipherdigest_security(const char *s)
 {
 	char *base, *tmp, *wp;
-	unsigned int ret;
+	unsigned int verdict, ret;
 
-	if ((base = xstrdup(s)) == NULL)
-		return 2;
+	if (s == NULL)
+		return EHD_SECURITY_UNSPEC;
+	if ((base = HX_strdup(s)) == NULL)
+		return -errno;
 
 	tmp = base;
-	while ((wp = HX_strsep(&tmp, ",-.:_")) != NULL)
-		if ((ret = __cipher_digest_security(wp)) < 2)
-			break;
+	verdict = EHD_SECURITY_UNSPEC;
+	while ((wp = HX_strsep(&tmp, ",-.:_")) != NULL) {
+		ret = __cipher_digest_security(wp);
+		if (verdict == EHD_SECURITY_UNSPEC)
+			verdict = ret;
+		else if (ret < verdict)
+			verdict = ret;
+	}
 
 	free(base);
-	return ret;
+	return verdict;
 }
 
 static struct {
 	struct sigaction oldact;
 	bool echo;
 	int fd;
-} pmt_pwq_restore;
+} ehd_pwq_restore;
 
-static void pmt_password_stop(int s)
+static void ehd_password_stop(int s)
 {
 	struct termios ti;
 
-	if (!pmt_pwq_restore.echo)
+	if (!ehd_pwq_restore.echo)
 		return;
-	if (tcgetattr(pmt_pwq_restore.fd, &ti) == 0) {
+	if (tcgetattr(ehd_pwq_restore.fd, &ti) == 0) {
 		ti.c_lflag |= ECHO;
-		tcsetattr(pmt_pwq_restore.fd, TCSANOW, &ti);
+		tcsetattr(ehd_pwq_restore.fd, TCSANOW, &ti);
 	}
-	sigaction(s, &pmt_pwq_restore.oldact, NULL);
+	sigaction(s, &ehd_pwq_restore.oldact, NULL);
 	if (s != 0)
 		kill(0, s);
 }
 
-static hxmc_t *__pmt_get_password(FILE *fp)
+static hxmc_t *__ehd_get_password(FILE *fp)
 {
 	hxmc_t *ret = NULL;
-	memset(&pmt_pwq_restore, 0, sizeof(pmt_pwq_restore));
-	pmt_pwq_restore.fd = fileno(fp);
+	memset(&ehd_pwq_restore, 0, sizeof(ehd_pwq_restore));
+	ehd_pwq_restore.fd = fileno(fp);
 
 	if (isatty(fileno(fp))) {
 		struct sigaction sa;
 		struct termios ti;
 
 		if (tcgetattr(fileno(fp), &ti) == 0) {
-			pmt_pwq_restore.echo = ti.c_lflag & ECHO;
-			if (pmt_pwq_restore.echo) {
+			ehd_pwq_restore.echo = ti.c_lflag & ECHO;
+			if (ehd_pwq_restore.echo) {
 				sigemptyset(&sa.sa_mask);
-				sa.sa_handler = pmt_password_stop;
+				sa.sa_handler = ehd_password_stop;
 				sa.sa_flags   = SA_RESETHAND;
 				sigaction(SIGINT, &sa, NULL);
 				ti.c_lflag &= ~ECHO;
@@ -322,17 +382,17 @@ static hxmc_t *__pmt_get_password(FILE *fp)
 		HX_chomp(ret);
 		HXmc_setlen(&ret, strlen(ret));
 	}
-	pmt_password_stop(0);
+	ehd_password_stop(0);
 	return ret;
 }
 
-hxmc_t *pmt_get_password(const char *prompt)
+EXPORT_SYMBOL hxmc_t *ehd_get_password(const char *prompt)
 {
 	hxmc_t *ret;
 
 	printf("%s", (prompt != NULL) ? prompt : "Password: ");
 	fflush(stdout);
-	ret = __pmt_get_password(stdin);
+	ret = __ehd_get_password(stdin);
 	printf("\n");
 	return ret;
 }

@@ -1,16 +1,20 @@
 /*
  *	Internal diagnostic tool to debug pmt loop.c
- *	Copyright © Jan Engelhardt, 2008 - 2009
+ *	Copyright © Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <libHX/init.h>
 #include <libHX/string.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 static unsigned int al_do_usetup;
@@ -20,7 +24,7 @@ static int al_setup(const char **argv)
 	char *dev;
 	int ret;
 
-	ret = pmt_loop_setup(argv[1], &dev, LOSETUP_RW);
+	ret = ehd_loop_setup(argv[1], &dev, EHD_LOSETUP_RW);
 	if (ret == 0) {
 		fprintf(stderr, "%s: error: no free loop devices\n",
 		        HX_basename(*argv));
@@ -41,7 +45,7 @@ static int al_usetup(const char *loop_dev)
 {
 	int ret;
 
-	if ((ret = pmt_loop_release(loop_dev)) < 0)
+	if ((ret = ehd_loop_release(loop_dev)) < 0)
 		fprintf(stderr, "warning: loop_release: %s\n", strerror(-ret));
 	return EXIT_SUCCESS;
 }
@@ -67,6 +71,12 @@ int main(int argc, const char **argv)
 {
 	int ret;
 
+	ret = HX_init();
+	if (ret <= 0) {
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+		abort();
+	}
+
 	if (!al_get_options(&argc, &argv))
 		return EXIT_FAILURE;
 	if (al_do_usetup)
@@ -74,5 +84,6 @@ int main(int argc, const char **argv)
 	else
 		ret = al_setup(argv);
 
+	HX_exit();
 	return ret;
 }

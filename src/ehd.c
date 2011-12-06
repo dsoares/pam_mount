@@ -1,6 +1,6 @@
 /*
  *	Encrypted Home Disk manipulation utility
- *	Copyright © Jan Engelhardt, 2008
+ *	Copyright © Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <libHX/ctype_helper.h>
 #include <libHX/defs.h>
+#include <libHX/init.h>
 #include <libHX/misc.h>
 #include <libHX/option.h>
 #include <libHX/proc.h>
@@ -29,11 +30,13 @@
 #include <security/pam_appl.h>
 #include <libcryptsetup.h>
 #include <pwd.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 static const char ehd_default_dmcipher[] = "aes-cbc-essiv:sha256";
 static const unsigned int ehd_default_strength = 256; /* cipher, not ESSIV */
 static const char ehd_default_hash[] = "sha512"; /* for PBKDF2 */
+static unsigned int ehd_debug;
 
 /**
  * @size:		container size in bytes
@@ -315,19 +318,19 @@ static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
 static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
-	struct ehd_mount mount_info;
-	struct ehd_mtreq mount_request = {
+	struct ehd_mount_info mount_info;
+	struct ehd_mount_request mount_request = {
 		.container = cont->path,
 		.key_data  = password,
 		.key_size  = strlen(password),
-		.readonly  = LOSETUP_RW,
+		.readonly  = EHD_LOSETUP_RW,
 	};
 	int ret;
 
 	if (cont->blkdev) {
 		cont->device = cont->path;
 	} else {
-		ret = pmt_loop_setup(cont->path, &cont->loop_dev, LOSETUP_RW);
+		ret = ehd_loop_setup(cont->path, &cont->loop_dev, EHD_LOSETUP_RW);
 		if (ret == 0) {
 			fprintf(stderr, "loop_setup: error: no free loop "
 			        "devices\n");
@@ -341,7 +344,7 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	}
 
 	ehd_init_volume_luks(pg, password);
-	ret = pmt_loop_release(cont->device);
+	ret = ehd_loop_release(cont->device);
 	if (ret <= 0)
 		fprintf(stderr, "loop_release: warning: %s\n", strerror(-ret));
 
@@ -377,7 +380,7 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 #define DEFAULT_FSTYPE "ext4"
 	struct container_ctl *cont = &pg->cont;
 	hxmc_t *tmp = HXmc_meminit(NULL, 0);
-	bool ret = false;
+	int ret = false;
 	struct stat sb;
 
 	if (cont->user == NULL) {
@@ -465,15 +468,18 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 	if (cont->hash == NULL)
 		cont->hash = HX_strdup(ehd_default_hash);
 
-	if (cipher_digest_security(cont->cipher) < 1) {
+	ret = ehd_cipherdigest_security(cont->cipher);
+	if (ret < 0)
+		fprintf(stderr, "pmt_cipherdigest_security: %s\n", strerror(-ret));
+	else if (ret < EHD_SECURITY_UNSPEC)
 		fprintf(stderr, "Cipher \"%s\" is considered insecure.\n",
 		        cont->cipher);
-//		return false;
-	} else if (cipher_digest_security(cont->hash) < 1) {
+	ret = ehd_cipherdigest_security(cont->hash);
+	if (ret < 0)
+		fprintf(stderr, "pmt_cipherdigest_security: %s\n", strerror(-ret));
+	else if (ret < EHD_SECURITY_UNSPEC)
 		fprintf(stderr, "Hash \"%s\" is considered insecure.\n",
 		        cont->hash);
-//		return false;
-	}
 
 	ret = true;
  out:
@@ -485,7 +491,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 {
 	struct container_ctl *cont = &pg->cont;
 	struct HXoption options_table[] = {
-		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &Debug,
+		{.sh = 'D', .type = HXTYPE_NONE, .ptr = &ehd_debug,
 		 .help = "Enable debugging"},
 		{.sh = 'F', .type = HXTYPE_NONE | HXOPT_INC,
 		 .ptr = &pg->force_level,
@@ -527,12 +533,9 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 	hxmc_t *password, *password2;
 	int ret;
 
+	ehd_logctl(EHD_LOGFT_NOSYSLOG, EHD_LOG_SET);
 	if (!ehd_get_options(&argc, &argv, pg))
 		return EXIT_FAILURE;
-
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
-	pmtlog_prefix = "ehd";
 
 	if (!ehd_check(pg))
 		return EXIT_FAILURE;
@@ -542,8 +545,8 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 	       "of a passphrase or anything otherwise fancy. pmt-ehd(8), as "
 	       "well as cryptsetup(8)'s luksFormat will, by default, do the "
 	       "master key generation and hashing themselves!\n");
-	password  = pmt_get_password(NULL);
-	password2 = pmt_get_password("Reenter password: ");
+	password  = ehd_get_password(NULL);
+	password2 = ehd_get_password("Reenter password: ");
 	if (password == NULL || password2 == NULL ||
 	    strcmp(password, password2) != 0) {
 		fprintf(stderr, "Passwords mismatch.\n");
@@ -571,9 +574,22 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 int main(int argc, const char **argv)
 {
 	struct ehd_ctl pg;
+	int ret;
 
-	Debug = false;
+	ret = HX_init();
+	if (ret <= 0) {
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+		abort();
+	}
+	ret = cryptmount_init();
+	if (ret <= 0) {
+		fprintf(stderr, "cryptmount_init: %s\n", strerror(errno));
+		abort();
+	}
+
 	memset(&pg, 0, sizeof(pg));
-
-	return main2(argc, argv, &pg);
+	ret = main2(argc, argv, &pg);
+	cryptmount_exit();
+	HX_exit();
+	return ret;
 }

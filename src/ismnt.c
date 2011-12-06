@@ -11,11 +11,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libHX/init.h>
 #include "pam_mount.h"
 
 int main(int argc, const char **argv)
 {
 	int ret;
+
+	ret = HX_init();
+	if (ret <= 0) {
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+		abort();
+	}
 
 	if (argc < 3) {
 		fprintf(stderr, "Usage: %s dev mountpoint\n", *argv);
@@ -25,12 +32,14 @@ int main(int argc, const char **argv)
 	ret = pmt_cmtab_mounted(argv[1], argv[2]);
 	if (ret < 0) {
 		fprintf(stderr, "%s\n", strerror(-ret));
-		return 2;
+		ret = 2;
 	} else if (ret == 0) {
 		printf("Not mounted\n");
-		return EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 	} else {
 		printf("Mounted\n");
-		return EXIT_SUCCESS;
+		ret = EXIT_SUCCESS;
 	}
+	HX_exit();
+	return ret;
 }

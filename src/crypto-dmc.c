@@ -17,6 +17,8 @@
 #include <libHX/proc.h>
 #include <libHX/string.h>
 #include <libcryptsetup.h>
+#include "cmt-internal.h"
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 /**
@@ -24,15 +26,15 @@
  * @path:	path to the crypto container
  * @blkdev:	path is definitely a block device
  */
-int dmc_is_luks(const char *path, bool blkdev)
+EXPORT_SYMBOL int ehd_is_luks(const char *path, bool blkdev)
 {
 	struct crypt_device *cd;
 	const char *device = path;
 	char *loop_device;
 	int ret, ret2;
 
-	if (!blkdev) {
-		ret = pmt_loop_setup(path, &loop_device, LOSETUP_RO);
+	if (blkdev != EHD_BLKDEV_ASSURED) {
+		ret = ehd_loop_setup(path, &loop_device, EHD_LOSETUP_RO);
 		if (ret == 0) {
 			fprintf(stderr, "No free loop device\n");
 			return -ENXIO;
@@ -54,10 +56,10 @@ int dmc_is_luks(const char *path, bool blkdev)
 		/* else keep ret as-is */
 		crypt_free(cd);
 	}
-	if (!blkdev) {
-		ret2 = pmt_loop_release(loop_device);
+	if (blkdev != EHD_BLKDEV_ASSURED) {
+		ret2 = ehd_loop_release(loop_device);
 		if (ret2 < 0)
-			fprintf(stderr, "pmt_loop_release: %s\n",
+			fprintf(stderr, "ehd_loop_release: %s\n",
 			        strerror(-ret));
 	}
 	return ret;
@@ -75,7 +77,8 @@ static hxmc_t *dmc_crypto_name(const char *s)
 	return ret;
 }
 
-static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
+static bool dmc_run(const struct ehd_mount_request *req,
+    struct ehd_mount_info *mt)
 {
 	struct crypt_device *cd;
 	unsigned int flags = 0;
@@ -144,7 +147,8 @@ static bool dmc_run(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	return ret >= 0 ? true : false;
 }
 
-static int dmc_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
+static int dmc_load(const struct ehd_mount_request *req,
+    struct ehd_mount_info *mt)
 {
 	mt->crypto_name = dmc_crypto_name(mt->container);
 	w4rn("Using %s as dmdevice name\n", mt->crypto_name);
@@ -154,7 +158,7 @@ static int dmc_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	return dmc_run(req, mt);
 }
 
-static int dmc_unload(const struct ehd_mount *mt)
+static int dmc_unload(const struct ehd_mount_info *mt)
 {
 	struct crypt_device *cd;
 	const char *cname;

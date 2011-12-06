@@ -8,53 +8,51 @@ AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
 sbin_PROGRAMS		= pmvarrun
-if HAVE_LIBCRYPTSETUP
 sbin_PROGRAMS		+= pmt-ehd
-endif
 ssbin_PROGRAMS		= mount.crypt
 noinst_PROGRAMS		= autoloop ismnt
 noinst_SCRIPTS 		= umount.crypt
 
-noinst_LTLIBRARIES	= libpmt_crypto.la libpmt_loop.la libpmt_mtab.la
+lib_LTLIBRARIES		= libcryptmount.la
+noinst_LTLIBRARIES	= libpmt_mtab.la
 
 #
-# libpmt_crypto
+# libcryptmount
 #
-libpmt_crypto_la_SOURCES = crypto.c
-libpmt_crypto_la_LIBADD = libpmt_loop.la ${libcrypto_LIBS} ${libHX_LIBS}
+libcryptmount_la_SOURCES = crypto.c log.c loop.c loop-linux.c
+libcryptmount_la_LDFLAGS = -Wl,--version-script=${srcdir}/libcryptmount.map \
+                           -version-info 0:0:0
+libcryptmount_la_LIBADD = ${libHX_LIBS} ${libcrypto_LIBS}
+libcryptmount_la_DEPENDENCIES = ${srcdir}/libcryptmount.map
+
 if HAVE_LIBCRYPTSETUP
-libpmt_crypto_la_SOURCES += crypto-dmc.c
-libpmt_crypto_la_LIBADD += ${libcryptsetup_LIBS}
+libcryptmount_la_SOURCES += crypto-dmc.c
+libcryptmount_la_LIBADD += ${libcryptsetup_LIBS}
 endif
 if HAVE_CGD
-libpmt_crypto_la_SOURCES += crypto-cgd.c
+libcryptmount_la_SOURCES += crypto-cgd.c
 endif
-
-#
-# libpmt_loop
-#
-libpmt_loop_la_SOURCES = loop.c loop-linux.c
 if HAVE_MDIO
-libpmt_loop_la_SOURCES += loop-mdvn.c
+libcryptmount_la_SOURCES += loop-mdvn.c
 endif
 if HAVE_VND
-libpmt_loop_la_SOURCES += loop-vnd.c
+libcryptmount_la_SOURCES += loop-vnd.c
 endif
 
 #
 # libpmt_mtab
 #
-libpmt_mtab_la_SOURCES = log.c misc.c mtab.c
+libpmt_mtab_la_SOURCES = misc.c mtab.c
 libpmt_mtab_la_CFLAGS  = ${AM_CFLAGS}
 libpmt_mtab_la_LIBADD  = ${libHX_LIBS}
 
 #
 # pam_mount.so
 #
-pam_mount_la_SOURCES	= log.c misc.c mount.c pam_mount.c \
+pam_mount_la_SOURCES	= misc.c mount.c pam_mount.c \
 			  rdconf1.c rdconf2.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
-pam_mount_la_LIBADD	= -lpam ${libHX_LIBS} \
+pam_mount_la_LIBADD	= libcryptmount.la -lpam ${libHX_LIBS} \
 			  ${libmount_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
@@ -62,25 +60,26 @@ pam_mount_la_LDFLAGS	= -module -avoid-version
 # test tools
 #
 autoloop_SOURCES	= autoloop.c
-autoloop_LDADD		= libpmt_loop.la ${libHX_LIBS}
+autoloop_LDADD		= libcryptmount.la ${libHX_LIBS}
 
-ismnt_SOURCES		= ismnt.c
+ismnt_SOURCES		= ismnt.c log.c
+ismnt_CFLAGS		= ${AM_CFLAGS}
 ismnt_LDADD		= libpmt_mtab.la
 
 #
 # mount helpers
 #
 mount_crypt_SOURCES	= mtcrypt.c spawn.c
-mount_crypt_LDADD	= libpmt_crypto.la libpmt_mtab.la ${libHX_LIBS}
+mount_crypt_LDADD	= libcryptmount.la libpmt_mtab.la ${libHX_LIBS}
 
-pmt_ehd_SOURCES		= ehd.c bdev.c log.c misc.c spawn.c
-pmt_ehd_LDADD		= libpmt_crypto.la ${libHX_LIBS}
+pmt_ehd_SOURCES		= ehd.c bdev.c misc.c spawn.c
+pmt_ehd_LDADD		= libcryptmount.la ${libHX_LIBS}
 
 #
 # runtime helpers
 #
-pmvarrun_SOURCES = pmvarrun.c log.c
-pmvarrun_LDADD   = ${libHX_LIBS}
+pmvarrun_SOURCES = pmvarrun.c
+pmvarrun_LDADD   = libcryptmount.la ${libHX_LIBS}
 
 EXTRA_DIST = misc.h mount.h pam_mount.h readconfig.h spawn.h
 

@@ -13,7 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "pam_mount.h"
+#include <libHX/string.h>
+#include "cmt-internal.h"
 #include <dev/cgdvar.h>
 
 /*
@@ -22,7 +23,8 @@
  */
 static const unsigned int BSD_CGD_MINORS = 8;
 
-static int cgd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
+static int cgd_load(const struct ehd_mount_request *req,
+    struct ehd_mount_info *mt)
 {
 	struct cgd_ioctl info;
 	unsigned int i;
@@ -61,7 +63,7 @@ static int cgd_load(const struct ehd_mtreq *req, struct ehd_mount *mt)
 	return ret;
 }
 
-static int cgd_unload(const struct ehd_mount *mt)
+static int cgd_unload(const struct ehd_mount_info *mt)
 {
 	int saved_errno, fd, ret;
 

@@ -31,6 +31,7 @@
 #include <libHX/defs.h>
 #include <libHX/proc.h>
 #include <libHX.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 #ifndef PAM_EXTERN
@@ -95,7 +96,7 @@ static void parse_pam_args(int argc, const char **argv)
 		else if (strcasecmp("disable_propagate_password", argv[i]) == 0)
 			Args.propagate_pw = false;
 		else if (strcasecmp("debug", argv[i]) == 0)
-			Debug = true;
+			Config.debug = 1;
 		else
 			w4rn("unknown pam_mount option \"%s\"\n", argv[i]);
 	}
@@ -243,15 +244,12 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 	char buf[8];
 	int ret;
 
-	pmtlog_prefix = "pam_mount";
-	pmtlog_path[PMTLOG_ERR][PMTLOG_SYSLOG] = true;
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
-	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
-
 	ret = HX_init();
 	if (ret <= 0)
 		l0g("libHX init failed: %s\n", strerror(errno));
+	ret = cryptmount_init();
+	if (ret <= 0)
+		l0g("libcryptmount init failed: %s\n", strerror(errno));
 
 	initconfig(&Config);
 	parse_pam_args(argc, argv);
@@ -279,10 +277,12 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 		return PAM_SERVICE_ERR;
 
 	/* reinitialize after @Debug may have changed */
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
-	pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG] = Debug;
+	if (ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_GET))
+		ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_UNSET);
+	if (Config.debug)
+		ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
 
-	snprintf(buf, sizeof(buf), "%u", Debug);
+	snprintf(buf, sizeof(buf), "%u", Config.debug);
 	setenv("_PMT_DEBUG_LEVEL", buf, true);
 
 	pmt_sigpipe_setup(true);
@@ -292,6 +292,7 @@ static int common_init(pam_handle_t *pamh, int argc, const char **argv)
 static void common_exit(void)
 {
 	pmt_sigpipe_setup(false);
+	cryptmount_exit();
 	HX_exit();
 }
 

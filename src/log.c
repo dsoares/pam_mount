@@ -12,39 +12,55 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <syslog.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
-const char *pmtlog_prefix;
-bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
-unsigned int Debug = true;
+static unsigned int ehd_log_ft[__EHD_LOGFT_MAX];
+
+EXPORT_SYMBOL int ehd_logctl(enum ehd_log_feature ft, ...)
+{
+	va_list ap;
+	va_start(ap, ft);
+	int a = va_arg(ap, int);
+
+	if (a == EHD_LOG_GET) {
+		return ehd_log_ft[ft];
+	} else if (a == EHD_LOG_SET) {
+		++ehd_log_ft[ft];
+	} else if (a == EHD_LOG_UNSET) {
+		if (ehd_log_ft[ft] == 0)
+			fprintf(stderr, "%s: feature %u is already zero\n",
+			        __func__, ft);
+		else
+			--ehd_log_ft[ft];
+	}
+	return 1;
+}
 
 /**
- * misc_log - log an error/warning
+ * ehd_err - log an error/warning
  * @format:	printf(3)-style format specifier
- *
- * Do not call this function directly; use the l0g() macro instead, so that
- * file name and line number show up.
  */
-int misc_log(const char *format, ...)
+EXPORT_SYMBOL int ehd_err(const char *format, ...)
 {
 	va_list args, arg2;
 	int ret = 0;
 
 	assert(format != NULL);
 
-	va_start(args, format);
-	va_copy(arg2, args);
-	if (pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR])
-		ret = vfprintf(stderr, format, args);
-	if (pmtlog_path[PMTLOG_ERR][PMTLOG_SYSLOG])
+	if (!ehd_log_ft[EHD_LOGFT_NOSYSLOG]) {
+		va_start(args, format);
+		va_copy(arg2, args);
 		vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
+		va_end(arg2);
+	}
+	ret = vfprintf(stderr, format, args);
 	va_end(args);
-	va_end(arg2);
 	return ret;
 }
 
 /**
- * misc_warn - debug logger
+ * ehd_dbg - log informational messages
  * @format:	printf(3)-style format specifier
  *
  * If debugging is turned on, the message is logged to syslog and %stderr.
@@ -53,23 +69,22 @@ int misc_log(const char *format, ...)
  * Do not call this function directly; use the w4rn() macro instead, so that
  * file name and line number show up.
  */
-int misc_warn(const char *format, ...)
+EXPORT_SYMBOL int ehd_dbg(const char *format, ...)
 {
 	va_list args, arg2;
 	int ret = 0;
 
 	assert(format != NULL);
-	if (!pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] &&
-	    !pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
+	if (!ehd_log_ft[EHD_LOGFT_DEBUG])
 		return 0;
 
 	va_start(args, format);
-	va_copy(arg2, args);
-	if (pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR])
-		ret = vfprintf(stderr, format, args);
-	if (pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
+	if (!ehd_log_ft[EHD_LOGFT_NOSYSLOG]) {
+		va_copy(arg2, args);
 		vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
+		va_end(arg2);
+	}
+	ret = vfprintf(stderr, format, args);
 	va_end(args);
-	va_end(arg2);
 	return ret;
 }

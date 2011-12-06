@@ -35,10 +35,10 @@
 
 /* Note that you will also need to change PMPREFIX in pmvarrun.c then! */
 #define l0g(fmt, ...) \
-	misc_log(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
+	ehd_err(("(%s:%u): " fmt), HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 #define w4rn(fmt, ...) \
-	misc_warn(("%s(%s:%u): " fmt), pmtlog_prefix, HX_basename(__FILE__), \
+	ehd_dbg(("(%s:%u): " fmt), HX_basename(__FILE__), \
 	__LINE__, ## __VA_ARGS__)
 
 struct HXdeque;
@@ -66,18 +66,6 @@ enum command_type {
 	CMD_OFL,
 	_CMD_MAX,
 	CMD_NONE,
-};
-
-enum {
-	/* src */
-	PMTLOG_ERR = 0,
-	PMTLOG_DBG,
-	PMTLOG_SRCMAX,
-
-	/* dst */
-	PMTLOG_SYSLOG = 0,
-	PMTLOG_STDERR,
-	PMTLOG_DSTMAX,
 };
 
 /**
@@ -136,25 +124,6 @@ struct kvp {
 };
 
 /**
- * struct ehd_request - mapping and mount request for EHD
- * @mountpoint:	where to mount EHD
- * @fs_cipher:	cipher used for filesystem (cryptsetup name)
- * @fs_hash:	hash used for filesystem (cryptsetup name)
- * @container:	path to disk image
- * @key_data:	key material
- * @key_size:	size of key data, in bytes
- * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
- * @readonly:	create readonly mount?
- */
-struct ehd_mtreq {
-	const char *mountpoint;
-	const char *fs_cipher, *fs_hash, *container;
-	const void *key_data;
-	unsigned int key_size, trunc_keysize;
-	bool readonly;
-};
-
-/**
  * struct ehd_mount - EHD mount info
  * @container:		path to disk image
  * @lower_device:	link to either @container if a block device,
@@ -163,17 +132,12 @@ struct ehd_mtreq {
  * @crypto_name:	crypto device that was created (basename only)
  * @crypto_device:	full path to the crypto device
  */
-struct ehd_mount {
+struct ehd_mount_info {
 	char *container;
 	const char *lower_device;
 	char *loop_device;
 	hxmc_t *crypto_name;
 	hxmc_t *crypto_device;
-};
-
-struct ehd_crypto_ops {
-	int (*load)(const struct ehd_mtreq *, struct ehd_mount *);
-	int (*unload)(const struct ehd_mount *);
 };
 
 typedef int (mount_op_fn_t)(const struct config *, struct vol *,
@@ -202,45 +166,6 @@ static inline const char *znul(const char *s)
 extern size_t pmt_block_getsize64(const char *);
 
 /*
- *	CRYPTO.C
- */
-extern int ehd_load(const struct ehd_mtreq *, struct ehd_mount *);
-extern int ehd_unload(const struct ehd_mount *);
-extern void ehd_mtfree(struct ehd_mount *);
-extern hxmc_t *ehd_decrypt_key(const char *, const char *, const char *,
-	const char *);
-extern unsigned int cipher_digest_security(const char *);
-extern hxmc_t *pmt_get_password(const char *);
-
-/*
- *	CRYPTO-*.C
- */
-extern const struct ehd_crypto_ops ehd_cgd_ops;
-extern const struct ehd_crypto_ops ehd_dmcrypt_ops;
-
-extern int dmc_is_luks(const char *, bool);
-
-/*
- *	LOOP.C
- */
-enum {
-	LOSETUP_RW = 0,
-	LOSETUP_RO = 1,
-};
-
-extern int pmt_loop_setup(const char *, char **, bool);
-extern int pmt_loop_release(const char *);
-
-/*
- *	LOG.C
- */
-extern const char *pmtlog_prefix;
-extern bool pmtlog_path[PMTLOG_SRCMAX][PMTLOG_DSTMAX];
-
-extern int misc_log(const char *, ...);
-extern int misc_warn(const char *, ...);
-
-/*
  *	MISC.C
  */
 extern void arglist_add(struct HXdeque *, const char *,
@@ -258,11 +183,8 @@ extern void misc_dump_id(const char *);
 extern int pmt_fileop_exists(const char *);
 extern int pmt_fileop_isreg(const char *);
 extern int pmt_fileop_owns(const char *, const char *);
-extern void pmt_readfile(const char *);
 extern char *relookup_user(const char *);
 extern long str_to_long(const char *);
-extern void *xmalloc(size_t);
-extern void *xrealloc(void *, size_t);
 extern char *xstrdup(const char *);
 
 /*
@@ -326,11 +248,6 @@ extern bool ofl(const char *, unsigned int);
 /*
  *	PAM_MOUNT.C
  */
-#ifndef HAVE_VISIBILITY_HIDDEN
-	/* Workaround Xserver issue */
-#	define Debug pmt_debug
-#endif
-extern unsigned int Debug;
 extern struct config Config;
 
 /*

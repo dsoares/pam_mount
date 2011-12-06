@@ -21,6 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libHX.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/evp.h>
@@ -70,6 +71,8 @@ struct umount_options {
 	bool is_cont, blkdev;
 };
 
+static unsigned int mtcr_debug;
+
 static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 {
 	struct mount_options *mo = cbi->current->uptr;
@@ -77,6 +80,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 	bool first = true;
 	char *copt;
 	char *key;
+	int ret;
 
 	if ((copt = xstrdup(cbi->data)) == NULL)
 		return;
@@ -92,17 +96,26 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			++key;
 		if (strcmp(key, "cipher") == 0) {
 			mo->dmcrypt_cipher = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Cipher \"%s\" is considered "
 				        "insecure.\n", value);
 		} else if (strcmp(key, "fsk_cipher") == 0) {
 			mo->fsk_cipher = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Cipher \"%s\" is considered "
 				        "insecure.\n", value);
 		} else if (strcmp(key, "fsk_hash") == 0) {
 			mo->fsk_hash = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Hash \"%s\" is considered "
 				        "insecure.\n", value);
 		} else if (strcmp(key, "dm-timeout") == 0)
@@ -120,12 +133,17 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			l0g("loop mount option ignored\n");
 		else if (strcmp(key, "hash") == 0) {
 			mo->dmcrypt_hash = value;
-			if (cipher_digest_security(value) < 1)
+			ret = ehd_cipherdigest_security(value);
+			if (ret < 0)
+				fprintf(stderr, "%s\n", strerror(-ret));
+			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Hash \"%s\" is considered "
 				        "insecure.\n", value);
-		} else if (strcmp(key, "verbose") == 0)
-			Debug = pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = true;
-		else {
+		} else if (strcmp(key, "verbose") == 0) {
+			if (!mtcr_debug)
+				ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
+			mtcr_debug = true;
+		} else {
 			if (!first)
 				HXmc_strcat(&passthru, ",");
 			first = false;
@@ -140,9 +158,9 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		if (strcmp(key, "remount") == 0)
 			mo->remount = true;
 		else if (strcmp(key, "ro") == 0)
-			mo->readonly = LOSETUP_RO;
+			mo->readonly = EHD_LOSETUP_RO;
 		else if (strcmp(key, "rw") == 0)
-			mo->readonly = LOSETUP_RW;
+			mo->readonly = EHD_LOSETUP_RW;
 	}
 
 	if (*passthru != '\0') {
@@ -177,7 +195,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		 .uptr = opt, .help = "Mount options"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->readonly,
 		 .help = "Set up devices and mounts as read-only"},
-		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &Debug,
+		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &mtcr_debug,
 		 .help = "Enable debugging"},
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
@@ -188,7 +206,8 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
 
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	if (mtcr_debug)
+		ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
 
 	if (opt->remount) {
 		if (*argc < 2 || *(*argv)[1] == '\0') {
@@ -292,8 +311,7 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 		}
 	}
 
-#ifdef HAVE_LIBCRYPTSETUP
-	ret = dmc_is_luks(opt->container, opt->blkdev);
+	ret = ehd_is_luks(opt->container, opt->blkdev);
 	if (ret > 0) {
 		/* LUKS */
 		if (opt->dmcrypt_cipher != NULL)
@@ -310,12 +328,11 @@ static bool mtcr_get_mount_options(int *argc, const char ***argv,
 			return false;
 		}
 	}
-#endif
 
 	if (opt->dmcrypt_hash == NULL)
 		opt->dmcrypt_hash = "plain";
 	if (!kfpt)
-		opt->fsk_password = pmt_get_password(NULL);
+		opt->fsk_password = ehd_get_password(NULL);
 	return true;
 }
 
@@ -360,8 +377,8 @@ static int mtcr_mount(struct mount_options *opt)
 	struct stat sb;
 	int ret, argk;
 	hxmc_t *key;
-	struct ehd_mount mount_info;
-	struct ehd_mtreq mount_request = {
+	struct ehd_mount_info mount_info;
+	struct ehd_mount_request mount_request = {
 		.container = opt->container,
 		.fs_cipher = opt->dmcrypt_cipher,
 		.fs_hash   = opt->dmcrypt_hash,
@@ -387,10 +404,18 @@ static int mtcr_mount(struct mount_options *opt)
 		mount_request.trunc_keysize = HXmc_length(key);
 	} else {
 #ifdef HAVE_LIBCRYPTO
-		key = ehd_decrypt_key(opt->fsk_file, opt->fsk_hash,
-		      opt->fsk_cipher, opt->fsk_password);
-		if (key == NULL) {
-			fprintf(stderr, "Error while decrypting fskey\n");
+		struct ehd_decryptkf_params dp = {
+			.keyfile  = opt->fsk_file,
+			.digest   = opt->fsk_hash,
+			.cipher   = opt->fsk_cipher,
+			.password = opt->fsk_password,
+		};
+
+		ret = ehd_decrypt_keyfile(&dp);
+		key = dp.result;
+		if (ret != EHD_DECRYPTKF_SUCCESS || key == NULL) {
+			fprintf(stderr, "Error while decrypting fskey: %s\n",
+			        ehd_decryptkf_strerror(ret));
 			return 0;
 		}
 		mount_request.trunc_keysize = HXmc_length(key);
@@ -415,10 +440,10 @@ static int mtcr_mount(struct mount_options *opt)
 	}
 	HXmc_free(key);
 	if (mount_info.crypto_device == NULL) {
-		if (Debug)
+		if (mtcr_debug)
 			fprintf(stderr, "No crypto device assigned\n");
 		ehd_unload(&mount_info);
-		ehd_mtfree(&mount_info);
+		ehd_mountinfo_free(&mount_info);
 		return 0;
 	}
 
@@ -448,7 +473,7 @@ static int mtcr_mount(struct mount_options *opt)
 			        "intervention required, run_sync status %d\n",
 			        ret);
 			ehd_unload(&mount_info);
-			ehd_mtfree(&mount_info);
+			ehd_mountinfo_free(&mount_info);
 			return false;
 		}
 	}
@@ -486,7 +511,7 @@ static int mtcr_mount(struct mount_options *opt)
 			opt->extra_opts : "defaults");
 	}
 
-	ehd_mtfree(&mount_info);
+	ehd_mountinfo_free(&mount_info);
 	return ret;
 }
 
@@ -501,7 +526,7 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 		 .help = "Do not update /etc/mtab"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->ro_fallback,
 		 .help = "(Option ignored)"},
-		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &Debug,
+		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &mtcr_debug,
 		 .help = "Be verbose - enable debugging"},
 		HXOPT_AUTOHELP,
 		HXOPT_TABLEEND,
@@ -511,7 +536,8 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 	if (HX_getopt(options_table, argc, argv, HXOPT_USAGEONERR) <= 0)
 		return false;
 
-	pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] = Debug;
+	if (mtcr_debug)
+		ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
 
 	if (*argc < 2 || *(*argv)[1] == '\0') {
 		fprintf(stderr, "%s: You need to specify the container "
@@ -617,7 +643,7 @@ static int mtcr_umount(struct umount_options *opt)
 {
 	const char *umount_args[3];
 	int final_ret, ret, argk = 0;
-	struct ehd_mount mount_info;
+	struct ehd_mount_info mount_info;
 	char *mountpoint = NULL;
 
 	memset(&mount_info, 0, sizeof(mount_info));
@@ -668,28 +694,9 @@ static int mtcr_umount(struct umount_options *opt)
 	return final_ret;
 }
 
-int main(int argc, const char **argv)
+static int main2(int argc, const char **argv)
 {
-	struct stat sb;
-	int ret;
-
-	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0)
-		fprintf(stderr, "NOTE: mount.crypt does not support utab "
-		        "(systems with no mtab or read-only mtab) yet. This "
-		        "means that you will temporarily need to call "
-		        "umount.crypt(8) rather than umount(8) to get crypto "
-		        "volumes unmounted.\n");
-
-	ret = HX_init();
-	if (ret <= 0) {
-		fprintf(stderr, "HX_init: %s\n", strerror(errno));
-		abort();
-	}
-
-	Debug = false;
-	pmtlog_path[PMTLOG_ERR][PMTLOG_STDERR] = true;
-	pmtlog_prefix = HX_basename(*argv);
-
+	ehd_logctl(EHD_LOGFT_NOSYSLOG, EHD_LOG_SET);
 	setenv("PATH", PMT_DFL_PATH, true);
 #ifdef HAVE_LIBCRYPTO
 	OpenSSL_add_all_ciphers();
@@ -725,4 +732,33 @@ int main(int argc, const char **argv)
 	}
 
 	return EXIT_FAILURE;
+}
+
+int main(int argc, const char **argv)
+{
+	struct stat sb;
+	int ret;
+
+	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0)
+		fprintf(stderr, "NOTE: mount.crypt does not support utab "
+		        "(systems with no mtab or read-only mtab) yet. This "
+		        "means that you will temporarily need to call "
+		        "umount.crypt(8) rather than umount(8) to get crypto "
+		        "volumes unmounted.\n");
+
+	ret = HX_init();
+	if (ret <= 0) {
+		fprintf(stderr, "HX_init: %s\n", strerror(errno));
+		abort();
+	}
+	ret = cryptmount_init();
+	if (ret <= 0) {
+		fprintf(stderr, "cryptmount_init: %s\n", strerror(errno));
+		abort();
+	}
+
+	ret = main2(argc, argv);
+	cryptmount_exit();
+	HX_exit();
+	return ret;
 }

@@ -22,6 +22,7 @@
 #include <libHX/list.h>
 #include <libHX/string.h>
 #include <pwd.h>
+#include "libcryptmount.h"
 #include "pam_mount.h"
 
 struct HXbtree;
@@ -105,15 +106,14 @@ int pmt_fileop_owns(const char *user, const char *file)
  * arglist_log - dump command
  * @argq:	argument list
  *
- * Log @argq using misc_warn() when debugging is turned on.
+ * Log @argq using ehd_log() when debugging is turned on.
  */
 void arglist_log(const struct HXdeque *argq)
 {
 	const struct HXdeque_node *n;
 	hxmc_t *str = NULL;
 
-	if (!pmtlog_path[PMTLOG_DBG][PMTLOG_STDERR] &&
-	    !pmtlog_path[PMTLOG_DBG][PMTLOG_SYSLOG])
+	if (!ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_GET))
 		return;
 
 	str = HXmc_meminit(NULL, 80);
@@ -123,7 +123,7 @@ void arglist_log(const struct HXdeque *argq)
 		HXmc_strcat(&str, "' ");
 	}
 
-	misc_warn("command: %s\n", str);
+	ehd_dbg("command: %s\n", str);
 	HXmc_free(str);
 }
 
@@ -131,7 +131,7 @@ void arglist_llog(const char *const *argv)
 {
 	hxmc_t *str = NULL;
 
-	if (!Debug)
+	if (!ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_GET))
 		return;
 
 	str = HXmc_meminit(NULL, 80);
@@ -142,7 +142,7 @@ void arglist_llog(const char *const *argv)
 		++argv;
 	}
 
-	misc_warn("command: %s\n", str);
+	ehd_dbg("command: %s\n", str);
 	HXmc_free(str);
 }
 
@@ -168,7 +168,7 @@ void arglist_add(struct HXdeque *argq, const char *arg,
 		return;
 
 	if (filled == NULL || HXdeque_push(argq, filled) == NULL)
-		misc_log("malloc: %s\n", strerror(errno));
+		l0g("malloc: %s\n", strerror(errno));
 }
 
 /**
@@ -186,7 +186,7 @@ struct HXdeque *arglist_build(const struct HXdeque *cmd,
 	struct HXdeque *aq;
 
 	if ((aq = HXdeque_init()) == NULL)
-		misc_log("malloc: %s\n", strerror(errno));
+		l0g("malloc: %s\n", strerror(errno));
 
 	for (n = cmd->first; n != NULL; n = n->next)
 		arglist_add(aq, n->ptr, vinfo);
@@ -313,39 +313,6 @@ hxmc_t *kvplist_to_str(const struct HXclist_head *optlist)
 }
 
 /**
- * xmalloc - allocate memory
- * @n:	size of the new buffer
- *
- * Wrapper around malloc() that warns when no new memory block could be
- * obtained.
- */
-void *xmalloc(size_t n)
-{
-	void *ret;
-	if ((ret = malloc(n)) == NULL)
-		l0g("%s: Could not allocate %lu bytes\n",
-		    __func__, static_cast(unsigned long, n));
-	return ret;
-}
-
-/**
- * xrealloc - resize memory block
- * @orig:	original address of the buffer
- * @n:		new size of the buffer
- *
- * Wrapper around realloc() that warns when no new memory block could be
- * obtained.
- */
-void *xrealloc(void *orig, size_t n)
-{
-	void *ret;
-	if ((ret = realloc(orig, n)) == NULL)
-		l0g("%s: Could not reallocate to %lu bytes\n",
-		    __func__, static_cast(unsigned long, n));
-	return ret;
-}
-
-/**
  * xstrdup -
  * @src:	source string
  *
@@ -359,27 +326,4 @@ char *xstrdup(const char *src)
 		l0g("%s: Could not allocate %lu bytes\n",
 		    __func__, strlen(src));
 	return ret;
-}
-
-/**
- * I suck at giving this function a proper name.
- */
-void pmt_readfile(const char *file)
-{
-	hxmc_t *ln = NULL;
-	FILE *fp;
-
-	if ((fp = fopen(file, "r")) == NULL) {
-		l0g("%s: Could not open %s: %s\n", __func__, file,
-		    strerror(errno));
-		return;
-	}
-
-	while (HX_getl(&ln, fp) != NULL) {
-		HX_chomp(ln);
-		l0g("%s\n", ln);
-	}
-
-	HXmc_free(ln);
-	fclose(fp);
 }

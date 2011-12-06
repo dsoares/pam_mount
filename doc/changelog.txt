@@ -3,11 +3,13 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
-Fixes;
+Fixes:
 - pam_mount: restore keyfile support for non-crypto mounts
   (useful for accessing volumes with a different password than the login one)
 Changes:
 - pam_mount: use libmount for utab/mtab operations
+- Move crypto code into a separate library, libcryptmount
+  rather than including the .o files in every executable
 
 
 v2.12 (2011-10-06)
