@@ -65,30 +65,26 @@ struct ehd_decryptkf_params {
 	hxmc_t *result;
 };
 
-/**
- * struct ehd_mount_request - mapping and mount request for EHD
- * @container:		path to disk image
- * @mountpoint:		where to mount the volume on
- * @readonly:		whether to create a readonly vfsmount
- * @key_data:		key material/password
- * @key_size:		size of key data, in bytes
- * @fs_cipher:		cipher used for filesystem, if any. (cryptsetup name)
- * @fs_hash:		hash used for filesystem, if any. (cryptsetup name)
- * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
- */
-struct ehd_mount_request {
-	const char *container;
-	const char *mountpoint;
-	const char *fs_cipher, *fs_hash;
-	const void *key_data;
-	unsigned int key_size, trunc_keysize;
-	bool readonly;
+enum ehd_mtreq_opt {
+	EHD_MTREQ_CONTAINER = 1,
+	EHD_MTREQ_MOUNTPOINT,
+	EHD_MTREQ_FS_CIPHER,
+	EHD_MTREQ_FS_HASH,
+	EHD_MTREQ_KEY_DATA,
+	EHD_MTREQ_KEY_SIZE,
+	EHD_MTREQ_TRUNC_KEYSIZE,
+	EHD_MTREQ_READONLY,
 };
 
 struct ehd_mount_info;
+struct ehd_mount_request;
 
 extern int cryptmount_init(void);
 extern void cryptmount_exit(void);
+
+extern struct ehd_mount_request *ehd_mtreq_new(void);
+extern void ehd_mtreq_free(struct ehd_mount_request *);
+extern int ehd_mtreq_set(struct ehd_mount_request *, enum ehd_mtreq_opt, ...);
 
 extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info *);
 extern int ehd_unload(const struct ehd_mount_info *);

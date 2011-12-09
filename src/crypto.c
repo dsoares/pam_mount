@@ -77,6 +77,88 @@ EXPORT_SYMBOL void ehd_mountinfo_free(struct ehd_mount_info *mt)
 		free(mt->loop_device);
 }
 
+EXPORT_SYMBOL struct ehd_mount_request *ehd_mtreq_new(void)
+{
+	struct ehd_mount_request *rq;
+
+	rq = calloc(1, sizeof(*rq));
+	if (rq == NULL)
+		return NULL;
+	return rq;
+}
+
+EXPORT_SYMBOL void ehd_mtreq_free(struct ehd_mount_request *rq)
+{
+	free(rq->container);
+	free(rq->mountpoint);
+	free(rq->fs_cipher);
+	free(rq->fs_hash);
+	free(rq->key_data);
+}
+
+EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
+    enum ehd_mtreq_opt opt, ...)
+{
+	va_list args;
+	const void *orig;
+	void *nv;
+
+	va_start(args, opt);
+	switch (opt) {
+	case EHD_MTREQ_CONTAINER:
+	case EHD_MTREQ_MOUNTPOINT:
+	case EHD_MTREQ_FS_CIPHER:
+	case EHD_MTREQ_FS_HASH:
+		orig = va_arg(args, const char *);
+		nv = HX_strdup(orig);
+		if (nv == NULL && orig != NULL)
+			goto out;
+		break;
+	case EHD_MTREQ_KEY_DATA:
+		orig = va_arg(args, const void *);
+		nv = HX_memdup(orig, rq->key_size);
+		if (nv == NULL)
+			goto out;
+		free(rq->key_data);
+		rq->key_data = nv;
+		break;
+	case EHD_MTREQ_KEY_SIZE:
+		rq->key_size = va_arg(args, unsigned int);
+		break;
+	case EHD_MTREQ_TRUNC_KEYSIZE:
+		rq->trunc_keysize = va_arg(args, unsigned int);
+		break;
+	case EHD_MTREQ_READONLY:
+		rq->readonly = va_arg(args, unsigned int);
+		break;
+	}
+	switch (opt) {
+	case EHD_MTREQ_CONTAINER:
+		free(rq->container);
+		rq->container = nv;
+		break;
+	case EHD_MTREQ_MOUNTPOINT:
+		free(rq->container);
+		rq->container = nv;
+		break;
+	case EHD_MTREQ_FS_CIPHER:
+		free(rq->fs_cipher);
+		rq->fs_cipher = nv;
+		break;
+	case EHD_MTREQ_FS_HASH:
+		free(rq->fs_hash);
+		rq->fs_hash = nv;
+		break;
+	default:
+		break;
+	}
+	va_end(args);
+	return 1;
+ out:
+	va_end(args);
+	return -errno;
+}
+
 /**
  * ehd_load - set up crypto device for an EHD container
  * @req:	parameters for setting up the mount
