@@ -113,6 +113,7 @@ EXPORT_SYMBOL void ehd_mtreq_free(struct ehd_mount_request *rq)
 	free(rq->fs_cipher);
 	free(rq->fs_hash);
 	free(rq->key_data);
+	free(rq);
 }
 
 EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
