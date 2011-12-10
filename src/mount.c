@@ -555,6 +555,36 @@ static void pmt_readfile(const char *file)
 	fclose(fp);
 }
 
+static int pmt_decrypt_keyfile(const struct vol *vol, const char *password,
+    hxmc_t **result)
+{
+	struct ehd_keydec_request *dp;
+	int ret;
+
+	dp = ehd_kdreq_new();
+	if (dp == NULL)
+		return -errno;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_KEYFILE, vol->fs_key_path);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_DIGEST, vol->fs_key_hash);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_CIPHER, vol->fs_key_cipher);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_PASSWORD, password);
+	if (ret < 0)
+		goto out;
+	ret = ehd_keydec_run(dp, result);
+	if (ret != EHD_KEYDEC_SUCCESS)
+		l0g("ehd_keydec_run: %s\n",
+		    ehd_keydec_strerror(ret));
+ out:
+	ehd_kdreq_free(dp);
+	return ret;
+}
+
 /**
  * do_mount -
  * @config:	current config
@@ -612,17 +642,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 		 * any openssl decryption. Without %CMD_CRYPTMOUNT however,
 		 * we have to do this ourselves.
 		 */
-		struct ehd_decryptkf_params dp = {
-			.keyfile  = vpt->fs_key_path,
-			.digest   = vpt->fs_key_hash,
-			.cipher   = vpt->fs_key_cipher,
-			.password = password,
-		};
-		ret = ehd_decrypt_keyfile(&dp);
-		if (ret != EHD_DECRYPTKF_SUCCESS)
-			l0g("ehd_decrypt_keyfile: %s\n",
-			    ehd_decryptkf_strerror(ret));
-		ll_password = dp.result;
+		ret = pmt_decrypt_keyfile(vpt, password, &ll_password);
 	} else {
 		ll_password = HXmc_strinit(password);
 	}

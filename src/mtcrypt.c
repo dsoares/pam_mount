@@ -366,6 +366,33 @@ static hxmc_t *mtcr_slurp_file(const char *file)
 	return buf;
 }
 
+static int mtcr_decrypt_keyfile(const struct mount_options *opt,
+    hxmc_t **result)
+{
+	struct ehd_keydec_request *dp;
+	int ret;
+
+	dp = ehd_kdreq_new();
+	if (dp == NULL)
+		return -errno;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_KEYFILE, opt->fsk_file);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_DIGEST, opt->fsk_hash);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_CIPHER, opt->fsk_cipher);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_PASSWORD, opt->fsk_password);
+	if (ret < 0)
+		goto out;
+	ret = ehd_keydec_run(dp, result);
+ out:
+	ehd_kdreq_free(dp);
+	return ret;
+}
+
 /**
  * mtcr_mount
  *
@@ -421,25 +448,12 @@ static int mtcr_mount(struct mount_options *opt)
 			goto out_r;
 		}
 	} else {
-#ifdef HAVE_LIBCRYPTO
-		struct ehd_decryptkf_params dp = {
-			.keyfile  = opt->fsk_file,
-			.digest   = opt->fsk_hash,
-			.cipher   = opt->fsk_cipher,
-			.password = opt->fsk_password,
-		};
-
-		ret = ehd_decrypt_keyfile(&dp);
-		key = dp.result;
-		if (ret != EHD_DECRYPTKF_SUCCESS || key == NULL) {
+		ret = mtcr_decrypt_keyfile(opt, &key);
+		if (ret != EHD_KEYDEC_SUCCESS || key == NULL) {
 			fprintf(stderr, "Error while decrypting fskey: %s\n",
-			        ehd_decryptkf_strerror(ret));
+			        ehd_keydec_strerror(ret));
 			goto out_z;
 		}
-#else
-		fprintf(stderr, "mtcrypt was compiled without OpenSSL support\n");
-		goto out_z;
-#endif
 	}
 
 	if (key != NULL) {

@@ -3,12 +3,15 @@ global:
 	cryptmount_init;
 	cryptmount_exit;
 	ehd_cipherdigest_security;
-	ehd_decrypt_keyfile;
-	ehd_decryptkf_strerror;
 	ehd_dbg;
 	ehd_err;
 	ehd_get_password;
 	ehd_is_luks;
+	ehd_kdreq_free;
+	ehd_kdreq_new;
+	ehd_kdreq_set;
+	ehd_keydec_run;
+	ehd_keydec_strerror;
 	ehd_load;
 	ehd_logctl;
 	ehd_loop_setup;
