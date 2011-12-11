@@ -26,6 +26,7 @@
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/evp.h>
 #endif
+#include "cmt-internal.h"
 
 /**
  * @object:		volume or mountpoint; used by remount
@@ -405,7 +406,7 @@ static int mtcr_mount(struct mount_options *opt)
 	struct stat sb;
 	hxmc_t *key = NULL;
 	int ret, argk;
-	struct ehd_mount_info mount_info;
+	struct ehd_mount_info *mount_info;
 	struct ehd_mount_request *mount_request;
 	unsigned int key_size = 0, trunc_keysize;
 
@@ -483,16 +484,16 @@ static int mtcr_mount(struct mount_options *opt)
 	} else if (ret == 0) {
 		goto out_z;
 	}
-	if (mount_info.crypto_device == NULL) {
+	if (mount_info->crypto_device == NULL) {
 		if (mtcr_debug)
 			fprintf(stderr, "No crypto device assigned\n");
-		ehd_unload(&mount_info);
-		ehd_mountinfo_free(&mount_info);
+		ehd_unload(mount_info);
+		ehd_mtinfo_free(mount_info);
 		goto out_z;
 	}
 
 	opt->dm_timeout *= 3;
-	while (stat(mount_info.crypto_device, &sb) < 0 && errno == ENOENT &&
+	while (stat(mount_info->crypto_device, &sb) < 0 && errno == ENOENT &&
 	    opt->dm_timeout-- > 0)
 		usleep(333333);
 
@@ -500,7 +501,7 @@ static int mtcr_mount(struct mount_options *opt)
 		argk = 0;
 		fsck_args[argk++] = "fsck";
 		fsck_args[argk++] = "-p";
-		fsck_args[argk++] = mount_info.crypto_device;
+		fsck_args[argk++] = mount_info->crypto_device;
 		fsck_args[argk] = NULL;
 		assert(argk < ARRAY_SIZE(fsck_args));
 
@@ -516,8 +517,8 @@ static int mtcr_mount(struct mount_options *opt)
 			fprintf(stderr, "Automatic fsck failed, manual "
 			        "intervention required, run_sync status %d\n",
 			        ret);
-			ehd_unload(&mount_info);
-			ehd_mountinfo_free(&mount_info);
+			ehd_unload(mount_info);
+			ehd_mtinfo_free(mount_info);
 			goto out_z;
 		}
 	}
@@ -533,7 +534,7 @@ static int mtcr_mount(struct mount_options *opt)
 		mount_args[argk++] = "-o";
 		mount_args[argk++] = opt->extra_opts;
 	}
-	mount_args[argk++] = mount_info.crypto_device;
+	mount_args[argk++] = mount_info->crypto_device;
 	mount_args[argk++] = opt->mountpoint;
 	mount_args[argk] = NULL;
 
@@ -541,22 +542,22 @@ static int mtcr_mount(struct mount_options *opt)
 	arglist_llog(mount_args);
 	if ((ret = HXproc_run_sync(mount_args, HXPROC_VERBOSE)) != 0) {
 		fprintf(stderr, "mount failed with run_sync status %d\n", ret);
-		ehd_unload(&mount_info);
+		ehd_unload(mount_info);
 		ret = 0;
 	} else if ((ret = pmt_cmtab_add(opt->mountpoint,
-	    mount_info.container, mount_info.loop_device,
-	    mount_info.crypto_device)) <= 0) {
+	    mount_info->container, mount_info->loop_device,
+	    mount_info->crypto_device)) <= 0) {
 		fprintf(stderr, "pmt_cmtab_add: %s\n", strerror(errno));
 		/* ignore error on cmtab - let user have his crypto */
 	} else if (opt->no_update) {
 		/* awesome logic */;
 	} else {
-		pmt_smtab_add(mount_info.container, opt->mountpoint,
+		pmt_smtab_add(mount_info->container, opt->mountpoint,
 			"crypt", (opt->extra_opts != NULL) ?
 			opt->extra_opts : "defaults");
 	}
 
-	ehd_mountinfo_free(&mount_info);
+	ehd_mtinfo_free(mount_info);
 	return ret;
 
  out_r:

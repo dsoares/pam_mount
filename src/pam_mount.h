@@ -117,23 +117,6 @@ struct kvp {
 	struct HXlist_head list;
 };
 
-/**
- * struct ehd_mount - EHD mount info
- * @container:		path to disk image
- * @lower_device:	link to either @container if a block device,
- * 			otherwise points to @loop_device.
- * @loop_device:	loop device that was created, if any
- * @crypto_name:	crypto device that was created (basename only)
- * @crypto_device:	full path to the crypto device
- */
-struct ehd_mount_info {
-	char *container;
-	const char *lower_device;
-	char *loop_device;
-	hxmc_t *crypto_name;
-	hxmc_t *crypto_device;
-};
-
 typedef int (mount_op_fn_t)(const struct config *, struct vol *,
 	struct HXformat_map *, const char *);
 

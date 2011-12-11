@@ -84,16 +84,42 @@ EXPORT_SYMBOL void cryptmount_exit(void)
 	pthread_mutex_unlock(&ehd_init_lock);
 }
 
+EXPORT_SYMBOL int ehd_mtinfo_get(struct ehd_mount_info *mt,
+    enum ehd_mtinfo_opt opt, void *ptr)
+{
+	switch (opt) {
+	case EHD_MTINFO_CONTAINER:
+		*static_cast(const char **, ptr) = mt->container;
+		break;
+	case EHD_MTINFO_CRYPTONAME:
+		*static_cast(const char **, ptr) = mt->crypto_name;
+		break;
+	case EHD_MTINFO_CRYPTODEV:
+		*static_cast(const char **, ptr) = mt->crypto_device;
+		break;
+	case EHD_MTINFO_LOOPDEV:
+		*static_cast(const char **, ptr) = mt->loop_device;
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
 /**
  * ehd_mtfree - free data associated with an EHD mount info block
  */
-EXPORT_SYMBOL void ehd_mountinfo_free(struct ehd_mount_info *mt)
+EXPORT_SYMBOL void ehd_mtinfo_free(struct ehd_mount_info *mt)
 {
 	free(mt->container);
 	HXmc_free(mt->crypto_device);
 	HXmc_free(mt->crypto_name);
 	if (mt->loop_device != NULL)
 		free(mt->loop_device);
+	/*
+	 * mt->lower_device is either NULL or pointing to
+	 * container of loop_device - and thus must not be freed.
+	 */
 }
 
 EXPORT_SYMBOL struct ehd_mount_request *ehd_mtreq_new(void)
@@ -185,17 +211,21 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
  * @mt:		EHD mount state
  */
 EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
-    struct ehd_mount_info *mt)
+    struct ehd_mount_info **mtp)
 {
 	struct stat sb;
 	int saved_errno, ret;
+	struct ehd_mount_info *mt;
 
-	memset(mt, 0, sizeof(*mt));
+	*mtp = mt = malloc(sizeof(*mt));
 	if (stat(req->container, &sb) < 0) {
 		l0g("Could not stat %s: %s\n", req->container, strerror(errno));
 		return -errno;
 	}
 
+	*mtp = mt = malloc(sizeof(*mt));
+	if (mt == NULL)
+		goto out_err;
 	if ((mt->container = HX_strdup(req->container)) == NULL)
 		goto out_err;
 	if (S_ISBLK(sb.st_mode)) {
@@ -235,8 +265,10 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
 	ret = -errno;
  out_ser:
 	saved_errno = errno;
-	ehd_unload(mt);
-	ehd_mountinfo_free(mt);
+	if (mt != NULL) {
+		ehd_unload(mt);
+		ehd_mtinfo_free(mt);
+	}
 	errno = saved_errno;
 	return ret;
 }
@@ -253,7 +285,7 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
  * not look as easy as the loop one, and does not look shared (i.e. available
  * as a system library) either.
  */
-EXPORT_SYMBOL int ehd_unload(const struct ehd_mount_info *mt)
+EXPORT_SYMBOL int ehd_unload(struct ehd_mount_info *mt)
 {
 	int ret, ret2;
 

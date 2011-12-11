@@ -70,6 +70,13 @@ enum ehd_mtreq_opt {
 	EHD_MTREQ_READONLY,
 };
 
+enum ehd_mtinfo_opt {
+	EHD_MTINFO_CONTAINER = 1,
+	EHD_MTINFO_CRYPTONAME,
+	EHD_MTINFO_CRYPTODEV,
+	EHD_MTINFO_LOOPDEV,
+};
+
 struct ehd_mount_info;
 struct ehd_mount_request;
 
@@ -80,9 +87,11 @@ extern struct ehd_mount_request *ehd_mtreq_new(void);
 extern void ehd_mtreq_free(struct ehd_mount_request *);
 extern int ehd_mtreq_set(struct ehd_mount_request *, enum ehd_mtreq_opt, ...);
 
-extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info *);
-extern int ehd_unload(const struct ehd_mount_info *);
-extern void ehd_mountinfo_free(struct ehd_mount_info *);
+extern int ehd_mtinfo_get(struct ehd_mount_info *, enum ehd_mtinfo_opt, void *);
+extern void ehd_mtinfo_free(struct ehd_mount_info *);
+
+extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info **);
+extern int ehd_unload(struct ehd_mount_info *);
 extern int ehd_is_luks(const char *, bool);
 
 extern struct ehd_keydec_request *ehd_kdreq_new(void);

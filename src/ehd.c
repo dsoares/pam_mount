@@ -318,7 +318,7 @@ static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
 static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
-	struct ehd_mount_info mount_info;
+	struct ehd_mount_info *mount_info;
 	struct ehd_mount_request *mount_request;
 	bool f_ret = false;
 	int ret;
@@ -365,11 +365,14 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 		goto out;
 
 	if (ehd_load(mount_request, &mount_info) > 0) {
+		const char *crypto_device = NULL;
+		ehd_mtinfo_get(mount_info, EHD_MTINFO_CRYPTODEV, &crypto_device);
 		if (!cont->skip_random)
-			ehd_xfer2(mount_info.crypto_device, cont->size);
-		f_ret = ehd_mkfs(pg, mount_info.crypto_device);
-		ret   = ehd_unload(&mount_info);
+			ehd_xfer2(crypto_device, cont->size);
+		f_ret = ehd_mkfs(pg, crypto_device);
+		ret   = ehd_unload(mount_info);
 		/* If mkfs failed, use its code. */
+		ehd_mtinfo_free(mount_info);
 		if (f_ret)
 			f_ret = ret > 0;
 	}
