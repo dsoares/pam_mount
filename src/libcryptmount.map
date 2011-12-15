@@ -22,7 +22,6 @@ global:
 	ehd_mtreq_set;
 	ehd_mtreq_free;
 	ehd_unload;
-	ehd_mountinfo_free;
 local:
 	*;
 };
