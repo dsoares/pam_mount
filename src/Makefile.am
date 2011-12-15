@@ -39,6 +39,8 @@ if HAVE_VND
 libcryptmount_la_SOURCES += loop-vnd.c
 endif
 
+include_HEADERS = libcryptmount.h
+
 #
 # libpmt_mtab
 #
