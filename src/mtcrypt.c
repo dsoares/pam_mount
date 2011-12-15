@@ -26,6 +26,7 @@
 #ifdef HAVE_LIBCRYPTO
 #	include <openssl/evp.h>
 #endif
+#include "cmt-internal.h"
 
 /**
  * @object:		volume or mountpoint; used by remount
@@ -366,6 +367,33 @@ static hxmc_t *mtcr_slurp_file(const char *file)
 	return buf;
 }
 
+static int mtcr_decrypt_keyfile(const struct mount_options *opt,
+    hxmc_t **result)
+{
+	struct ehd_keydec_request *dp;
+	int ret;
+
+	dp = ehd_kdreq_new();
+	if (dp == NULL)
+		return -errno;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_KEYFILE, opt->fsk_file);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_DIGEST, opt->fsk_hash);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_CIPHER, opt->fsk_cipher);
+	if (ret < 0)
+		goto out;
+	ret = ehd_kdreq_set(dp, EHD_KDREQ_PASSWORD, opt->fsk_password);
+	if (ret < 0)
+		goto out;
+	ret = ehd_keydec_run(dp, result);
+ out:
+	ehd_kdreq_free(dp);
+	return ret;
+}
+
 /**
  * mtcr_mount
  *
@@ -376,80 +404,96 @@ static int mtcr_mount(struct mount_options *opt)
 	const char *mount_args[8];
 	const char *fsck_args[4];
 	struct stat sb;
+	hxmc_t *key = NULL;
 	int ret, argk;
-	hxmc_t *key;
-	struct ehd_mount_info mount_info;
-	struct ehd_mount_request mount_request = {
-		.container = opt->container,
-		.fs_cipher = opt->dmcrypt_cipher,
-		.fs_hash   = opt->dmcrypt_hash,
-		.readonly  = opt->readonly,
+	struct ehd_mount_info *mount_info;
+	struct ehd_mount_request *mount_request;
+	unsigned int key_size = 0, trunc_keysize;
 
-		/* Hack for CRYPT_PLAIN. */
-		.trunc_keysize = 256 / CHAR_BIT,
-	};
+	mount_request = ehd_mtreq_new();
+	if (mount_request == NULL) {
+		fprintf(stderr, "%s\n", strerror(errno));
+		return 0;
+	}
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CONTAINER, opt->container);
+	if (ret < 0)
+		goto out_r;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_FS_CIPHER, opt->dmcrypt_cipher);
+	if (ret < 0)
+		goto out_r;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_FS_HASH, opt->dmcrypt_hash);
+	if (ret < 0)
+		goto out_r;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_READONLY, opt->readonly);
+	if (ret < 0)
+		goto out_r;
+	/* Hack for CRYPT_PLAIN: default to 256 */
+	trunc_keysize = 256 / CHAR_BIT;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_TRUNC_KEYSIZE, trunc_keysize);
+	if (ret < 0)
+		goto out_r;
 
 	if (opt->fsk_file == NULL) {
 		/* LUKS derives the key material on its own */
-		key = HXmc_meminit(opt->fsk_password,
-		      HXmc_length(opt->fsk_password));
-		if (key == NULL) {
-			fprintf(stderr, "HXmc_dup: %s\n", strerror(errno));
-			return 0;
-		}
+		ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_SIZE, HXmc_length(opt->fsk_password));
+		if (ret < 0)
+			goto out_r;
+		ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_DATA, opt->fsk_password);
+		if (ret < 0)
+			goto out_r;
 		/* Leave trunc_keysize at 0 */
 	} else if (kfpt_selected(opt->fsk_cipher)) {
 		key = mtcr_slurp_file(opt->fsk_file);
-		if (key == NULL)
-			return 0;
-		mount_request.trunc_keysize = HXmc_length(key);
-	} else {
-#ifdef HAVE_LIBCRYPTO
-		struct ehd_decryptkf_params dp = {
-			.keyfile  = opt->fsk_file,
-			.digest   = opt->fsk_hash,
-			.cipher   = opt->fsk_cipher,
-			.password = opt->fsk_password,
-		};
-
-		ret = ehd_decrypt_keyfile(&dp);
-		key = dp.result;
-		if (ret != EHD_DECRYPTKF_SUCCESS || key == NULL) {
-			fprintf(stderr, "Error while decrypting fskey: %s\n",
-			        ehd_decryptkf_strerror(ret));
-			return 0;
+		if (key == NULL) {
+			ret = -errno;
+			goto out_r;
 		}
-		mount_request.trunc_keysize = HXmc_length(key);
-#else
-		fprintf(stderr, "mtcrypt was compiled without OpenSSL support\n");
-		return 0;
-#endif
+	} else {
+		ret = mtcr_decrypt_keyfile(opt, &key);
+		if (ret != EHD_KEYDEC_SUCCESS || key == NULL) {
+			fprintf(stderr, "Error while decrypting fskey: %s\n",
+			        ehd_keydec_strerror(ret));
+			goto out_z;
+		}
 	}
 
-	mount_request.key_data = key;
-	mount_request.key_size = HXmc_length(key);
-	if (opt->trunc_keysize != 0)
-		mount_request.trunc_keysize = opt->trunc_keysize;
+	if (key != NULL) {
+		key_size = HXmc_length(key);
+		ret = ehd_mtreq_set(mount_request, EHD_MTREQ_TRUNC_KEYSIZE, key_size);
+		if (ret < 0)
+			goto out_r;
+		ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_SIZE, key_size);
+		if (ret < 0)
+			goto out_r;
+		ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_DATA, key);
+		HXmc_free(key);
+		key = NULL;
+		if (ret < 0)
+			goto out_r;
+	}
+	if (opt->trunc_keysize != 0) {
+		ret = ehd_mtreq_set(mount_request, EHD_MTREQ_TRUNC_KEYSIZE, opt->trunc_keysize);
+		if (ret < 0)
+			goto out_r;
+	}
 
-	w4rn("keysize=%u trunc_keysize=%u\n", mount_request.key_size,
-	     mount_request.trunc_keysize);
-	if ((ret = ehd_load(&mount_request, &mount_info)) < 0) {
+	w4rn("keysize=%u trunc_keysize=%u\n", key_size, trunc_keysize);
+	if ((ret = ehd_load(mount_request, &mount_info)) < 0) {
 		fprintf(stderr, "ehd_load: %s\n", strerror(errno));
-		return 0;
+		goto out_z;
 	} else if (ret == 0) {
-		return 0;
+		goto out_z;
 	}
-	HXmc_free(key);
-	if (mount_info.crypto_device == NULL) {
+	if (mount_info->crypto_device == NULL) {
 		if (mtcr_debug)
 			fprintf(stderr, "No crypto device assigned\n");
-		ehd_unload(&mount_info);
-		ehd_mountinfo_free(&mount_info);
-		return 0;
+		ehd_unload(mount_info);
+		ehd_mtinfo_free(mount_info);
+		goto out_z;
 	}
 
 	opt->dm_timeout *= 3;
-	while (stat(mount_info.crypto_device, &sb) < 0 && errno == ENOENT &&
+	while (stat(mount_info->crypto_device, &sb) < 0 && errno == ENOENT &&
 	    opt->dm_timeout-- > 0)
 		usleep(333333);
 
@@ -457,7 +501,7 @@ static int mtcr_mount(struct mount_options *opt)
 		argk = 0;
 		fsck_args[argk++] = "fsck";
 		fsck_args[argk++] = "-p";
-		fsck_args[argk++] = mount_info.crypto_device;
+		fsck_args[argk++] = mount_info->crypto_device;
 		fsck_args[argk] = NULL;
 		assert(argk < ARRAY_SIZE(fsck_args));
 
@@ -473,12 +517,13 @@ static int mtcr_mount(struct mount_options *opt)
 			fprintf(stderr, "Automatic fsck failed, manual "
 			        "intervention required, run_sync status %d\n",
 			        ret);
-			ehd_unload(&mount_info);
-			ehd_mountinfo_free(&mount_info);
-			return false;
+			ehd_unload(mount_info);
+			ehd_mtinfo_free(mount_info);
+			goto out_z;
 		}
 	}
 
+	/* candidate for replacement by some libmount calls, I guess. */
 	argk = 0;
 	mount_args[argk++] = "mount";
 	if (opt->fstype != NULL) {
@@ -489,7 +534,7 @@ static int mtcr_mount(struct mount_options *opt)
 		mount_args[argk++] = "-o";
 		mount_args[argk++] = opt->extra_opts;
 	}
-	mount_args[argk++] = mount_info.crypto_device;
+	mount_args[argk++] = mount_info->crypto_device;
 	mount_args[argk++] = opt->mountpoint;
 	mount_args[argk] = NULL;
 
@@ -497,23 +542,29 @@ static int mtcr_mount(struct mount_options *opt)
 	arglist_llog(mount_args);
 	if ((ret = HXproc_run_sync(mount_args, HXPROC_VERBOSE)) != 0) {
 		fprintf(stderr, "mount failed with run_sync status %d\n", ret);
-		ehd_unload(&mount_info);
+		ehd_unload(mount_info);
 		ret = 0;
 	} else if ((ret = pmt_cmtab_add(opt->mountpoint,
-	    mount_info.container, mount_info.loop_device,
-	    mount_info.crypto_device)) <= 0) {
+	    mount_info->container, mount_info->loop_device,
+	    mount_info->crypto_device)) <= 0) {
 		fprintf(stderr, "pmt_cmtab_add: %s\n", strerror(errno));
 		/* ignore error on cmtab - let user have his crypto */
 	} else if (opt->no_update) {
 		/* awesome logic */;
 	} else {
-		pmt_smtab_add(mount_info.container, opt->mountpoint,
+		pmt_smtab_add(mount_info->container, opt->mountpoint,
 			"crypt", (opt->extra_opts != NULL) ?
 			opt->extra_opts : "defaults");
 	}
 
-	ehd_mountinfo_free(&mount_info);
+	ehd_mtinfo_free(mount_info);
 	return ret;
+
+ out_r:
+	fprintf(stderr, "ehd_mtreq_set: %s\n", strerror(-ret));
+ out_z:
+	HXmc_free(key);
+	return 0;
 }
 
 static bool mtcr_get_umount_options(int *argc, const char ***argv,

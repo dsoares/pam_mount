@@ -318,18 +318,18 @@ static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
 static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 {
 	struct container_ctl *cont = &pg->cont;
-	struct ehd_mount_info mount_info;
-	struct ehd_mount_request mount_request = {
-		.container = cont->path,
-		.key_data  = password,
-		.key_size  = strlen(password),
-		.readonly  = EHD_LOSETUP_RW,
-	};
+	struct ehd_mount_info *mount_info;
+	struct ehd_mount_request *mount_request;
+	bool f_ret = false;
 	int ret;
 
 	if (cont->blkdev) {
 		cont->device = cont->path;
 	} else {
+		/*
+		 * Need manual setup of loop device here, since ehd_load
+		 * always does a crypt mount too, which we do not have yet.
+		 */
 		ret = ehd_loop_setup(cont->path, &cont->loop_dev, EHD_LOSETUP_RW);
 		if (ret == 0) {
 			fprintf(stderr, "loop_setup: error: no free loop "
@@ -348,17 +348,36 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	if (ret <= 0)
 		fprintf(stderr, "loop_release: warning: %s\n", strerror(-ret));
 
-	bool f_ret = false;
-	if (ehd_load(&mount_request, &mount_info) > 0) {
+	mount_request = ehd_mtreq_new();
+	if (mount_request == NULL)
+		return -errno;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CONTAINER, cont->path);
+	if (ret < 0)
+		goto out;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_SIZE, strlen(password));
+	if (ret < 0)
+		goto out;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_DATA, password);
+	if (ret < 0)
+		goto out;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_READONLY, EHD_LOSETUP_RW);
+	if (ret < 0)
+		goto out;
+
+	if (ehd_load(mount_request, &mount_info) > 0) {
+		const char *crypto_device = NULL;
+		ehd_mtinfo_get(mount_info, EHD_MTINFO_CRYPTODEV, &crypto_device);
 		if (!cont->skip_random)
-			ehd_xfer2(mount_info.crypto_device, cont->size);
-		f_ret = ehd_mkfs(pg, mount_info.crypto_device);
-		ret   = ehd_unload(&mount_info);
+			ehd_xfer2(crypto_device, cont->size);
+		f_ret = ehd_mkfs(pg, crypto_device);
+		ret   = ehd_unload(mount_info);
 		/* If mkfs failed, use its code. */
+		ehd_mtinfo_free(mount_info);
 		if (f_ret)
 			f_ret = ret > 0;
 	}
-
+ out:
+	ehd_mtreq_free(mount_request);
 	return f_ret;
 }
 

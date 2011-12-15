@@ -28,6 +28,25 @@
 #	include <openssl/evp.h>
 #endif
 
+#ifdef HAVE_LIBCRYPTO
+/**
+ * struct ehd_keydec_request - parameter agglomerator for ehd_kdreq_final
+ * @keyfile:	path to the key file
+ * @digest:	digest used for the key file
+ * @cipher:	cipher used for the key file
+ * @password:	password to unlock the key material
+ */
+struct ehd_keydec_request {
+	char *keyfile, *digest, *cipher, *password;
+
+	const EVP_CIPHER *s_cipher;
+	const EVP_MD *s_digest;
+	const unsigned char *d_salt, *d_text;
+	hxmc_t *d_result;
+	unsigned int d_keysize;
+};
+#endif
+
 static pthread_mutex_t ehd_init_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned long ehd_use_count;
 
@@ -65,16 +84,125 @@ EXPORT_SYMBOL void cryptmount_exit(void)
 	pthread_mutex_unlock(&ehd_init_lock);
 }
 
+EXPORT_SYMBOL int ehd_mtinfo_get(struct ehd_mount_info *mt,
+    enum ehd_mtinfo_opt opt, void *ptr)
+{
+	switch (opt) {
+	case EHD_MTINFO_CONTAINER:
+		*static_cast(const char **, ptr) = mt->container;
+		break;
+	case EHD_MTINFO_CRYPTONAME:
+		*static_cast(const char **, ptr) = mt->crypto_name;
+		break;
+	case EHD_MTINFO_CRYPTODEV:
+		*static_cast(const char **, ptr) = mt->crypto_device;
+		break;
+	case EHD_MTINFO_LOOPDEV:
+		*static_cast(const char **, ptr) = mt->loop_device;
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
 /**
  * ehd_mtfree - free data associated with an EHD mount info block
  */
-EXPORT_SYMBOL void ehd_mountinfo_free(struct ehd_mount_info *mt)
+EXPORT_SYMBOL void ehd_mtinfo_free(struct ehd_mount_info *mt)
 {
 	free(mt->container);
 	HXmc_free(mt->crypto_device);
 	HXmc_free(mt->crypto_name);
 	if (mt->loop_device != NULL)
 		free(mt->loop_device);
+	/*
+	 * mt->lower_device is either NULL or pointing to
+	 * container of loop_device - and thus must not be freed.
+	 */
+}
+
+EXPORT_SYMBOL struct ehd_mount_request *ehd_mtreq_new(void)
+{
+	struct ehd_mount_request *rq;
+
+	rq = calloc(1, sizeof(*rq));
+	if (rq == NULL)
+		return NULL;
+	return rq;
+}
+
+EXPORT_SYMBOL void ehd_mtreq_free(struct ehd_mount_request *rq)
+{
+	free(rq->container);
+	free(rq->mountpoint);
+	free(rq->fs_cipher);
+	free(rq->fs_hash);
+	free(rq->key_data);
+	free(rq);
+}
+
+EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
+    enum ehd_mtreq_opt opt, ...)
+{
+	va_list args;
+	const void *orig;
+	void *nv;
+
+	va_start(args, opt);
+	switch (opt) {
+	case EHD_MTREQ_CONTAINER:
+	case EHD_MTREQ_MOUNTPOINT:
+	case EHD_MTREQ_FS_CIPHER:
+	case EHD_MTREQ_FS_HASH:
+		orig = va_arg(args, const char *);
+		nv = HX_strdup(orig);
+		if (nv == NULL && orig != NULL)
+			goto out;
+		break;
+	case EHD_MTREQ_KEY_DATA:
+		orig = va_arg(args, const void *);
+		nv = HX_memdup(orig, rq->key_size);
+		if (nv == NULL)
+			goto out;
+		free(rq->key_data);
+		rq->key_data = nv;
+		break;
+	case EHD_MTREQ_KEY_SIZE:
+		rq->key_size = va_arg(args, unsigned int);
+		break;
+	case EHD_MTREQ_TRUNC_KEYSIZE:
+		rq->trunc_keysize = va_arg(args, unsigned int);
+		break;
+	case EHD_MTREQ_READONLY:
+		rq->readonly = va_arg(args, unsigned int);
+		break;
+	}
+	switch (opt) {
+	case EHD_MTREQ_CONTAINER:
+		free(rq->container);
+		rq->container = nv;
+		break;
+	case EHD_MTREQ_MOUNTPOINT:
+		free(rq->container);
+		rq->container = nv;
+		break;
+	case EHD_MTREQ_FS_CIPHER:
+		free(rq->fs_cipher);
+		rq->fs_cipher = nv;
+		break;
+	case EHD_MTREQ_FS_HASH:
+		free(rq->fs_hash);
+		rq->fs_hash = nv;
+		break;
+	default:
+		break;
+	}
+	va_end(args);
+	return 1;
+ out:
+	va_end(args);
+	return -errno;
 }
 
 /**
@@ -83,17 +211,21 @@ EXPORT_SYMBOL void ehd_mountinfo_free(struct ehd_mount_info *mt)
  * @mt:		EHD mount state
  */
 EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
-    struct ehd_mount_info *mt)
+    struct ehd_mount_info **mtp)
 {
 	struct stat sb;
 	int saved_errno, ret;
+	struct ehd_mount_info *mt;
 
-	memset(mt, 0, sizeof(*mt));
+	*mtp = mt = malloc(sizeof(*mt));
 	if (stat(req->container, &sb) < 0) {
 		l0g("Could not stat %s: %s\n", req->container, strerror(errno));
 		return -errno;
 	}
 
+	*mtp = mt = malloc(sizeof(*mt));
+	if (mt == NULL)
+		goto out_err;
 	if ((mt->container = HX_strdup(req->container)) == NULL)
 		goto out_err;
 	if (S_ISBLK(sb.st_mode)) {
@@ -133,8 +265,10 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
 	ret = -errno;
  out_ser:
 	saved_errno = errno;
-	ehd_unload(mt);
-	ehd_mountinfo_free(mt);
+	if (mt != NULL) {
+		ehd_unload(mt);
+		ehd_mtinfo_free(mt);
+	}
 	errno = saved_errno;
 	return ret;
 }
@@ -151,7 +285,7 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
  * not look as easy as the loop one, and does not look shared (i.e. available
  * as a system library) either.
  */
-EXPORT_SYMBOL int ehd_unload(const struct ehd_mount_info *mt)
+EXPORT_SYMBOL int ehd_unload(struct ehd_mount_info *mt)
 {
 	int ret, ret2;
 
@@ -179,18 +313,7 @@ EXPORT_SYMBOL int ehd_is_luks(const char *device, bool blkdev)
 #endif
 
 #ifdef HAVE_LIBCRYPTO
-struct decrypt_info {
-	struct ehd_decryptkf_params *p;
-	const EVP_CIPHER *cipher;
-	const EVP_MD *digest;
-
-	const unsigned char *data;
-	unsigned int keysize;
-
-	const unsigned char *salt;
-};
-
-static int ehd_decrypt_key2(const struct decrypt_info *info)
+static int ehd_decrypt_key2(struct ehd_keydec_request *par)
 {
 	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 	unsigned int out_cumul_len = 0;
@@ -198,17 +321,17 @@ static int ehd_decrypt_key2(const struct decrypt_info *info)
 	int out_len = 0;
 	hxmc_t *out;
 
-	if (EVP_BytesToKey(info->cipher, info->digest, info->salt,
-	    signed_cast(const unsigned char *, info->p->password),
-	    (info->p->password == NULL) ? 0 : strlen(info->p->password),
+	if (EVP_BytesToKey(par->s_cipher, par->s_digest, par->d_salt,
+	    signed_cast(const unsigned char *, par->password),
+	    (par->password == NULL) ? 0 : strlen(par->password),
 	    1, key, iv) <= 0)
-		return EHD_DECRYPTKF_OTHER;
+		return EHD_KEYDEC_OTHER;
 
-	out = HXmc_meminit(NULL, info->keysize + info->cipher->block_size);
+	out = HXmc_meminit(NULL, par->d_keysize + par->s_cipher->block_size);
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_DecryptInit_ex(&ctx, info->cipher, NULL, key, iv);
+	EVP_DecryptInit_ex(&ctx, par->s_cipher, NULL, key, iv);
 	EVP_DecryptUpdate(&ctx, signed_cast(unsigned char *,
-		&out[out_len]), &out_len, info->data, info->keysize);
+		&out[out_len]), &out_len, par->d_text, par->d_keysize);
 	out_cumul_len += out_len;
 	EVP_DecryptFinal_ex(&ctx, signed_cast(unsigned char *,
 		&out[out_len]), &out_len);
@@ -216,26 +339,31 @@ static int ehd_decrypt_key2(const struct decrypt_info *info)
 	HXmc_setlen(&out, out_cumul_len);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
-	info->p->result = out;
-	return 0;
+	par->d_result = out;
+	return EHD_KEYDEC_SUCCESS;
 }
+#endif
 
-EXPORT_SYMBOL int ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
+EXPORT_SYMBOL int
+ehd_keydec_run(struct ehd_keydec_request *par, hxmc_t **res)
 {
-	struct decrypt_info info = {
-		.digest = EVP_get_digestbyname(par->digest),
-		.cipher = EVP_get_cipherbyname(par->cipher),
-		.p      = par,
-	};
+#ifdef HAVE_LIBCRYPTO
 	unsigned char *buf;
 	struct stat sb;
 	ssize_t i_ret;
 	int fd, ret;
 
-	if (info.digest == NULL)
-		return EHD_DECRYPTKF_NODIGEST;
-	if (info.cipher == NULL)
-		return EHD_DECRYPTKF_NOCIPHER;
+	if (par->digest == NULL)
+		return EHD_KEYDEC_NODIGEST;
+	if (par->cipher == NULL)
+		return EHD_KEYDEC_NOCIPHER;
+	par->s_digest = EVP_get_digestbyname(par->digest);
+	if (par->s_digest == NULL)
+		return EHD_KEYDEC_NODIGEST;
+	par->s_cipher = EVP_get_cipherbyname(par->cipher);
+	if (par->s_cipher == NULL)
+		return EHD_KEYDEC_NOCIPHER;
+
 	if ((fd = open(par->keyfile, O_RDONLY)) < 0)
 		return -errno;
 	if (fstat(fd, &sb) < 0) {
@@ -250,39 +378,102 @@ EXPORT_SYMBOL int ehd_decrypt_keyfile(struct ehd_decryptkf_params *par)
 		goto out;
 	}
 	if ((i_ret = read(fd, buf, sb.st_size)) != sb.st_size) {
-		ret = (i_ret < 0) ? -errno : EHD_DECRYPTKF_OTHER;
+		ret = (i_ret < 0) ? -errno : EHD_KEYDEC_OTHER;
 		l0g("Incomplete read of %u bytes got %Zd bytes\n",
 		    sb.st_size, i_ret);
 		goto out2;
 	}
 
-	info.salt    = &buf[strlen("Salted__")];
-	info.data    = info.salt + PKCS5_SALT_LEN;
-	info.keysize = sb.st_size - (info.data - buf);
-	ret = ehd_decrypt_key2(&info);
-
+	par->d_salt    = &buf[strlen("Salted__")];
+	par->d_text    = par->d_salt + PKCS5_SALT_LEN;
+	par->d_keysize = sb.st_size - (par->d_text - buf);
+	ret = ehd_decrypt_key2(par);
+	*res = par->d_result;
  out2:
 	free(buf);
  out:
 	close(fd);
 	return ret;
+#else
+	l0g("%s called, but library built without openssl\n", __func__);
+	return -EINVAL;
+#endif
 }
-#endif /* HAVE_LIBCRYPTO */
 
-EXPORT_SYMBOL const char *ehd_decryptkf_strerror(int e)
+EXPORT_SYMBOL const char *ehd_keydec_strerror(int e)
 {
 	if (e <= 0)
 		return strerror(-e);
 	switch (e) {
-	case EHD_DECRYPTKF_NODIGEST:
+	case EHD_KEYDEC_NODIGEST:
 		return "Unknown digest";
-	case EHD_DECRYPTKF_NOCIPHER:
+	case EHD_KEYDEC_NOCIPHER:
 		return "Unknown cipher";
-	case EHD_DECRYPTKF_OTHER:
+	case EHD_KEYDEC_OTHER:
 		return "Other unspecified error";
 	default:
 		return "Unknown error code";
 	}
+}
+
+EXPORT_SYMBOL struct ehd_keydec_request *ehd_kdreq_new(void)
+{
+	struct ehd_keydec_request *rq;
+
+	rq = calloc(1, sizeof(*rq));
+	if (rq == NULL)
+		return NULL;
+	return rq;
+}
+
+EXPORT_SYMBOL void ehd_kdreq_free(struct ehd_keydec_request *rq)
+{
+	free(rq->keyfile);
+	free(rq->cipher);
+	free(rq->digest);
+	free(rq->password);
+	free(rq);
+}
+
+EXPORT_SYMBOL int ehd_kdreq_set(struct ehd_keydec_request *rq,
+    enum ehd_kdreq_opt opt, ...)
+{
+	va_list args;
+	const void *orig;
+	void *nv;
+
+	va_start(args, opt);
+	switch (opt) {
+	case EHD_KDREQ_KEYFILE ... EHD_KDREQ_PASSWORD:
+		orig = va_arg(args, const char *);
+		nv = HX_strdup(orig);
+		if (nv == NULL && orig != NULL)
+			goto out;
+		break;
+	}
+	switch (opt) {
+	case EHD_KDREQ_KEYFILE:
+		free(rq->keyfile);
+		rq->keyfile = nv;
+		break;
+	case EHD_KDREQ_CIPHER:
+		free(rq->cipher);
+		rq->cipher = nv;
+		break;
+	case EHD_KDREQ_DIGEST:
+		free(rq->digest);
+		rq->digest = nv;
+		break;
+	case EHD_KDREQ_PASSWORD:
+		free(rq->password);
+		rq->password = nv;
+		break;
+	}
+	va_end(args);
+	return 1;
+ out:
+	va_end(args);
+	return -errno;
 }
 
 static unsigned int __cipher_digest_security(const char *s)

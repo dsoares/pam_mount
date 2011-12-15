@@ -21,17 +21,17 @@ enum {
 };
 
 /**
- * Result codes for ehd_decrypt_keyfile
- * %EHD_DECRYPTKF_SUCCESS:	no error
- * %EHD_DECRYPTKF_NODIGEST:	the digest is not known
- * %EHD_DECRYPTKF_NOCIPHER:	the cipher is not known
- * %EHD_DECRYPTKF_OTHER:	other unspecified error
+ * Result codes for ehd_keydec_run
+ * %EHD_KEYDEC_SUCCESS:		no error
+ * %EHD_KEYDEC_NODIGEST:	the digest is not known
+ * %EHD_KEYDEC_NOCIPHER:	the cipher is not known
+ * %EHD_KEYDEC_OTHER:		other unspecified error
  */
 enum {
-	EHD_DECRYPTKF_SUCCESS = 0,
-	EHD_DECRYPTKF_NODIGEST,
-	EHD_DECRYPTKF_NOCIPHER,
-	EHD_DECRYPTKF_OTHER,
+	EHD_KEYDEC_SUCCESS = 0,
+	EHD_KEYDEC_NODIGEST,
+	EHD_KEYDEC_NOCIPHER,
+	EHD_KEYDEC_OTHER,
 };
 
 /**
@@ -52,51 +52,53 @@ enum {
 	EHD_SECURITY_ADEQUATE,
 };
 
-/**
- * struct ehd_decryptkf_params - parameter agglomerator for ehd_decrypt_keyfile
- * @keyfile:	path to the key file
- * @digest:	digest used for the key file
- * @cipher:	cipher used for the key file
- * @password:	password to unlock the key material
- * @result:	result pointer to unencrypted content
- */
-struct ehd_decryptkf_params {
-	const char *keyfile, *digest, *cipher, *password;
-	hxmc_t *result;
+enum ehd_kdreq_opt {
+	EHD_KDREQ_KEYFILE = 1,
+	EHD_KDREQ_DIGEST,
+	EHD_KDREQ_CIPHER,
+	EHD_KDREQ_PASSWORD,
 };
 
-/**
- * struct ehd_mount_request - mapping and mount request for EHD
- * @container:		path to disk image
- * @mountpoint:		where to mount the volume on
- * @readonly:		whether to create a readonly vfsmount
- * @key_data:		key material/password
- * @key_size:		size of key data, in bytes
- * @fs_cipher:		cipher used for filesystem, if any. (cryptsetup name)
- * @fs_hash:		hash used for filesystem, if any. (cryptsetup name)
- * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
- */
-struct ehd_mount_request {
-	const char *container;
-	const char *mountpoint;
-	const char *fs_cipher, *fs_hash;
-	const void *key_data;
-	unsigned int key_size, trunc_keysize;
-	bool readonly;
+enum ehd_mtreq_opt {
+	EHD_MTREQ_CONTAINER = 1,
+	EHD_MTREQ_MOUNTPOINT,
+	EHD_MTREQ_FS_CIPHER,
+	EHD_MTREQ_FS_HASH,
+	EHD_MTREQ_KEY_DATA,
+	EHD_MTREQ_KEY_SIZE,
+	EHD_MTREQ_TRUNC_KEYSIZE,
+	EHD_MTREQ_READONLY,
+};
+
+enum ehd_mtinfo_opt {
+	EHD_MTINFO_CONTAINER = 1,
+	EHD_MTINFO_CRYPTONAME,
+	EHD_MTINFO_CRYPTODEV,
+	EHD_MTINFO_LOOPDEV,
 };
 
 struct ehd_mount_info;
+struct ehd_mount_request;
 
 extern int cryptmount_init(void);
 extern void cryptmount_exit(void);
 
-extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info *);
-extern int ehd_unload(const struct ehd_mount_info *);
-extern void ehd_mountinfo_free(struct ehd_mount_info *);
+extern struct ehd_mount_request *ehd_mtreq_new(void);
+extern void ehd_mtreq_free(struct ehd_mount_request *);
+extern int ehd_mtreq_set(struct ehd_mount_request *, enum ehd_mtreq_opt, ...);
+
+extern int ehd_mtinfo_get(struct ehd_mount_info *, enum ehd_mtinfo_opt, void *);
+extern void ehd_mtinfo_free(struct ehd_mount_info *);
+
+extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info **);
+extern int ehd_unload(struct ehd_mount_info *);
 extern int ehd_is_luks(const char *, bool);
 
-extern int ehd_decrypt_keyfile(struct ehd_decryptkf_params *);
-extern const char *ehd_decryptkf_strerror(int);
+extern struct ehd_keydec_request *ehd_kdreq_new(void);
+extern int ehd_kdreq_set(struct ehd_keydec_request *, enum ehd_kdreq_opt, ...);
+extern int ehd_keydec_run(struct ehd_keydec_request *, char **);
+extern void ehd_kdreq_free(struct ehd_keydec_request *);
+extern const char *ehd_keydec_strerror(int);
 
 extern int ehd_cipherdigest_security(const char *);
 extern hxmc_t *ehd_get_password(const char *);
