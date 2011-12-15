@@ -3,6 +3,11 @@
 ACLOCAL_AMFLAGS  = -I m4
 SUBDIRS = config doc src
 
+pkgconfigdir = ${libdir}/pkgconfig
+pkgconfig_DATA = libcryptmount.pc
+
+${pkgconfig_DATA}: ${top_builddir}/config.status
+
 install-data-hook:
 	${MKDIR_P} ${DESTDIR}${localstatedir}/run/pam_mount;
 

@@ -130,5 +130,6 @@ esac
 AC_SUBST([PAM_MODDIR])
 
 AC_SUBST([PACKAGE_RELDATE])
-AC_CONFIG_FILES([Makefile config/Makefile doc/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile libcryptmount.pc
+	config/Makefile doc/Makefile src/Makefile])
 AC_OUTPUT
