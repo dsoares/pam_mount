@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.13 (2011-12-15)
+==================
 Fixes:
 - pam_mount: restore keyfile support for non-crypto mounts
   (useful for accessing volumes with a different password than the login one)
@@ -11,7 +15,7 @@ Changes:
 - Move crypto code into a separate library, libcryptmount
   rather than including the .o files in every executable
 Enhancements:
-- mount.crypt: add a new -o crypto_name= option
+- mount.crypt: add support for crypto name mapping (new -o crypto_name= option)
 
 
 v2.12 (2011-10-06)

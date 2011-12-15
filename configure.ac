@@ -7,8 +7,8 @@
 #	the Free Software Foundation; either version 2 of the License, or
 #	(at your option) any later version.
 #
-AC_INIT([pam_mount], [2.12])
-PACKAGE_RELDATE="2011-10-06"
+AC_INIT([pam_mount], [2.13])
+PACKAGE_RELDATE="2011-12-15"
 AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -63,7 +63,7 @@ AM_CONDITIONAL([HAVE_CGD], [test "x$ac_cv_header_dev_cgdvar_h" = "xyes"])
 AM_CONDITIONAL([HAVE_MDIO], [test "x$ac_cv_header_sys_mdioctl_h" = "xyes"])
 AM_CONDITIONAL([HAVE_VND], [test "x$ac_cv_header_dev_vndvar_h" = "xyes"])
 
-PKG_CHECK_MODULES([libHX], [libHX >= 3.12])
+PKG_CHECK_MODULES([libHX], [libHX >= 3.12.1])
 PKG_CHECK_MODULES([libmount], [mount >= 2.20])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
 
