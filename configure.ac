@@ -13,7 +13,7 @@ AC_PREREQ([2.59])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_INSTALL
-AM_INIT_AUTOMAKE([-Wall no-dist foreign subdir-objects])
+AM_INIT_AUTOMAKE([-Wall foreign subdir-objects tar-pax no-dist-gzip dist-xz])
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC

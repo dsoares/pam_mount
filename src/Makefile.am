@@ -83,7 +83,7 @@ pmt_ehd_LDADD		= libcryptmount.la ${libHX_LIBS}
 pmvarrun_SOURCES = pmvarrun.c
 pmvarrun_LDADD   = libcryptmount.la ${libHX_LIBS}
 
-EXTRA_DIST = misc.h mount.h pam_mount.h readconfig.h spawn.h
+EXTRA_DIST = cmt-internal.h libcryptmount.h pam_mount.h libcryptmount.map
 
 umount.crypt${EXEEXT}: mount.crypt${EXEEXT}
 	-${LN_S} $^ $@;
