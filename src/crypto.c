@@ -222,7 +222,6 @@ EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
 	int saved_errno, ret;
 	struct ehd_mount_info *mt;
 
-	*mtp = mt = malloc(sizeof(*mt));
 	if (stat(req->container, &sb) < 0) {
 		l0g("Could not stat %s: %s\n", req->container, strerror(errno));
 		return -errno;
