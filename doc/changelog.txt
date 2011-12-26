@@ -3,6 +3,8 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Fixes:
+- fix "feature 1 already set to zero"
 
 
 v2.13 (2011-12-15)

@@ -340,6 +340,7 @@ void initconfig(struct config *config)
 	char options_require[] = "nosuid,nodev";
 
 	memset(config, 0, sizeof(*config));
+	ehd_logctl(EHD_LOGFT_DEBUG, EHD_LOG_SET);
 	config->debug      = true;
 	config->mkmntpoint = true;
 
