@@ -215,7 +215,7 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
  * @req:	parameters for setting up the mount
  * @mt:		EHD mount state
  */
-EXPORT_SYMBOL int ehd_load(const struct ehd_mount_request *req,
+EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
     struct ehd_mount_info **mtp)
 {
 	struct stat sb;

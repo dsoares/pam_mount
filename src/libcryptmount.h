@@ -91,7 +91,7 @@ extern int ehd_mtreq_set(struct ehd_mount_request *, enum ehd_mtreq_opt, ...);
 extern int ehd_mtinfo_get(struct ehd_mount_info *, enum ehd_mtinfo_opt, void *);
 extern void ehd_mtinfo_free(struct ehd_mount_info *);
 
-extern int ehd_load(const struct ehd_mount_request *, struct ehd_mount_info **);
+extern int ehd_load(struct ehd_mount_request *, struct ehd_mount_info **);
 extern int ehd_unload(struct ehd_mount_info *);
 extern int ehd_is_luks(const char *, bool);
 
