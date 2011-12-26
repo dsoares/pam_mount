@@ -61,11 +61,12 @@ struct container_ctl {
  * @force_level:	number of "-f"s passed
  * @interactive:	if stdin is a tty
  * @cont:		container control substructure
- * @fskey:		fskey control substructure
+ * @password:		master key password
  */
 struct ehd_ctl {
 	unsigned int force_level;
 	struct container_ctl cont;
+	const char *password;
 	bool interactive;
 };
 
@@ -273,7 +274,7 @@ static void ehd_parse_name(const char *s, char *cipher, size_t cipher_size,
 	HX_strlcpy(cipher_mode, p, cm_size);
 }
 
-static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
+static int ehd_init_volume_luks(struct ehd_ctl *pg)
 {
 	/*
 	 * Pick what? WP specifies that XTS has a wider support range than
@@ -300,7 +301,7 @@ static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
 		goto out2;
 	}
 	ret = crypt_keyslot_add_by_volume_key(cd, CRYPT_ANY_SLOT, NULL, 0,
-	      password, strlen(password));
+	      pg->password, strlen(pg->password));
 	if (ret < 0) {
 		fprintf(stderr, "add_by_volume_key: %s\n", strerror(-ret));
 		goto out2;
@@ -315,7 +316,7 @@ static int ehd_init_volume_luks(struct ehd_ctl *pg, const char *password)
 /**
  * ehd_init_volume - set up loop device association if necessary
  */
-static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
+static bool ehd_init_volume(struct ehd_ctl *pg)
 {
 	struct container_ctl *cont = &pg->cont;
 	struct ehd_mount_info *mount_info;
@@ -343,7 +344,7 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 		cont->device = cont->loop_dev;
 	}
 
-	ehd_init_volume_luks(pg, password);
+	ehd_init_volume_luks(pg);
 	ret = ehd_loop_release(cont->device);
 	if (ret <= 0)
 		fprintf(stderr, "loop_release: warning: %s\n", strerror(-ret));
@@ -354,10 +355,11 @@ static bool ehd_init_volume(struct ehd_ctl *pg, const char *password)
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CONTAINER, cont->path);
 	if (ret < 0)
 		goto out;
-	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_SIZE, strlen(password));
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_SIZE,
+	                    strlen(pg->password));
 	if (ret < 0)
 		goto out;
-	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_DATA, password);
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_KEY_DATA, pg->password);
 	if (ret < 0)
 		goto out;
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_READONLY, EHD_LOSETUP_RW);
@@ -574,8 +576,8 @@ static int main2(int argc, const char **argv, struct ehd_ctl *pg)
 		goto out;
 	}
 
-	ret = ehd_init_volume(pg, password != NULL ? password : "") ?
-	      EXIT_SUCCESS : EXIT_FAILURE;
+	pg->password = (password != NULL) ? password : "";
+	ret = ehd_init_volume(pg) ? EXIT_SUCCESS : EXIT_FAILURE;
 	if (ret == EXIT_SUCCESS)
 		ehd_final_printout(pg);
 
