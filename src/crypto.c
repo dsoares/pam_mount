@@ -100,6 +100,9 @@ EXPORT_SYMBOL int ehd_mtinfo_get(struct ehd_mount_info *mt,
 	case EHD_MTINFO_LOOPDEV:
 		*static_cast(const char **, ptr) = mt->loop_device;
 		break;
+	case EHD_MTINFO_LOWERDEV:
+		*static_cast(const char **, ptr) = mt->lower_device;
+		break;
 	default:
 		return 0;
 	}

@@ -76,6 +76,7 @@ enum ehd_mtinfo_opt {
 	EHD_MTINFO_CRYPTONAME,
 	EHD_MTINFO_CRYPTODEV,
 	EHD_MTINFO_LOOPDEV,
+	EHD_MTINFO_LOWERDEV,
 };
 
 struct ehd_mount_info;
