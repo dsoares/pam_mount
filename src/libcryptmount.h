@@ -71,6 +71,7 @@ enum ehd_mtreq_opt {
 	EHD_MTREQ_CRYPTONAME,
 	EHD_MTREQ_LOOP_HOOK,
 	EHD_MTREQ_HOOK_PRIV,
+	EHD_MTREQ_CRYPTO_HOOK,
 };
 
 enum ehd_mtinfo_opt {

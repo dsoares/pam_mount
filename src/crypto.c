@@ -187,6 +187,9 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	case EHD_MTREQ_HOOK_PRIV:
 		rq->hook_priv = va_arg(args, void *);
 		break;
+	case EHD_MTREQ_CRYPTO_HOOK:
+		rq->crypto_hook = va_arg(args, ehd_hook_fn_t);
+		break;
 	}
 	switch (opt) {
 	case EHD_MTREQ_CONTAINER:
@@ -277,6 +280,12 @@ EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
 #endif
 	if (ret <= 0)
 		goto out_ser;
+
+	if (req->crypto_hook != NULL) {
+		ret = req->crypto_hook(req, mt, req->hook_priv);
+		if (ret <= 0)
+			goto out_ser;
+	}
 
 	return ret;
 
