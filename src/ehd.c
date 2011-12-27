@@ -249,7 +249,7 @@ static bool ehd_mkfs(const struct ehd_ctl *pg, const hxmc_t *crypto_device)
 	const char *const argv[] = {fsprog, crypto_device, NULL};
 	int ret;
 
-	fprintf(stderr, "-- Calling %s\n", fsprog);
+	fprintf(stderr, "-- Calling %s %s\n", fsprog, crypto_device);
 	if ((ret = HXproc_run_sync(argv, HXPROC_VERBOSE)) < 0 || ret != 0)
 		fprintf(stderr, "%s failed with run_sync status %d\n",
 		        fsprog, ret);
