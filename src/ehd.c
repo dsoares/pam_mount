@@ -238,14 +238,21 @@ static bool ehd_create_container(struct ehd_ctl *pg)
 	return ret;
 }
 
-static bool ehd_mkfs(const struct ehd_ctl *pg, const hxmc_t *crypto_device)
+static bool ehd_mkfs(struct ehd_mount_request *rq,
+    struct ehd_mount_info *mtinfo, void *priv)
 {
+	const struct ehd_ctl *pg = priv;
 	const struct container_ctl *cont = &pg->cont;
+	const char *crypto_device = NULL;
+	int ret;
+
+	ehd_mtinfo_get(mtinfo, EHD_MTINFO_CRYPTODEV, &crypto_device);
+	if (!cont->skip_random)
+		ehd_xfer2(crypto_device, cont->size);
 
 	hxmc_t *fsprog = HXmc_strinit("mkfs.");
 	HXmc_strcat(&fsprog, cont->fstype);
 	const char *const argv[] = {fsprog, crypto_device, NULL};
-	int ret;
 
 	fprintf(stderr, "-- Calling %s %s\n", fsprog, crypto_device);
 	if ((ret = HXproc_run_sync(argv, HXPROC_VERBOSE)) < 0 || ret != 0)
@@ -329,7 +336,6 @@ static bool ehd_init_volume(struct ehd_ctl *pg)
 	struct container_ctl *cont = &pg->cont;
 	struct ehd_mount_info *mount_info;
 	struct ehd_mount_request *mount_request;
-	bool f_ret = false;
 	int ret;
 
 	mount_request = ehd_mtreq_new();
@@ -355,22 +361,18 @@ static bool ehd_init_volume(struct ehd_ctl *pg)
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_HOOK_PRIV, pg);
 	if (ret < 0)
 		goto out;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CRYPTO_HOOK, ehd_mkfs);
+	if (ret < 0)
+		goto out;
 
-	if (ehd_load(mount_request, &mount_info) > 0) {
-		const char *crypto_device = NULL;
-		ehd_mtinfo_get(mount_info, EHD_MTINFO_CRYPTODEV, &crypto_device);
-		if (!cont->skip_random)
-			ehd_xfer2(crypto_device, cont->size);
-		f_ret = ehd_mkfs(pg, crypto_device);
-		ret   = ehd_unload(mount_info);
-		/* If mkfs failed, use its code. */
+	ret = ehd_load(mount_request, &mount_info);
+	if (ret > 0) {
+		ret = ehd_unload(mount_info);
 		ehd_mtinfo_free(mount_info);
-		if (f_ret)
-			f_ret = ret > 0;
 	}
  out:
 	ehd_mtreq_free(mount_request);
-	return f_ret;
+	return ret > 0;
 }
 
 static void ehd_final_printout(const struct ehd_ctl *pg)
