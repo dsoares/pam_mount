@@ -41,8 +41,6 @@ static unsigned int ehd_debug;
 /**
  * @size:		container size in bytes
  * @path:		store container at this path
- * @loop_dev:		loop device in use (may be %NULL)
- * @device:		pointer to either @path or @loop_dev as crypto demands
  * @fstype:		initialize container with this filesystem
  * @cipher:		cipher specification as understood by cryptsetup
  * @keybits:		block size, as understood by cryptsetup and the cipher
@@ -51,7 +49,7 @@ static unsigned int ehd_debug;
  */
 struct container_ctl {
 	unsigned long long size;
-	char *path, *loop_dev, *device, *fstype, *cipher, *hash, *user;
+	char *path, *fstype, *cipher, *hash, *user;
 	unsigned int keybits, skip_random, uid;
 	bool blkdev;
 };
@@ -274,24 +272,34 @@ static void ehd_parse_name(const char *s, char *cipher, size_t cipher_size,
 	HX_strlcpy(cipher_mode, p, cm_size);
 }
 
-static int ehd_init_volume_luks(struct ehd_ctl *pg)
+static int ehd_init_volume_luks(struct ehd_mount_request *rq,
+    struct ehd_mount_info *mtinfo, void *priv)
 {
 	/*
 	 * Pick what? WP specifies that XTS has a wider support range than
 	 * ESSIV. But XTS is also double complexity due to the double key,
 	 * without adding anything of value.
 	 */
+	struct ehd_ctl *pg = priv;
 	struct container_ctl *cont = &pg->cont;
 	char cipher[32], cipher_mode[32];
 	struct crypt_params_luks1 format_params = {.hash = cont->hash};
 	struct crypt_device *cd = NULL;
+	const char *lower_dev = NULL;
 	int ret;
+
+	BUILD_BUG_ON(!__builtin_types_compatible_p(
+		__typeof__(&ehd_init_volume_luks), ehd_hook_fn_t));
 
 	ehd_parse_name(cont->cipher, cipher, sizeof(cipher),
 	               cipher_mode, sizeof(cipher_mode));
-	ret = crypt_init(&cd, cont->device);
+	ret = ehd_mtinfo_get(mtinfo, EHD_MTINFO_LOWERDEV, &lower_dev);
+	if (ret <= 0 || lower_dev == NULL)
+		goto out;
+	ret = crypt_init(&cd, lower_dev);
 	if (ret < 0) {
-		fprintf(stderr, "crypt_init: %s\n", strerror(-ret));
+		fprintf(stderr, "crypt_init: %s: %s\n",
+		        lower_dev, strerror(-ret));
 		goto out;
 	}
 	ret = crypt_format(cd, CRYPT_LUKS1, cipher, cipher_mode, NULL, NULL,
@@ -324,31 +332,6 @@ static bool ehd_init_volume(struct ehd_ctl *pg)
 	bool f_ret = false;
 	int ret;
 
-	if (cont->blkdev) {
-		cont->device = cont->path;
-	} else {
-		/*
-		 * Need manual setup of loop device here, since ehd_load
-		 * always does a crypt mount too, which we do not have yet.
-		 */
-		ret = ehd_loop_setup(cont->path, &cont->loop_dev, EHD_LOSETUP_RW);
-		if (ret == 0) {
-			fprintf(stderr, "loop_setup: error: no free loop "
-			        "devices\n");
-			return false;
-		} else if (ret < 0) {
-			fprintf(stderr, "loop_setup: error: %s\n",
-			        strerror(-ret));
-			return false;
-		}
-		cont->device = cont->loop_dev;
-	}
-
-	ehd_init_volume_luks(pg);
-	ret = ehd_loop_release(cont->device);
-	if (ret <= 0)
-		fprintf(stderr, "loop_release: warning: %s\n", strerror(-ret));
-
 	mount_request = ehd_mtreq_new();
 	if (mount_request == NULL)
 		return -errno;
@@ -363,6 +346,13 @@ static bool ehd_init_volume(struct ehd_ctl *pg)
 	if (ret < 0)
 		goto out;
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_READONLY, EHD_LOSETUP_RW);
+	if (ret < 0)
+		goto out;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_LOOP_HOOK,
+	                    ehd_init_volume_luks);
+	if (ret < 0)
+		goto out;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_HOOK_PRIV, pg);
 	if (ret < 0)
 		goto out;
 
