@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <libHX/string.h>
+#include "libcryptmount.h"
 
 /**
  * struct ehd_mount - EHD mount info
@@ -30,12 +31,16 @@ struct ehd_mount_info {
  * @key_data:		key material/password
  * @key_size:		size of key data, in bytes
  * @trunc_keysize:	extra cryptsetup instruction for truncation (in bytes)
+ * @loop_hook:		hook function to run after loop device setup
+ * @hook_priv:		user data
  * @readonly:		whether to create a readonly vfsmount
  */
 struct ehd_mount_request {
 	char *container, *crypto_name, *mountpoint;
 	char *fs_cipher, *fs_hash;
 	void *key_data;
+	ehd_hook_fn_t loop_hook;
+	void *hook_priv;
 	unsigned int key_size, trunc_keysize;
 	bool readonly;
 };

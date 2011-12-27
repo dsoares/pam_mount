@@ -181,6 +181,12 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	case EHD_MTREQ_READONLY:
 		rq->readonly = va_arg(args, unsigned int);
 		break;
+	case EHD_MTREQ_LOOP_HOOK:
+		rq->loop_hook = va_arg(args, ehd_hook_fn_t);
+		break;
+	case EHD_MTREQ_HOOK_PRIV:
+		rq->hook_priv = va_arg(args, void *);
+		break;
 	}
 	switch (opt) {
 	case EHD_MTREQ_CONTAINER:
@@ -254,6 +260,12 @@ EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
 			w4rn("Using %s\n", mt->loop_device);
 			mt->lower_device = mt->loop_device;
 		}
+	}
+
+	if (req->loop_hook != NULL) {
+		ret = req->loop_hook(req, mt, req->hook_priv);
+		if (ret <= 0)
+			goto out_ser;
 	}
 
 #ifdef HAVE_LIBCRYPTSETUP

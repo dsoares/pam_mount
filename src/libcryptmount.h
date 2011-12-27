@@ -69,6 +69,8 @@ enum ehd_mtreq_opt {
 	EHD_MTREQ_TRUNC_KEYSIZE,
 	EHD_MTREQ_READONLY,
 	EHD_MTREQ_CRYPTONAME,
+	EHD_MTREQ_LOOP_HOOK,
+	EHD_MTREQ_HOOK_PRIV,
 };
 
 enum ehd_mtinfo_opt {
@@ -81,6 +83,9 @@ enum ehd_mtinfo_opt {
 
 struct ehd_mount_info;
 struct ehd_mount_request;
+
+typedef int (*ehd_hook_fn_t)(struct ehd_mount_request *,
+	struct ehd_mount_info *, void *);
 
 extern int cryptmount_init(void);
 extern void cryptmount_exit(void);
