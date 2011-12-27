@@ -364,6 +364,11 @@ static bool ehd_init_volume(struct ehd_ctl *pg)
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CRYPTO_HOOK, ehd_mkfs);
 	if (ret < 0)
 		goto out;
+	/* We don't need to mount it */
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_LAST_STAGE,
+	                    EHD_MTREQ_STAGE_CRYPTO);
+	if (ret < 0)
+		goto out;
 
 	ret = ehd_load(mount_request, &mount_info);
 	if (ret > 0) {
