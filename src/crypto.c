@@ -132,6 +132,7 @@ EXPORT_SYMBOL struct ehd_mount_request *ehd_mtreq_new(void)
 	rq = calloc(1, sizeof(*rq));
 	if (rq == NULL)
 		return NULL;
+	rq->last_stage = EHD_MTREQ_STAGE_MOUNT;
 	return rq;
 }
 
@@ -189,6 +190,9 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 		break;
 	case EHD_MTREQ_CRYPTO_HOOK:
 		rq->crypto_hook = va_arg(args, ehd_hook_fn_t);
+		break;
+	case EHD_MTREQ_LAST_STAGE:
+		rq->last_stage = va_arg(args, enum ehd_mtreq_stage);
 		break;
 	}
 	switch (opt) {
@@ -270,6 +274,8 @@ EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
 		if (ret <= 0)
 			goto out_ser;
 	}
+	if (req->last_stage == EHD_MTREQ_STAGE_LOOP)
+		return 1;
 
 #ifdef HAVE_LIBCRYPTSETUP
 	ret = ehd_dmcrypt_ops.load(req, mt);
@@ -286,6 +292,8 @@ EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
 		if (ret <= 0)
 			goto out_ser;
 	}
+	if (req->last_stage == EHD_MTREQ_STAGE_CRYPTO)
+		return 1;
 
 	return ret;
 

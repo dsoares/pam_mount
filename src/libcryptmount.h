@@ -72,6 +72,7 @@ enum ehd_mtreq_opt {
 	EHD_MTREQ_LOOP_HOOK,
 	EHD_MTREQ_HOOK_PRIV,
 	EHD_MTREQ_CRYPTO_HOOK,
+	EHD_MTREQ_LAST_STAGE,
 };
 
 enum ehd_mtinfo_opt {
@@ -80,6 +81,13 @@ enum ehd_mtinfo_opt {
 	EHD_MTINFO_CRYPTODEV,
 	EHD_MTINFO_LOOPDEV,
 	EHD_MTINFO_LOWERDEV,
+};
+
+enum ehd_mtreq_stage {
+	EHD_MTREQ_STAGE_NONE,
+	EHD_MTREQ_STAGE_LOOP,
+	EHD_MTREQ_STAGE_CRYPTO,
+	EHD_MTREQ_STAGE_MOUNT,
 };
 
 struct ehd_mount_info;

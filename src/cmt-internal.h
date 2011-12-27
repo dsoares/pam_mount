@@ -34,6 +34,7 @@ struct ehd_mount_info {
  * @loop_hook:		hook function to run after loop device setup
  * @crypto_hook:	hook function to run after crypto device setup
  * @hook_priv:		user data
++ * @last_stage:		stop after setup of given component
  * @readonly:		whether to create a readonly vfsmount
  */
 struct ehd_mount_request {
@@ -43,6 +44,7 @@ struct ehd_mount_request {
 	ehd_hook_fn_t loop_hook, crypto_hook;
 	void *hook_priv;
 	unsigned int key_size, trunc_keysize;
+	enum ehd_mtreq_stage last_stage;
 	bool readonly;
 };
 
