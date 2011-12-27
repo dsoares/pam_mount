@@ -227,7 +227,7 @@ EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
 		return -errno;
 	}
 
-	*mtp = mt = malloc(sizeof(*mt));
+	*mtp = mt = calloc(1, sizeof(*mt));
 	if (mt == NULL)
 		goto out_err;
 	if ((mt->container = HX_strdup(req->container)) == NULL)
