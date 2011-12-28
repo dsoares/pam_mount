@@ -226,6 +226,34 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	return -errno;
 }
 
+static int ehd_wait_for_file(const char *path)
+{
+	static const struct timespec delay = {0, 100000000};
+	unsigned int retries = 50;
+	struct stat sb;
+	bool done = false;
+	int ret;
+
+	/* Nicer way to do these wait loops? libudev? */
+	while (retries-- > 0) {
+		ret = stat(path, &sb);
+		if (ret == 0)
+			break;
+		ret = -errno;
+		if (ret != -ENOENT)
+			return -errno;
+		if (!done) {
+			w4rn("Waiting for %s to appear\n", path);
+			done = true;
+		}
+		fprintf(stderr, ".");
+		nanosleep(&delay, NULL);
+	}
+	if (ret == -ENOENT)
+		w4rn("Device node %s was not created\n", path);
+	return (ret == 0) ? 1 : ret;
+}
+
 /**
  * ehd_load - set up crypto device for an EHD container
  * @req:	parameters for setting up the mount
@@ -267,6 +295,10 @@ EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
 			w4rn("Using %s\n", mt->loop_device);
 			mt->lower_device = mt->loop_device;
 		}
+
+		ret = ehd_wait_for_file(mt->loop_device);
+		if (ret <= 0)
+			goto out_ser;
 	}
 
 	if (req->loop_hook != NULL) {
@@ -284,6 +316,10 @@ EXPORT_SYMBOL int ehd_load(struct ehd_mount_request *req,
 #else
 	ret = -EOPNOTSUPP;
 #endif
+	if (ret <= 0)
+		goto out_ser;
+
+	ret = ehd_wait_for_file(mt->crypto_device);
 	if (ret <= 0)
 		goto out_ser;
 

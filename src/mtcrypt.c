@@ -53,7 +53,6 @@ struct mount_options {
 	hxmc_t *fsk_password, *extra_opts, *crypto_device;
 	char *loop_device;
 	unsigned int no_update, readonly, trunc_keysize;
-	int dm_timeout;
 	bool is_cont;
 	bool blkdev;
 	bool fsck;
@@ -120,9 +119,7 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			else if (ret < EHD_SECURITY_UNSPEC)
 				fprintf(stderr, "Hash \"%s\" is considered "
 				        "insecure.\n", value);
-		} else if (strcmp(key, "dm-timeout") == 0)
-			mo->dm_timeout = strtoul(value, NULL, 0);
-		else if (strcmp(key, "fstype") == 0)
+		} else if (strcmp(key, "fstype") == 0)
 			mo->fstype = value;
 		else if (strcmp(key, "keyfile") == 0)
 			mo->fsk_file = value;
@@ -406,7 +403,6 @@ static int mtcr_mount(struct mount_options *opt)
 {
 	const char *mount_args[8];
 	const char *fsck_args[4];
-	struct stat sb;
 	hxmc_t *key = NULL;
 	int ret, argk;
 	struct ehd_mount_info *mount_info;
@@ -497,11 +493,6 @@ static int mtcr_mount(struct mount_options *opt)
 		ehd_mtinfo_free(mount_info);
 		goto out_z;
 	}
-
-	opt->dm_timeout *= 3;
-	while (stat(mount_info->crypto_device, &sb) < 0 && errno == ENOENT &&
-	    opt->dm_timeout-- > 0)
-		usleep(333333);
 
 	if (opt->fsck) {
 		argk = 0;

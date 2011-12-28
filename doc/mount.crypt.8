@@ -37,10 +37,6 @@ for PLAIN (non-LUKS) volumes. pmt-ehd(8) defaults to creating volumes with
 Select the name for the crypto device (optional). This option is currently
 only usable with dm-crypt systems.
 .TP
-\fBdm\-timeout=\fP\fIseconds\fP
-Wait at most this many seconds for udev to create /dev/mapper/\fIname\fP after
-calling cryptsetup(8). The default value is 0 seconds.
-.TP
 \fBfsck\fP
 Run fsck on the container before mounting it.
 .TP
