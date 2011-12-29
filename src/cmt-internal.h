@@ -25,6 +25,8 @@ struct ehd_mount_info {
 /**
  * struct ehd_mount_request - mapping and mount request for EHD
  * @container:		path to disk image
+ * @fstype:		filesystem type
+ * @mount_opts:		mount options for fs
  * @mountpoint:		where to mount the volume on
  * @fs_cipher:		cipher used for filesystem, if any. (cryptsetup name)
  * @fs_hash:		hash used for filesystem, if any. (cryptsetup name)
@@ -38,7 +40,7 @@ struct ehd_mount_info {
  * @readonly:		whether to create a readonly vfsmount
  */
 struct ehd_mount_request {
-	char *container, *crypto_name, *mountpoint;
+	char *container, *crypto_name, *fstype, *mount_opts, *mountpoint;
 	char *fs_cipher, *fs_hash;
 	void *key_data;
 	ehd_hook_fn_t loop_hook, crypto_hook;

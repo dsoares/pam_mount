@@ -160,6 +160,8 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	case EHD_MTREQ_MOUNTPOINT:
 	case EHD_MTREQ_FS_CIPHER:
 	case EHD_MTREQ_FS_HASH:
+	case EHD_MTREQ_FSTYPE:
+	case EHD_MTREQ_MOUNT_OPTS:
 		orig = va_arg(args, const char *);
 		nv = HX_strdup(orig);
 		if (nv == NULL && orig != NULL)
@@ -215,6 +217,14 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	case EHD_MTREQ_FS_HASH:
 		free(rq->fs_hash);
 		rq->fs_hash = nv;
+		break;
+	case EHD_MTREQ_FSTYPE:
+		free(rq->fstype);
+		rq->fstype = nv;
+		break;
+	case EHD_MTREQ_MOUNT_OPTS:
+		free(rq->mount_opts);
+		rq->mount_opts = nv;
 		break;
 	default:
 		break;

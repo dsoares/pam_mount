@@ -73,6 +73,8 @@ enum ehd_mtreq_opt {
 	EHD_MTREQ_HOOK_PRIV,
 	EHD_MTREQ_CRYPTO_HOOK,
 	EHD_MTREQ_LAST_STAGE,
+	EHD_MTREQ_FSTYPE,
+	EHD_MTREQ_MOUNT_OPTS,
 };
 
 enum ehd_mtinfo_opt {
