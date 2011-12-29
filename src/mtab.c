@@ -35,6 +35,7 @@
 #include <libHX/defs.h>
 #include <libHX/io.h>
 #include <libHX/string.h>
+#include "cmt-internal.h"
 #include "libcryptmount.h"
 #include "pam_mount.h"
 
@@ -191,28 +192,27 @@ int pmt_smtab_add(const char *device, const char *mountpoint,
 	return ret;
 }
 
-int pmt_cmtab_add(const char *mountpoint, const char *container,
-    const char *loop_device, const char *crypto_device)
+int pmt_cmtab_add(struct ehd_mount_info *mt)
 {
+	const char *loop_device, *crypto_device;
 	hxmc_t *line;
 	int ret;
 
-	if (container == NULL)
+	if (mt->container == NULL)
 		return -EINVAL;
-	if (loop_device == NULL)
-		loop_device = "-";
-	if (crypto_device == NULL)
-		crypto_device = "-";
+	loop_device = (mt->loop_device == NULL) ? "-" : mt->loop_device;
+	crypto_device = (mt->crypto_device == NULL) ? "-" : mt->crypto_device;
 
 	/* Preallocate just the normal size */
-	line = HXmc_meminit(NULL, strlen(mountpoint) + strlen(container) +
-	       strlen(loop_device) + strlen(crypto_device) + 5);
+	line = HXmc_meminit(NULL, strlen(mt->mountpoint) +
+	       strlen(mt->container) + strlen(loop_device) +
+	       strlen(crypto_device) + 5);
 	if (line == NULL)
 		return -errno;
 
-	mt_esccat(&line, mountpoint);
+	mt_esccat(&line, mt->mountpoint);
 	HXmc_strcat(&line, "\t");
-	mt_esccat(&line, container);
+	mt_esccat(&line, mt->container);
 	HXmc_strcat(&line, "\t");
 	mt_esccat(&line, loop_device);
 	HXmc_strcat(&line, "\t");

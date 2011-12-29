@@ -187,13 +187,14 @@ enum {
 	PMT_BY_CRYPTODEV = 1 << 1,
 };
 
+struct ehd_mount_info;
+
 extern int pmt_smtab_add(const char *, const char *,
 	const char *, const char *);
 extern int pmt_smtab_remove(const char *, enum smtab_field);
 extern int pmt_smtab_mounted(const char *, const char *,
 	int (*)(const char *, const char *));
-extern int pmt_cmtab_add(const char *, const char *,
-	const char *, const char *);
+extern int pmt_cmtab_add(struct ehd_mount_info *);
 extern int pmt_cmtab_get(const char *, enum cmtab_field,
 	char **, char **, char **, char **);
 extern int pmt_cmtab_remove(const char *);
