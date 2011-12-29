@@ -394,6 +394,26 @@ static int mtcr_decrypt_keyfile(const struct mount_options *opt,
 	return ret;
 }
 
+static int mtcr_fsck(struct ehd_mount_request *rq,
+    struct ehd_mount_info *mtinfo)
+{
+	const char *const fsck_args[4] =
+		{"fsck", "-p", mtinfo->crypto_device, NULL};
+	int ret;
+
+	arglist_llog(fsck_args);
+	ret = HXproc_run_sync(fsck_args, HXPROC_VERBOSE);
+	/*
+	 * Return codes higher than 1 indicate that manual intervention
+	 * is required, therefore abort the mount/login.
+	 * Lower than 0: internal error (e.g. fork).
+	 */
+	if (ret != 0 && ret != 1)
+		fprintf(stderr, "Automatic fsck failed, manual intervention "
+		        "required, run_status/exit status %d\n", ret);
+	return ret == 0;
+}
+
 /**
  * mtcr_mount
  *
@@ -402,7 +422,6 @@ static int mtcr_decrypt_keyfile(const struct mount_options *opt,
 static int mtcr_mount(struct mount_options *opt)
 {
 	const char *mount_args[8];
-	const char *fsck_args[4];
 	hxmc_t *key = NULL;
 	int ret, argk;
 	struct ehd_mount_info *mount_info;
@@ -478,6 +497,12 @@ static int mtcr_mount(struct mount_options *opt)
 		if (ret < 0)
 			goto out_r;
 	}
+	if (opt->fsck) {
+		ret = ehd_mtreq_set(mount_request, EHD_MTREQ_CRYPTO_HOOK,
+		      mtcr_fsck);
+		if (ret < 0)
+			goto out_r;
+	}
 
 	w4rn("keysize=%u trunc_keysize=%u\n", key_size, trunc_keysize);
 	if ((ret = ehd_load(mount_request, &mount_info)) < 0) {
@@ -485,39 +510,6 @@ static int mtcr_mount(struct mount_options *opt)
 		goto out_z;
 	} else if (ret == 0) {
 		goto out_z;
-	}
-	if (mount_info->crypto_device == NULL) {
-		if (mtcr_debug)
-			fprintf(stderr, "No crypto device assigned\n");
-		ehd_unload(mount_info);
-		ehd_mtinfo_free(mount_info);
-		goto out_z;
-	}
-
-	if (opt->fsck) {
-		argk = 0;
-		fsck_args[argk++] = "fsck";
-		fsck_args[argk++] = "-p";
-		fsck_args[argk++] = mount_info->crypto_device;
-		fsck_args[argk] = NULL;
-		assert(argk < ARRAY_SIZE(fsck_args));
-
-		arglist_llog(fsck_args);
-		ret = HXproc_run_sync(fsck_args, HXPROC_VERBOSE);
-
-		/*
-		 * Return codes higher than 1 indicate that manual intervention
-		 * is required, therefore abort the mount/login.
-		 * Lower than 0: internal error (e.g. fork).
-		 */
-		if (ret != 0 && ret != 1) {
-			fprintf(stderr, "Automatic fsck failed, manual "
-			        "intervention required, run_sync status %d\n",
-			        ret);
-			ehd_unload(mount_info);
-			ehd_mtinfo_free(mount_info);
-			goto out_z;
-		}
 	}
 
 	/* candidate for replacement by some libmount calls, I guess. */
