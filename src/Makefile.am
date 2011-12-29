@@ -10,7 +10,7 @@ module_LTLIBRARIES	= pam_mount.la
 sbin_PROGRAMS		= pmvarrun
 sbin_PROGRAMS		+= pmt-ehd
 ssbin_PROGRAMS		= mount.crypt
-noinst_PROGRAMS		= autoloop ismnt
+noinst_PROGRAMS		= autoloop
 noinst_SCRIPTS 		= umount.crypt
 
 lib_LTLIBRARIES		= libcryptmount.la
@@ -63,10 +63,6 @@ pam_mount_la_LDFLAGS	= -module -avoid-version
 #
 autoloop_SOURCES	= autoloop.c
 autoloop_LDADD		= libcryptmount.la ${libHX_LIBS}
-
-ismnt_SOURCES		= ismnt.c log.c
-ismnt_CFLAGS		= ${AM_CFLAGS}
-ismnt_LDADD		= libpmt_mtab.la
 
 #
 # mount helpers
