@@ -13,6 +13,7 @@
  * @loop_device:	loop device that was created, if any
  * @crypto_name:	crypto device that was created (basename only)
  * @crypto_device:	full path to the crypto device
+ * @mountpoint:		assigned mountpoint
  */
 struct ehd_mount_info {
 	char *container;
@@ -20,6 +21,7 @@ struct ehd_mount_info {
 	char *loop_device;
 	hxmc_t *crypto_name;
 	hxmc_t *crypto_device;
+	hxmc_t *mountpoint;
 };
 
 /**

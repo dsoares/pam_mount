@@ -533,7 +533,13 @@ static int mtcr_mount(struct mount_options *opt)
 		fprintf(stderr, "mount failed with run_sync status %d\n", ret);
 		ehd_unload(mount_info);
 		ret = 0;
-	} else if ((ret = pmt_cmtab_add(opt->mountpoint,
+		goto out_i;
+	}
+	ret = HX_realpath(&mount_info->mountpoint, opt->mountpoint,
+	      HX_REALPATH_DEFAULT | HX_REALPATH_ABSOLUTE);
+	if (ret <= 0)
+		goto out_i;
+	if ((ret = pmt_cmtab_add(mount_info->mountpoint,
 	    mount_info->container, mount_info->loop_device,
 	    mount_info->crypto_device)) <= 0) {
 		fprintf(stderr, "pmt_cmtab_add: %s\n", strerror(errno));
@@ -541,11 +547,12 @@ static int mtcr_mount(struct mount_options *opt)
 	} else if (opt->no_update) {
 		/* awesome logic */;
 	} else {
-		pmt_smtab_add(mount_info->container, opt->mountpoint,
+		pmt_smtab_add(mount_info->container, mount_info->mountpoint,
 			"crypt", (opt->extra_opts != NULL) ?
 			opt->extra_opts : "defaults");
 	}
 
+ out_i:
 	ehd_mtinfo_free(mount_info);
 	return ret;
 
