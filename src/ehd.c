@@ -462,15 +462,14 @@ static bool ehd_fill_options_container(struct ehd_ctl *pg)
 			HX_getl(&tmp, stdin);
 			HX_chomp(tmp);
 			s = strtoul(tmp, NULL, 0);
+			s <<= 20; /* megabytes -> bytes */
 		} while (*tmp == '\0' || s == 0);
 		cont->size = s;
 	}
 
-	if (strcmp(cont->fstype, "xfs") == 0 && cont->size < 16)
+	if (strcmp(cont->fstype, "xfs") == 0 && cont->size < 16*1048576)
 		fprintf(stderr, "Warning: XFS volumes need to be "
 		        "at least 16 MB\n");
-
-	cont->size <<= 20; /* megabytes -> bytes */
 
 	if (cont->cipher == NULL) {
 		cont->cipher = HX_strdup(ehd_default_dmcipher);
@@ -543,6 +542,7 @@ static bool ehd_get_options(int *argc, const char ***argv, struct ehd_ctl *pg)
 	    HXOPT_ERR_SUCCESS)
 		return false;
 
+	cont->size <<= 20; /* mb -> b */
 	pg->interactive = isatty(fileno(stdin));
 	return ehd_fill_options_container(pg);
 }

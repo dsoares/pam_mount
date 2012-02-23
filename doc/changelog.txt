@@ -5,6 +5,7 @@ HEAD
 ====
 Fixes:
 - fix "feature 1 already set to zero"
+- pmt-ehd: avoid miscalculating blockdev size obtained from BLKGETSIZE64
 
 
 v2.13 (2011-12-15)
