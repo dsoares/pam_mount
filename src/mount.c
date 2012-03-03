@@ -577,9 +577,14 @@ static int pmt_decrypt_keyfile(const struct vol *vol, const char *password,
 	if (ret < 0)
 		goto out;
 	ret = ehd_keydec_run(dp, result);
-	if (ret != EHD_KEYDEC_SUCCESS)
-		l0g("ehd_keydec_run: %s\n",
-		    ehd_keydec_strerror(ret));
+	if (ret == EHD_KEYDEC_NODIGEST)
+		l0g("ehd_keydec_run: %s: \"%s\"\n", ehd_keydec_strerror(ret),
+		    vol->fs_key_hash);
+	else if (ret == EHD_KEYDEC_NOCIPHER)
+		l0g("ehd_keydec_run: %s: \"%s\"\n", ehd_keydec_strerror(ret),
+		    vol->fs_key_cipher);
+	else if (ret != EHD_KEYDEC_SUCCESS)
+		l0g("ehd_keydec_run: %s\n", ehd_keydec_strerror(ret));
  out:
 	ehd_kdreq_free(dp);
 	return ret;
