@@ -606,7 +606,7 @@ int do_mount(const struct config *config, struct vol *vpt,
 	struct HXdeque *argv;
 	struct HXproc proc;
 	const char *mount_user;
-	hxmc_t *ll_password;
+	hxmc_t *ll_password = NULL;
 	int ret;
 
 	assert(vinfo != NULL);

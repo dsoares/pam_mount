@@ -7,6 +7,7 @@ Fixes:
 - fix "feature 1 already set to zero"
 - pmt-ehd: avoid miscalculating blockdev size obtained from BLKGETSIZE64
 - pam_mount: give more verbose output on "unknown digest/cipher"
+- pam_mount: fix crash when an unknown digest/cipher was specified
 
 
 v2.13 (2011-12-15)
