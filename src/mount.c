@@ -438,7 +438,8 @@ int do_unmount(const struct config *config, struct vol *vpt,
 	if (config->mkmntpoint && config->rmdir_mntpt && vpt->created_mntpt)
 		if (rmdir(vpt->mountpoint) < 0)
 			/* non-fatal, but warn */
-			w4rn("could not remove %s\n", vpt->mountpoint);
+			w4rn("could not remove %s: %s\n", vpt->mountpoint,
+			     strerror(errno));
 	return ret;
 }
 
