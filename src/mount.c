@@ -647,8 +647,11 @@ int do_mount(const struct config *config, struct vol *vpt,
 		 * any openssl decryption. Without %CMD_CRYPTMOUNT however,
 		 * we have to do this ourselves.
 		 */
+		w4rn("Not a crypto-type volume. Will decode OpenSSL key.\n");
 		ret = pmt_decrypt_keyfile(vpt, password, &ll_password);
 	} else {
+		w4rn("This is a crypto-type volume. "
+		     "Key decoding deferred to mount.crypt.\n");
 		ll_password = HXmc_strinit(password);
 	}
 	if (ll_password == NULL)
