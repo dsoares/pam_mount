@@ -8,7 +8,9 @@ AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN} \
 moduledir		= @PAM_MODDIR@
 module_LTLIBRARIES	= pam_mount.la
 sbin_PROGRAMS		= pmvarrun
+if HAVE_LIBCRYPTSETUP
 sbin_PROGRAMS		+= pmt-ehd
+endif
 ssbin_PROGRAMS		= mount.crypt
 noinst_PROGRAMS		= autoloop
 noinst_SCRIPTS 		= umount.crypt
@@ -71,7 +73,7 @@ mount_crypt_SOURCES	= mtcrypt.c spawn.c
 mount_crypt_LDADD	= libcryptmount.la libpmt_mtab.la ${libHX_LIBS}
 
 pmt_ehd_SOURCES		= ehd.c bdev.c misc.c spawn.c
-pmt_ehd_LDADD		= libcryptmount.la ${libHX_LIBS}
+pmt_ehd_LDADD		= libcryptmount.la ${libHX_LIBS} ${libcryptsetup_LIBS}
 
 #
 # runtime helpers
