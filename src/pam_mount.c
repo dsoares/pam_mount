@@ -526,6 +526,20 @@ static int process_volumes(struct config *config, const char *authtok)
 	return ret;
 }
 
+static void assert_root(void)
+{
+	/*
+	 * I know checking for 0 is rather unflexible, but it does - so far -
+	 * account for all the bugreports involving insufficient permissions.
+	 */
+	if (geteuid() == 0)
+		return;
+	l0g("*** PAM_MOUNT WAS INVOKED WITH INSUFFICIENT PRIVILEGES. (euid=%ld)\n",
+	    static_cast(long, geteuid()));
+	l0g("*** THIS IS A BUG OF THE CALLER. CONSULT YOUR DISTRO.\n");
+	l0g("*** Also see bugs.txt in the pam_mount source tarball/website documentation.\n");
+}
+
 /**
  * pam_sm_open_session -
  * @pamh:	PAM handle
@@ -589,7 +603,7 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_open_session(pam_handle_t *pamh, int flags,
 		/* There are some volumes, so grab a password. */
 		system_authtok = ses_grab_authtok(pamh);
 
-	misc_dump_id("Session open");
+	assert_root();
 	envpath_init(Config.path);
 	ret = process_volumes(&Config, system_authtok);
 
@@ -690,12 +704,12 @@ PAM_EXTERN EXPORT_SYMBOL int pam_sm_close_session(pam_handle_t *pamh,
 		l0g("libHX init failed: %s\n", strerror(errno));
 	ret = PAM_SUCCESS;
 	w4rn("received order to close things\n");
+	assert_root();
 	if (Config.volume_list.items == 0) {
 		w4rn("No volumes to umount\n");
 		goto out;
 	}
 
-	misc_dump_id("Session close");
 	/*
 	 * call pam_get_user() again because ssh calls PAM fns from seperate
  	 * processes.

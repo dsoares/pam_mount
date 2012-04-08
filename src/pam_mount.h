@@ -156,7 +156,6 @@ extern char *kvplist_get(const struct HXclist_head *, const char *);
 extern void kvplist_genocide(struct HXclist_head *);
 extern hxmc_t *kvplist_to_str(const struct HXclist_head *);
 extern void misc_add_ntdom(struct HXformat_map *, const char *);
-extern void misc_dump_id(const char *);
 extern int pmt_fileop_exists(const char *);
 extern int pmt_fileop_isreg(const char *);
 extern int pmt_fileop_owns(const char *, const char *);

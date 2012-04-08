@@ -6,10 +6,12 @@
  *	as published by the Free Software Foundation; either version 2.1
  *	of the License, or (at your option) any later version.
  */
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <libHX/defs.h>
 #include <libHX/deque.h>
@@ -124,9 +126,8 @@ static void set_myuid(void *data)
 	if (chdir("/") < 0)
 		;
 	if (user == NULL) {
-		misc_dump_id("set_myuid<pre>");
 		if (setuid(0) < 0) {
-			l0g("error setting uid to 0\n");
+			l0g("error setting uid to 0: %s\n", strerror(errno));
 			return;
 		}
 	} else {
@@ -151,7 +152,6 @@ static void set_myuid(void *data)
 		setenv("HOME", real_user->pw_dir, 1);
 		setenv("USER", real_user->pw_name, 1);
 	}
-	misc_dump_id("set_myuid<post>");
 }
 
 const struct HXproc_ops pmt_dropprivs_ops = {

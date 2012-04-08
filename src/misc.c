@@ -28,18 +28,6 @@
 struct HXbtree;
 
 /**
- * misc_dump_id - print user IDs
- */
-void misc_dump_id(const char *where)
-{
-	w4rn("%s: (ruid/rgid=%u/%u, e=%u/%u)\n", where,
-	     static_cast(unsigned int, getuid()),
-	     static_cast(unsigned int, getgid()),
-	     static_cast(unsigned int, geteuid()),
-	     static_cast(unsigned int, getegid()));
-}
-
-/**
  * pmt_fileop_exists -
  * @file:	file to check
  *
