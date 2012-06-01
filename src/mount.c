@@ -351,6 +351,7 @@ static bool mkmountpoint(struct vol *volume, const char *d)
 		w4rn("chown %s -> %ld:%ld\n", dtmp,
 		     static_cast(long, pe->pw_uid),
 		     static_cast(long, pe->pw_gid));
+		*last = '/';
 	}
 	HXmc_free(dtmp);
 
