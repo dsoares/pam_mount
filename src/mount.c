@@ -295,6 +295,7 @@ static bool mkmountpoint(struct vol *volume, const char *d)
 	dtmp = HXmc_strinit(d);
 	if (dtmp == NULL || (!is_file && HXmc_strcat(&dtmp, "/") == NULL)) {
 		l0g("HXmc_strinit: %s\n", strerror(errno));
+		HXmc_free(dtmp);
 		return false;
 	}
 
