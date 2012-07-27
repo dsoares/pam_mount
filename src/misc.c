@@ -35,7 +35,7 @@ struct HXbtree;
  * non-zero if that was successful. Returns 0 for error. %errno will be set
  * in case of error.
  */
-int pmt_fileop_exists(const char *file)
+bool pmt_fileop_exists(const char *file)
 {
 	struct stat sb;
 	assert(file != NULL);
@@ -49,7 +49,7 @@ int pmt_fileop_exists(const char *file)
  * Check if a path is a regular file and return positive non-zero if that was
  * successful. Returns 0 for error. %errno will be set in case of error.
  */
-int pmt_fileop_isreg(const char *path)
+bool pmt_fileop_isreg(const char *path)
 {
 	struct stat sb;
 
@@ -63,11 +63,10 @@ int pmt_fileop_isreg(const char *path)
  * @user:	user to check for
  * @file:	file to check
  *
- * Checks whether @user owns @file. Returns positive non-zero if this is the
- * case, otherwise zero. If an error occurred, zero is returned and %errno
- * is set. (For the success case, %errno is undefined.)
+ * Checks whether @user owns @file. If an error occurred, false is returned and
+ * %errno is set. (For the success case, %errno is undefined.)
  */
-int pmt_fileop_owns(const char *user, const char *file)
+bool pmt_fileop_owns(const char *user, const char *file)
 {
 	struct stat filestat;
 	struct passwd *userinfo;
@@ -78,12 +77,12 @@ int pmt_fileop_owns(const char *user, const char *file)
 	if ((userinfo = getpwnam(user)) == NULL) {
 		l0g("user %s could not be translated to UID\n",
 		    user);
-		return 0;
+		return false;
 	}
 
 	if (stat(file, &filestat) != 0) {
 		w4rn("file %s could not be stat'ed\n", file);
-		return 0;
+		return false;
 	}
 
 	return filestat.st_uid == userinfo->pw_uid &&
