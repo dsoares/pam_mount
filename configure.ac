@@ -16,6 +16,7 @@ AC_PROG_INSTALL
 AM_INIT_AUTOMAKE([-Wall foreign subdir-objects tar-pax no-dist-gzip dist-xz])
 AC_PROG_CC
 AM_PROG_CC_C_O
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_DISABLE_STATIC
 AM_PROG_LIBTOOL
 AC_PROG_LN_S
