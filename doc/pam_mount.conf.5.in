@@ -171,35 +171,33 @@ X server termination notification. pam_mount can be configured to kill these
 processes and optionally wait before sending signals.
 .TP
 \fB<luserconf name="\fP\fI.pam_mount.conf.xml\fP\fB" />\fP
-Individual users may define additional volumes (usually in
-~/.pam_mount.conf.xml) to mount if allowed by the master configuration file by
-the presence of the \fB<luserconf>\fP element. With it, users may mount and
-unmount any volumes they specify that they have ownership of (in case of
-local mounts) - the mount process is called \fBas
-superuser\fP. On some filesystem configurations this may be a security risk so
-user-defined volumes are not allowed by the default pam_mount.conf.xml
-distributed with pam_mount. Luserconfigs are parsed after any volumes from
-the global configuration file are mounted, so mounting home directories with a
-global config and then mounting further volumes from luserconfigs is possible.
+Individual users may define additional volumes in a file by the specified
+\fIname\fP relative to their home directory. The presence of \fB<luserconf>\fP
+in the master config file enables this feature. If turned on, users may mount
+and unmount any volumes they specify and that they have ownership of (in case
+of local mounts). The mount process is executed \fBas superuser\fP. This may
+have security implications, so this feature is disabled by default.
+Luserconfigs are parsed after any volumes from the global configuration file
+have been mounted, so that first mounting home directories with a global config
+and then mounting further volumes from luserconfigs is possible.
 .TP
 \fB<mntoptions allow="\fP\fIoptions,...\fP\fB" />\fP
-The <mntoptions> elements determine which options may be specified in per\-user
-configuration files (see <luserconf>). It does not apply to the master file.
-Specifying <mntoptions> is forbidden and ignored in per\-user configs.
-It defaults to \fIallow="nosuid,nodev"\fP, and the default is cleared when the
-first <mntoptions allow="..."> tag is seen. All further <mntoptions> are
-additive, though.
+The <mntoptions> elements determine which options may be specified in <volumes>
+in per-user configuration files (see <luserconf>). It does not apply to the
+master file. Specifying <mntoptions> is forbidden and ignored in per-user
+configs. The default allowed list consists of "\fInosuid,nodev\fP", and this
+default is cleared when the first allow="..." attribute is seen by the config
+parser. All further allow="..." are additive, though.
 .TP
 \fB<mntoptions deny="\fP\fIoptions,...\fP\fB" />\fP
-Any options listed in deny may not appear in the option list of per\-user
-mounts. (Does not apply to the master file.)
+Any options listed in deny may not appear in the option list of per-user
+mounts. The default deny list is empty.
 .TP
 \fB<mntoptions require="\fP\fIoptions,...\fP\fB" />\fP
-All options listed in require must appear in the option list of per\-user
-mounts. (Does not apply to the master file.)
-It defaults to \fInosuid,nodev\fP, and the default is cleared when the
-first <mntoptions require="..."> tag is seen. All further <mntoptions> are
-additive, though.
+All options listed in require must appear in the option list of per-user
+mounts. The default require list consists of "\fInosuid,nodev\fP", and like
+allow="", is cleared when first encountered by the parser, and is otherwise
+additive.
 .TP
 \fB<path>\fP\fIdirectories...\fP\fB</path>\fP
 The default for the PATH environmental variable is not consistent across
