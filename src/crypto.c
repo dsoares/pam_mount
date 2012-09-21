@@ -151,7 +151,7 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 {
 	va_list args;
 	const void *orig;
-	void *nv;
+	void *nv = NULL;
 
 	va_start(args, opt);
 	switch (opt) {
@@ -526,7 +526,7 @@ EXPORT_SYMBOL int ehd_kdreq_set(struct ehd_keydec_request *rq,
 {
 	va_list args;
 	const void *orig;
-	void *nv;
+	void *nv = NULL;
 
 	va_start(args, opt);
 	switch (opt) {
