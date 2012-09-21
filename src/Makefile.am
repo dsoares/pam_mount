@@ -84,7 +84,7 @@ pmvarrun_LDADD   = libcryptmount.la ${libHX_LIBS}
 EXTRA_DIST = cmt-internal.h libcryptmount.h pam_mount.h libcryptmount.map
 
 umount.crypt${EXEEXT}: mount.crypt${EXEEXT}
-	-${LN_S} $^ $@;
+	-${LN_S} -f $^ $@;
 
 if !KEEP_LA
 install-data-hook:
