@@ -196,6 +196,9 @@ EXPORT_SYMBOL int ehd_mtreq_set(struct ehd_mount_request *rq,
 	case EHD_MTREQ_LAST_STAGE:
 		rq->last_stage = va_arg(args, enum ehd_mtreq_stage);
 		break;
+	case EHD_MTREQ_ALLOW_DISCARDS:
+		rq->allow_discards = va_arg(args, unsigned int);
+		break;
 	}
 	switch (opt) {
 	case EHD_MTREQ_CONTAINER:

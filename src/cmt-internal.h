@@ -40,6 +40,7 @@ struct ehd_mount_info {
  * @hook_priv:		user data
 + * @last_stage:		stop after setup of given component
  * @readonly:		whether to create a readonly vfsmount
+ * @allow_discards:	allow fs trim requests
  */
 struct ehd_mount_request {
 	char *container, *crypto_name, *fstype, *mount_opts, *mountpoint;
@@ -49,7 +50,7 @@ struct ehd_mount_request {
 	void *hook_priv;
 	unsigned int key_size, trunc_keysize;
 	enum ehd_mtreq_stage last_stage;
-	bool readonly;
+	bool readonly, allow_discards;
 };
 
 struct ehd_crypto_ops {

@@ -97,6 +97,14 @@ static bool dmc_run(const struct ehd_mount_request *req,
 	}
 	if (req->readonly)
 		flags |= CRYPT_ACTIVATE_READONLY;
+	if (req->allow_discards) {
+#ifdef CRYPT_ACTIVATE_ALLOW_DISCARDS
+		flags |= CRYPT_ACTIVATE_ALLOW_DISCARDS;
+#else
+		fprintf(stderr, "CRYPT_ACTIVATE_ALLOW_DISCARDS requested, "
+		        "but not provided by your libcryptsetup.\n");
+#endif
+	}
 
 	ret = crypt_load(cd, CRYPT_LUKS1, NULL);
 	if (ret == 0) {

@@ -75,6 +75,7 @@ enum ehd_mtreq_opt {
 	EHD_MTREQ_LAST_STAGE,
 	EHD_MTREQ_FSTYPE,
 	EHD_MTREQ_MOUNT_OPTS,
+	EHD_MTREQ_ALLOW_DISCARDS,
 };
 
 enum ehd_mtinfo_opt {

@@ -44,6 +44,7 @@
  * @blkdev:		true if @container is a block device
  * @fsck:		true if fsck should be performed
  * @remount:		issue a remount
+ * @allow_discards:	allow fs trim requests
  */
 struct mount_options {
 	hxmc_t *object, *container, *mountpoint;
@@ -57,6 +58,7 @@ struct mount_options {
 	bool blkdev;
 	bool fsck;
 	bool remount;
+	bool allow_discards;
 };
 
 /**
@@ -162,6 +164,8 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			mo->readonly = EHD_LOSETUP_RO;
 		else if (strcmp(key, "rw") == 0)
 			mo->readonly = EHD_LOSETUP_RW;
+		else if (strcmp(key, "discard") == 0)
+			mo->allow_discards = true;
 	}
 
 	if (*passthru != '\0') {
@@ -446,6 +450,10 @@ static int mtcr_mount(struct mount_options *opt)
 	if (ret < 0)
 		goto out_r;
 	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_READONLY, opt->readonly);
+	if (ret < 0)
+		goto out_r;
+	ret = ehd_mtreq_set(mount_request, EHD_MTREQ_ALLOW_DISCARDS,
+	      opt->allow_discards);
 	if (ret < 0)
 		goto out_r;
 	/* Hack for CRYPT_PLAIN: default to 256 */
