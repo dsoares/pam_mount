@@ -4,6 +4,11 @@ Options are listed in the 4th column of a PAM file, e.g.:
 
 	auth	optional	pam_mount.so	debug
 
+Options are to be separated by whitespace, hence specifying more than
+one is to look like:
+
+	auth	optional	pam_mount.so	debug disable_interactive
+
 
 enable_pam_password (default)
 disable_pam_password
