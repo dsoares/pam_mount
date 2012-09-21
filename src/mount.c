@@ -437,7 +437,7 @@ int do_unmount(const struct config *config, struct vol *vpt,
 		ret = proc.p_exited && proc.p_status == 0;
 
  out:
-	if (config->mkmntpoint && config->rmdir_mntpt && vpt->created_mntpt)
+	if (vpt->created_mntpt && config->rmdir_mntpt)
 		if (rmdir(vpt->mountpoint) < 0)
 			/* non-fatal, but warn */
 			w4rn("could not remove %s: %s\n", vpt->mountpoint,
@@ -709,7 +709,8 @@ int do_mount(const struct config *config, struct vol *vpt,
 		return 0;
 	}
 
-	if (!proc.p_exited || proc.p_status != 0) {
+	if ((!proc.p_exited || proc.p_status != 0) &&
+	    vpt->created_mntpt && config->rmdir_mntpt) {
 		/*
 		 * Remove mountpoint if mount failed, to flag unavailability
 		 * of service (e.g. when mntpt is the user's home directory).

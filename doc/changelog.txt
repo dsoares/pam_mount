@@ -9,6 +9,7 @@ Fixes:
 - pam_mount: give more verbose output on "unknown digest/cipher"
 - pam_mount: fix crash when an unknown digest/cipher was specified
 - pam_mount: correctly mkdir mountpoint if requested
+- pam_mount: only remove mountpoint if actually created
 Changes:
 - Complain louder when EUID is not 0
 
