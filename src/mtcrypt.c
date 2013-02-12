@@ -753,11 +753,6 @@ static int main2(int argc, const char **argv)
 {
 	ehd_logctl(EHD_LOGFT_NOSYSLOG, EHD_LOG_SET);
 	setenv("PATH", PMT_DFL_PATH, true);
-#ifdef HAVE_LIBCRYPTO
-	OpenSSL_add_all_ciphers();
-	OpenSSL_add_all_digests();
-#endif
-
 	/*
 	 * When invoking umount.crypt via the libtool helper script,
 	 * argv[0] is always "mount.crypt" due to the symlinking.

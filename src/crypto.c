@@ -67,6 +67,11 @@ EXPORT_SYMBOL int cryptmount_init(void)
 			pthread_mutex_unlock(&ehd_init_lock);
 			return ret;
 		}
+#ifdef HAVE_LIBCRYPTO
+		OpenSSL_add_all_algorithms();
+		OpenSSL_add_all_ciphers();
+		OpenSSL_add_all_digests();
+#endif
 	}
 	++ehd_use_count;
 	pthread_mutex_unlock(&ehd_init_lock);
@@ -76,6 +81,10 @@ EXPORT_SYMBOL int cryptmount_init(void)
 EXPORT_SYMBOL void cryptmount_exit(void)
 {
 	pthread_mutex_lock(&ehd_init_lock);
+	/*
+	 * OpenSSL does not look refcounted and calling EVP_cleanup could
+	 * upset other components in the program image.
+	 */
 	if (ehd_use_count == 0)
 		fprintf(stderr, "%s: reference count is already zero!\n",
 		        __func__);
