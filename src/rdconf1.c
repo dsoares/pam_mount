@@ -1363,7 +1363,7 @@ static const char *rc_volume(xmlNode *node, struct config *config,
 static const struct pmt_command default_command[] = {
 	{CMD_SMBMOUNT,   "smbfs", {"smbmount", "%(COMBOPATH)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_SMBUMOUNT,  "smbfs", {"smbumount", "%(MNTPT)", NULL}},
-	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "%(COMBOPATH)", "%(MNTPT)", "-o", "user=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
+	{CMD_CIFSMOUNT,   "cifs", {"mount", "-t", "cifs", "%(COMBOPATH)", "%(MNTPT)", "-o", "username=%(USER),uid=%(USERUID),gid=%(USERGID)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_NCPMOUNT,   "ncpfs", {"ncpmount", "%(COMBOPATH)", "%(MNTPT)", "-o", "pass-fd=0,volume=%(VOLUME)%(if %(OPTIONS),\",%(OPTIONS)\")", NULL}},
 	{CMD_NCPUMOUNT,  "ncpfs", {"ncpumount", "%(MNTPT)", NULL}},
 	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(if %(OPTIONS),-o)", "%(OPTIONS)", NULL}},

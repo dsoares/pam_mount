@@ -363,7 +363,7 @@ mountpoint="/home/user/krueger" />
 .SS NCP mounts
 .PP
 <volume user="user" fstype="ncpfs" server="krueger" path="public"
-mountpoint="/home/user/krueger" options="user=user.context" />
+mountpoint="/home/user/krueger" options="username=user.context" />
 .SS Bind mounts
 .PP
 This may come useful in conjunction with pam_chroot:

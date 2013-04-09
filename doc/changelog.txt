@@ -12,6 +12,11 @@ Fixes:
 - pam_mount: only remove mountpoint if actually created
 Changes:
 - Complain louder when EUID is not 0
+- Make CIFS mounts work again after util-linux option parser update.
+  util-linux has received updates to its option parser in or around
+  v2.22, and pam_mount was incorrectly using the "user" moutn option
+  to specify a username; the proper option is, of course, "username".
+  (as in: <volume fstype="cifs" ... options="username=someoneelse" />)
 
 
 v2.13 (2011-12-15)
