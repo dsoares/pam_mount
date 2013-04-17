@@ -17,6 +17,7 @@ Changes:
   v2.22, and pam_mount was incorrectly using the "user" moutn option
   to specify a username; the proper option is, of course, "username".
   (as in: <volume fstype="cifs" ... options="username=someoneelse" />)
+- Make Winbind user logins (DOMAIN\user) work with cifs-utils > 5.5
 
 
 v2.13 (2011-12-15)
