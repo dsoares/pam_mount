@@ -28,6 +28,10 @@ readwrite. The crypto and loop devices will have to be disassociated first.
 Turn on debugging and be a bit more verbose.
 .SH Mount options
 .TP
+\fBallow_discard\fP
+Enables discard passthrough support. This option does not cause the filesystem
+to be mounted with discard enabled, but does allow fstrim to be manually run.
+.TP
 \fBcipher\fP
 The cryptsetup cipher used for the encrypted volume. This option is mandatory
 for PLAIN (non-LUKS) volumes. pmt-ehd(8) defaults to creating volumes with

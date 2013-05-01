@@ -3,6 +3,9 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+Enhancements:
+- pam_mount: add an "allow_discard" option for volumes to enable
+  trim support on the block device without enabling it for the filesystem.
 Fixes:
 - fix "feature 1 already set to zero"
 - pmt-ehd: avoid miscalculating blockdev size obtained from BLKGETSIZE64

@@ -44,7 +44,7 @@
  * @blkdev:		true if @container is a block device
  * @fsck:		true if fsck should be performed
  * @remount:		issue a remount
- * @allow_discards:	allow fs trim requests
+ * @allow_discards:	set block device to allow fs trim requests
  */
 struct mount_options {
 	hxmc_t *object, *container, *mountpoint;
@@ -146,6 +146,8 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			mtcr_debug = true;
 		} else if (strcmp(key, "crypto_name") == 0) {
 			mo->crypto_name = value;
+		} else if (strcmp(key, "allow_discard") == 0) {
+			mo->allow_discards = true;
 		} else {
 			/*
 			 * Above are the pam_mount-specific options that are
