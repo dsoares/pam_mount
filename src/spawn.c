@@ -84,7 +84,7 @@ static void initgroups2(const char *user, const struct passwd *real_user)
 	if (maxgrps < 0)
 		maxgrps = 64;
 	groups = malloc(maxgrps * sizeof(gid_t));
-	if (groups != NULL)
+	if (groups == NULL)
 		return;
 	ngrps = maxgrps;
 	if (getgrouplist(user, real_user->pw_gid, groups, &ngrps) < 0)
