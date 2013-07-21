@@ -147,6 +147,11 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 		} else if (strcmp(key, "crypto_name") == 0) {
 			mo->crypto_name = value;
 		} else {
+			/*
+			 * Above are the pam_mount-specific options that are
+			 * "eaten". Everything else is passed right on to
+			 * mount(8).
+			 */
 			if (!first)
 				HXmc_strcat(&passthru, ",");
 			first = false;
@@ -157,7 +162,11 @@ static void mtcr_parse_suboptions(const struct HXoptcb *cbi)
 			}
 		}
 
-		/* Options added to passthrough, but also inspected by us. */
+		/*
+		 * As the following options are not listed in the above cases,
+		 * these did get added to passthrough. We still need to
+		 * inspect them, however.
+		 */
 		if (strcmp(key, "remount") == 0)
 			mo->remount = true;
 		else if (strcmp(key, "ro") == 0)
