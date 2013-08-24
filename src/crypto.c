@@ -29,7 +29,6 @@
 #	include <openssl/evp.h>
 #endif
 
-#ifdef HAVE_LIBCRYPTO
 /**
  * struct ehd_keydec_request - parameter agglomerator for ehd_kdreq_final
  * @keyfile:	path to the key file
@@ -39,14 +38,14 @@
  */
 struct ehd_keydec_request {
 	char *keyfile, *digest, *cipher, *password;
-
+#ifdef HAVE_LIBCRYPTO
 	const EVP_CIPHER *s_cipher;
 	const EVP_MD *s_digest;
+#endif
 	const unsigned char *d_salt, *d_text;
 	hxmc_t *d_result;
 	unsigned int d_keysize;
 };
-#endif
 
 static pthread_mutex_t ehd_init_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned long ehd_use_count;
