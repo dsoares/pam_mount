@@ -6,6 +6,8 @@ HEAD
 Enhancements:
 - pam_mount: add an "allow_discard" option for volumes to enable
   trim support on the block device without enabling it for the filesystem.
+- config: regexes can now be used for the <user> and <group> configuration
+  options
 Fixes:
 - fix "feature 1 already set to zero"
 - pmt-ehd: avoid miscalculating blockdev size obtained from BLKGETSIZE64

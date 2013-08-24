@@ -334,6 +334,16 @@ Check if the user logging in is a member of the group given by \fIname\fP
 The \fBicase\fP attribute may be used on \fB<user>\fP, \fB<pgrp>\fP and
 \fB<sgrp>\fP to enable case\-insensitive matching (or not). It defaults to
 "no".
+.TP
+\fBregex="yes"\fP (or no)
+The \fBregex\fP attribute may be used on \fB<user>\fP, \fB<pgrp>\fP and
+\fB<sgrp>\fP to enable interpreting the text content of the tag as a
+Perl-compatible regular expression pattern. This attribute may be combined with
+"icase" (see above). Example: <user regex="yes">joe</user> matches any user
+who has the letter sequence "joe" anywhere in their username. Therefor, use the
+regex feature cautiously and consider adding ^ and $ anchors to limit security
+surprises. Example: <user regex="yes">^.*joe.*$</user> if you really
+wanted to match the sequence at any position.
 .SH Examples
 .PP
 Remember that \fB~\fP can be used in the mountpoint attribute to denote the

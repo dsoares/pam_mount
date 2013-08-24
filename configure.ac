@@ -68,6 +68,7 @@ AM_CONDITIONAL([HAVE_VND], [test "x$ac_cv_header_dev_vndvar_h" = "xyes"])
 PKG_CHECK_MODULES([libHX], [libHX >= 3.12.1])
 PKG_CHECK_MODULES([libmount], [mount >= 2.20])
 PKG_CHECK_MODULES([libxml], [libxml-2.0 >= 2.6])
+PKG_CHECK_MODULES([libpcre], [libpcre >= 7])
 
 AC_ARG_WITH(
 	[crypto],

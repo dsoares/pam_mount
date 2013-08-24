@@ -2,7 +2,7 @@
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} -DRUNDIR=\"${rundir}\" \
 		${libHX_CFLAGS} ${libcrypto_CFLAGS} ${libcryptsetup_CFLAGS} \
-		${libmount_CFLAGS} ${libxml_CFLAGS}
+		${libmount_CFLAGS} ${libpcre_CFLAGS} ${libxml_CFLAGS}
 AM_CFLAGS = ${regular_CFLAGS} ${GCC_FVISIBILITY_HIDDEN}
 
 moduledir		= @PAM_MODDIR@
@@ -57,7 +57,7 @@ pam_mount_la_SOURCES	= misc.c mount.c pam_mount.c \
 			  rdconf1.c rdconf2.c spawn.c
 pam_mount_la_CFLAGS	= ${AM_CFLAGS}
 pam_mount_la_LIBADD	= libcryptmount.la -lpam ${libHX_LIBS} \
-			  ${libmount_LIBS} ${libxml_LIBS}
+			  ${libmount_LIBS} ${libpcre_LIBS} ${libxml_LIBS}
 pam_mount_la_LDFLAGS	= -module -avoid-version
 
 #

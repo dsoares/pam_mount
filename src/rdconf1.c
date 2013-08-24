@@ -21,6 +21,7 @@
 #endif
 #include <libHX.h>
 #include <libHX/libxml_helper.h>
+#include <pcre.h>
 #include "libcryptmount.h"
 #include "pam_mount.h"
 
@@ -572,6 +573,41 @@ static inline bool parse_bool_f(char *s)
 	return ret;
 }
 
+static int pmt_strregmatch(const char *s, const char *pattern, bool icase)
+{
+	/* Mostly compile-time flags that are not valid for pcre_exec */
+	unsigned int flags = PCRE_DOLLAR_ENDONLY | PCRE_DOTALL |
+	                     PCRE_NO_AUTO_CAPTURE;
+	const char *error = NULL;
+	int erroffset, ret;
+	pcre *rd;
+
+	if (icase)
+		flags |= PCRE_CASELESS;
+	rd = pcre_compile(pattern, flags, &error, &erroffset, NULL);
+	if (error != NULL) {
+		l0g("pcre_compile failed: %s at offset %d\n", error, erroffset);
+		return -1;
+	} else if (rd == NULL) {
+		l0g("pcre_compile failed: %s\n", strerror(errno));
+		return -1;
+	}
+
+	ret = pcre_exec(rd, NULL, s, strlen(s), 0, 0, NULL, 0);
+	if (ret == PCRE_ERROR_NOMATCH) {
+		l0g("pcre_exec: no match\n");
+		ret = false;
+	} else if (ret < 0) {
+		ret = false;
+		l0g("pcre_exec: error code %d\n", ret);
+	} else {
+		ret = true;
+		l0g("pcre_exec: /%s/: %d matches\n", pattern, ret);
+	}
+	pcre_free(rd);
+	return ret;
+}
+
 /**
  * user_in_sgrp -
  * @user:	user to check
@@ -581,7 +617,8 @@ static inline bool parse_bool_f(char *s)
  * no match was found, positive non-zero on success or negative non-zero on
  * failure.
  */
-static bool user_in_sgrp(const char *user, const char *grp, bool icase)
+static bool user_in_sgrp(const char *user, const char *grp, bool icase,
+    bool regex)
 {
 	struct group *gent;
 	const char *const *wp;
@@ -595,9 +632,14 @@ static bool user_in_sgrp(const char *user, const char *grp, bool icase)
 
 	wp = const_cast2(const char *const *, gent->gr_mem);
 	while (wp != NULL && *wp != NULL) {
-		if (strcmp(*wp, user) == 0 ||
-		    (icase && strcasecmp(*wp, user) == 0))
+		if (regex) {
+			if (pmt_strregmatch(user, *wp, icase) > 0)
+				return true;
+		} else if (icase && strcasecmp(*wp, user) == 0) {
 			return true;
+		} else if (strcmp(*wp, user) == 0) {
+			return true;
+		}
 		++wp;
 	}
 
@@ -931,15 +973,20 @@ static int rc_volume_cond_user(const struct passwd *pwd, xmlNode *node)
 {
 	xmlNode *parent = node;
 	bool icase = parse_bool_f(xml_getprop(parent, "icase"));
+	bool regex = parse_bool_f(xml_getprop(parent, "regex"));
+	const char *pattern;
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
 			continue;
-		if (icase)
-			return strcasecmp(signed_cast(const char *,
-			       node->content), pwd->pw_name) == 0;
+		pattern = signed_cast(const char *, node->content);
+		if (regex)
+			return pmt_strregmatch(pwd->pw_name, pattern,
+			       icase) > 0;
+		else if (icase)
+			return strcasecmp(pwd->pw_name, pattern) == 0;
 		else
-			return xml_strcmp(node->content, pwd->pw_name) == 0;
+			return strcmp(pwd->pw_name, pattern) == 0;
 	}
 
 	return false;
@@ -1004,7 +1051,7 @@ static int rc_volume_cond_gid(const struct passwd *pwd, xmlNode *node)
 }
 
 static int __rc_volume_cond_pgrp(const char *group, unsigned int gid,
-    bool icase)
+    bool icase, bool regex)
 {
 	const struct group *grp;
 
@@ -1018,7 +1065,9 @@ static int __rc_volume_cond_pgrp(const char *group, unsigned int gid,
 		return -1;
 	}
 
-	if (icase)
+	if (regex)
+		return pmt_strregmatch(grp->gr_name, group, icase) > 0;
+	else if (icase)
 		return strcasecmp(group, grp->gr_name) == 0;
 	else
 		return strcmp(group, grp->gr_name) == 0;
@@ -1033,6 +1082,7 @@ static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
 {
 	xmlNode *parent = node;
 	bool icase = parse_bool_f(xml_getprop(parent, "icase"));
+	bool regex = parse_bool_f(xml_getprop(parent, "regex"));
 
 	for (node = node->children; node != NULL; node = node->next) {
 		if (node->type != XML_TEXT_NODE)
@@ -1040,7 +1090,7 @@ static int rc_volume_cond_pgrp(const struct passwd *pwd, xmlNode *node)
 
 		return __rc_volume_cond_pgrp(
 		       signed_cast(const char *, node->content), pwd->pw_gid,
-		       icase);
+		       icase, regex);
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "pgrp");
@@ -1057,6 +1107,7 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 	const struct group *grp;
 	xmlNode *parent = node;
 	bool icase = parse_bool_f(xml_getprop(parent, "icase"));
+	bool regex = parse_bool_f(xml_getprop(parent, "regex"));
 	int ret;
 
 	for (node = node->children; node != NULL; node = node->next) {
@@ -1075,7 +1126,7 @@ static int rc_volume_cond_sgrp(const struct passwd *pwd, xmlNode *node)
 		if (ret < 0 || ret > 0)
 			return ret;
 		return user_in_sgrp(pwd->pw_name,
-		       signed_cast(const char *, node->content), icase);
+		       signed_cast(const char *, node->content), icase, regex);
 	}
 
 	l0g("config: empty or invalid content for <%s>\n", "sgrp");
@@ -1155,16 +1206,16 @@ static int rc_volume_cond_simple(const struct passwd *pwd, xmlNode *node)
 		for_me &= ret;
 	}
 	if (pgrp != NULL) {
-		ret = __rc_volume_cond_pgrp(pgrp, pwd->pw_gid, false);
+		ret = __rc_volume_cond_pgrp(pgrp, pwd->pw_gid, false, false);
 		if (ret < 0)
 			goto out;
 		for_me &= ret;
 	}
 	if (sgrp != NULL) {
-		bool ret2 = __rc_volume_cond_pgrp(sgrp, pwd->pw_gid, false);
+		bool ret2 = __rc_volume_cond_pgrp(sgrp, pwd->pw_gid, false, false);
 		if (ret < 0)
 			goto out;
-		ret = user_in_sgrp(pwd->pw_name, sgrp, false);
+		ret = user_in_sgrp(pwd->pw_name, sgrp, false, false);
 		if (ret < 0)
 			goto out;
 		for_me &= ret || ret2;

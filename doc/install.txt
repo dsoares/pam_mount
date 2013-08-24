@@ -1,21 +1,22 @@
 
 Minimum required packages for building pam_mount from a tarball release:
 
-	* libHX 3.10.1 or up
+	* libHX 3.12.1 or up
 	* libmount 2.20 or up
+	* libpcre 7.0 or up
 	* libxml 2.6.x or up
 	* pkg-config 0.19 or up
 	* Linux-PAM 0.99.x or up
-	SUN-PAM (compiled-tested only with 5.11~85)
+	SUN-PAM (compiled-tested only with 5.11-Beta Build 85)
 	BSD PAM is untested and probably not working right now.
 
 Additional required packages for building from (Git) snapshot:
 
 	* autoconf 2.59 or up
-	* automake 1.9 or up (automake 1.4 will NOT work)
+	* automake 1.10 or up
 	* libtool 1.5.22 or up (older ones might work)
 
-Optional packages for building:
+Then, optional packages for building:
 
 	* openssl 0.9.8 or up
 	* libcryptsetup 1.1.2 or up -- block-level encryption
@@ -27,7 +28,7 @@ Suggested packages for runtime:
 		- ofl: to support kill-on-logout
 
 	local targets:
-	* encfs 1.3 or up -- file-level encryption
+	* encfs 1.4 or up -- file-level encryption
 
 	remote targets:
 	* sshfs -- SFTP-over-SSH
