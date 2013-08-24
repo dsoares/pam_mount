@@ -1369,7 +1369,10 @@ static const struct pmt_command default_command[] = {
 	{CMD_NCPUMOUNT,  "ncpfs", {"ncpumount", "%(MNTPT)", NULL}},
 	{CMD_FUSEMOUNT,   "fuse", {"mount.fuse", "%(VOLUME)", "%(MNTPT)", "%(if %(OPTIONS),-o)", "%(OPTIONS)", NULL}},
 	{CMD_FUSEUMOUNT, "fuse",  {"fusermount", "-u", "%(MNTPT)", NULL}},
-	/* Do not use LCLMOUNT to avoid calling fsck */
+	/*
+	 * Do not use LCLMOUNT for networked filesystems,
+	 * so as to avoid calling fsck.
+	 */
 	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(COMBOPATH)", "%(MNTPT)", NULL}},
 	{CMD_NFSMOUNT,    "nfs4"},
 	{CMD_LCLMOUNT,    NULL,    {"mount", "-p0", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
