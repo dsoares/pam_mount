@@ -3,4 +3,6 @@
 if [ ! -e configure ]; then
 	./autogen.sh;
 fi;
-exec ./configure CFLAGS=-ggdb3 --with-rundir="$PWD/run" "$@";
+exec ./configure CFLAGS=-ggdb3 \
+	LDFLAGS="-Wl,-z -Wl,defs -Wl,-z -Wl,--as-needed" \
+	--with-rundir="$PWD/run" "$@";
