@@ -3,6 +3,10 @@ For details, see the history as recorded in the git repository.
 
 HEAD
 ====
+
+
+v2.14 (2013-08-27)
+==================
 Enhancements:
 - pam_mount: add an "allow_discard" option for volumes to enable
   trim support on the block device without enabling it for the filesystem.
