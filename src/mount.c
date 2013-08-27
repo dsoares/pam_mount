@@ -646,15 +646,18 @@ int do_mount(const struct config *config, struct vol *vpt,
 	if (vpt->type != CMD_CRYPTMOUNT && vpt->fs_key_cipher != NULL &&
 	    strlen(vpt->fs_key_cipher) > 0) {
 		/*
+		 * Support keyfile together with non-CRYPTMOUNT volumes
+		 * (e.g. CIFSMOUNT).
+		 *
 		 * In case of %CMD_CRYPTMOUNT, mount.crypt will deal with
 		 * any openssl decryption. Without %CMD_CRYPTMOUNT however,
 		 * we have to do this ourselves.
 		 */
-		w4rn("Not a crypto-type volume. Will decode OpenSSL key.\n");
+		w4rn("Not a crypto-type volume, but has keyfile and cipher. "
+		     "Will decode OpenSSL key.\n");
 		ret = pmt_decrypt_keyfile(vpt, password, &ll_password);
 	} else {
-		w4rn("This is a crypto-type volume. "
-		     "Key decoding deferred to mount.crypt.\n");
+		w4rn("Password will be sent to helper as-is.\n");
 		ll_password = HXmc_strinit(password);
 	}
 	if (ll_password == NULL)
