@@ -15,6 +15,7 @@ Fixes:
 - pam_mount: fix crash when an unknown digest/cipher was specified
 - pam_mount: correctly mkdir mountpoint if requested
 - pam_mount: only remove mountpoint if actually created
+- config: restore DOMAIN_USER and DOMAIN_NAME expansion in mount options
 Changes:
 - Complain louder when EUID is not 0
 - Make CIFS mounts work again after util-linux option parser update.
