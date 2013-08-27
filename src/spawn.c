@@ -1,5 +1,5 @@
 /*
- *	Copyright © Jan Engelhardt, 2006 - 2008
+ *	Copyright Jan Engelhardt, 2006 - 2008
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License

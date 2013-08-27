@@ -1,6 +1,6 @@
 /*
  *	NetBSD loop device support
- *	Copyright © Jan Engelhardt, 2008- 2009
+ *	Copyright Jan Engelhardt, 2008- 2009
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License

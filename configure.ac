@@ -1,6 +1,6 @@
 #
-#	Copyright (C) 2002 W. Michael Petullo <mike@flyn.org>
-#	Copyright © Jan Engelhardt, 2005 - 2010
+#	Copyright W. Michael Petullo <mike@flyn.org>, 2002
+#	Copyright Jan Engelhardt, 2005 - 2010
 #
 #	This file is part of pam_mount; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by

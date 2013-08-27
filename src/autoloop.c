@@ -1,6 +1,6 @@
 /*
  *	Internal diagnostic tool to debug pmt loop.c
- *	Copyright © Jan Engelhardt, 2008-2011
+ *	Copyright Jan Engelhardt, 2008-2011
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License

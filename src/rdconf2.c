@@ -1,7 +1,7 @@
 /*
- *	Copyright (C) Elvis Pfützenreuter, 2000
- *	Copyright © Jan Engelhardt, 2006 - 2009
- *	Copyright © Bastian Kleineidam, 2005
+ *	Copyright Elvis Pfützenreuter, 2000
+ *	Copyright Jan Engelhardt, 2006 - 2009
+ *	Copyright Bastian Kleineidam, 2005
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License

@@ -1,8 +1,8 @@
 /*
  *	pam_mount
- *	Copyright © W. Michael Petullo <mike@flyn.org>, 2004
- *	Copyright © Jan Engelhardt, 2005-2011
- *	Copyright © Bastian Kleineidam <calvin [at] debian org>, 2005
+ *	Copyright W. Michael Petullo <mike@flyn.org>, 2004
+ *	Copyright Jan Engelhardt, 2005-2011
+ *	Copyright Bastian Kleineidam <calvin [at] debian org>, 2005
  *
  *	This file is part of pam_mount; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public License
