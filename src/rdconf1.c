@@ -1428,7 +1428,7 @@ static const struct pmt_command default_command[] = {
 	 */
 	{CMD_NFSMOUNT,    "nfs",   {"mount", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(COMBOPATH)", "%(MNTPT)", NULL}},
 	{CMD_NFSMOUNT,    "nfs4"},
-	{CMD_LCLMOUNT,    NULL,    {"mount", "-p0", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
+	{CMD_LCLMOUNT,    NULL,    {"mount", "%(if %(OPTIONS),-o%(OPTIONS))", "-t%(FSTYPE)", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTMOUNT,  "crypt", {"mount", "-t", "crypt", "%(if %(CIPHER),-ocipher=%(CIPHER))", "%(if %(FSKEYCIPHER),-ofsk_cipher=%(FSKEYCIPHER))", "%(if %(FSKEYHASH),-ofsk_hash=%(FSKEYHASH))", "%(if %(FSKEYPATH),-okeyfile=%(FSKEYPATH))", "%(if %(OPTIONS),-o%(OPTIONS))", "%(VOLUME)", "%(MNTPT)", NULL}},
 	{CMD_CRYPTMOUNT,  "crypt_LUKS"},
 	{CMD_CRYPTMOUNT,  "crypto_LUKS"},

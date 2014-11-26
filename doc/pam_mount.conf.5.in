@@ -240,7 +240,7 @@ specify either absolute paths, or relative ones, in which case $PATH will be
 searched. Since login programs have differing default PATHs, pam_mount has its
 own path definition (see above).
 .TP
-\fB<lclmount>\fP\fImount \-p0 \-t %(FSTYPE) ...\fP\fB</lclmount>\fP
+\fB<lclmount>\fP\fImount \-t %(FSTYPE) ...\fP\fB</lclmount>\fP
 The regular mount program.
 .TP
 \fB<umount>\fP\fIumount %(MNTPT)\fP\fB</umount>\fP
