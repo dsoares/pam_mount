@@ -72,6 +72,7 @@ struct umount_options {
 	hxmc_t *object;
 	unsigned int no_update, ro_fallback;
 	bool is_cont, blkdev;
+	char *type;
 };
 
 static unsigned int mtcr_debug;
@@ -538,6 +539,13 @@ static int mtcr_mount(struct mount_options *opt)
 		mount_args[argk++] = "-t";
 		mount_args[argk++] = opt->fstype;
 	}
+	if (opt->extra_opts == NULL) {
+		opt->extra_opts = "helper=crypt";
+	} else if (*opt->extra_opts != '\0') {
+		HXmc_strcat(&opt->extra_opts, ",");
+		HXmc_strcat(&opt->extra_opts, "helper=crypt");
+	}
+
 	if (opt->extra_opts != NULL) {
 		mount_args[argk++] = "-o";
 		mount_args[argk++] = opt->extra_opts;
@@ -590,6 +598,8 @@ static bool mtcr_get_umount_options(int *argc, const char ***argv,
 		{.sh = 'n', .type = HXTYPE_NONE, .ptr = &opt->no_update,
 		 .help = "Do not update /etc/mtab"},
 		{.sh = 'r', .type = HXTYPE_NONE, .ptr = &opt->ro_fallback,
+		 .help = "(Option ignored)"},
+		{.sh = 't', .type = HXTYPE_STRING, .ptr = &opt->type,
 		 .help = "(Option ignored)"},
 		{.sh = 'v', .type = HXTYPE_NONE, .ptr = &mtcr_debug,
 		 .help = "Be verbose - enable debugging"},
@@ -707,7 +717,7 @@ static void mtcr_log_contents(const char *file)
  */
 static int mtcr_umount(struct umount_options *opt)
 {
-	const char *umount_args[3];
+	const char *umount_args[4];
 	int final_ret, ret, argk = 0;
 	struct ehd_mount_info mount_info;
 	char *mountpoint = NULL;
@@ -740,6 +750,7 @@ static int mtcr_umount(struct umount_options *opt)
 	pmt_cmtab_remove(mountpoint);
 
 	umount_args[argk++] = "umount";
+	umount_args[argk++] = "-i";
 	umount_args[argk++] = mountpoint;
 	umount_args[argk]   = NULL;
 
@@ -797,15 +808,7 @@ static int main2(int argc, const char **argv)
 
 int main(int argc, const char **argv)
 {
-	struct stat sb;
 	int ret;
-
-	if (stat("/etc/mtab", &sb) == 0 && (sb.st_mode & S_IWUGO) == 0)
-		fprintf(stderr, "NOTE: mount.crypt does not support utab "
-		        "(systems with no mtab or read-only mtab) yet. This "
-		        "means that you will temporarily need to call "
-		        "umount.crypt(8) rather than umount(8) to get crypto "
-		        "volumes unmounted.\n");
 
 	ret = HX_init();
 	if (ret <= 0) {
