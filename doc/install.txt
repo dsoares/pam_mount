@@ -21,6 +21,10 @@ Then, optional packages for building:
 	* openssl 0.9.8 or up
 	* libcryptsetup 1.1.2 or up -- block-level encryption
 
+Required packages for runtime:
+
+	* util-linux 2.20 or up
+
 Suggested packages for runtime:
 
 	* hxtools
