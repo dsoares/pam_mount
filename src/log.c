@@ -48,8 +48,8 @@ EXPORT_SYMBOL int ehd_err(const char *format, ...)
 
 	assert(format != NULL);
 
+	va_start(args, format);
 	if (!ehd_log_ft[EHD_LOGFT_NOSYSLOG]) {
-		va_start(args, format);
 		va_copy(arg2, args);
 		vsyslog(LOG_AUTH | LOG_ERR, format, arg2);
 		va_end(arg2);
