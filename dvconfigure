@@ -4,5 +4,5 @@ if [ ! -e configure ]; then
 	./autogen.sh;
 fi;
 exec ./configure CFLAGS=-ggdb3 \
-	LDFLAGS="-Wl,-z -Wl,defs -Wl,-z -Wl,--as-needed" \
+	LDFLAGS="-Wl,-z -Wl,defs -Wl,--as-needed" \
 	--with-rundir="$PWD/run" "$@";
