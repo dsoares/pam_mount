@@ -617,33 +617,45 @@ static int pmt_strregmatch(const char *s, const char *pattern, bool icase)
  * no match was found, positive non-zero on success or negative non-zero on
  * failure.
  */
-static bool user_in_sgrp(const char *user, const char *grp, bool icase,
+static bool user_in_sgrp(const char *user, const char *search_grp, bool icase,
     bool regex)
 {
-	struct group *gent;
-	const char *const *wp;
+	const struct group *gent;
+	int i, ret, ngroups = 0;
+	gid_t *grplist;
 
-	if ((gent = getgrnam(grp)) == NULL) {
-		if (errno != 0)
-			w4rn("getgrnam(\"%s\") failed: %s\n",
-			     grp, strerror(errno));
+	ret = getgrouplist(user, -1, NULL, &ngroups);
+	if (ret >= 0) {
+		/* No secondary groups. Cannot be a member, then. */
 		return false;
 	}
-
-	wp = const_cast2(const char *const *, gent->gr_mem);
-	while (wp != NULL && *wp != NULL) {
-		if (regex) {
-			if (pmt_strregmatch(user, *wp, icase) > 0)
-				return true;
-		} else if (icase && strcasecmp(*wp, user) == 0) {
-			return true;
-		} else if (strcmp(*wp, user) == 0) {
-			return true;
-		}
-		++wp;
+	grplist = malloc(sizeof(gid_t) * ngroups);
+	ret = getgrouplist(user, -1, grplist, &ngroups);
+	if (ret < 0) {
+		l0g("getgrouplist(%s) failed: %s\n", user, strerror(errno));
+		free(grplist);
+		return false;
 	}
-
+	for (i = 0; i < ngroups; ++i) {
+		if (grplist[i] == -1)
+			continue;
+		gent = getgrgid(grplist[i]);
+		if (gent == NULL)
+			continue;
+		if (regex) {
+			if (pmt_strregmatch(gent->gr_name, search_grp, icase) > 0)
+				goto found;
+		} else if (icase && strcasecmp(gent->gr_name, search_grp) == 0) {
+			goto found;
+		} else if (strcmp(gent->gr_name, search_grp) == 0) {
+			goto found;
+		}
+	}
+	free(grplist);
 	return false;
+ found:
+	free(grplist);
+	return true;
 }
 
 //-----------------------------------------------------------------------------
