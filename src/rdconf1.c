@@ -621,11 +621,11 @@ static bool user_in_sgrp(const char *user, const char *search_grp, bool icase,
     bool regex)
 {
 	const struct group *gent;
-	int i, ret, ngroups = 0;
-	gid_t *grplist;
+	int i, ret, ngroups = 1;
+	gid_t *grplist, grpbuf;
 
-	ret = getgrouplist(user, -1, NULL, &ngroups);
-	if (ret >= 0) {
+	ret = getgrouplist(user, -1, &grpbuf, &ngroups);
+	if (ret == 0 || (ret == 1 && grpbuf == -1)) {
 		/* No secondary groups. Cannot be a member, then. */
 		return false;
 	}
