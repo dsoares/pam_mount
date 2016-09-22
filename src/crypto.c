@@ -415,7 +415,7 @@ static int ehd_decrypt_key2(struct ehd_keydec_request *par)
 {
 	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 	unsigned int out_cumul_len = 0;
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX *ctx;
 	int out_len = 0;
 	hxmc_t *out;
 
@@ -424,18 +424,20 @@ static int ehd_decrypt_key2(struct ehd_keydec_request *par)
 	    (par->password == NULL) ? 0 : strlen(par->password),
 	    1, key, iv) <= 0)
 		return EHD_KEYDEC_OTHER;
+	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL)
+		return EHD_KEYDEC_OTHER;
 
-	out = HXmc_meminit(NULL, par->d_keysize + par->s_cipher->block_size);
-	EVP_CIPHER_CTX_init(&ctx);
-	EVP_DecryptInit_ex(&ctx, par->s_cipher, NULL, key, iv);
-	EVP_DecryptUpdate(&ctx, signed_cast(unsigned char *,
+	out = HXmc_meminit(NULL, par->d_keysize + EVP_CIPHER_block_size(par->s_cipher));
+	EVP_DecryptInit_ex(ctx, par->s_cipher, NULL, key, iv);
+	EVP_DecryptUpdate(ctx, signed_cast(unsigned char *,
 		&out[out_len]), &out_len, par->d_text, par->d_keysize);
 	out_cumul_len += out_len;
-	EVP_DecryptFinal_ex(&ctx, signed_cast(unsigned char *,
+	EVP_DecryptFinal_ex(ctx, signed_cast(unsigned char *,
 		&out[out_len]), &out_len);
 	out_cumul_len += out_len;
 	HXmc_setlen(&out, out_cumul_len);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 
 	par->d_result = out;
 	return EHD_KEYDEC_SUCCESS;
