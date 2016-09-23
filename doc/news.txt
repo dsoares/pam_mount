@@ -5,6 +5,17 @@ HEAD
 ====
 
 
+v2.16 (2016-09-23)
+==================
+Enhancements:
+* support building with OpenSSL 1.1.0 and test libressl 2.4.2
+Changes:
+* the sgrp match is now implemented by asking for the user's group list instead
+  of asking for the group's user list. (The latter can easily be orders of
+  magnitude larger, which is why some LDAP servers may be configured not to
+  return the list at all.)
+
+
 v2.15 (2014-12-01)
 ==================
 Changes:
